@@ -425,3 +425,11 @@ button.heat-cell { cursor: pointer; }
 .heat-list li { margin: 4px 0; }
 .linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); cursor: pointer; text-align: left; }
 .linklike:hover { color: var(--red); text-decoration: underline; }
+
+.throwback { border: 1px dashed var(--ink-3); border-radius: 8px; padding: 10px 12px; margin: 10px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.throwback ul { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 140px; }
+.throwback .kicker { width: 100%; color: var(--red, #c0392b); }
+.tl-day { margin: 14px 0; }
+.tl-date { font-size: 11px; color: var(--ink-3); margin-bottom: 6px; border-left: 3px solid var(--red, #c0392b); padding-left: 8px; }
+.tl-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
+.tl-frame { flex: 0 0 220px; scroll-snap-align: start; }
