@@ -4,7 +4,7 @@ import { embedConfig } from './settings';
 type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 
 let cachedFetch: FetchFn | null = null;
-async function getFetch(): Promise<FetchFn> {
+export async function getFetch(): Promise<FetchFn> {
   if (cachedFetch) return cachedFetch;
   const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
   if (isTauri) {
