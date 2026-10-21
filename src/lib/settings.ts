@@ -90,12 +90,12 @@ export function saveSettings(s: Settings) {
 }
 
 export function aiReady(s: Settings): boolean {
-  return !!(s.chat.baseUrl && s.chat.apiKey && s.chat.chatModel);
+  return !!(s.chat.baseUrl && s.chat.chatModel && (s.chat.apiKey || s.preset === 'custom'));
 }
 
 export function embedConfig(s: Settings): { baseUrl: string; apiKey: string; model: string } | null {
   const baseUrl = s.embed.sameAsChat ? s.embed.baseUrl || s.chat.baseUrl : s.embed.baseUrl;
   const apiKey = s.embed.sameAsChat ? s.chat.apiKey : s.embed.apiKey;
-  if (!s.embed.model || !baseUrl || !apiKey) return null;
+  if (!s.embed.model || !baseUrl || (!apiKey && s.preset !== 'custom')) return null;
   return { baseUrl, apiKey, model: s.embed.model };
 }
