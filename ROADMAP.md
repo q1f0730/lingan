@@ -10,7 +10,7 @@
 - [x] v0.4.0 「哇」第一弹：图片从 ASCII 字符显影成照片（复用用户阿卡迪亚代码思路：/workspace/projects/f3a3a9d7-9eb0-4bc6-87ea-725a0f720ba9/work/arcadia-e/repo/packages/ui/src/ascii/ 下 sampleImage/developMask/paintDevelop 等，自己的项目可复用）；空状态和加载改成 ASCII 小动画；显影按钮按下时 ASCII 雾散开
 - [x] v0.5.0 「哇」第二弹：参考 reactbits.dev（MIT，复制组件源码进项目，不加重依赖）加入卡片入场错落动画、标题文字解码/打字特效、显影结果逐字浮现、按钮磁吸/点击涟漪；遵守 prefers-reduced-motion，低端机自动降级
 - [x] v0.6.0 收集热力图：口味画像页加 GitHub 式 365 天热力图（暗房红深浅），点格子看当天收了什么；连续天数
-- [ ] v0.7.0 记忆：时间线视图（按天分组的胶卷条）+「那年今天 / 一周前的你」回顾卡，显影室可一键把旧素材拉进来
+- [x] v0.7.0 记忆：时间线视图（按天分组的胶卷条）+「那年今天 / 一周前的你」回顾卡，显影室可一键把旧素材拉进来
 - [ ] v0.8.0 安卓分享菜单：在任意 App 里分享文字/链接/图片 → 直接收进暗房（Share Target）
 - [ ] v0.9.0 Windows 全局快捷键 Ctrl+Shift+L 随时弹出速记小窗 + 系统托盘
 - [ ] v0.10.0 联动一：导出到 Obsidian（每件素材一个 Markdown + 图片，显影记录单独文件夹）；导入 flomo / 微信收藏导出的文本 / 浏览器书签 HTML
