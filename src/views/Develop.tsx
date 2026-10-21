@@ -238,6 +238,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
 export function IdeaCard({ idea, source, devId }: { idea: Idea; source: 'ai' | 'offline'; devId?: number }) {
   const { toast } = useApp();
   const dev = useLiveQuery(() => (devId ? db.developments.get(devId) : undefined), [devId]);
+  const srcItems = useLiveQuery(async () => (dev ? (await db.items.bulkGet(dev.itemIds)).filter(Boolean) : []), [dev?.id]);
   async function copy() {
     const t = `${idea.title}\n\n${idea.bridge}\n\n${idea.idea}${idea.form ? `\n\n形式：${idea.form}` : ''}${idea.firstStep ? `\n第一步：${idea.firstStep}` : ''}`;
     try {
@@ -269,6 +270,18 @@ export function IdeaCard({ idea, source, devId }: { idea: Idea; source: 'ai' | '
         </p>
       )}
       {idea.oblique && <p className="idea-oblique mono">斜策略：{idea.oblique}</p>}
+      {srcItems && srcItems.length > 0 && (
+        <div className="provenance">
+          <span className="label mono">SOURCE NEGATIVES // 来自你的底片</span>
+          <div className="tags">
+            {srcItems.map((it) => (
+              <span key={it!.id} className="tag">
+                № {String(it!.id).padStart(3, '0')} {it!.title}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       {idea.cliches.length > 0 && (
         <div className="cliches">
           <div className="label mono red">⊘ BANNED CLICHÉS // 已禁用的套路</div>
