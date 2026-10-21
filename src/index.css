@@ -355,4 +355,6 @@ details summary { cursor: pointer; font-size: 12px; color: var(--ink-3); margin:
   .card-text .card-title.quote { font-size: 16px; }
   .vinyl { width: 48px; height: 48px; }
   .darkroom-head span:nth-child(2) { display: none; }
+  .develop-btn { font-size: 14px; letter-spacing: 0.08em; padding: 14px 8px; }
 }
+.provenance { margin-top: 12px; }
