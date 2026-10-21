@@ -21,6 +21,15 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const [result, setResult] = useState<{ idea: Idea; source: 'ai' | 'offline'; id?: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [showStarred, setShowStarred] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!busy) return;
+    const t0 = Date.now();
+    setElapsed(0);
+    const h = setInterval(() => setElapsed(Date.now() - t0), 100);
+    return () => clearInterval(h);
+  }, [busy]);
 
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
 
@@ -168,22 +177,31 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
           </div>
 
           {shown && (
-            <div className="collide">
+            <div className="collide darkroom">
+              <div className="darkroom-head mono">
+                <span>▲ {shown.length === 3 ? 'TRIPLE' : 'DUAL'} EMULSION</span>
+                <span>35MM NEGATIVE</span>
+                <span>SAFELIGHT: 620NM</span>
+              </div>
               <div className="negatives">
                 {shown.map((it, i) => (
                   <div key={it.id} className="negative">
                     <ItemCard item={it} compact onOpen={openItem} />
-                    <button className="btn ghost small" onClick={() => replaceOne(i)} disabled={busy}>
-                      换一张
+                    <button className="swap mono" onClick={() => replaceOne(i)} disabled={busy}>
+                      ↻ 换一张
                     </button>
                   </div>
                 ))}
               </div>
-              <div className="actions center">
-                <button className="btn primary big" onClick={() => develop(shown)} disabled={busy || shown.length < 2}>
-                  {busy ? <span className="develop-anim">显影中…</span> : '显影'}
-                </button>
+              <div className="exposure mono">
+                <span>
+                  <i className="sq" /> EXPOSURE TIME
+                </span>
+                <span className="timer">{String(Math.floor(elapsed / 60000)).padStart(2, '0')}:{String(Math.floor((elapsed / 1000) % 60)).padStart(2, '0')}.{Math.floor((elapsed % 1000) / 100)}s</span>
               </div>
+              <button className="develop-btn mono" onClick={() => develop(shown)} disabled={busy || shown.length < 2}>
+                {busy ? <span className="develop-anim">[ 显影中 DEVELOPING… ]</span> : '[ 显影 COLLIDE & DEVELOP ]'}
+              </button>
               {!aiReady(settings) && (
                 <p className="hint">
                   还没配置 AI，现在是离线显影（基于斜策略的结构提示）。
@@ -232,11 +250,18 @@ export function IdeaCard({ idea, source, devId }: { idea: Idea; source: 'ai' | '
   return (
     <article className="idea">
       <div className="idea-meta mono">
-        <span>{source === 'ai' ? 'AI 显影' : '离线显影'}</span>
-        {idea.form && <span>形式 · {idea.form}</span>}
+        <span>[ 显影成果 · № DEV-{String(devId ?? 0).padStart(2, '0')} ]</span>
+        <span className="idea-src">{source === 'ai' ? 'AI EMULSION' : 'OFFLINE'}</span>
       </div>
-      <h2 className="idea-title">{idea.title}</h2>
-      {idea.bridge && <p className="idea-bridge">{idea.bridge}</p>}
+      <h2 className="idea-title">《{idea.title.replace(/^《|》$/g, '')}》</h2>
+      {idea.form && <div className="idea-form mono">FORM · {idea.form}</div>}
+      {idea.bridge && (
+        <div className="idea-bridge">
+          <div className="label mono red">THE CREATIVE BRIDGE // 灵感对撞</div>
+          {idea.bridge}
+        </div>
+      )}
+      <div className="label mono">CREATIVE DIRECTION // 创意</div>
       <p className="idea-body">{idea.idea}</p>
       {idea.firstStep && (
         <p className="idea-step">
@@ -246,7 +271,7 @@ export function IdeaCard({ idea, source, devId }: { idea: Idea; source: 'ai' | '
       {idea.oblique && <p className="idea-oblique mono">斜策略：{idea.oblique}</p>}
       {idea.cliches.length > 0 && (
         <div className="cliches">
-          <div className="label mono">已禁用的套路</div>
+          <div className="label mono red">⊘ BANNED CLICHÉS // 已禁用的套路</div>
           <ul>
             {idea.cliches.map((c, i) => (
               <li key={i}>
