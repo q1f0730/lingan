@@ -1,4 +1,5 @@
 import { formatWhen } from '../lib/quick';
+import { AsciiImage } from './AsciiDevelop';
 import { TYPE_LABEL, type Item } from '../lib/types';
 
 export function frameNo(id?: number) {
@@ -28,7 +29,7 @@ export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: I
       </div>
       {item.image && (
         <div className="card-imgwrap">
-          <img className="card-img" src={item.image} alt={item.title} loading="lazy" />
+          <AsciiImage className="card-img" id={item.id} src={item.image} alt={item.title} />
           <span className="exp mono">EXP {String(item.id ?? 0).padStart(2, '0')}A</span>
         </div>
       )}
