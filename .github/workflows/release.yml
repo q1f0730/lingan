@@ -1,0 +1,93 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'tag, e.g. v0.1.0'
+        required: true
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: true
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      id: ${{ steps.rel.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: notes
+        run: |
+          V="${TAG#v}"
+          if [ -f "docs/releases/$TAG.md" ]; then cp "docs/releases/$TAG.md" notes.md; else echo "灵感暗房 $TAG" > notes.md; fi
+      - id: rel
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: 灵感暗房 ${{ env.TAG }}
+          body_path: notes.md
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+  windows:
+    needs: create-release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with: { workspaces: 'src-tauri -> target' }
+      - name: set version
+        shell: bash
+        run: node scripts/set-version.mjs "${TAG#v}"
+      - run: npm install
+      - run: npm test
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.id }}
+          assetNamePattern: 'Lingan_[version]_[arch][setup][ext]'
+  android:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+      - uses: swatinem/rust-cache@v2
+        with: { workspaces: 'src-tauri -> target' }
+      - name: set version
+        run: node scripts/set-version.mjs "${TAG#v}"
+      - run: npm install
+      - name: android init + build
+        run: |
+          export NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          echo "NDK_HOME=$NDK_HOME"
+          npx tauri android init --ci
+          node scripts/patch-android.mjs
+          npx tauri android build --apk --ci --target aarch64 armv7
+      - name: sign
+        run: |
+          set -e
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          IN=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' | head -1)
+          echo "apk: $IN"
+          $BT/zipalign -f -p 4 "$IN" aligned.apk
+          $BT/apksigner sign --ks signing/lingan.p12 --ks-type PKCS12 --ks-pass pass:lingan-q1f730 --ks-key-alias lingan --out "Lingan_${TAG#v}_android.apk" aligned.apk
+          $BT/apksigner verify "Lingan_${TAG#v}_android.apk"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: Lingan_*_android.apk
