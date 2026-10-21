@@ -23,13 +23,13 @@ export function computeTaste(items: Item[], now = Date.now()): TasteStats {
   const byType = { music: 0, film: 0, image: 0, text: 0, link: 0, idea: 0 } as Record<ItemType, number>;
   for (const it of items) byType[it.type] = (byType[it.type] || 0) + 1;
   const topTags = count(items.flatMap((i) => i.tags)).slice(0, 16);
-  const topCreators = count(items.map((i) => (i.creator || '').trim()).filter(Boolean)).slice(0, 8);
+  const topCreators = count(items.map((i) => (i.creator || '').trim()).filter(Boolean)).filter(([, n]) => n > 1).slice(0, 8);
   const bigrams: string[] = [];
   for (const it of items) {
     const han = (it.why || '').replace(/[^\u4e00-\u9fff]/g, ' ');
     for (const seg of han.split(/\s+/)) for (let i = 0; i < seg.length - 1; i++) {
       const b = seg.slice(i, i + 2);
-      if (!STOP.has(b)) bigrams.push(b);
+      if (!STOP.has(b) && !/[的了么都是在有人我你他她它和与就也还很被把这那个不没吗呢吧啊一]/.test(b)) bigrams.push(b);
     }
   }
   const whyWords = count(bigrams).filter(([, n]) => n > 1).slice(0, 12);
