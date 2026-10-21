@@ -63,6 +63,9 @@ async function run(name, viewport) {
   await pg.waitForTimeout(700);
   if (await pg.locator('.clip-offer').count()) errs.push(`[${name}] clip offered twice`);
   await pg.evaluate(() => navigator.clipboard.writeText(''));
+  // android share bridge
+  await pg.evaluate(() => { let n = 1; window.LinganShare = { take: () => (n-- > 0 ? JSON.stringify({ text: 'https://example.com/shared', subject: '分享来的文章' }) : '') }; window.dispatchEvent(new Event('focus')); });
+  await pg.waitForSelector('.card:has-text("分享来的文章")', { timeout: 5000 }).catch(() => errs.push(`[${name}] share intake failed`));
   await pg.screenshot({ path: `${out}/${name}-1-library.png`, fullPage: true });
   // search + filter
   await pg.fill('.search input', '钢琴');
