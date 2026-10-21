@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useState } from 'react';
 import { ItemCard } from '../components/ItemCard';
+import { QuickBar } from '../components/QuickBar';
 import { addItem, db } from '../lib/db';
 import { SAMPLES } from '../lib/samples';
 import { itemText } from '../lib/similarity';
@@ -41,6 +42,7 @@ export function Library() {
         <span>· {items.length} ITEMS</span>
         <span className="strip-date">{new Date().toLocaleDateString('zh-CN').replace(/\//g, '.')}</span>
       </div>
+      <QuickBar />
       <div className="search">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索标题、作者、句子、标签…" aria-label="搜索" />
         {q && (
