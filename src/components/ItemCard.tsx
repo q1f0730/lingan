@@ -1,3 +1,4 @@
+import { formatWhen } from '../lib/quick';
 import { TYPE_LABEL, type Item } from '../lib/types';
 
 export function frameNo(id?: number) {
@@ -20,6 +21,9 @@ export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: I
     >
       <div className="card-meta">
         <span className="mono">{frameNo(item.id)}</span>
+        <time className="card-when mono" dateTime={new Date(item.createdAt).toISOString()}>
+          {formatWhen(item.createdAt)}
+        </time>
         <span className="type-badge">{TYPE_LABEL[item.type]}</span>
       </div>
       {item.image && (
