@@ -115,14 +115,19 @@ export default function App() {
             <span className="brand-name">灵感暗房</span>
             <span className="mono brand-sub">LINGAN</span>
           </div>
-          {NAV.map((n) => (
+          {NAV.map((n, idx) => [
+            idx === 2 && (
+              <button key="add" className="nav-add" onClick={openCapture} aria-label="收集">
+                ＋
+              </button>
+            ),
             <button key={n.v} className={`nav-btn${view === n.v ? ' on' : ''}`} onClick={() => setView(n.v)} aria-current={view === n.v ? 'page' : undefined}>
               <span className="nav-ic" aria-hidden>
                 {n.icon}
               </span>
               <span>{n.label}</span>
-            </button>
-          ))}
+            </button>,
+          ])}
         </nav>
         <main className="main">
           {view === 'library' && <Library />}
