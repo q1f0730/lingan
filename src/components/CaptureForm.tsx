@@ -26,6 +26,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
   const [imgBusy, setImgBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [sniff, setSniff] = useState<'' | 'busy' | 'ok' | 'fail'>('');
+  const [more, setMore] = useState(!!(initial.why || initial.tags.length));
 
   async function recognize(raw: string) {
     const url = extractUrl(raw);
@@ -52,6 +53,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
   useEffect(() => {
     setD(initial);
     setTagText(initial.tags.join(' '));
+    setMore(!!(initial.why || initial.tags.length));
   }, [initial]);
   const ph = PH[d.type];
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
@@ -165,6 +167,12 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
         </div>
       </div>
+      {!more && (
+        <button type="button" className="btn ghost small more-toggle" onClick={() => setMore(true)}>
+          ＋ 为什么打动我 / 标签（可选）
+        </button>
+      )}
+      {more && (<>
       <label className="field why">
         <span className="label mono">为什么打动我 · 最重要的一句</span>
         <input value={d.why || ''} onChange={(e) => set('why', e.target.value)} placeholder="AI 靠这句话认识你的口味" maxLength={200} />
@@ -173,6 +181,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
         <span className="label mono">标签（空格分隔）</span>
         <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="雨 克制 慢镜头" />
       </label>
+      </>)}
       {err && <div className="error">{err}</div>}
       <div className="actions">
         <button type="button" className="btn ghost" onClick={onCancel}>
