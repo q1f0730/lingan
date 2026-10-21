@@ -119,6 +119,14 @@ async function run(name, viewport) {
   // taste
   await pg.click('.nav-btn:has-text("画像")');
   await pg.waitForSelector('.stat-n');
+  // v0.6 热力图：365 格，今天那格有素材，点它列出当天素材
+  await pg.waitForSelector('.heat-grid');
+  const hc = await pg.locator('.heat-cell[role=gridcell]').count();
+  if (hc !== 365) errs.push(`[${name}] heat cells expected 365 got ${hc}`);
+  const todayLv = await pg.locator('.heat-cell[role=gridcell]').last().getAttribute('class');
+  if (/lv0/.test(todayLv || '')) errs.push(`[${name}] today heat cell empty`);
+  await pg.locator('.heat-cell[role=gridcell]').last().click();
+  await pg.waitForSelector('.heat-day .heat-list li');
   await pg.screenshot({ path: `${out}/${name}-4-taste.png`, fullPage: true });
   // settings + theme
   await pg.click('.nav-btn:has-text("设置")');
