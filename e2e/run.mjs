@@ -128,6 +128,13 @@ async function run(name, viewport) {
   await pg.locator('.heat-cell[role=gridcell]').last().click();
   await pg.waitForSelector('.heat-day .heat-list li');
   await pg.screenshot({ path: `${out}/${name}-4-taste.png`, fullPage: true });
+  // v0.7 时间线
+  await pg.click('.nav-btn:has-text("灵感库")');
+  await pg.click('.chip:has-text("时间线")');
+  await pg.waitForSelector('.tl-day .tl-frame');
+  await pg.screenshot({ path: `${out}/${name}-4b-timeline.png`, fullPage: true });
+  await pg.click('.chip:has-text("时间线")');
+  await pg.click('.nav-btn:has-text("画像")');
   // settings + theme
   await pg.click('.nav-btn:has-text("设置")');
   await pg.click('text=暗房（深）');
