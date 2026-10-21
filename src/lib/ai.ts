@@ -34,7 +34,7 @@ async function postJSON(url: string, key: string, body: unknown, timeoutMs = 900
   try {
     res = await f(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      headers: key ? { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` } : { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal: ctrl.signal,
     });
