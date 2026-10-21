@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useState } from 'react';
+import { AsciiEmpty, AsciiLoader } from '../components/AsciiDevelop';
 import { ItemCard } from '../components/ItemCard';
 import { QuickBar } from '../components/QuickBar';
 import { addItem, db } from '../lib/db';
@@ -26,7 +27,7 @@ export function Library() {
     toast('已放入 10 件示例素材，可以随时删除');
   }
 
-  if (!items) return <div className="loading mono">冲洗中…</div>;
+  if (!items) return <AsciiLoader />;
 
   return (
     <section className="view">
@@ -68,6 +69,7 @@ export function Library() {
       </div>
       {items.length === 0 ? (
         <div className="empty">
+          <AsciiEmpty />
           <div className="empty-frame mono">№ 000</div>
           <h2>暗房还是空的</h2>
           <p>收进第一件打动你的东西：一首歌、一部电影、一张图、一句话。</p>
