@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaptureForm, emptyDraft, type Draft } from './components/CaptureForm';
 import { frameNo, safeHost } from './components/ItemCard';
 import { ClipOffer } from './components/QuickBar';
+import { level, useButtonFx } from './components/Motion';
 import { Sheet } from './components/Sheet';
 import { fromLocalInput, toLocalInput } from './lib/quick';
 import { addItem, db, updateItem } from './lib/db';
@@ -31,6 +32,11 @@ export default function App() {
   const [preset, setPreset] = useState<number[] | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+
+  useButtonFx();
+  useEffect(() => {
+    document.documentElement.dataset.motion = level();
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = settings.theme;
