@@ -22,7 +22,17 @@ export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: I
         <span className="mono">{frameNo(item.id)}</span>
         <span className="type-badge">{TYPE_LABEL[item.type]}</span>
       </div>
-      {item.image && <img className="card-img" src={item.image} alt={item.title} loading="lazy" />}
+      {item.image && (
+        <div className="card-imgwrap">
+          <img className="card-img" src={item.image} alt={item.title} loading="lazy" />
+          <span className="exp mono">EXP {String(item.id ?? 0).padStart(2, '0')}A</span>
+        </div>
+      )}
+      {item.type === 'music' && !item.image && (
+        <div className="vinyl" aria-hidden>
+          <span />
+        </div>
+      )}
       <h3 className={`card-title${item.type === 'text' && item.content ? ' quote' : ''}`}>
         {item.type === 'text' && item.content ? `「${item.content}」` : item.title}
       </h3>
