@@ -390,3 +390,18 @@ details summary { cursor: pointer; font-size: 12px; color: var(--ink-3); margin:
 .develop-wrap { position: relative; }
 .fog-burst { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 160px; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .fog-burst { display: none; } }
+
+/* v0.5 「哇」第二弹：错落入场 / 解码 / 逐字浮现 / 涟漪 / 磁吸（遵守 reduced-motion；低端机 data-motion=lite 自动降级） */
+@keyframes card-in { from { opacity: 0; transform: translateY(18px) scale(0.98); } }
+@keyframes ripple { from { transform: scale(0); opacity: 0.35; } to { transform: scale(1); opacity: 0; } }
+html[data-motion='full'] .masonry-cell, html[data-motion='lite'] .masonry-cell { animation: card-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 1ms); }
+html[data-motion='lite'] .masonry-cell { animation-duration: 0.25s; animation-delay: calc(var(--i, 0) * 0.4ms); }
+.btn, .nav-add { position: relative; overflow: hidden; }
+.btn { transform: translate(var(--mx, 0), var(--my, 0)); }
+.btn:active { transform: translate(var(--mx, 0), calc(var(--my, 0px) + 1px)); }
+.ripple { position: absolute; border-radius: 50%; background: currentColor; pointer-events: none; animation: ripple 0.6s ease-out forwards; }
+.fab { overflow: hidden; }
+.decode { font-variant-ligatures: none; }
+.tw-rest { color: transparent; user-select: none; }
+.idea-body { min-height: 1.9em; }
+@media (prefers-reduced-motion: reduce) { .masonry-cell { animation: none !important; } .ripple { display: none; } .btn { transform: none; } }
