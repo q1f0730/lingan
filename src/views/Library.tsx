@@ -6,22 +6,27 @@ import { QuickBar } from '../components/QuickBar';
 import { addItem, db } from '../lib/db';
 import { SAMPLES } from '../lib/samples';
 import { staggerDelay } from '../lib/motion';
+import { groupByDay, throwbacks } from '../lib/memory';
 import { itemText } from '../lib/similarity';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
 
 export function Library() {
-  const { openItem, openCapture, toast } = useApp();
+  const { openItem, openCapture, toast, developFrom } = useApp();
   const items = useLiveQuery(() => db.items.orderBy('createdAt').reverse().toArray(), []);
   const [q, setQ] = useState('');
   const [type, setType] = useState<ItemType | 'all'>('all');
   const [tag, setTag] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState(false);
 
   const filtered = useMemo(() => {
     if (!items) return [];
     const k = q.trim().toLowerCase();
     return items.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)) && (!k || itemText(i).toLowerCase().includes(k)));
   }, [items, q, type, tag]);
+
+  const backs = useMemo(() => (items ? throwbacks(items) : []), [items]);
+  const days = useMemo(() => (timeline ? groupByDay(filtered) : []), [timeline, filtered]);
 
   async function loadSamples() {
     for (const s of SAMPLES) await addItem(s);
@@ -45,6 +50,21 @@ export function Library() {
         <span className="strip-date">{new Date().toLocaleDateString('zh-CN').replace(/\//g, '.')}</span>
       </div>
       <QuickBar />
+      {backs.map((b) => (
+        <div key={b.label} className="throwback">
+          <div className="kicker mono">⟲ {b.label}</div>
+          <ul>
+            {b.items.slice(0, 3).map((it) => (
+              <li key={it.id}>
+                <button className="btnlike" onClick={() => openItem(it)}>{it.title || '无题'}</button>
+              </li>
+            ))}
+          </ul>
+          <button className="btn ghost small" onClick={() => developFrom(b.items.map((i) => i.id!).filter(Boolean).slice(0, 3))}>
+            拉进显影室
+          </button>
+        </div>
+      ))}
       <div className="search">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索标题、作者、句子、标签…" aria-label="搜索" />
         {q && (
@@ -62,6 +82,9 @@ export function Library() {
             {TYPE_LABEL[t]}
           </button>
         ))}
+        <button className={`chip${timeline ? ' on' : ''}`} onClick={() => setTimeline((v) => !v)} aria-pressed={timeline}>
+          ▤ 时间线
+        </button>
         {tag && (
           <button className="chip on red" onClick={() => setTag(null)}>
             #{tag} ✕
@@ -86,6 +109,21 @@ export function Library() {
       ) : filtered.length === 0 ? (
         <div className="empty small">
           <p>没有匹配的素材。</p>
+        </div>
+      ) : timeline ? (
+        <div className="timeline">
+          {days.map((g) => (
+            <div key={g.key} className="tl-day">
+              <div className="tl-date mono">{g.key.replace(/-/g, '.')} · {g.items.length}</div>
+              <div className="tl-strip">
+                {g.items.map((it) => (
+                  <div key={it.id} className="tl-frame">
+                    <ItemCard item={it} onOpen={openItem} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="masonry">
