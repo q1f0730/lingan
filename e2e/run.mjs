@@ -14,6 +14,7 @@ async function run(name, viewport) {
   pg.on('dialog', (d) => d.accept());
   await pg.goto(base);
   await pg.waitForSelector('text=暗房还是空的');
+  if (!(await pg.locator('.ascii-empty').count())) errs.push(`[${name}] ascii empty state missing`);
   await pg.screenshot({ path: `${out}/${name}-0-empty.png`, fullPage: true });
   // capture one manually
   await pg.click('text=收集第一件');
@@ -82,6 +83,7 @@ async function run(name, viewport) {
   await pg.click('text=以此显影');
   await pg.waitForSelector('.darkroom');
   await pg.click('.develop-btn');
+  if (!(await pg.locator('.fog-burst').count())) errs.push(`[${name}] fog burst missing`);
   await pg.waitForSelector('.idea', { timeout: 10000 });
   await pg.waitForTimeout(1300);
   await pg.screenshot({ path: `${out}/${name}-3-develop.png`, fullPage: true });
@@ -122,6 +124,36 @@ async function run(name, viewport) {
   await pg.waitForSelector('.card:has-text("花样年华")');
   const th = await pg.evaluate(() => document.documentElement.dataset.theme);
   if (th !== 'darkroom') errs.push(`[${name}] theme not persisted`);
+  // v0.4 ASCII 显影：塞一张图片素材（直接写 IndexedDB），刷新后应先出字符画再显影成照片
+  await pg.evaluate(async () => {
+    const c = document.createElement('canvas');
+    c.width = 320; c.height = 200;
+    const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 320, 200);
+    gr.addColorStop(0, '#222'); gr.addColorStop(0.5, '#e0452a'); gr.addColorStop(1, '#f5f0e7');
+    g.fillStyle = gr; g.fillRect(0, 0, 320, 200);
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(160, 100, 50, 0, 7); g.fill();
+    const url = c.toDataURL('image/jpeg', 0.8);
+    await new Promise((res, rej) => {
+      const r = indexedDB.open('lingan');
+      r.onerror = () => rej(r.error);
+      r.onsuccess = () => {
+        const tx = r.result.transaction('items', 'readwrite');
+        const now = Date.now();
+        tx.objectStore('items').add({ type: 'image', title: '渐变测试图', image: url, tags: [], createdAt: now, updatedAt: now });
+        tx.oncomplete = () => res(null);
+        tx.onerror = () => rej(tx.error);
+      };
+    });
+  });
+  await pg.reload();
+  await pg.waitForSelector('.card:has-text("渐变测试图")');
+  await pg.waitForSelector('.ascii-canvas', { timeout: 3000 });
+  await pg.waitForTimeout(450);
+  await pg.screenshot({ path: `${out}/${name}-7-ascii-mid.png` });
+  await pg.waitForFunction(() => !document.querySelector('.ascii-canvas') && document.querySelector('.ascii-wrap.ascii-done'), null, { timeout: 5000 });
+  const iw = await pg.locator('.card:has-text("渐变测试图") img.card-img').evaluate((i) => i.naturalWidth);
+  if (iw < 10) errs.push(`[${name}] ascii image not loaded`);
   await ctx.close();
 }
 try {
