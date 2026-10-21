@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useState } from 'react';
 import { chat } from '../lib/ai';
 import { db } from '../lib/db';
+import { HeatmapPanel } from '../components/Heatmap';
 import { aiReady } from '../lib/settings';
 import { useApp } from '../lib/store';
 import { computeTaste, tastePrompt } from '../lib/taste';
@@ -87,6 +88,8 @@ export function Taste() {
           ))}
         </div>
       </div>
+
+      <HeatmapPanel items={items} />
 
       <div className="panel">
         <div className="label mono">素材构成</div>
