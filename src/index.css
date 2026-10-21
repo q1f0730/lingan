@@ -380,3 +380,13 @@ details summary { cursor: pointer; font-size: 12px; color: var(--ink-3); margin:
 .clip-actions { display: flex; justify-content: flex-end; gap: 8px; }
 @media (min-width: 761px) { .clip-offer { bottom: 90px; } }
 @media (prefers-reduced-motion: reduce) { .quick-after, .clip-offer { animation: none; } }
+
+/* v0.4 ASCII 显影 */
+.ascii-wrap { position: relative; line-height: 0; }
+.ascii-wrap:not(.ascii-on):not(.ascii-done) > img { opacity: 0; }
+.ascii-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.spin-ch { color: var(--red); display: inline-block; min-width: 1em; }
+.ascii-empty { margin: 4px auto 0; font-size: 12px; line-height: 1.15; color: var(--ink-2); display: inline-block; text-align: left; white-space: pre; min-height: 8.1em; }
+.develop-wrap { position: relative; }
+.fog-burst { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 160px; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .fog-burst { display: none; } }
