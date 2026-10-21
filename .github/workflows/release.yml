@@ -76,6 +76,7 @@ jobs:
           export NDK_HOME="$ANDROID_NDK_LATEST_HOME"
           echo "NDK_HOME=$NDK_HOME"
           npx tauri android init --ci
+          npx tauri icon public/favicon.svg
           node scripts/patch-android.mjs
           npx tauri android build --apk --ci --target aarch64 armv7
       - name: sign
