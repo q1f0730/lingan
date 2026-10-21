@@ -7,7 +7,7 @@ fs.mkdirSync(out, { recursive: true });
 const errs = [];
 const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] });
 async function run(name, viewport) {
-  const ctx = await b.newContext({ viewport, deviceScaleFactor: 1 });
+  const ctx = await b.newContext({ viewport, deviceScaleFactor: 1, permissions: ['clipboard-read', 'clipboard-write'] });
   const pg = await ctx.newPage();
   pg.on('pageerror', (e) => errs.push(`[${name}] pageerror ${e.message}`));
   pg.on('console', (m) => m.type() === 'error' && errs.push(`[${name}] console ${m.text()}`));
@@ -20,6 +20,7 @@ async function run(name, viewport) {
   await pg.fill('.capture .field.big input', '重庆森林');
   await pg.click('.capture .chip:has-text("电影")');
   await pg.fill('.capture input[maxlength="80"]', '王家卫');
+  await pg.click('.capture .more-toggle');
   await pg.fill('.capture .field.why input', '凤梨罐头的过期日期像一份情书');
   await pg.fill('.capture input[placeholder="雨 克制 慢镜头"]', '香港 罐头 霓虹');
   await pg.click('text=收进暗房');
@@ -38,6 +39,29 @@ async function run(name, viewport) {
   await pg.click('text=先放点示例');
   await pg.waitForSelector('.card:has-text("花样年华")');
   await pg.waitForTimeout(400);
+  // v0.3 quick bar: type + Enter saves, time shown, optional why after save
+  await pg.fill('.quick-input', '速记测试一句 #速记');
+  await pg.press('.quick-input', 'Enter');
+  await pg.waitForSelector('.card:has-text("速记测试一句")');
+  const when = await pg.locator('.card:has-text("速记测试一句") .card-when').innerText();
+  if (!when.startsWith('今天')) errs.push(`[${name}] card time expected 今天 got ${when}`);
+  if (!(await pg.locator('.card:has-text("速记测试一句") .tag:has-text("速记")').count())) errs.push(`[${name}] quick tag missing`);
+  await pg.fill('.quick-why', '因为很安静 #夜');
+  await pg.press('.quick-why', 'Enter');
+  await pg.waitForSelector('.card:has-text("因为很安静")');
+  if (await pg.locator('.quick-after').count()) errs.push(`[${name}] quick-after should close`);
+  // clipboard offer
+  const clipText = `剪贴板里的一句话 ${name}`;
+  await pg.evaluate((t) => navigator.clipboard.writeText(t), clipText);
+  await pg.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await pg.waitForSelector('.clip-offer', { timeout: 5000 });
+  await pg.screenshot({ path: `${out}/${name}-1b-clip.png` });
+  await pg.click('.clip-offer button:has-text("收进暗房")');
+  await pg.waitForSelector(`.card:has-text("${clipText}")`);
+  await pg.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await pg.waitForTimeout(700);
+  if (await pg.locator('.clip-offer').count()) errs.push(`[${name}] clip offered twice`);
+  await pg.evaluate(() => navigator.clipboard.writeText(''));
   await pg.screenshot({ path: `${out}/${name}-1-library.png`, fullPage: true });
   // search + filter
   await pg.fill('.search input', '钢琴');
@@ -52,6 +76,8 @@ async function run(name, viewport) {
   // detail
   await pg.click('.card:has-text("花样年华")');
   await pg.waitForSelector('.detail');
+  await pg.fill('.when-input', '2025-10-19T08:30');
+  await pg.waitForSelector('.toast:has-text("时间已改")');
   await pg.screenshot({ path: `${out}/${name}-2-detail.png` });
   await pg.click('text=以此显影');
   await pg.waitForSelector('.darkroom');
@@ -79,6 +105,8 @@ async function run(name, viewport) {
   await pg.screenshot({ path: `${out}/${name}-5-settings-dark.png`, fullPage: true });
   await pg.click('.nav-btn:has-text("灵感库")');
   await pg.screenshot({ path: `${out}/${name}-6-library-dark.png`, fullPage: true });
+  const w2 = await pg.locator('.card:has-text("花样年华") .card-when').innerText();
+  if (w2 !== '2025/10/19') errs.push(`[${name}] edited time expected 2025/10/19 got ${w2}`);
   // edit + delete
   await pg.click('.card:has-text("Avril 14th")');
   await pg.click('.detail button:has-text("编辑")');
