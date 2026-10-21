@@ -7,6 +7,7 @@ import { Sheet } from './components/Sheet';
 import { fromLocalInput, toLocalInput } from './lib/quick';
 import { addItem, db, updateItem } from './lib/db';
 import { enrichItem } from './lib/enrich';
+import { shareToDraft, takeShared } from './lib/share';
 import { loadSettings, saveSettings, type Settings } from './lib/settings';
 import { Ctx, type View } from './lib/store';
 import { TYPE_LABEL, type Item } from './lib/types';
@@ -64,6 +65,29 @@ export default function App() {
     () => ({ settings, setSettings, toast, openItem, openCapture, go: setView, developFrom }),
     [settings, setSettings, toast, openItem, openCapture, developFrom],
   );
+
+  // Android share sheet → straight into the darkroom
+  useEffect(() => {
+    const pull = async () => {
+      const d = shareToDraft(takeShared());
+      if (!d) return;
+      const id = await addItem(d);
+      toast('已收进暗房 ' + frameNo(id));
+      enrichItem(id, settingsRef.current).then((err) => {
+        if (err) toast('AI 加工失败：' + err, 'err');
+      });
+    };
+    void pull();
+    const vis = () => {
+      if (document.visibilityState === 'visible') void pull();
+    };
+    document.addEventListener('visibilitychange', vis);
+    window.addEventListener('focus', vis);
+    return () => {
+      document.removeEventListener('visibilitychange', vis);
+      window.removeEventListener('focus', vis);
+    };
+  }, [toast]);
 
   // keyboard shortcut: N = new
   useEffect(() => {
