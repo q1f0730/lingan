@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaptureForm, emptyDraft, type Draft } from './components/CaptureForm';
 import { frameNo, safeHost } from './components/ItemCard';
+import { ClipOffer } from './components/QuickBar';
 import { Sheet } from './components/Sheet';
+import { fromLocalInput, toLocalInput } from './lib/quick';
 import { addItem, db, updateItem } from './lib/db';
 import { enrichItem } from './lib/enrich';
 import { loadSettings, saveSettings, type Settings } from './lib/settings';
@@ -146,8 +148,10 @@ export default function App() {
         </Sheet>
 
         <Sheet open={!!detail && !capture} onClose={() => setDetail(null)} title={detail ? `${frameNo(detail.id)} · ${TYPE_LABEL[detail.type]}` : ''}>
-          {detail && <Detail it={detail} onEdit={() => { const { id, createdAt: _c, updatedAt: _u, ...rest } = detail; void _c; void _u; setCapture({ draft: rest, editId: id }); }} onDelete={() => onDelete(detail)} onDevelop={() => { setDetail(null); developFrom([detail.id!]); }} onReAI={async () => { const err = await enrichItem(detail.id!, settings, true); toast(err ? 'AI 加工失败：' + err : 'AI 已重新加工', err ? 'err' : 'ok'); const fresh = await db.items.get(detail.id!); if (fresh) setDetail(fresh); }} />}
+          {detail && <Detail it={detail} onEdit={() => { const { id, createdAt: _c, updatedAt: _u, ...rest } = detail; void _c; void _u; setCapture({ draft: rest, editId: id }); }} onDelete={() => onDelete(detail)} onDevelop={() => { setDetail(null); developFrom([detail.id!]); }} onWhen={async (ts) => { await updateItem(detail.id!, { createdAt: ts }); const fresh = await db.items.get(detail.id!); if (fresh) setDetail(fresh); toast('时间已改'); }} onReAI={async () => { const err = await enrichItem(detail.id!, settings, true); toast(err ? 'AI 加工失败：' + err : 'AI 已重新加工', err ? 'err' : 'ok'); const fresh = await db.items.get(detail.id!); if (fresh) setDetail(fresh); }} />}
         </Sheet>
+
+        {!capture && !detail && <ClipOffer />}
 
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((t) => (
@@ -161,7 +165,7 @@ export default function App() {
   );
 }
 
-function Detail({ it, onEdit, onDelete, onDevelop, onReAI }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void }) {
+function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void }) {
   return (
     <div className="detail">
       {it.image && <img className="detail-img" src={it.image} alt={it.title} />}
@@ -200,8 +204,21 @@ function Detail({ it, onEdit, onDelete, onDevelop, onReAI }: { it: Item; onEdit:
           ))}
         </div>
       )}
-      <div className="mono dim small-meta">
-        收于 {new Date(it.createdAt).toLocaleString('zh-CN')}
+      <div className="mono dim small-meta when-row">
+        <label>
+          收于{' '}
+          <input
+            type="datetime-local"
+            className="when-input"
+            aria-label="记录时间"
+            defaultValue={toLocalInput(it.createdAt)}
+            key={it.createdAt}
+            onChange={(e) => {
+              const t = fromLocalInput(e.target.value);
+              if (t && Math.abs(t - it.createdAt) >= 60000) onWhen(t);
+            }}
+          />
+        </label>
         {it.embedding ? ' · 已向量化' : ''}
       </div>
       <div className="actions">
