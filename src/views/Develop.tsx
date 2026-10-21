@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { FogBurst } from '../components/AsciiDevelop';
 import { ItemCard } from '../components/ItemCard';
+import { DecodeText, TypeReveal } from '../components/Motion';
 import { db } from '../lib/db';
 import { developOffline, developWithAI } from '../lib/develop';
 import { aiReady } from '../lib/settings';
@@ -226,7 +227,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
           )}
 
           {busy && <div className="tray"><div className="tray-paper" /></div>}
-          {result && <IdeaCard idea={result.idea} source={result.source} devId={result.id} />}
+          {result && <IdeaCard key={result.id} animate idea={result.idea} source={result.source} devId={result.id} />}
         </>
       )}
 
@@ -247,7 +248,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   );
 }
 
-export function IdeaCard({ idea, source, devId }: { idea: Idea; source: 'ai' | 'offline'; devId?: number }) {
+export function IdeaCard({ idea, source, devId, animate }: { idea: Idea; source: 'ai' | 'offline'; devId?: number; animate?: boolean }) {
   const { toast } = useApp();
   const dev = useLiveQuery(() => (devId ? db.developments.get(devId) : undefined), [devId]);
   const srcItems = useLiveQuery(async () => (dev ? (await db.items.bulkGet(dev.itemIds)).filter(Boolean) : []), [dev?.id]);
@@ -266,7 +267,7 @@ export function IdeaCard({ idea, source, devId }: { idea: Idea; source: 'ai' | '
         <span>[ 显影成果 · № DEV-{String(devId ?? 0).padStart(2, '0')} ]</span>
         <span className="idea-src">{source === 'ai' ? 'AI EMULSION' : 'OFFLINE'}</span>
       </div>
-      <h2 className="idea-title">《{idea.title.replace(/^《|》$/g, '')}》</h2>
+      <h2 className="idea-title">{animate ? <DecodeText text={`《${idea.title.replace(/^《|》$/g, '')}》`} /> : `《${idea.title.replace(/^《|》$/g, '')}》`}</h2>
       {idea.form && <div className="idea-form mono">FORM · {idea.form}</div>}
       {idea.bridge && (
         <div className="idea-bridge">
@@ -275,7 +276,7 @@ export function IdeaCard({ idea, source, devId }: { idea: Idea; source: 'ai' | '
         </div>
       )}
       <div className="label mono">CREATIVE DIRECTION // 创意</div>
-      <p className="idea-body">{idea.idea}</p>
+      {animate ? <TypeReveal className="idea-body" text={idea.idea} /> : <p className="idea-body">{idea.idea}</p>}
       {idea.firstStep && (
         <p className="idea-step">
           <span className="mono">第一步 →</span> {idea.firstStep}
