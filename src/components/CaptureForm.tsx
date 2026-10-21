@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '../lib/image';
 import { normalizeTags } from '../lib/db';
+import { extractUrl, fetchLinkMeta } from '../lib/linkmeta';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 
 export type Draft = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
@@ -24,6 +25,30 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
   const [err, setErr] = useState('');
   const [imgBusy, setImgBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [sniff, setSniff] = useState<'' | 'busy' | 'ok' | 'fail'>('');
+
+  async function recognize(raw: string) {
+    const url = extractUrl(raw);
+    if (!url) return;
+    setSniff('busy');
+    try {
+      const m = await fetchLinkMeta(url);
+      setD((x) => ({
+        ...x,
+        url,
+        type: x.type === 'idea' || x.type === 'link' ? m.type : x.type,
+        title: !x.title || extractUrl(x.title) ? m.title || x.title.replace(url, '').trim() || '' : x.title,
+        year: x.year || m.year || '',
+        creator: x.creator || m.siteName || '',
+        content: x.content || m.description || '',
+        image: x.image || m.imageData,
+      }));
+      setSniff('ok');
+    } catch {
+      setD((x) => ({ ...x, url, type: x.type === 'idea' ? 'link' : x.type, title: extractUrl(x.title) ? x.title.replace(url, '').trim() : x.title }));
+      setSniff('fail');
+    }
+  }
   useEffect(() => {
     setD(initial);
     setTagText(initial.tags.join(' '));
@@ -51,7 +76,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    let title = (d.title || '').trim();
+    let title = (d.title || '').trim().slice(0, 120);
     if (!title) {
       // derive a title so quick capture never blocks
       const src = (d.content || d.why || d.url || '').trim();
@@ -76,8 +101,23 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
       </div>
       <label className="field big">
         <span className="label mono">此刻戳到你的是什么？</span>
-        <input autoFocus value={d.title} onChange={(e) => set('title', e.target.value)} placeholder={ph.title} maxLength={120} />
+        <input
+          autoFocus
+          value={d.title}
+          onChange={(e) => set('title', e.target.value)}
+          onPaste={(e) => {
+            const t = e.clipboardData.getData('text');
+            if (extractUrl(t)) setTimeout(() => recognize(t), 0);
+          }}
+          placeholder={`${ph.title}（也可以直接粘贴链接）`}
+          maxLength={400}
+        />
       </label>
+      {sniff && (
+        <div className={`sniff mono${sniff === 'fail' ? ' red' : ''}`}>
+          {sniff === 'busy' ? '◌ 正在读取链接…' : sniff === 'ok' ? '✓ 已从链接读取标题和封面' : '× 读不到这个网页的信息，已保存链接，其余请手填'}
+        </div>
+      )}
       <div className="row2">
         {ph.creator && (
           <label className="field">
@@ -95,7 +135,12 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
       {(d.type === 'link' || d.type === 'music' || d.type === 'film') && (
         <label className="field">
           <span className="label mono">链接</span>
-          <input value={d.url || ''} onChange={(e) => set('url', e.target.value)} placeholder="https://" inputMode="url" />
+          <div className="inline">
+            <input value={d.url || ''} onChange={(e) => set('url', e.target.value)} placeholder="https://" inputMode="url" />
+            <button type="button" className="btn ghost small" disabled={!d.url || sniff === 'busy'} onClick={() => recognize(/^https?:/i.test(d.url || '') ? d.url! : 'https://' + d.url)}>
+              识别
+            </button>
+          </div>
         </label>
       )}
       <label className="field">
