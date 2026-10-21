@@ -358,3 +358,4 @@ details summary { cursor: pointer; font-size: 12px; color: var(--ink-3); margin:
   .develop-btn { font-size: 14px; letter-spacing: 0.08em; padding: 14px 8px; }
 }
 .provenance { margin-top: 12px; }
+.sniff { font-size: 12px; margin: -6px 0 8px; color: var(--ink-2); }
