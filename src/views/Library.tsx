@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { AsciiEmpty, AsciiLoader } from '../components/AsciiDevelop';
 import { ItemCard } from '../components/ItemCard';
 import { QuickBar } from '../components/QuickBar';
 import { addItem, db } from '../lib/db';
 import { SAMPLES } from '../lib/samples';
+import { staggerDelay } from '../lib/motion';
 import { itemText } from '../lib/similarity';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
@@ -88,8 +89,8 @@ export function Library() {
         </div>
       ) : (
         <div className="masonry">
-          {filtered.map((it) => (
-            <div key={it.id} className="masonry-cell">
+          {filtered.map((it, i) => (
+            <div key={it.id} className="masonry-cell" style={{ '--i': staggerDelay(i) } as CSSProperties}>
               <ItemCard item={it} onOpen={openItem} />
             </div>
           ))}
