@@ -113,3 +113,27 @@ describe('db roundtrip', () => {
     await expect(importAll({ foo: 1 }, d2)).rejects.toThrow();
   });
 });
+
+import { extractUrl, guessType, parseHtmlMeta } from '../lib/linkmeta';
+describe('linkmeta', () => {
+  it('guesses type by host', () => {
+    expect(guessType('https://music.163.com/song?id=1')).toBe('music');
+    expect(guessType('https://movie.douban.com/subject/1/')).toBe('film');
+    expect(guessType('https://a.com/x.JPG?v=2')).toBe('image');
+    expect(guessType('https://example.com')).toBe('link');
+    expect(guessType('not a url')).toBe('link');
+  });
+  it('extracts url from share text', () => {
+    expect(extractUrl('分享歌曲《晴天》https://y.qq.com/n/ryqq/songDetail/abc （来自QQ音乐）')).toBe('https://y.qq.com/n/ryqq/songDetail/abc');
+    expect(extractUrl('无链接')).toBeNull();
+  });
+  it('parses og meta', () => {
+    const html = `<html><head><title>x</title><meta property="og:title" content="花样年华 (2000) (豆瓣)"><meta content="/img/p.jpg" property="og:image"><meta name="description" content="A &amp; B"></head></html>`;
+    const m = parseHtmlMeta(html, 'https://movie.douban.com/subject/1291557/');
+    expect(m.title).toBe('花样年华');
+    expect(m.year).toBe('2000');
+    expect(m.image).toBe('https://movie.douban.com/img/p.jpg');
+    expect(m.description).toBe('A & B');
+    expect(m.type).toBe('film');
+  });
+});
