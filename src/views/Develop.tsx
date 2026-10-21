@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
+import { FogBurst } from '../components/AsciiDevelop';
 import { ItemCard } from '../components/ItemCard';
 import { db } from '../lib/db';
 import { developOffline, developWithAI } from '../lib/develop';
@@ -22,6 +23,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const [busy, setBusy] = useState(false);
   const [showStarred, setShowStarred] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [fog, setFog] = useState(0);
 
   useEffect(() => {
     if (!busy) return;
@@ -199,9 +201,19 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                 </span>
                 <span className="timer">{String(Math.floor(elapsed / 60000)).padStart(2, '0')}:{String(Math.floor((elapsed / 1000) % 60)).padStart(2, '0')}.{Math.floor((elapsed % 1000) / 100)}s</span>
               </div>
-              <button className="develop-btn mono" onClick={() => develop(shown)} disabled={busy || shown.length < 2}>
-                {busy ? <span className="develop-anim">[ 显影中 DEVELOPING… ]</span> : '[ 显影 COLLIDE & DEVELOP ]'}
-              </button>
+              <div className="develop-wrap">
+                <button
+                  className="develop-btn mono"
+                  onClick={() => {
+                    setFog(Date.now());
+                    develop(shown);
+                  }}
+                  disabled={busy || shown.length < 2}
+                >
+                  {busy ? <span className="develop-anim">[ 显影中 DEVELOPING… ]</span> : '[ 显影 COLLIDE & DEVELOP ]'}
+                </button>
+                {fog > 0 && <FogBurst key={fog} />}
+              </div>
               {!aiReady(settings) && (
                 <p className="hint">
                   还没配置 AI，现在是离线显影（基于斜策略的结构提示）。
