@@ -87,6 +87,25 @@ async function run(name, viewport) {
   await pg.waitForSelector('.idea', { timeout: 10000 });
   await pg.waitForTimeout(1300);
   await pg.screenshot({ path: `${out}/${name}-3-develop.png`, fullPage: true });
+  // v0.5 动效：标题解码、正文逐字浮现，最终都应还原为完整文字
+  const mv = await pg.evaluate(() => document.documentElement.dataset.motion);
+  if (!['full', 'lite', 'off'].includes(mv)) errs.push(`[${name}] data-motion missing: ${mv}`);
+  await pg.waitForFunction(() => !document.querySelector('.idea .tw-rest'), null, { timeout: 8000 }).catch(() => errs.push(`[${name}] type reveal never finished`));
+  const dec = await pg.evaluate(() => {
+    const el = document.querySelector('.idea-title .decode');
+    return el ? { label: el.getAttribute('aria-label'), text: el.textContent } : null;
+  });
+  if (!dec) errs.push(`[${name}] decode title missing`);
+  else if (dec.label !== dec.text) errs.push(`[${name}] decode title not settled: ${dec.text} vs ${dec.label}`);
+  // 涟漪：按下按钮后应出现 .ripple（off 档除外）
+  if (mv !== 'off') {
+    const rp = await pg.evaluate(async () => {
+      const btn = document.querySelector('.idea button.btn');
+      btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }));
+      return !!btn.querySelector('.ripple');
+    });
+    if (!rp) errs.push(`[${name}] ripple missing`);
+  }
   await pg.click('.idea button:has-text("收藏")');
   await pg.click('text=重新抽底片');
   await pg.click('.seg button:has-text("3")');
@@ -157,6 +176,14 @@ async function run(name, viewport) {
   await ctx.close();
 }
 try {
+  // v0.5 reduced-motion：系统要求减少动效时，档位必须是 off
+  const rctx = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  const rpg = await rctx.newPage();
+  await rpg.goto(base);
+  await rpg.waitForSelector('.view');
+  const lv = await rpg.evaluate(() => document.documentElement.dataset.motion);
+  if (lv !== 'off') errs.push(`[reduced] expected motion off got ${lv}`);
+  await rctx.close();
   await run('desktop', { width: 1366, height: 860 });
   await run('mobile', { width: 390, height: 844 });
 } catch (e) {
