@@ -1,0 +1,142 @@
+import { useEffect, useRef, useState } from 'react';
+import { compressImage } from '../lib/image';
+import { normalizeTags } from '../lib/db';
+import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
+
+export type Draft = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
+
+const PH: Record<ItemType, { title: string; creator: string; content: string }> = {
+  music: { title: '歌名', creator: '歌手 / 乐队', content: '一句歌词，或者哪一秒戳到你' },
+  film: { title: '片名', creator: '导演', content: '一个镜头、一句台词' },
+  image: { title: '给这张图起个名字', creator: '作者 / 出处', content: '补充说明' },
+  text: { title: '出处 / 标题', creator: '作者', content: '摘抄的原文' },
+  link: { title: '标题', creator: '网站 / 作者', content: '摘要' },
+  idea: { title: '一句话概括', creator: '', content: '展开写写' },
+};
+
+export function emptyDraft(type: ItemType = 'idea'): Draft {
+  return { type, title: '', creator: '', year: '', content: '', url: '', image: undefined, why: '', tags: [] };
+}
+
+export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Draft; onSave: (d: Draft) => void; onCancel: () => void; saving?: boolean }) {
+  const [d, setD] = useState<Draft>(initial);
+  const [tagText, setTagText] = useState(initial.tags.join(' '));
+  const [err, setErr] = useState('');
+  const [imgBusy, setImgBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    setD(initial);
+    setTagText(initial.tags.join(' '));
+  }, [initial]);
+  const ph = PH[d.type];
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
+
+  async function pick(f?: File | null) {
+    if (!f) return;
+    if (!f.type.startsWith('image/')) {
+      setErr('请选择图片文件');
+      return;
+    }
+    setImgBusy(true);
+    setErr('');
+    try {
+      const url = await compressImage(f);
+      setD((x) => ({ ...x, image: url, type: x.type === 'idea' && !x.title ? 'image' : x.type }));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : '图片处理失败');
+    } finally {
+      setImgBusy(false);
+    }
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    let title = (d.title || '').trim();
+    if (!title) {
+      // derive a title so quick capture never blocks
+      const src = (d.content || d.why || d.url || '').trim();
+      title = src ? src.slice(0, 18) : d.image ? '无题图片' : '';
+    }
+    if (!title) {
+      setErr('写点什么吧：标题、内容或者为什么打动你，至少一项');
+      return;
+    }
+    const url = d.url?.trim() ? (/^https?:\/\//i.test(d.url.trim()) ? d.url.trim() : 'https://' + d.url.trim()) : '';
+    onSave({ ...d, title, url, tags: normalizeTags(tagText), creator: d.creator?.trim(), year: d.year?.trim(), why: d.why?.trim(), content: d.content?.trim() });
+  }
+
+  return (
+    <form className="capture" onSubmit={submit}>
+      <div className="chips" role="radiogroup" aria-label="类型">
+        {TYPE_ORDER.map((t) => (
+          <button type="button" key={t} role="radio" aria-checked={d.type === t} className={`chip${d.type === t ? ' on' : ''}`} onClick={() => set('type', t)}>
+            {TYPE_LABEL[t]}
+          </button>
+        ))}
+      </div>
+      <label className="field big">
+        <span className="label mono">此刻戳到你的是什么？</span>
+        <input autoFocus value={d.title} onChange={(e) => set('title', e.target.value)} placeholder={ph.title} maxLength={120} />
+      </label>
+      <div className="row2">
+        {ph.creator && (
+          <label className="field">
+            <span className="label mono">{ph.creator}</span>
+            <input value={d.creator || ''} onChange={(e) => set('creator', e.target.value)} maxLength={80} />
+          </label>
+        )}
+        {(d.type === 'music' || d.type === 'film' || d.type === 'text') && (
+          <label className="field narrow">
+            <span className="label mono">年份</span>
+            <input value={d.year || ''} onChange={(e) => set('year', e.target.value.replace(/[^\d]/g, '').slice(0, 4))} inputMode="numeric" placeholder="2000" />
+          </label>
+        )}
+      </div>
+      {(d.type === 'link' || d.type === 'music' || d.type === 'film') && (
+        <label className="field">
+          <span className="label mono">链接</span>
+          <input value={d.url || ''} onChange={(e) => set('url', e.target.value)} placeholder="https://" inputMode="url" />
+        </label>
+      )}
+      <label className="field">
+        <span className="label mono">{ph.content}</span>
+        <textarea value={d.content || ''} onChange={(e) => set('content', e.target.value)} rows={d.type === 'text' || d.type === 'idea' ? 4 : 2} maxLength={4000} />
+      </label>
+      <div className="field">
+        <span className="label mono">图片</span>
+        <div className="img-pick">
+          {d.image ? (
+            <div className="img-preview">
+              <img src={d.image} alt="预览" />
+              <button type="button" className="btn ghost small" onClick={() => set('image', undefined)}>
+                移除
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="btn ghost" onClick={() => fileRef.current?.click()} disabled={imgBusy}>
+              {imgBusy ? '处理中…' : '＋ 选择图片'}
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
+        </div>
+      </div>
+      <label className="field why">
+        <span className="label mono">为什么打动我 · 最重要的一句</span>
+        <input value={d.why || ''} onChange={(e) => set('why', e.target.value)} placeholder="AI 靠这句话认识你的口味" maxLength={200} />
+      </label>
+      <label className="field">
+        <span className="label mono">标签（空格分隔）</span>
+        <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="雨 克制 慢镜头" />
+      </label>
+      {err && <div className="error">{err}</div>}
+      <div className="actions">
+        <button type="button" className="btn ghost" onClick={onCancel}>
+          取消
+        </button>
+        <button type="submit" className="btn primary" disabled={saving || imgBusy}>
+          {saving ? '保存中…' : '收进暗房'}
+        </button>
+      </div>
+    </form>
+  );
+}
