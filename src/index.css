@@ -359,3 +359,24 @@ details summary { cursor: pointer; font-size: 12px; color: var(--ink-3); margin:
 }
 .provenance { margin-top: 12px; }
 .sniff { font-size: 12px; margin: -6px 0 8px; color: var(--ink-2); }
+
+/* v0.3.0 零摩擦速记 */
+.quick { margin: 12px 0 4px; }
+.quick-bar { display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--ink); background: var(--paper); padding: 4px 6px 4px 12px; box-shadow: 3px 3px 0 var(--red); }
+.quick-ic { color: var(--red); font-size: 20px; line-height: 1; }
+.quick-input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; padding: 10px 0; outline: none; }
+.quick-input::placeholder, .quick-why::placeholder { color: var(--ink-3); }
+.quick-after { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; animation: rise 0.2s; }
+.quick-after .mono { white-space: nowrap; font-size: 12px; }
+.quick-why { flex: 1; min-width: 0; border: 0; border-bottom: 1px dashed var(--ink-3); background: transparent; color: var(--ink); font: inherit; font-size: 14px; padding: 6px 2px; outline: none; }
+.quick-why:focus { border-bottom-color: var(--ink); }
+.card-when { margin-left: auto; margin-right: 8px; opacity: 0.85; }
+.when-row label { display: inline-flex; align-items: center; gap: 4px; }
+.when-input { font: inherit; color: inherit; background: transparent; border: 0; border-bottom: 1px dashed var(--ink-3); padding: 2px 0; }
+.more-toggle { align-self: flex-start; margin: 2px 0 10px; }
+.clip-offer { position: fixed; z-index: 70; left: 0; right: 0; margin: 0 auto; bottom: calc(150px + var(--safe-b)); width: min(92vw, 460px); background: var(--paper); color: var(--ink); border: 1.5px solid var(--ink); box-shadow: 4px 4px 0 var(--red); padding: 12px 14px; animation: rise 0.25s; }
+.clip-k { font-size: 11px; color: var(--red); letter-spacing: 0.08em; }
+.clip-text { margin: 6px 0 10px; font-size: 14px; word-break: break-all; }
+.clip-actions { display: flex; justify-content: flex-end; gap: 8px; }
+@media (min-width: 761px) { .clip-offer { bottom: 90px; } }
+@media (prefers-reduced-motion: reduce) { .quick-after, .clip-offer { animation: none; } }
