@@ -29,12 +29,18 @@ export function Library() {
 
   return (
     <section className="view">
-      <header className="view-head">
-        <div>
-          <div className="kicker mono">ROLL 01 · {String(items.length).padStart(3, '0')} FRAMES</div>
-          <h1>灵感库</h1>
-        </div>
+      <header className="roll-head">
+        <span className="roll-ic" aria-hidden>◉</span>
+        <h1>
+          灵感库 <span className="mono roll-no">ROLL #{String(Math.floor(items.length / 36) + 1).padStart(2, '0')} / 36 EXP</span>
+        </h1>
+        <span className="rec mono">○ REC</span>
       </header>
+      <div className="strip mono">
+        <span className="red">LINGAN TRI-X 400</span>
+        <span>· {items.length} ITEMS</span>
+        <span className="strip-date">{new Date().toLocaleDateString('zh-CN').replace(/\//g, '.')}</span>
+      </div>
       <div className="search">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索标题、作者、句子、标签…" aria-label="搜索" />
         {q && (
@@ -83,6 +89,16 @@ export function Library() {
               <ItemCard item={it} onOpen={openItem} />
             </div>
           ))}
+        </div>
+      )}
+      {items.length > 0 && (
+        <div className="ruler mono" aria-hidden>
+          <div className="ruler-ticks" />
+          <div className="ruler-labels">
+            <span>FRAME 01</span>
+            <span className="red">CURRENT: EXP {String(items.length % 36 || 36).padStart(2, '0')}</span>
+            <span>FRAME 36 END</span>
+          </div>
         </div>
       )}
       {items.length > 0 && <TagCloud items={items.flatMap((i) => i.tags)} onPick={setTag} />}
