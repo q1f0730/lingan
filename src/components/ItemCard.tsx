@@ -34,7 +34,7 @@ export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: I
         </div>
       )}
       <h3 className={`card-title${item.type === 'text' && item.content ? ' quote' : ''}`}>
-        {item.type === 'text' && item.content ? `「${item.content}」` : item.title}
+        {item.type === 'text' && item.content ? `「${item.content.replace(/^[「“"『]+|[」”"』]+$/g, '')}」` : item.title}
       </h3>
       {item.type === 'text' && item.content && <div className="card-sub">—— {item.creator || item.title}</div>}
       {item.type !== 'text' && (item.creator || item.year) && (
