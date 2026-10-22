@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>拾穗 · GLEAN — 备份 / 导入导出 (390px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            surface: '#FFFFFF',
+            ink: '#000000',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            hairline: '#E5E5E5',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      width: 100%;
+      max-width: 390px;
+      margin: 0 auto;
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    input::placeholder {
+      color: #7E7E7E;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-surface text-ink antialiased flex flex-col justify-between">
+
+  <!-- Top bar & Main Content -->
+  <div class="px-4 pt-4 pb-28 w-full">
+    <!-- Top Action Row -->
+    <div class="flex items-center justify-between pb-8 pt-1">
+      <button type="button" class="text-[14px] text-ink font-medium tracking-tight hover:opacity-70 transition-opacity">返回</button>
+      <div class="text-[13px] font-semibold tracking-tight text-ink">拾穗 · GLEAN</div>
+    </div>
+
+    <!-- Huge Display Headline -->
+    <h1 class="text-[56px] font-semibold text-ink leading-none tracking-[-0.04em] mb-4">备份</h1>
+
+    <!-- Subtitle description -->
+    <p class="text-[15px] text-secondary leading-relaxed mb-8">
+      你的穗只在这台手机上。定期导出一份，换手机时导入。
+    </p>
+
+    <!-- Two-column key/value list (no lines) -->
+    <div class="space-y-2 mb-10 text-[14px]">
+      <div class="flex justify-between items-baseline">
+        <span class="text-secondary text-[14px]">本机</span>
+        <span class="text-ink text-[14px] font-medium">10 穗 · 5 新枝 · 6 张图</span>
+      </div>
+      <div class="flex justify-between items-baseline">
+        <span class="text-secondary text-[14px]">上次备份</span>
+        <span class="text-ink text-[14px] font-medium">2026/10/20 21:04</span>
+      </div>
+    </div>
+
+    <!-- Section: 导出 -->
+    <div class="mb-8">
+      <div class="text-[11px] font-medium text-secondary tracking-widest pb-1 border-b border-black">
+        导出
+      </div>
+      
+      <!-- Row 1 -->
+      <div class="py-3.5 border-b border-hairline flex justify-between items-start">
+        <div>
+          <div class="text-[15px] font-medium text-ink">完整备份（含图片）</div>
+          <div class="text-[12px] text-secondary mt-0.5">可在新手机上原样导入</div>
+        </div>
+        <span class="text-[13px] text-secondary font-medium">.zip</span>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="py-3.5 border-b border-hairline flex justify-between items-start">
+        <div>
+          <div class="text-[15px] font-medium text-ink">只导出文字</div>
+          <div class="text-[12px] text-secondary mt-0.5">标题、来源、标签、为什么收</div>
+        </div>
+        <span class="text-[13px] text-secondary font-medium">.json</span>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="py-3.5 border-b border-hairline flex justify-between items-start">
+        <div>
+          <div class="text-[15px] font-medium text-ink">导出为 Markdown</div>
+          <div class="text-[12px] text-secondary mt-0.5">每穗一段，方便放进笔记软件</div>
+        </div>
+        <span class="text-[13px] text-secondary font-medium">.md</span>
+      </div>
+    </div>
+
+    <!-- Section: 导入 -->
+    <div class="mb-10">
+      <div class="text-[11px] font-medium text-secondary tracking-widest pb-1 border-b border-black">
+        导入
+      </div>
+
+      <!-- Row 1 -->
+      <div class="py-3.5 border-b border-hairline">
+        <div class="text-[15px] font-medium text-ink">从备份文件恢复</div>
+        <div class="text-[12px] text-secondary mt-0.5">同名穗会保留两份，不会覆盖</div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="py-3.5 border-b border-hairline">
+        <div class="text-[15px] font-medium text-ink">从 Markdown 导入</div>
+        <div class="text-[12px] text-secondary mt-0.5">每个一级标题算一穗</div>
+      </div>
+    </div>
+
+    <!-- Primary Action: 立即备份 -->
+    <button type="button" class="w-full bg-black text-white text-[15px] font-semibold py-4 text-center tracking-wide active:opacity-80 transition-opacity">
+      立即备份
+    </button>
+
+    <!-- Footer Copyright -->
+    <div class="text-center text-[11px] text-secondary tracking-wider mt-10">
+      © 2026 Q1f730
+    </div>
+  </div>
+
+  <!-- Persistent Bottom Dock (Quick-Capture + 5-word Text Navigation) -->
+  <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] bg-white z-50">
+    <!-- Quick-Capture Line -->
+    <div class="border-t border-black px-4 py-2.5 flex items-center justify-between">
+      <input 
+        type="text" 
+        placeholder="随手拾一穗" 
+        class="w-full text-[14px] bg-transparent outline-none text-ink pr-3"
+      >
+      <button type="button" class="text-[14px] font-bold text-ink hover:opacity-70 transition-opacity flex-shrink-0">
+        拾
+      </button>
+    </div>
+
+    <!-- Five-word Text-only Bottom Navigation -->
+    <div class="border-t border-hairline px-4 py-3 flex justify-between items-center text-[13px]">
+      <a href="#" class="text-secondary hover:text-ink transition-colors pb-0.5">穗仓</a>
+      <a href="#" class="text-secondary hover:text-ink transition-colors pb-0.5">嫁接</a>
+      <a href="#" class="text-secondary hover:text-ink transition-colors pb-0.5">新枝</a>
+      <a href="#" class="text-secondary hover:text-ink transition-colors pb-0.5">口味</a>
+      <a href="#" class="text-ink font-semibold border-b border-black pb-0.5">设置</a>
+    </div>
+  </div>
+
+</body>
+</html>
