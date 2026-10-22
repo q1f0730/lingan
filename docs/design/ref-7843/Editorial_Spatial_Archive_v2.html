@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Spatial Archive V.1 - Index</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#e3e3df",
+                        "surface-bright": "#faf9f5",
+                        "inverse-primary": "#c6c6c6",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1b1b1b",
+                        "on-tertiary-container": "#848484",
+                        "on-primary-fixed": "#1b1b1b",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "inverse-surface": "#2f312e",
+                        "secondary-fixed-dim": "#c8c6c4",
+                        "on-primary-fixed-variant": "#474747",
+                        "outline-variant": "#cfc4c5",
+                        "on-surface": "#1a1c1a",
+                        "inverse-on-surface": "#f1f1ed",
+                        "on-secondary-fixed": "#1b1c1a",
+                        "error-container": "#ffdad6",
+                        "surface": "#ffffff", // Forced plain white background
+                        "secondary-container": "#e1dfdd",
+                        "on-surface-variant": "#4c4546",
+                        "on-error-container": "#93000a",
+                        "background": "#ffffff", // Forced plain white background
+                        "primary": "#000000",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "tertiary": "#000000",
+                        "surface-container": "#eeeeea",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "on-tertiary-fixed": "#1b1b1b",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#e2e2e2",
+                        "surface-variant": "#e3e3df",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e4e2df",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#848484",
+                        "secondary": "#5e5e5c",
+                        "on-secondary-container": "#636361",
+                        "on-background": "#1a1c1a",
+                        "surface-dim": "#dadad6",
+                        "outline": "#7e7576",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#1b1b1b",
+                        "surface-container-high": "#e8e8e4",
+                        "on-secondary-fixed-variant": "#474745",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f4f4f0",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-tint": "#5e5e5e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "section-gap": "160px",
+                        "gutter": "24px",
+                        "margin-edge": "64px",
+                        "unit": "4px",
+                        "stack-md": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Manrope"],
+                        "label-caps": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["80px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "200"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.2em", "fontWeight": "600"}],
+                        "headline-lg": ["48px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "300"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "letterSpacing": "0em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.4", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "letterSpacing": "0em", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for the long list */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e3e3df;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c6c6c6;
+        }
+        /* Image scatter field pan effect simulation (CSS only for visual representation) */
+        .scatter-field {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .scatter-container:hover .scatter-field {
+             /* Subtle shift to simulate movement on hover area */
+            transform: scale(1.02) translate(-1%, -1%);
+        }
+        
+        .scatter-img {
+            transition: all 0.4s ease;
+            filter: grayscale(100%) opacity(0.7);
+        }
+        .scatter-img:hover {
+            filter: grayscale(0%) opacity(1);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        /* Index item hover effect */
+        .index-item {
+            transition: all 0.3s ease;
+        }
+        .index-item:hover {
+            color: #000000;
+            padding-left: 8px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen overflow-hidden font-body-md selection:bg-primary-fixed selection:text-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-16 py-10 bg-white/90 backdrop-blur-none border-none shadow-none cursor-none">
+<div class="text-lg font-bold tracking-tighter text-zinc-900 uppercase">ARCHIVE</div>
+<div class="font-label-caps text-label-caps text-zinc-900 uppercase tracking-[0.2em]">12:00 PM</div>
+</header>
+<!-- Main Layout -->
+<main class="relative h-screen w-full flex">
+<!-- Left/Center Canvas: Expansive Image Scatter Field -->
+<div class="flex-grow h-full overflow-hidden relative scatter-container pt-32 pl-margin-edge pb-margin-edge pr-64">
+<!-- Large container to hold the scattered images, slightly larger than viewport to allow panning -->
+<div class="scatter-field relative w-[120%] h-[120%] -left-[10%] -top-[10%]">
+<!-- Project 01 -->
+<div class="absolute top-[15%] left-[10%] w-[18vw] aspect-[4/5] scatter-img group">
+<img alt="Minimalist concrete architecture with sharp shadows" class="w-full h-full object-cover shadow-md" data-alt="Minimalist concrete architecture with sharp shadows, high contrast, brutalist style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpEb9RMjDAxUL6Kxxx5YVS7-IyBKRkF6NTeb2U-w-7h72JT9IwIaV7Mddm_sdLuWJvKAv-Mu1T9WSVjXM5hbHoq6NIt8mrBxpGnHSZ8v03aIu41bGpB9dJttkRBekiM7pIa08tXaILdnNIX8Irsb6j-pDNk7H54DV4wzxZWBlPRE4I5xasykw9nguoVcTQPT3r-POcsFaE9WDrgfcQbOIKz_lDKMcux-y3WvX9wc97QvrP1Tk2BFrhyUAgZGcY8_OsquS1l25Fgk4I"/>
+<span class="absolute bottom-4 left-4 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 01</span>
+</div>
+<!-- Project 02 -->
+<div class="absolute top-[40%] left-[5%] w-[12vw] aspect-square scatter-img group">
+<img alt="Minimalist interior with carefully placed chair" class="w-full h-full object-cover shadow-sm" data-alt="Minimalist interior with carefully placed chair, soft diffused lighting, neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAL0TDs_4QNrfgdN1T4by0V9WGjixwCTXHMN59SFVkD_luULfyNqiKU0SJSnjCG0w1d9bRkC4JXS0Q-phKhw-w_t6akUbx60yjknSSuKMfAAd0WNRypP7TELY95MG2cGqo4dN4-IAQLQc7_cw1EqLMThd-_TX2DhBOM4l0pUz0PC4NknWmCeI3isHfO89sO7hpuDiG6caeWrJ7wo0gMb7GvFxt1qrET1D7pFAxt0SCWAP79PixYpAfd0n9tQArRwVMTQUoVFFJwrs3V"/>
+<span class="absolute bottom-2 left-2 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 02</span>
+</div>
+<!-- Project 03 -->
+<div class="absolute top-[10%] left-[35%] w-[22vw] aspect-[16/9] scatter-img group">
+<img alt="Abstract glass facade reflecting sky" class="w-full h-full object-cover shadow-lg" data-alt="Abstract glass facade reflecting cloudy sky, architectural detail, cold tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB9lZ3jzb5G-yC6jakEdJapPEOOrWXW4WAJ4uNgxYxmH9N0Hte68dHwA-xpBAuRwc9eC0cX-2_74TzSTYE6A-aeSp6_i1bqVFpoIcykE_Z0N0v8ttx47LhHDYRhx-QvW0cnXNJBZsGa0IBRsFVVdvDryVUmcrieGU1-Hv4z4PQ_L_xg1BaAcEbIHRNB6XwD68RJkwW1IAV1qqOLAohunYxGml8QC3H0FlYl0vc1u0O785bccwM-q34g0zx5Cy1xKFgOaix_-b1SjlI"/>
+<span class="absolute bottom-4 left-4 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 03</span>
+</div>
+<!-- Project 04 -->
+<div class="absolute top-[55%] left-[25%] w-[15vw] aspect-[3/4] scatter-img group z-20">
+<img alt="Curved staircase from below" class="w-full h-full object-cover shadow-md" data-alt="Curved staircase from below, monochromatic, geometric composition" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD23JXSCqI6h5AYXLU_dPxL4PaspJ75LtSWkriStqjHa3bLb8op59cxGDFbDYeDRyRC0_HyQSy7XqMeYwzYrTzCAMZBc7gaxwSQu-0tppNX9RoDfzdCOpnHmU2iwOefg3R-EQXf4_yqQUh80R_FTXqf_2jsZbpTCPRdvTlMFJg295Pezwp_XaByyeFV-OmYcIAuSRjJV3mgtDS23q2hCC_3l_T4sOpLpMqIEK0iyd0HntJRcLqHcFTM0Mx91DVQMGpp3Xs7O7BULArz"/>
+<span class="absolute bottom-4 left-4 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 04</span>
+</div>
+<!-- Project 05 -->
+<div class="absolute top-[30%] left-[60%] w-[14vw] aspect-square scatter-img group">
+<img alt="Modernist chair on terrazzo floor" class="w-full h-full object-cover shadow-sm" data-alt="Modernist chair on terrazzo floor, strong directional sunlight, design artifact" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_vPk5ZtxhKcLTbpcYAAULy5y4P9qtuqtc4seDr1dHA2lMs3XUT7GBQI3QLa_Lry1tqdryDm5IGcjp7JWTwwK1RbldlNc0lJjE2zx2eMfJfDmmPtRs25bT9wQbvcjaXkEPKvt-SJeCMah1_M-x8ewkBbdsoGA07S3nUS01VAukTloNCEaDWu14vfV5eoE3cy_62cT2w4pUAzj4I_K1-1VzuPUkxFKvb42-Aav3JOVg1AbCGQ78VkzkNf4RfG8hCB0TpcpYuDo6Mwoa"/>
+<span class="absolute bottom-2 left-2 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 05</span>
+</div>
+<!-- Project 06 -->
+<div class="absolute top-[65%] left-[50%] w-[20vw] aspect-[16/10] scatter-img group">
+<img alt="Expansive empty office space with floor to ceiling windows" class="w-full h-full object-cover shadow-lg" data-alt="Expansive empty office space with floor to ceiling windows, city view, minimalist corporate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiFpMsuX9M0R-YAfXFq9HRT8MKNG4KBkgFxiX_sOXiUt9ajn9BQr8Ojp36NFwMI_q4vxjbCpf3j6pQB8R-c53CiGurjXcGzV3Q5ksrMUF_sMLLMyS107RM5dEWvXji-WfmyFTchCqYjCNCNYNNeTHVYf0k11044IThwzkIVtniiqr6Cz5LAPZ0WofF-TYPTa7pCdk1ZufJc0Qyfam2Y5a7cv4GmPr65qFi26kIwpGBtmGHaaHnaauQkuRLy0kAqWvs0Qn9cr8Mt9jR"/>
+<span class="absolute bottom-4 left-4 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 06</span>
+</div>
+<!-- Project 07 -->
+<div class="absolute top-[15%] left-[80%] w-[10vw] aspect-[2/3] scatter-img group">
+<img alt="Detail shot of textured wall" class="w-full h-full object-cover shadow-sm" data-alt="Detail shot of textured wall, plaster finish, neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNUTJdMt6s34zpQJnkbhP0y9bLrPAQlRGjP2Ngfistp27fO04_dECiwSN1mKe_8WkMejApHt8flmYUa5jVSRZTdY_lyc28ZOMaT0GGkkmqW5IyVm8wkYczH2zEOaXUEGXBKmJZ7gH521sIBw2IDzlVnXL_RzeNC29M7qeddO2MYg-7xuUtnoIpOh7XvURHxhL7Vuk0fd3j0_USrzrioYpGlIeCqAjLFrxnAWBYs2P6i2bty2LzdiZ7suON-g-FSbgaQ1-UktNeC_B2"/>
+<span class="absolute bottom-2 left-2 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 07</span>
+</div>
+<!-- Project 08 -->
+<div class="absolute top-[80%] left-[15%] w-[16vw] aspect-[4/3] scatter-img group">
+<img alt="Exterior of modern home at dusk" class="w-full h-full object-cover shadow-md" data-alt="Exterior of modern home at dusk, warm interior lights, dark sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPTU4jaJrM8LFTC6ijEEREfoJElzy-HREQpOMFetfsT2qrEZ_Mow6iCXwXsaH9zX_jHxfZSZCz0mjvYXjMW96f1nyGFI2_Az0Cdj5Bvi_cGEQ62zC-nkC98ewcf3LcZ6tzSAVpcYcYspG5Jnln7Zhagsshw4rhPVwaKaPgMx7sTxV2XLfEl-ja9AEME-eFbHplOZcA3ffN5puYkSeqfJoBlDzEfqqdrR5aFkr1HwrCiASO8TKW85Eehz0UYlfNe8wi5MWvaI_JO4BE"/>
+<span class="absolute bottom-4 left-4 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 08</span>
+</div>
+<!-- Project 09 -->
+<div class="absolute top-[45%] left-[75%] w-[18vw] aspect-[3/4] scatter-img group">
+<img alt="Close up of steel beams" class="w-full h-full object-cover shadow-lg" data-alt="Close up of steel structural beams, industrial aesthetic, sharp details" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8Z1h1noFgz10Fssd1v1DHr52QeLxMjO5fGTqLTa3ZvOuUBRJLzDXoMKWy70jHVa-CQ0v_mdROQnT-WxG0DPBMSQmRIkUAm1UJAU3KaJiv1tqo4I2-XQb7bYokfjPEyHgvaTavnHeO_Xjh5H_t3u2jBkfIARWuxwpLGyNS5YMeQAe2-71hUtO8omiV5pWughA1QREKvfqf-Az7WAMY5VldJAteGKhazSby67omq6cL924GkhgB5YMqtwrK9BkzmnDYpHHLxsc4LiId"/>
+<span class="absolute bottom-4 left-4 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 09</span>
+</div>
+<!-- Project 10 -->
+<div class="absolute top-[5%] left-[60%] w-[12vw] aspect-square scatter-img group">
+<img alt="Minimalist light fixture against white wall" class="w-full h-full object-cover shadow-sm" data-alt="Minimalist light fixture against white wall, subtle shadow play" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqxkJkgodi591C1JKaGmCrgrLH54-D45WbcVsVz8VAnRb5gZ9f01WUu7GopCrJrGlNFVtTdlP1CEeZvM3PtFPj8EZCODAANRLcLIScCDMLqRAY8NR8kdz782m3XKiE4nsypYxrNSOPzdx8XfDn3W3I4t7gS8ojSZTEShu-kc1v7M6rY3KEhzmCL2GYpK67hfAeSjFUt94W5D2deF85ebehQ7nIx5BdJ6ixuwLkKWVJBRyGZ_7RUz--7DYp_Yc3Uch5RaeYV5wE5YfV"/>
+<span class="absolute bottom-2 left-2 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 10</span>
+</div>
+<!-- Project 11 -->
+<div class="absolute top-[85%] left-[40%] w-[14vw] aspect-[16/9] scatter-img group">
+<img alt="Empty white gallery space" class="w-full h-full object-cover shadow-md" data-alt="Empty white gallery space, polished concrete floor, stark lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0TOItzh35KJYhiICPuV4QJDeVV_aNNdkG5w_XkWpsk_Ak3VjQMNGlBr4l-gGWEeEDvld3u3Eq2gzF6FJqmMCWM41pGA6irIw8ut0vxrPaWaPED5kcV5nnWnG3RpFrM7UZPsUCpdLuT782GvH0Ug2h1YfolFLitHEX4YSFAOyQ_lnsbkCgF8VYEO8w5rZQxI0mOhNya5fJFl1A85Nh5SYt56JBUmRvWv8_gzHT3pw33hP0rr2e86fJ8XnQBy-P3Xr4wArAHKBP1Ey_"/>
+<span class="absolute bottom-4 left-4 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 11</span>
+</div>
+<!-- Project 12 -->
+<div class="absolute top-[25%] left-[85%] w-[11vw] aspect-[4/5] scatter-img group">
+<img alt="Abstract architectural shapes intersecting" class="w-full h-full object-cover shadow-sm" data-alt="Abstract architectural shapes intersecting, stark shadows, high contrast" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApAkc-MEExnVhE5yCaysCtE4lr3DTUqptr_-V82i0LHOah5MfUz1R2Hl7dQhnCKLncp_9nSfS1-ZPztNDPP0SsaVtELo9e-zzdtSq8F0V6u_sS3gfRv0nE-vpZaCpD1iaB7dT1-pAKjvTOYmIoW1x-POJlaVuSAUhogBmweCy-ZfNUFPmZGzKk5IRSu40jz71sX2mpWD-2-xSjSCm64jtGMFqingYoT_zTHwuE-QP4NBqG-EN5amos2PmrRejC6NQ32U8r7mC-F2LK"/>
+<span class="absolute bottom-2 left-2 text-white font-label-caps text-label-caps opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-2 py-1">PROJECT 12</span>
+</div>
+</div>
+</div>
+<!-- SideNavBar (Dense, Scrollable Index) -->
+<nav class="fixed right-0 top-0 h-full w-72 flex flex-col pt-32 pb-16 pl-8 pr-16 z-40 bg-transparent border-surface-container-high shadow-none">
+<div class="mb-12">
+<h2 class="font-label-caps text-label-caps text-primary uppercase tracking-[0.2em] mb-2">INDEX</h2>
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-[0.1em]">SPATIAL ARCHIVE V.1</p>
+</div>
+<div class="flex-grow overflow-y-auto pr-4 -mr-4">
+<ul class="flex flex-col space-y-1">
+<!-- Nav Items based on provided labels, extended significantly -->
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 01</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 02</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 03</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 04</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 05</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 06</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 07</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<!-- Extended Projects -->
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 08</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 09</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 10</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 11</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 12</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 13</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 14</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 15</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 16</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 17</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 18</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 19</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<li class="group cursor-pointer index-item flex items-center justify-between">
+<span class="font-label-caps text-[10px] uppercase text-zinc-400 group-hover:text-zinc-900 transition-colors tracking-tight">PROJECT 20</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-300 group-hover:text-zinc-900 opacity-0 group-hover:opacity-100 transition-all">circle</span>
+</li>
+<!-- Active State / Index label from JSON -->
+<li class="group cursor-pointer index-item flex items-center justify-between border-surface-container-high">
+<span class="font-label-caps text-[10px] uppercase text-zinc-900 font-bold underline underline-offset-8 decoration-1 tracking-tight">INDEX</span>
+<span class="material-symbols-outlined text-[14px] text-zinc-900">list</span>
+</li>
+</ul>
+</div>
+</nav>
+</main>
+</body></html>
