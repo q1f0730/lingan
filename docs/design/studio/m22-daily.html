@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-primary-container": "#848484",
+            "surface-tint": "#5e5e5e",
+            "primary-fixed-dim": "#c6c6c6",
+            "on-tertiary-container": "#838484",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "secondary-fixed-dim": "#c7c6c6",
+            "primary-container": "#1b1b1b",
+            "primary": "#000000",
+            "outline": "#7e7576",
+            "surface-container-low": "#f3f3f3",
+            "on-background": "#1a1c1c",
+            "background": "#ffffff",
+            "error": "#ba1a1a",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed-variant": "#464747",
+            "tertiary": "#000000",
+            "outline-variant": "#cfc4c5",
+            "tertiary-container": "#1a1c1c",
+            "secondary-fixed": "#e3e2e2",
+            "on-secondary-fixed": "#1b1c1c",
+            "surface-container": "#eeeeee",
+            "on-primary": "#ffffff",
+            "surface-variant": "#e2e2e2",
+            "on-secondary": "#ffffff",
+            "tertiary-fixed": "#e3e2e2",
+            "on-error-container": "#93000a",
+            "on-error": "#ffffff",
+            "inverse-on-surface": "#f1f1f1",
+            "error-container": "#ffdad6",
+            "on-secondary-container": "#646464",
+            "surface-container-high": "#e8e8e8",
+            "primary-fixed": "#e2e2e2",
+            "secondary-container": "#e3e2e2",
+            "on-tertiary-fixed": "#1a1c1c",
+            "surface-dim": "#dadada",
+            "inverse-primary": "#c6c6c6",
+            "on-primary-fixed": "#1b1b1b",
+            "secondary": "#7e7e7e",
+            "on-surface-variant": "#4c4546",
+            "surface-bright": "#f9f9f9",
+            "surface-container-highest": "#e2e2e2",
+            "on-surface": "#000000",
+            "on-primary-fixed-variant": "#474747",
+            "inverse-surface": "#2f3131",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed-variant": "#464747",
+            "surface": "#ffffff"
+          },
+          borderRadius: {
+            DEFAULT: "0px",
+            none: "0px",
+            sm: "0px",
+            md: "0px",
+            lg: "0px",
+            xl: "0px",
+            full: "0px"
+          },
+          fontFamily: {
+            sans: ["Inter", "Noto Sans SC", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      box-shadow: none !important;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+    }
+    input::placeholder {
+      color: #7E7E7E;
+      opacity: 1;
+    }
+    /* Hide scrollbars cleanly */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    html {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  <style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-background text-on-surface flex justify-center selection:bg-black selection:text-white">
+<!-- Mobile Viewport Container exactly 390px -->
+<main class="w-[390px] min-h-screen bg-background relative flex flex-col justify-between">
+<!-- Top Navigation Block -->
+<header class="w-full pt-4 pb-2 px-4 flex flex-col justify-start">
+<div class="flex justify-between items-baseline w-full">
+<h1 class="text-[20px] font-semibold tracking-tight text-primary leading-none">拾穗 · GLEAN</h1>
+<button class="text-[14px] text-[#7E7E7E] hover:text-black transition-colors focus:outline-none p-0 bg-transparent border-0" type="button">设置</button>
+</div>
+<div class="mt-2 text-[12px] text-[#7E7E7E] leading-none">
+        每日一穗 · 10/22
+      </div>
+</header>
+<!-- Scrollable Content Canvas -->
+<div class="px-4 pb-[130px] pt-2 flex-1">
+<!-- Main Block: Light Grey #F3F3F3, 4:5 aspect ratio feel, square cornered -->
+<section class="bg-[#F3F3F3] p-7 min-h-[380px] flex flex-col justify-between">
+<div class="pt-2">
+<p class="text-[28px] font-semibold text-primary leading-[1.22] tracking-tight">
+            把外卖小票上的备注收集成一本诗集
+          </p>
+</div>
+<div class="text-[12px] text-[#7E7E7E] leading-none pt-8">
+          想法 · 拾于 10/05
+        </div>
+</section>
+<!-- Section Below Main Block -->
+<section class="pt-6">
+<p class="text-[15px] text-[#7E7E7E] leading-normal">
+          17 天没碰过它了。
+        </p>
+<!-- Original Notes Context -->
+<div class="mt-6">
+<div class="text-[12px] text-[#7E7E7E] leading-none">当时写的</div>
+<div class="mt-1 text-[15px] text-primary leading-relaxed font-normal">
+            「多放香菜，不要葱，谢谢你下雨还来。」这种话比很多诗好。
+          </div>
+</div>
+<!-- Semantic Associations / Connections -->
+<div class="mt-6">
+<div class="text-[12px] text-[#7E7E7E] leading-none">可能和它接得上</div>
+<div class="mt-2 flex flex-col divide-y divide-[#F0F0F0]">
+<div class="py-2.5 flex justify-between items-center">
+<span class="text-[15px] text-primary">旧书店堆到天花板的书脊</span>
+<span class="text-[12px] text-[#7E7E7E]">照片</span>
+</div>
+<div class="py-2.5 flex justify-between items-center">
+<span class="text-[15px] text-primary">《一一》</span>
+<span class="text-[12px] text-[#7E7E7E]">电影</span>
+</div>
+</div>
+</div>
+<!-- Action Items (Text actions spaced 24px) -->
+<div class="mt-6 flex items-center gap-6">
+<button class="text-[15px] text-primary bg-transparent border-0 p-0 hover:opacity-70 transition-opacity" type="button">
+            还喜欢
+          </button>
+<button class="text-[15px] text-primary underline underline-offset-4 decoration-1 bg-transparent border-0 p-0 hover:opacity-70 transition-opacity" type="button">
+            拿去嫁接
+          </button>
+<button class="text-[15px] text-[#7E7E7E] bg-transparent border-0 p-0 hover:text-black transition-colors" type="button">
+            放下
+          </button>
+</div>
+<!-- Explanatory Cadence Note -->
+<div class="mt-6 text-[12px] text-[#7E7E7E] leading-relaxed">
+          每天一穗，从你最久没看的里面挑。
+        </div>
+<!-- Archival Colophon Mark -->
+<div class="mt-12 mb-4 text-center text-[12px] text-[#7E7E7E] tracking-wider">
+          © 2026 Q1f730
+        </div>
+</section>
+</div>
+<!-- Pinned Bottom Container: Quick-Capture & Navigation -->
+<footer class="fixed bottom-0 w-[390px] bg-white border-t border-black z-50">
+<!-- Quick Capture Row -->
+<form class="h-11 px-4 flex items-center justify-between" onsubmit="event.preventDefault(); document.getElementById('capture-input').value='';">
+<input autocomplete="off" class="w-full text-[15px] text-black bg-transparent border-0 p-0 focus:ring-0 focus:outline-none placeholder-[#7E7E7E]" id="capture-input" placeholder="随手拾一穗" type="text"/>
+<button class="ml-3 text-[15px] font-semibold text-black bg-transparent border-0 p-0 whitespace-nowrap hover:opacity-70 active:opacity-40 transition-opacity" type="submit">
+          拾
+        </button>
+</form>
+<!-- Bottom Nav Row: Exactly five pure text destinations -->
+<nav aria-label="底栏导航" class="h-12 border-t border-[#F0F0F0] px-4 flex justify-between items-center">
+<a class="text-[13px] text-black font-medium underline underline-offset-4 decoration-1 focus:outline-none" href="#storage">
+          穗仓
+        </a>
+<a class="text-[13px] text-[#7E7E7E] hover:text-black focus:outline-none transition-colors" href="#graft">
+          嫁接
+        </a>
+<a class="text-[13px] text-[#7E7E7E] hover:text-black focus:outline-none transition-colors" href="#new">
+          新枝
+        </a>
+<a class="text-[13px] text-[#7E7E7E] hover:text-black focus:outline-none transition-colors" href="#taste">
+          口味
+        </a>
+<a class="text-[13px] text-[#7E7E7E] hover:text-black focus:outline-none transition-colors" href="#settings">
+          设置
+        </a>
+</nav>
+</footer>
+</main>
+</body></html>
