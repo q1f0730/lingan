@@ -1,3 +1,5 @@
+import type { GraftMode } from './modes';
+
 export type ItemType = 'music' | 'film' | 'image' | 'text' | 'link' | 'idea';
 
 export interface Item {
@@ -29,6 +31,10 @@ export interface Item {
   sample?: 1;
   /** v0.14 最近一次「碰过」：打开详情、编辑、拿去嫁接。每日一穗按它找很久没碰的旧穗 */
   touchedAt?: number;
+  /** v0.18 被嫁接的次数（一次嫁接 = 一批三根，算 1 次）。旧数据迁移时补 0 或按旧新枝回填 */
+  graftCount?: number;
+  /** v0.18 最后一次被嫁接的时间 */
+  graftedAt?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -92,6 +98,8 @@ export interface Development {
   batch?: GraftBatch;
   /** v0.12：与 idea.evidence 相同，单独放一份方便建索引（Dexie version 2） */
   evidence?: 'ok' | 'weak' | 'legacy';
+  /** v0.18 用哪种接法抽的穗（相近 / 远距 / 被冷落 / 跨媒介 / 反氛围）；之前长的没有 */
+  mode?: GraftMode;
   createdAt: number;
 }
 
