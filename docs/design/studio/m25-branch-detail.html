@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN - 新枝详情</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary-fixed-dim": "#c7c6c6",
+            "on-primary": "#ffffff",
+            "background": "#ffffff",
+            "on-error": "#ffffff",
+            "primary-fixed": "#e2e2e2",
+            "surface": "#ffffff",
+            "primary": "#000000",
+            "on-secondary-fixed": "#1b1c1c",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed-variant": "#474747",
+            "surface-dim": "#dadada",
+            "tertiary-fixed": "#e3e2e2",
+            "surface-container-highest": "#e2e2e2",
+            "on-tertiary-fixed": "#1a1c1c",
+            "on-tertiary-container": "#838484",
+            "on-surface-variant": "#4c4546",
+            "inverse-surface": "#2f3131",
+            "surface-tint": "#5e5e5e",
+            "outline": "#7e7576",
+            "surface-container": "#eeeeee",
+            "secondary": "#5e5e5e",
+            "on-tertiary-fixed-variant": "#464747",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-high": "#e8e8e8",
+            "on-background": "#1a1c1c",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "on-primary-fixed": "#1b1b1b",
+            "surface-bright": "#f9f9f9",
+            "secondary-container": "#e3e2e2",
+            "inverse-primary": "#c6c6c6",
+            "primary-container": "#1b1b1b",
+            "secondary-fixed": "#e3e2e2",
+            "on-surface": "#1a1c1c",
+            "outline-variant": "#cfc4c5",
+            "on-primary-container": "#848484",
+            "tertiary-container": "#1a1c1c",
+            "tertiary": "#000000",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "surface-variant": "#e2e2e2",
+            "inverse-on-surface": "#f1f1f1",
+            "on-tertiary": "#ffffff",
+            "on-secondary-container": "#646464",
+            "surface-container-low": "#f3f3f3",
+            "primary-fixed-dim": "#c6c6c6",
+            "on-secondary-fixed-variant": "#464747"
+          },
+          borderRadius: {
+            DEFAULT: "0px",
+            lg: "0px",
+            xl: "0px",
+            full: "0px"
+          },
+          spacing: {
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "space-xl": "30px",
+            "margin": "10px",
+            "gutter": "10px",
+            "space-lg": "20px",
+            "space-md": "10px"
+          },
+          fontFamily: {
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-mono-caps": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "sans-serif"],
+            "headline-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-sm": ["Inter", "Noto Sans SC", "sans-serif"]
+          },
+          fontSize: {
+            "label-micro": ["10px", { lineHeight: "12px", letterSpacing: "0.08em", fontWeight: "500" }],
+            "headline-sm": ["20px", { lineHeight: "24px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "display-hero": ["56px", { lineHeight: "56px", letterSpacing: "-0.04em", fontWeight: "700" }],
+            "label-mono-caps": ["11px", { lineHeight: "14px", letterSpacing: "0.12em", fontWeight: "500" }],
+            "body-lg": ["15px", { lineHeight: "22px", letterSpacing: "-0.01em", fontWeight: "400" }],
+            "display-hero-zh": ["48px", { lineHeight: "52px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-lg": ["32px", { lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "600" }],
+            "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #F0F0F0;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="flex justify-center min-h-screen">
+<!-- 390px Mobile Canvas -->
+<main class="w-[390px] min-h-screen bg-surface flex flex-col justify-between relative shadow-none border-0">
+<!-- Top Bar -->
+<header class="w-full h-12 px-4 flex items-center justify-between bg-surface border-0 z-20">
+<button class="text-[14px] leading-none text-primary font-normal cursor-pointer select-none bg-transparent p-0 border-0" type="button">返回</button>
+<button class="text-[12px] leading-none text-outline font-normal cursor-pointer select-none bg-transparent p-0 border-0" type="button">分享</button>
+</header>
+<!-- Scrollable Content Canvas -->
+<article class="px-4 pt-1 pb-6 flex-1">
+<!-- Meta Label & Sequential Identification -->
+<section class="flex flex-col">
+<div class="text-[11px] leading-none tracking-widest text-outline uppercase font-label-micro">
+          新枝 01 / 03 · 10/22 · 远距
+        </div>
+<div class="text-[40px] leading-none font-normal tracking-tight text-primary mt-3">
+          01
+        </div>
+</section>
+<!-- Main Title & Body Editorial Statement -->
+<section class="mt-2">
+<h1 class="text-[32px] leading-[1.15] font-semibold tracking-tight text-primary m-0">
+          楼道电台
+        </h1>
+<p class="text-[15px] leading-[1.6] text-primary mt-3 mb-0 font-normal">
+          给每盏声控灯配一个频道。夜里有人经过，只播这一层住户拾过的歌。
+        </p>
+</section>
+<!-- Evidence Deficiency Tag (证据不足) -->
+<section class="mt-4 flex items-center flex-wrap gap-x-2 gap-y-1">
+<span class="inline-block bg-primary text-on-primary text-[11px] font-medium px-1.5 py-0.5 leading-none">
+          证据不足
+        </span>
+<span class="text-[12px] text-outline leading-tight font-normal">
+          「这一层住户拾过的歌」只有 Re: Stacks 一穗撑着。
+        </span>
+</section>
+<!-- Source Items Breakdown ('因为这几穗') -->
+<section class="mt-6">
+<div class="text-[11px] text-outline tracking-wider font-normal mb-2.5">
+          因为这几穗
+        </div>
+<!-- 3 Modular Grid Tiles -->
+<div class="grid grid-cols-3 gap-[10px] w-full">
+<!-- Tile 1: Architectural Idea Note -->
+<div class="bg-surface-container-low p-2.5 flex flex-col justify-between h-[142px]">
+<p class="text-[12px] text-primary leading-snug font-normal m-0 line-clamp-4">
+              给楼道里每一盏声控灯起一个名字
+            </p>
+<span class="text-[10px] text-outline leading-none font-normal block pt-1">
+              想法 · 10/17
+            </span>
+</div>
+<!-- Tile 2: Pure Link Reference -->
+<div class="bg-surface-container-low p-2.5 flex flex-col justify-between h-[142px]">
+<p class="text-[12px] text-primary leading-snug font-normal m-0">
+              Radio Garden<br/>
+<span class="text-outline">radio.garden</span>
+</p>
+<span class="text-[10px] text-outline leading-none font-normal block pt-1">
+              链接 · 10/16
+            </span>
+</div>
+<!-- Tile 3: Cabin in Snow Image Card -->
+<div class="relative overflow-hidden h-[142px] bg-primary flex flex-col justify-end">
+<img alt="Re: Stacks" class="absolute inset-0 w-full h-full object-cover object-center" src="https://lh3.googleusercontent.com/aida/AEtjO1VtN8VP_yx7Akt0rP-RFy_hL4k7YtEnFDmv1BZWDQeKxsmOriyFF_sWMhmw7k33iY2D2hqS-omsa_gPZZ2dMeRFqxzqxUmu9jFdKy3vyGcByh0uPUmkzFp5tLWHvUMr_2XX8gRALB9Nygadnya7LTemK5xx09PEGJJHiRIe2LxDmsa4O7B-JFP7j7ajrSVm0BjM_H8Vb0EtlEfPlaZV-T-RjKF2PGmnohoAxkmc8uarpfv_BqhT7N4ktWw"/>
+<!-- Scrim gradient overlay for architectural textual legibility -->
+<div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+<div class="relative z-10 p-2.5 flex flex-col gap-0.5">
+<span class="text-[12px] font-semibold text-white leading-tight truncate">
+                Re: Stacks
+              </span>
+<span class="text-[10px] text-white/80 leading-none">
+                歌 · 10/19
+              </span>
+</div>
+</div>
+</div>
+</section>
+<!-- Mini Experiment Section ('20 分钟小实验') -->
+<section class="mt-6">
+<div class="text-[11px] text-outline tracking-wider font-normal mb-3">
+          20 分钟小实验
+        </div>
+<ol class="space-y-2.5 text-primary text-[13px] leading-relaxed pl-0 m-0 list-none">
+<li class="flex items-start">
+<span class="w-4 flex-shrink-0 text-primary font-normal">1</span>
+<span>今晚回家，记下每层灯亮多久才灭。</span>
+</li>
+<li class="flex items-start">
+<span class="w-4 flex-shrink-0 text-primary font-normal">2</span>
+<span>给三楼那盏挑一首歌，站在灯下放完。</span>
+</li>
+<li class="flex items-start">
+<span class="w-4 flex-shrink-0 text-primary font-normal">3</span>
+<span>写一句：如果它是电台，它会叫什么。</span>
+</li>
+</ol>
+<p class="text-[11px] text-outline mt-3 mb-0 font-normal">
+          实验做完回来写一句
+        </p>
+</section>
+<!-- Action Row: Text Only -->
+<section class="mt-7 flex items-center gap-6">
+<button class="text-[14px] font-medium text-primary cursor-pointer select-none bg-transparent p-0 border-0" type="button">
+          留下
+        </button>
+<button class="text-[14px] font-normal text-outline cursor-pointer select-none bg-transparent p-0 border-0" type="button">
+          再接一次
+        </button>
+<button class="text-[14px] font-normal text-[#C6C6C6] cursor-pointer select-none bg-transparent p-0 border-0" type="button">
+          不要
+        </button>
+</section>
+<!-- Archival System Identifier Footer -->
+<footer class="mt-10 mb-2 text-center">
+<div class="text-[11px] text-outline font-normal select-none">
+          © 2026 Q1f730
+        </div>
+</footer>
+</article>
+<!-- Bottom Persistent Structure Area -->
+<aside class="sticky bottom-0 left-0 w-full bg-surface z-30">
+<!-- Quick-capture Input Line (Hairline Separator) -->
+<div class="h-12 border-t border-primary flex items-center justify-between px-4 bg-surface">
+<input class="bg-transparent border-0 p-0 text-[14px] text-primary placeholder-[#7E7E7E] focus:ring-0 focus:outline-none w-full" placeholder="随手拾一穗" type="text"/>
+<button class="text-[14px] font-medium text-primary ml-3 flex-shrink-0 bg-transparent p-0 border-0 cursor-pointer" type="button">
+          拾
+        </button>
+</div>
+<!-- Pure Typographic Bottom Navigation -->
+<nav class="h-12 border-t border-surface-container-low flex justify-around items-center px-2 bg-surface">
+<button class="text-[12px] text-outline cursor-pointer font-normal bg-transparent border-0 p-0" type="button">
+          穗仓
+        </button>
+<button class="text-[12px] text-outline cursor-pointer font-normal bg-transparent border-0 p-0" type="button">
+          嫁接
+        </button>
+<button class="text-[12px] text-primary font-medium border-b border-primary pb-0.5 bg-transparent border-t-0 border-l-0 border-r-0 cursor-pointer p-0" type="button">
+          新枝
+        </button>
+<button class="text-[12px] text-outline cursor-pointer font-normal bg-transparent border-0 p-0" type="button">
+          口味
+        </button>
+<button class="text-[12px] text-outline cursor-pointer font-normal bg-transparent border-0 p-0" type="button">
+          设置
+        </button>
+</nav>
+</aside>
+</main>
+</body></html>
