@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN — 穗详情 (照片 · 轮渡上的雾)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-container": "#1a1c1c",
+            "surface-tint": "#5e5e5e",
+            "on-surface": "#1a1c1c",
+            "surface": "#ffffff",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#e3e2e2",
+            "on-surface-variant": "#4c4546",
+            "on-secondary-fixed-variant": "#464747",
+            "primary-fixed-dim": "#c6c6c6",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#e3e2e2",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "outline": "#7e7576",
+            "tertiary": "#000000",
+            "on-background": "#1a1c1c",
+            "surface-container-highest": "#e2e2e2",
+            "on-primary-fixed": "#1b1b1b",
+            "on-tertiary-container": "#838484",
+            "inverse-surface": "#2f3131",
+            "background": "#ffffff",
+            "surface-container-high": "#e8e8e8",
+            "primary-fixed": "#e2e2e2",
+            "on-tertiary-fixed": "#1a1c1c",
+            "tertiary-fixed": "#e3e2e2",
+            "on-error": "#ffffff",
+            "surface-dim": "#dadada",
+            "surface-container-low": "#f3f3f3",
+            "on-tertiary-fixed-variant": "#464747",
+            "on-tertiary": "#ffffff",
+            "on-secondary-container": "#646464",
+            "error-container": "#ffdad6",
+            "primary": "#000000",
+            "inverse-on-surface": "#f1f1f1",
+            "on-primary-container": "#848484",
+            "inverse-primary": "#c6c6c6",
+            "surface-container": "#eeeeee",
+            "primary-container": "#1b1b1b",
+            "secondary-fixed-dim": "#c7c6c6",
+            "outline-variant": "#cfc4c5",
+            "on-secondary-fixed": "#1b1c1c",
+            "error": "#ba1a1a",
+            "on-primary-fixed-variant": "#474747",
+            "secondary": "#7e7e7e",
+            "surface-variant": "#e2e2e2",
+            "surface-bright": "#ffffff",
+            "on-error-container": "#93000a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "0px"
+          },
+          "spacing": {
+            "gutter": "10px",
+            "space-md": "10px",
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "margin": "16px",
+            "space-xl": "30px",
+            "space-lg": "20px"
+          },
+          "fontFamily": {
+            "sans": ["Noto Sans SC", "Inter", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "Inter", "sans-serif"],
+            "headline-sm": ["Noto Sans SC", "Inter", "sans-serif"],
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-sm": ["Noto Sans SC", "Inter", "sans-serif"],
+            "label-mono-caps": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero": ["Inter", "sans-serif"],
+            "headline-lg": ["Noto Sans SC", "Inter", "sans-serif"],
+            "body-lg": ["Noto Sans SC", "Inter", "sans-serif"]
+          },
+          "fontSize": {
+            "display-hero-zh": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-micro": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "400" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-mono-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "500" }],
+            "display-hero": ["56px", { "lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+            "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      font-family: 'Noto Sans SC', 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+    }
+    /* Hide scrollbar for pure planar feel */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-surface text-primary flex justify-center">
+<!-- Mobile Viewport Container: Exactly 390px -->
+<main class="w-[390px] min-h-screen bg-surface flex flex-col relative pb-[120px] select-none">
+<!-- Top Bar -->
+<header class="w-full h-12 flex justify-between items-center px-4 bg-surface z-40 sticky top-0">
+<button class="text-[12px] text-secondary font-normal tracking-wide hover:text-primary transition-none bg-transparent p-0 m-0 border-0 cursor-pointer" type="button">
+        返回
+      </button>
+<div class="text-[12px] font-medium tracking-tight text-primary">
+        拾穗 · GLEAN
+      </div>
+<button class="text-[12px] text-primary font-normal tracking-wide hover:opacity-70 transition-none bg-transparent p-0 m-0 border-0 cursor-pointer" type="button">
+        编辑
+      </button>
+</header>
+<!-- Edge-to-Edge Hero Photograph (4:5 Aspect Ratio, 390px x 487.5px) -->
+<section class="w-full aspect-[4/5] bg-surface-container-low overflow-hidden">
+<img alt="轮渡上的雾" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks"/>
+</section>
+<!-- Detail Content Body -->
+<div class="px-4 pt-5 flex flex-col">
+<!-- Section Index Indicator -->
+<div class="font-label-micro text-label-micro text-[#7E7E7E]">
+        照片 · 01 / 10
+      </div>
+<!-- Main Subject Title -->
+<h1 class="font-headline-lg text-headline-lg text-primary mt-2">
+        轮渡上的雾
+      </h1>
+<!-- Architectural Tabular Key-Value Block -->
+<div class="mt-5 flex flex-col space-y-1">
+<div class="flex items-baseline text-[13px] leading-[1.8]">
+<span class="w-14 shrink-0 text-[#7E7E7E]">拾于</span>
+<span class="text-primary tracking-tight">2026/10/21 07:12</span>
+</div>
+<div class="flex items-baseline text-[13px] leading-[1.8]">
+<span class="w-14 shrink-0 text-[#7E7E7E]">来源</span>
+<span class="text-primary">自己拍</span>
+</div>
+<div class="flex items-baseline text-[13px] leading-[1.8]">
+<span class="w-14 shrink-0 text-[#7E7E7E]">标签</span>
+<span class="text-primary">#清晨  #城市</span>
+</div>
+</div>
+<!-- Architectural Narrative: 为什么收 -->
+<div class="mt-6">
+<div class="font-label-micro text-label-micro text-[#7E7E7E] mb-2">
+          为什么收
+        </div>
+<p class="font-body-lg text-body-lg text-primary leading-relaxed">
+          栏杆一路伸进雾里，看不见对岸，船却照常开。
+        </p>
+</div>
+<!-- Association Section: 长进了这些新枝 -->
+<div class="mt-6">
+<div class="font-label-micro text-label-micro text-[#7E7E7E] mb-2">
+          长进了这些新枝
+        </div>
+<div>
+<a class="inline-block text-[15px] text-primary underline underline-offset-4 decoration-1 hover:opacity-70 transition-none" href="#">
+            渡轮上的平山
+          </a>
+</div>
+</div>
+<!-- Actions Row -->
+<div class="mt-8 flex items-center space-x-6">
+<button class="text-[14px] font-medium text-primary bg-transparent p-0 border-0 hover:opacity-70 transition-none cursor-pointer" type="button">
+          拿去嫁接
+        </button>
+<button class="text-[14px] font-normal text-[#7E7E7E] bg-transparent p-0 border-0 hover:text-primary transition-none cursor-pointer" type="button">
+          分享
+        </button>
+<button class="text-[14px] font-normal text-[#A0A0A0] bg-transparent p-0 border-0 hover:text-primary transition-none cursor-pointer" type="button">
+          删除
+        </button>
+</div>
+<!-- Editorial Archival Footer Mark -->
+<footer class="mt-14 mb-8 text-center">
+<span class="text-[11px] text-[#A0A0A0] tracking-wider">
+          © 2026 Q1f730
+        </span>
+</footer>
+</div>
+<!-- Pinned Bottom System Shell -->
+<div class="fixed bottom-0 w-[390px] bg-surface z-50">
+<!-- Quick-capture bar -->
+<div class="h-11 border-t border-primary flex justify-between items-center px-4 bg-surface">
+<span class="text-[13px] text-[#7E7E7E]">
+          随手拾一穗
+        </span>
+<button class="text-[13px] font-medium text-primary bg-transparent p-0 border-0 hover:opacity-70 transition-none cursor-pointer" type="button">
+          拾
+        </button>
+</div>
+<!-- Bottom Text-Only Navigation Bar (5 Items: 穗仓 / 嫁接 / 新枝 / 口味 / 设置) -->
+<nav class="h-12 flex justify-between items-center px-4 bg-surface border-t border-[#F3F3F3]">
+<!-- 穗仓 (Active: black text with bottom border underline) -->
+<a class="flex flex-col items-center justify-center text-[12px] text-primary font-medium border-b border-primary pb-0.5 transition-none" href="#">
+          穗仓
+        </a>
+<!-- 嫁接 -->
+<a class="flex flex-col items-center justify-center text-[12px] text-[#7E7E7E] pb-0.5 hover:text-primary transition-none" href="#">
+          嫁接
+        </a>
+<!-- 新枝 -->
+<a class="flex flex-col items-center justify-center text-[12px] text-[#7E7E7E] pb-0.5 hover:text-primary transition-none" href="#">
+          新枝
+        </a>
+<!-- 口味 -->
+<a class="flex flex-col items-center justify-center text-[12px] text-[#7E7E7E] pb-0.5 hover:text-primary transition-none" href="#">
+          口味
+        </a>
+<!-- 设置 -->
+<a class="flex flex-col items-center justify-center text-[12px] text-[#7E7E7E] pb-0.5 hover:text-primary transition-none" href="#">
+          设置
+        </a>
+</nav>
+</div>
+</main>
+</body></html>
