@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-white" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN - 穗仓 (列表)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<style>
+    * {
+      border-radius: 0px !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #ffffff;
+      color: #000000;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+    }
+  </style>
+</head>
+<body class="bg-white text-black min-h-screen flex justify-center selection:bg-black selection:text-white">
+<!-- 390px Mobile Canvas Container -->
+<div class="w-full max-w-[390px] min-h-screen bg-white flex flex-col relative pb-32">
+<!-- TopAppBar -->
+<header class="w-full pt-5 px-[10px] pb-0 bg-white z-30">
+<div class="flex justify-between items-center w-full h-8">
+<h1 class="text-[20px] font-semibold tracking-tight text-black leading-none">
+          拾穗 · GLEAN
+        </h1>
+<button class="text-[11px] font-medium tracking-[0.12em] text-[#7E7E7E] hover:text-black transition-none uppercase">
+          设置
+        </button>
+</div>
+</header>
+<!-- Hero Display Section -->
+<section class="px-[10px] pt-[30px] pb-[16px]">
+<div class="flex flex-col">
+<!-- Huge Display Headline with tight negative tracking & 1.0 line-height -->
+<h2 class="text-[52px] leading-none font-semibold text-black tracking-[-0.04em] mb-4">
+          穗仓 (10)
+        </h2>
+<!-- Action Row: Button '嫁接所选' + View Toggle '网格 | 列表' (列表 active, underlined) -->
+<div class="flex items-center justify-between pt-1">
+<button class="bg-black text-white text-[11px] font-medium tracking-[0.08em] px-[10px] py-1.5 hover:opacity-80 transition-none flex items-center justify-center">
+            嫁接所选
+          </button>
+<!-- View Toggle '网格 | 列表' with 列表 active & underlined -->
+<div class="flex items-center space-x-1.5 text-[11px] font-medium tracking-wider">
+<span class="text-[#C6C6C6] cursor-pointer hover:text-[#7E7E7E] transition-none">网格</span>
+<span class="text-[#E0E0E0]">|</span>
+<span class="text-black font-semibold border-b border-black pb-[1px] cursor-pointer">列表</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Content: Strict Editorial Tight Table with NO lines between rows -->
+<main class="px-[10px] flex-grow">
+<div class="w-full">
+<!-- Table Header: Tiny uppercase-style labels + Single 1px black rule strictly under header only -->
+<div class="grid grid-cols-12 gap-1 pb-2 border-b border-black text-[10px] font-medium tracking-[0.1em] text-[#7E7E7E] uppercase select-none"><div class="col-span-5 truncate">穗</div>
+<div class="col-span-2">类型</div>
+<div class="col-span-3">来源</div>
+<div class="col-span-2 text-right">日期</div></div>
+<!-- 10 Rows (Row height ~44px, compact, NO lines between rows) -->
+<div class="flex flex-col">
+<!-- Row 1: 照片『轮渡上的雾』 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">轮渡上的雾</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">照片</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">自己</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/21</span>
+</div></div>
+<!-- Row 2: 电影『完美的日子』 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">完美的日子</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">电影</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">维姆·文德斯</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/20</span>
+</div></div>
+<!-- Row 3: 歌『Re: Stacks』 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">Re: Stacks</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">歌</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">Bon Iver</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/19</span>
+</div></div>
+<!-- Row 4: 摘抄 (卡尔维诺) -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">“记忆中的形象一旦被词语固定住...”</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">摘抄</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">卡尔维诺</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/18</span>
+</div></div>
+<!-- Row 5: 想法 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">“给楼道里每一盏声控灯起一个名字”</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">想法</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">自己</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/17</span>
+</div></div>
+<!-- Row 6: 链接 (Radio Garden) -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">Radio Garden · 转动地球收听各地电台</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">链接</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none font-mono">radio.garden</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/16</span>
+</div></div>
+<!-- Row 7: 照片『旧书店堆到天花板的书脊』 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">旧书店堆到天花板的书脊</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">照片</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">自己</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/14</span>
+</div></div>
+<!-- Row 8: 歌『aqua』 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">aqua</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">歌</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">坂本龙一</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/12</span>
+</div></div>
+<!-- Row 9: 电影『一一』 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">《一一》</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">电影</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">杨德昌</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/09</span>
+</div></div>
+<!-- Row 10: 想法 -->
+<div class="grid grid-cols-12 gap-1 items-center h-[44px] cursor-pointer hover:bg-[#F9F9F9] transition-none"><div class="col-span-5 pr-2 truncate">
+<p class="text-[15px] font-medium text-black truncate leading-tight tracking-tight">“把外卖小票上的备注收集成一本诗集”</p>
+</div>
+<div class="col-span-2">
+<span class="text-[12px] text-[#7E7E7E] leading-none">想法</span>
+</div>
+<div class="col-span-3">
+<span class="text-[12px] text-[#7E7E7E] truncate block leading-none">自己</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-[12px] text-[#7E7E7E] font-normal tabular-nums leading-none">10/05</span>
+</div></div>
+</div>
+</div>
+<!-- Editorial Archival Footer Notice -->
+<div class="pt-10 pb-6 text-center">
+<p class="text-[10px] tracking-widest text-[#7E7E7E] font-medium uppercase">
+          © 2026 Q1f730
+        </p>
+</div>
+</main>
+<!-- Sticky Pinned Bottom Section: Quick-Capture Bar + 5-item text nav -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto z-50 bg-white">
+<!-- Quick-Capture Bar: Thin single line input, hairline top border, no radius, no box -->
+<div class="w-full border-t border-black px-[10px] py-2.5 bg-white flex items-center justify-between">
+<input class="text-[13px] text-black placeholder:text-[#7E7E7E] bg-transparent border-0 outline-none p-0 focus:ring-0 w-full" placeholder="随手拾一穗" type="text"/>
+<button class="text-[13px] font-semibold text-black hover:opacity-70 px-2 py-0.5 transition-none shrink-0 leading-none">
+          拾
+        </button>
+</div>
+<!-- BottomNavBar: Exactly 5 items in tiny text (穗仓 active and underlined, others grey) -->
+<nav class="w-full border-t border-[#E5E5E5] bg-white px-[10px] pt-2.5 pb-4">
+<div class="flex justify-between items-center w-full">
+<!-- Item 1: 穗仓 (Active) -->
+<button class="flex items-center justify-center text-black border-b border-black pb-[1px]">
+<span class="text-[11px] font-semibold tracking-wider">穗仓</span>
+</button>
+<!-- Item 2: 嫁接 (Inactive) -->
+<button class="flex items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="text-[11px] tracking-wider">嫁接</span>
+</button>
+<!-- Item 3: 新枝 (Inactive) -->
+<button class="flex items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="text-[11px] tracking-wider">新枝</span>
+</button>
+<!-- Item 4: 口味 (Inactive) -->
+<button class="flex items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="text-[11px] tracking-wider">口味</span>
+</button>
+<!-- Item 5: 设置 (Inactive) -->
+<button class="flex items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="text-[11px] tracking-wider">设置</span>
+</button>
+</div>
+</nav>
+</div>
+</div>
+</body>
+</html>
