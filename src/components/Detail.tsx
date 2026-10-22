@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../lib/db';
 import { fromLocalInput, toLocalInput } from '../lib/quick';
 import { useApp } from '../lib/store';
-import { bookTitle, branchesFrom, displayTitle, quoteSource } from '../lib/studio';
+import { bookTitle, branchesFrom, displayTitle, quoteSource, shortDate } from '../lib/studio';
 import { TYPE_LABEL, type Item, type ItemType } from '../lib/types';
 import { useOriginalSrc } from '../lib/useImage';
 import { safeHost } from './ItemCard';
@@ -100,6 +100,10 @@ export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it
               </dd>
             </div>
           )}
+          <div className="kv-graft">
+            <dt>嫁接</dt>
+            <dd className="num">{it.graftCount ? `${it.graftCount} 次 · 最后 ${shortDate(it.graftedAt || it.createdAt)}` : '还没接过'}</dd>
+          </div>
           {it.embedding ? (
             <div>
               <dt>向量</dt>
