@@ -5,7 +5,6 @@ import { fetchLinkMeta } from '../lib/linkmeta';
 import { clipMemory, parseQuick, readClipboard, shouldOffer, type QuickDraft } from '../lib/quick';
 import type { Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
-import { frameNo } from './ItemCard';
 import { onQuickFocus } from '../lib/desktop';
 
 /** Save a quick draft, then fill link metadata + AI enrichment in the background. */
@@ -32,7 +31,7 @@ export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) =
       }
     }
     const err = await enrichItem(id, s);
-    if (err) onErr?.('AI 加工失败：' + err);
+    if (err) onErr?.('AI 整理失败：' + err);
   })();
   return id;
 }
@@ -94,16 +93,16 @@ export function QuickBar() {
       await db.items.update(last, { why: w || cur.why, tags: normalizeTags([...cur.tags, ...tags]), updatedAt: Date.now(), embedding: undefined, embedModel: undefined });
       enrichItem(last, settings);
     }
-    toast('已补充 ' + frameNo(last));
+    toast('已补上');
     setLast(null);
     setWhy('');
   }
 
   return (
-    <div className="quick">
+    <div className="quick paper">
       <div className="quick-bar">
-        <span className="quick-ic mono" aria-hidden>
-          ›
+        <span className="quick-ic" aria-hidden>
+          ✎
         </span>
         <input
           className="quick-input"
@@ -116,7 +115,7 @@ export function QuickBar() {
               save();
             }
           }}
-          placeholder="一句话、链接、#标签，回车即存"
+          placeholder="随手拾一穗：一句话、链接、#标签，回车即存"
           aria-label="速记"
           enterKeyHint="done"
           maxLength={4000}
@@ -129,7 +128,7 @@ export function QuickBar() {
       </div>
       {last && (
         <div className="quick-after">
-          <span className="mono red">✓ {frameNo(last)} 已收</span>
+          <span className="quick-ok">✓ 已拾进穗仓</span>
           <input
             className="quick-why"
             value={why}
@@ -197,23 +196,23 @@ export function ClipOffer() {
     setClip(null);
     const d = parseQuick(t);
     if (!d) return;
-    const id = await quickAdd(d, settings, (m) => toast(m, 'err'));
-    toast('已收进暗房 ' + frameNo(id));
+    await quickAdd(d, settings, (m) => toast(m, 'err'));
+    toast('已拾进穗仓');
   }
   function skip() {
     clipMemory.set(clip!);
     setClip(null);
   }
   return (
-    <div className="clip-offer" role="dialog" aria-label="剪贴板">
-      <div className="clip-k mono">剪贴板里有</div>
+    <div className="clip-offer paper" role="dialog" aria-label="剪贴板">
+      <div className="clip-k">剪贴板里有一穗</div>
       <div className="clip-text">{preview}</div>
       <div className="clip-actions">
         <button className="btn ghost small" onClick={skip}>
           忽略
         </button>
         <button className="btn primary small" onClick={take}>
-          收进暗房
+          拾进穗仓
         </button>
       </div>
     </div>
