@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..800;1,6..72,400..700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,400..600&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed": "#ffdad4",
+            "on-tertiary": "#ffffff",
+            "surface-dim": "#dadad6",
+            "surface-bright": "#faf9f5",
+            "on-error": "#ffffff",
+            "on-background": "#1a1c1a",
+            "outline": "#747878",
+            "surface-container-highest": "#e3e3df",
+            "on-tertiary-fixed": "#400201",
+            "secondary": "#5f5e5e",
+            "on-surface": "#1a1c1a",
+            "on-primary-fixed-variant": "#474646",
+            "surface-container-lowest": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-tint": "#5f5e5e",
+            "on-surface-variant": "#444748",
+            "on-secondary-fixed-variant": "#474747",
+            "primary-fixed-dim": "#c8c6c5",
+            "on-tertiary-container": "#c96859",
+            "secondary-container": "#e4e2e2",
+            "on-secondary": "#ffffff",
+            "surface-variant": "#e3e3df",
+            "primary": "#111111",
+            "on-error-container": "#93000a",
+            "secondary-fixed": "#e4e2e2",
+            "on-tertiary-fixed-variant": "#7b2d22",
+            "surface": "#ECECE8",
+            "background": "#ECECE8",
+            "secondary-fixed-dim": "#c8c6c6",
+            "inverse-on-surface": "#f1f1ed",
+            "inverse-surface": "#2f312e",
+            "on-secondary-fixed": "#1b1c1c",
+            "error": "#8A382C",
+            "surface-container-high": "#e8e8e4",
+            "on-primary-container": "#858383",
+            "surface-container-low": "#f4f4f0",
+            "outline-variant": "#D0D0CA",
+            "inverse-primary": "#c8c6c5",
+            "primary-fixed": "#e5e2e1",
+            "tertiary": "#8A382C",
+            "tertiary-container": "#400201",
+            "on-primary": "#ECECE8",
+            "primary-container": "#111111",
+            "on-primary-fixed": "#1c1b1b",
+            "surface-container": "#E2E2DC",
+            "tertiary-fixed-dim": "#ffb4a8",
+            "on-secondary-container": "#656464"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "none": "0px"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "gutter-sm": "0.75rem",
+            "space-md": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.25rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "caption": ["\"Source Serif 4\"", "serif"],
+            "body-lg": ["\"Source Serif 4\"", "serif"],
+            "display": ["Newsreader", "serif"],
+            "dateline": ["Space Grotesk", "monospace"],
+            "headline-md": ["Newsreader", "serif"],
+            "body-sm": ["\"Source Serif 4\"", "serif"],
+            "masthead": ["Newsreader", "serif"],
+            "body-md": ["\"Source Serif 4\"", "serif"],
+            "label-sm": ["Space Grotesk", "sans-serif"],
+            "headline-lg": ["Newsreader", "serif"],
+            "headline-sm": ["Newsreader", "serif"]
+          },
+          "fontSize": {
+            "caption": ["11px", {"lineHeight": "15px", "fontWeight": "400"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "display": ["32px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "dateline": ["10px", {"lineHeight": "13px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+            "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "17px", "fontWeight": "400"}],
+            "masthead": ["27px", {"lineHeight": "32px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+            "body-md": ["13.5px", {"lineHeight": "19px", "fontWeight": "400"}],
+            "label-sm": ["10.5px", {"lineHeight": "13px", "letterSpacing": "0.06em", "fontWeight": "600"}],
+            "headline-lg": ["22px", {"lineHeight": "27px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-sm": ["15px", {"lineHeight": "20px", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #ECECE8;
+      color: #111111;
+      font-feature-settings: "kern" 1, "liga" 1;
+      -webkit-font-smoothing: antialiased;
+      width: 390px;
+      height: 844px;
+      overflow: hidden;
+      margin: 0 auto;
+      position: relative;
+    }
+    .double-rule-top {
+      border-top: 2px solid #111111;
+      position: relative;
+    }
+    .double-rule-top::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 0;
+      right: 0;
+      border-top: 0.5px solid #111111;
+    }
+    .double-rule-bottom {
+      border-bottom: 2px solid #111111;
+      position: relative;
+    }
+    .double-rule-bottom::before {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      right: 0;
+      border-bottom: 0.5px solid #111111;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="flex flex-col bg-surface text-primary select-none h-[844px] w-[390px] relative overflow-hidden">
+<!-- TOP APP BAR (Shared Components JSON Anchor) -->
+<header class="flex justify-between items-center w-full px-margin pt-3 pb-2.5 bg-surface border-b border-outline-variant z-20">
+<button aria-label="Menu" class="hover:opacity-80 active:opacity-60 transition-opacity flex items-center justify-center p-1">
+<span class="material-symbols-outlined text-[20px] text-primary">menu</span>
+</button>
+<div class="text-masthead font-masthead tracking-wider text-primary text-center">
+      拾穗 · GLEAN
+    </div>
+<button aria-label="Search" class="hover:opacity-80 active:opacity-60 transition-opacity flex items-center justify-center p-1">
+<span class="material-symbols-outlined text-[20px] text-primary">search</span>
+</button>
+</header>
+<!-- FOLIO & DATELINE BAR -->
+<div class="px-margin py-1.5 border-b border-outline-variant flex justify-between items-center text-dateline font-dateline bg-surface text-secondary uppercase">
+<span>第 342 期 · 穗仓专刊</span>
+<span class="text-primary font-bold">编者 Q1f730</span>
+<span>晨间号 · 晴冷</span>
+</div>
+<!-- MAIN SCROLLABLE EDITORIAL CANVAS -->
+<main class="flex-1 overflow-y-auto custom-scroll pb-20 px-margin">
+<!-- QUICK-CAPTURE BAR: TELEGRAPH / BROADSHEET DISPATCH STRIP -->
+<section class="mt-3 mb-3 border border-primary p-1 bg-surface-bright flex items-center gap-2">
+<div class="border-r border-primary pr-2 pl-1.5 py-0.5 flex items-center text-primary">
+<span class="material-symbols-outlined text-[17px]">edit_note</span>
+<span class="text-label-sm font-label-sm ml-1 uppercase">速记</span>
+</div>
+<input class="w-full bg-transparent border-0 p-0 text-body-md font-body-md italic text-primary focus:ring-0 placeholder-secondary placeholder:italic" placeholder="随手拾一穗…" type="text"/>
+<button class="bg-primary text-on-primary px-2 py-1 text-label-sm font-label-sm flex items-center active:bg-secondary">
+<span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</section>
+<!-- SPECIAL EDITION: 嫁接 (GRAFTING) BANNER (号外 / 特刊) -->
+<section class="mb-3.5 border-2 border-primary bg-primary text-on-primary p-2.5 flex justify-between items-center relative overflow-hidden">
+<div class="pr-2 flex-1">
+<div class="flex items-center gap-1.5 mb-1">
+<span class="bg-tertiary text-on-tertiary text-[9px] font-dateline px-1 py-0.2 tracking-widest font-bold">号外 · 特刊</span>
+<span class="text-label-sm font-label-sm text-outline-variant tracking-wider uppercase">MATERIAL FUSION</span>
+</div>
+<p class="font-headline-sm text-headline-sm tracking-tight text-surface-bright leading-tight">
+          启动思绪嫁接：将远距素材化育为新枝
+        </p>
+<p class="text-caption font-caption text-outline-variant mt-0.5 line-clamp-1">
+          已就绪 6 穗素材待杂交培育
+        </p>
+</div>
+<button class="bg-surface text-primary border border-surface px-2.5 py-2 font-dateline text-label-sm font-bold uppercase tracking-wider flex items-center gap-1 shrink-0 active:bg-surface-variant hover:bg-surface-bright transition-colors">
+<span>嫁接</span>
+<span class="material-symbols-outlined text-[14px]">call_split</span>
+</button>
+</section>
+<!-- SECTION DIVIDER RULE -->
+<div class="double-rule-bottom pb-1 mb-3 flex justify-between items-end">
+<h2 class="text-headline-sm font-headline-sm font-bold uppercase tracking-wider">今日拾存 · ARCHIVE</h2>
+<span class="text-dateline font-dateline text-secondary">共 6 册见证</span>
+</div>
+<!-- 6 COLLECTED ITEMS (NEWSPAPER BROADSHEET GRID & ASYMMETRY) -->
+<div class="space-y-3.5">
+<!-- ITEM 1: PHOTO (雨后的梧桐街) - BROADSHEET LEAD PHOTOGRAPH -->
+<article class="border-b border-outline-variant pb-3.5">
+<div class="flex justify-between items-baseline mb-1">
+<span class="text-label-sm font-label-sm text-tertiary uppercase font-bold tracking-wider">[ 映象 · PHOTO ]</span>
+<span class="text-dateline font-dateline text-secondary">今天 09:12 · Q1f730</span>
+</div>
+<div class="relative border border-primary p-1 bg-surface-bright mb-1.5">
+<img alt="雨后的梧桐街" class="w-full h-44 object-cover filter contrast-[1.05] grayscale-[15%]" src="https://lh3.googleusercontent.com/aida/AEtjO1Xsr-NX4Mwz0JBYqZze83Z_DuRQVua-8j-7aUYBIZvDr0Dk74eApMvfQObrFplhAxmVzFCIfRl6fvDca_w-1GYR1xtMCAyWoY2-U2k68Meb8_3jH8uIQWQAf2BExSOAb76R84rLJys3c72b7Xnj724UGaLLDV4HFrtTvRUlA8_ZUzVfyTtUdIG63c3k3gzhx_jKQgY991OhmYIc8gLDrzWmG_mmuP8ePULUZwyYZn1O5oFV_nK_MaIhSVZb"/>
+<div class="absolute bottom-2 left-2 bg-primary/85 text-surface text-[9px] font-dateline px-1.5 py-0.5 tracking-widest">
+            PARIS / AUTUMN RAIN
+          </div>
+</div>
+<div class="flex justify-between items-start gap-2">
+<div>
+<h3 class="text-headline-md font-headline-md font-bold tracking-tight text-primary leading-tight">
+              雨后的梧桐街
+            </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 italic">
+              湿漉石砖路上映照着街灯的暖橘与落叶，巴黎十月的薄雾与咖啡香气未散。
+            </p>
+</div>
+<span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-1">bookmark</span>
+</div>
+</article>
+<!-- 2-COLUMN SPLIT: ITEM 2 (FILM) & ITEM 3 (SONG) -->
+<div class="grid grid-cols-2 gap-3 border-b border-outline-variant pb-3.5">
+<!-- ITEM 2: FILM (燃烧女子的肖像) -->
+<article class="border-r border-outline-variant pr-3 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="text-[9px] font-dateline font-bold uppercase text-primary border border-primary px-1">胶卷 · FILM</span>
+</div>
+<h4 class="text-headline-sm font-headline-sm font-bold leading-tight mt-1 mb-1">
+              《燃烧女子的肖像》
+            </h4>
+<p class="text-caption font-caption text-secondary">
+              2019 · 瑟琳·席安玛 导演
+            </p>
+<p class="text-body-sm font-body-sm text-primary mt-1.5 leading-snug">
+              凝视与被凝视的默契倒转。孤岛之火与无声乐章的告别。
+            </p>
+</div>
+<div class="pt-2 mt-2 border-t border-outline-variant/60 flex justify-between items-center text-dateline font-dateline text-secondary">
+<span>昨天 23:40</span>
+<span class="italic">Q1f730</span>
+</div>
+</article>
+<!-- ITEM 3: SONG (夜空中最亮的星) -->
+<article class="pl-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-center mb-1">
+<span class="text-[9px] font-dateline font-bold uppercase bg-surface-container-highest px-1 text-primary">声学 · SONG</span>
+</div>
+<h4 class="text-headline-sm font-headline-sm font-bold leading-tight mt-1 mb-1">
+              夜空中最亮的星
+            </h4>
+<p class="text-caption font-caption text-secondary">
+              逃跑计划 · 单曲录音
+            </p>
+<div class="mt-2 p-1.5 bg-surface-container border-l-2 border-primary">
+<p class="text-[11px] font-caption italic text-on-surface leading-tight">
+                “祈祷拥有一颗透明的心灵，和会流泪的眼睛…”
+              </p>
+</div>
+</div>
+<div class="pt-2 mt-2 border-t border-outline-variant/60 flex justify-between items-center text-dateline font-dateline text-secondary">
+<span>昨天 21:05</span>
+<span class="italic">Q1f730</span>
+</div>
+</article>
+</div>
+<!-- ITEM 4: QUOTE (文案) - BROADSHEET EDITORIAL PULL-QUOTE -->
+<article class="border-b border-outline-variant pb-3.5 bg-surface-bright p-3 border border-outline-variant">
+<div class="flex justify-between items-center mb-1.5">
+<span class="text-[10px] font-dateline font-bold tracking-widest text-tertiary uppercase">§ 拾穗文案 · DISPATCH</span>
+<span class="text-dateline font-dateline text-secondary">10/19 · 编者 Q1f730</span>
+</div>
+<div class="text-center py-2 relative">
+<div class="w-12 h-px bg-primary mx-auto mb-2 opacity-30"></div>
+<p class="text-headline-md font-headline-md italic font-semibold text-primary px-3 leading-snug">
+            “我们读诗，是因为我们是人类的一员。”
+          </p>
+<div class="w-12 h-px bg-primary mx-auto mt-2 opacity-30"></div>
+</div>
+<div class="text-right text-caption font-caption text-secondary italic">
+          — 录自《死亡诗社》
+        </div>
+</article>
+<!-- 2-COLUMN SPLIT: ITEM 5 (IDEA) & ITEM 6 (LINK) -->
+<div class="grid grid-cols-2 gap-3 border-b-2 border-primary pb-3.5 mb-2">
+<!-- ITEM 5: IDEA (想法) -->
+<article class="border-r border-outline-variant pr-3 flex flex-col justify-between bg-surface-container-low p-2 border border-outline-variant">
+<div>
+<div class="flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-[13px] text-tertiary">lightbulb</span>
+<span class="text-[10px] font-dateline font-bold uppercase text-primary">想法 · IDEA</span>
+</div>
+<p class="text-body-sm font-body-sm text-primary font-medium mt-1 leading-snug">
+              把通勤路上听到的对话写成一组短诗。
+            </p>
+<p class="text-caption font-caption text-secondary mt-1 italic">
+              车厢的金属颤鸣与断裂的句子互为注脚。
+            </p>
+</div>
+<div class="pt-2 mt-2 border-t border-outline-variant/60 flex justify-between items-center text-dateline font-dateline text-secondary">
+<span>10/18</span>
+<span>Q1f730</span>
+</div>
+</article>
+<!-- ITEM 6: LINK (Are.na · 关于收集的收集) -->
+<article class="pl-1 flex flex-col justify-between bg-surface p-2 border border-outline-variant">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-[10px] font-dateline font-bold uppercase text-primary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">link</span>
+                网络 · WIRE
+              </span>
+<span class="text-[9px] font-dateline text-secondary font-mono">are.na</span>
+</div>
+<h4 class="text-headline-sm font-headline-sm font-bold text-primary leading-tight mt-0.5">
+              Are.na
+            </h4>
+<p class="text-body-sm font-body-sm text-primary mt-1 line-clamp-2 underline decoration-1 underline-offset-2 decoration-outline">
+              关于收集的收集：网状思维的档案拓扑
+            </p>
+</div>
+<div class="pt-2 mt-2 border-t border-outline-variant/60 flex justify-between items-center text-dateline font-dateline text-secondary">
+<span>10/16</span>
+<span class="material-symbols-outlined text-[13px] text-primary">arrow_outward</span>
+</div>
+</article>
+</div>
+<!-- BROAD SHEET FOOTER NOTE -->
+<div class="text-center py-2 text-dateline font-dateline text-secondary uppercase tracking-widest text-[9px]">
+        — 拾穗馆藏 编目完毕 · 晨版 完 —
+      </div>
+</div>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Components JSON Anchor) -->
+<!-- Active state: '穗仓' with exact style_active_navigation mapping -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-xs py-space-xs bg-surface border-t border-outline-variant h-[60px]">
+<!-- Tab 1: 穗仓 (Active) -->
+<a aria-label="穗仓" class="flex flex-col items-center justify-center text-primary font-bold active:scale-95 transition-transform duration-100 flex-1 py-1" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5 tracking-wider">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 -->
+<a aria-label="嫁接" class="flex flex-col items-center justify-center text-secondary hover:text-primary active:scale-95 transition-transform duration-100 flex-1 py-1" href="#">
+<span class="material-symbols-outlined text-[20px]">call_split</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5 tracking-wider">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 -->
+<a aria-label="新枝" class="flex flex-col items-center justify-center text-secondary hover:text-primary active:scale-95 transition-transform duration-100 flex-1 py-1" href="#">
+<span class="material-symbols-outlined text-[20px]">psychology</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5 tracking-wider">新枝</span>
+</a>
+<!-- Tab 4: 口味 -->
+<a aria-label="口味" class="flex flex-col items-center justify-center text-secondary hover:text-primary active:scale-95 transition-transform duration-100 flex-1 py-1" href="#">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5 tracking-wider">口味</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a aria-label="设置" class="flex flex-col items-center justify-center text-secondary hover:text-primary active:scale-95 transition-transform duration-100 flex-1 py-1" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-label-sm font-label-sm uppercase mt-0.5 tracking-wider">设置</span>
+</a>
+</nav>
+</body></html>
