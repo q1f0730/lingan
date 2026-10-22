@@ -26,6 +26,8 @@ function ItemCardImpl({ item, onOpen, compact }: { item: Item; onOpen?: (i: Item
   return (
     <article
       className={`card card-${item.type}${compact ? ' compact' : ''}`}
+      data-item-id={item.id}
+      data-sample={item.sample ? '1' : undefined}
       onClick={() => onOpen?.(item)}
       role={onOpen ? 'button' : undefined}
       tabIndex={onOpen ? 0 : undefined}
@@ -38,7 +40,10 @@ function ItemCardImpl({ item, onOpen, compact }: { item: Item; onOpen?: (i: Item
     >
       {itemHasImage(item) && <CardImage item={item} />}
       <div className="card-meta">
-        <span className="type-badge">{TYPE_LABEL[item.type]}</span>
+        <span>
+          <span className="type-badge">{TYPE_LABEL[item.type]}</span>
+          {item.sample && <span className="tag sample-badge">示例</span>}
+        </span>
         <time className="card-when" dateTime={new Date(item.createdAt).toISOString()}>
           {formatWhen(item.createdAt)}
         </time>
@@ -54,7 +59,7 @@ function ItemCardImpl({ item, onOpen, compact }: { item: Item; onOpen?: (i: Item
           {item.year}
         </div>
       )}
-      {item.type === 'idea' && item.content && !compact && <p className="card-body">{item.content}</p>}
+      {(item.type === 'idea' || (item.type === 'image' && !itemHasImage(item))) && item.content && !compact && <p className="card-body">{item.content}</p>}
       {item.type === 'link' && item.url && <div className="card-url">{safeHost(item.url)}</div>}
       {item.why && !compact && <p className="card-why">{item.why}</p>}
       {item.tags.length > 0 && !compact && (
