@@ -1,23 +1,22 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AsciiLoader, SeedBurst } from '../components/AsciiDevelop';
+import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { GraftGrowing } from '../components/GraftGrowing';
 import { GraftTrail, IdeaCard } from '../components/IdeaCard';
-import { ItemCard } from '../components/ItemCard';
-import { PageTitle } from '../components/PageTitle';
 import { db } from '../lib/db';
 import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
 import { MIN_EVIDENCE } from '../lib/provenance';
 import { aiReady } from '../lib/settings';
 import { daySeed, mulberry32, pickItems } from '../lib/similarity';
 import { useApp } from '../lib/store';
-import type { Development, GraftBatch, Item } from '../lib/types';
+import { TYPE_LABEL, type Development, type GraftBatch, type Item } from '../lib/types';
+import { displayTitle, nn, shortDate } from '../lib/studio';
 
 const TASTE_KEY = 'lingan.taste.ai';
 
 /** 嫁接：把几穗相距很远的东西接在一起，一次长三根新枝。v0.12 起至少 3 穗，好让每根新枝都能点回 3 穗。 */
 export function Develop({ preset, clearPreset }: { preset: number[] | null; clearPreset: () => void }) {
-  const { settings, toast, openItem, go } = useApp();
+  const { settings, toast, openItem, go, desktop } = useApp();
   const items = useLiveQuery(() => db.items.toArray(), []);
   const nBranches = useLiveQuery(() => db.developments.count(), []);
   const [count, setCount] = useState<3 | 4 | 5>(3);
@@ -28,7 +27,6 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<GraftProgress | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const [burst, setBurst] = useState(0);
 
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
 
@@ -66,7 +64,14 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     }
   }, [items, byId, picked]);
 
-  if (!items) return <AsciiLoader />;
+  // 手机上嫁接区在已选列表下面：开始嫁接 / 长好了时把它带进视野
+  useEffect(() => {
+    if (desktop || (!busy && !result)) return;
+    const el = document.querySelector(result ? '.three-head' : '.graft-main');
+    el?.scrollIntoView({ block: 'start', behavior: document.documentElement.dataset.motion === 'off' ? 'auto' : 'smooth' });
+  }, [busy, result, desktop]);
+
+  if (!items) return <Loading />;
 
   function shuffle() {
     if (!items || items.length < MIN_EVIDENCE) return;
@@ -145,52 +150,91 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   }
 
   const shown = picked || null;
+  const again = () => shown && develop(shown);
 
   return (
-    <section className="view">
-      <PageTitle title="嫁接" whisper="Graft two far-apart things, see what grows" />
+    <section className="view develop">
+      <DisplayTitle title={busy ? '嫁接中' : '嫁接'} count={shown ? shown.length : undefined} sub={shown ? `已选 ${shown.length} 穗，一次长三根新枝。` : '选 3 到 5 穗，把相距很远的东西接在一起。'} />
 
       {items.length < MIN_EVIDENCE ? (
-        <div className="paper empty">
-          <h2>穗还不够</h2>
-          <p>至少要拾 {MIN_EVIDENCE} 穗，才能嫁接：每根新枝都要能说出它是从哪 {MIN_EVIDENCE} 穗长出来的。</p>
+        <div className="empty">
+          <h2 className="lead">穗还不够</h2>
+          <p className="meta-text">至少要拾 {MIN_EVIDENCE} 穗，才能嫁接：每根新枝都要能说出它是从哪 {MIN_EVIDENCE} 穗长出来的。</p>
           <button className="btn primary" onClick={() => go('library')}>
             去拾穗
           </button>
         </div>
       ) : (
-        <>
-          {!shown && daily && (
-            <div className="paper daily">
-              <div className="kicker">今日三穗 · {new Date().getMonth() + 1}月{new Date().getDate()}日</div>
-              <div className="pair">
-                {daily.map((it, i) => [
-                  i > 0 && (
-                    <span key={'x' + i} className="pair-x" aria-hidden>
-                      ×
-                    </span>
-                  ),
-                  <div key={it.id} className="pair-item">
-                    <ItemCard item={it} compact onOpen={openItem} />
-                  </div>,
-                ])}
-              </div>
-              <div className="actions">
-                <button
-                  className="btn primary"
-                  onClick={() => {
-                    setPicked(daily);
-                    develop(daily);
-                  }}
-                  disabled={busy}
-                >
-                  嫁接今日三穗
-                </button>
-              </div>
-            </div>
-          )}
+        <div className={`graft-layout${result || busy ? ' has-result' : ''}`}>
+          <div className="graft-side">
+            {!shown && daily && (
+              <section className="daily">
+                <div className="label">今日三穗 · {String(new Date().getMonth() + 1).padStart(2, '0')}/{String(new Date().getDate()).padStart(2, '0')}</div>
+                <PickTable items={daily} onOpen={openItem} />
+                <div className="actions">
+                  <button
+                    className="btn primary"
+                    onClick={() => {
+                      setPicked(daily);
+                      develop(daily);
+                    }}
+                    disabled={busy}
+                  >
+                    嫁接今日三穗
+                  </button>
+                </div>
+              </section>
+            )}
 
-          <div className="paper controls">
+            {shown && (
+              <section className="graft">
+                <div className="label">已选 ({shown.length}) · 最多 5</div>
+                <PickTable items={shown} onOpen={openItem} onSwap={busy ? undefined : replaceOne} />
+                <div className="graft-wrap">
+                  <button className="btn primary graft-btn" onClick={() => develop(shown)} disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}>
+                    {busy ? '正在嫁接…' : `嫁接所选 · 长三根`}
+                  </button>
+                </div>
+                {!aiReady(settings) && (
+                  <p className="hint meta-text">
+                    还没配置 AI，现在是离线嫁接：同样四步、同样三根，用八种变形法和斜策略给出结构提示。{' '}
+                    <button className="linklike" onClick={() => go('settings')}>
+                      去设置免费模型
+                    </button>
+                  </p>
+                )}
+              </section>
+            )}
+
+          </div>
+
+          <div className="graft-main">
+            {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} recheck={progress.recheck} onCancel={() => abortRef.current?.abort()} />}
+            {result && (
+              <>
+                <div className="three-head">
+                  <span className="label">一次三枝 · {result.run.source === 'ai' ? 'AI 嫁接' : '离线嫁接'}</span>
+                  <span className="three-sub meta-text">三根新枝，变形法各不相同，每根都能点回它的穗。挑一根，今天就动手。</span>
+                </div>
+                <div className="three">
+                  {result.run.branches.map((b, i) => (
+                    <IdeaCard key={result.ids[i]} animate idea={b} source={result.run.source} devId={result.ids[i]} index={i} hideCliches onAgain={again} />
+                  ))}
+                </div>
+                {result.run.branches[0]?.cliches.length > 0 && (
+                  <div className="cliches-row">
+                    <span className="label">剪掉的旧枝（三根都避开的套路）</span>
+                    <span className="cliche-list">
+                      {result.run.branches[0].cliches.map((c, i) => (
+                        <s key={i}>{c}</s>
+                      ))}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+            <section className="controls">
             <div className="ctrl">
               <span className="label">几穗</span>
               <div className="seg">
@@ -202,99 +246,64 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
               </div>
             </div>
             <label className="ctrl grow">
-              <span className="label">跳跃度 {Math.round(jump * 100)}%</span>
+              <span className="label">跳跃度</span>
               <input type="range" min={0} max={1} step={0.05} value={jump} onChange={(e) => setJump(parseFloat(e.target.value))} aria-label="跳跃度" />
-              <span className="range-ends">
+              <span className="range-ends meta-text">
                 <span>相近</span>
-                <span>八竿子打不着</span>
+                <span>远距</span>
               </span>
             </label>
             <label className="ctrl grow">
               <span className="label">往哪个方向长（可空）</span>
-              <input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="例如：一首歌的 MV / 毕业作品 / 一条文案" maxLength={80} />
+              <input className="line-input" value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="例如：一首歌的 MV / 毕业作品 / 一条文案" maxLength={80} />
             </label>
-            <button className="btn" onClick={shuffle}>
+            <button className="btn text strong shuffle" onClick={shuffle}>
               {shown ? '重新抽穗' : '抽几穗'}
             </button>
-          </div>
-
-          {shown && (
-            <div className="paper graft">
-              <div className="kicker">要接在一起的 {shown.length} 穗</div>
-              <div className="pair">
-                {shown.map((it, i) => [
-                  i > 0 && (
-                    <span key={'x' + i} className="pair-x" aria-hidden>
-                      ×
-                    </span>
-                  ),
-                  <div key={it.id} className="pair-item">
-                    <ItemCard item={it} compact onOpen={openItem} />
-                    <button className="swap" onClick={() => replaceOne(i)} disabled={busy}>
-                      ↻ 换一穗
-                    </button>
-                  </div>,
-                ])}
-              </div>
-              <div className="graft-wrap">
-                <button
-                  className="btn primary big graft-btn"
-                  onClick={() => {
-                    setBurst(Date.now());
-                    develop(shown);
-                  }}
-                  disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}
-                >
-                  {busy ? '正在嫁接…' : '嫁接 · 长三根'}
-                </button>
-                {burst > 0 && <SeedBurst key={burst} />}
-              </div>
-              {!aiReady(settings) && (
-                <p className="hint">
-                  还没配置 AI，现在是离线嫁接：同样四步、同样三根，用八种变形法和斜策略给出结构提示。
-                  <button className="link" onClick={() => go('settings')}>
-                    去设置免费模型
-                  </button>
-                </p>
-              )}
-            </div>
-          )}
-
-          {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} recheck={progress.recheck} onCancel={() => abortRef.current?.abort()} />}
-          {result && (
-            <>
-              <div className="three-head">
-                <span className="kicker">一次三枝 · {result.run.source === 'ai' ? 'AI 嫁接' : '离线嫁接'}</span>
-                <span className="three-sub">三根新枝，变形法各不相同，每根都能点回它的穗。挑一根，今天就动手。</span>
-              </div>
-              <div className="three">
-                {result.run.branches.map((b, i) => (
-                  <IdeaCard key={result.ids[i]} animate idea={b} source={result.run.source} devId={result.ids[i]} index={i} hideCliches />
-                ))}
-              </div>
-              {result.run.branches[0]?.cliches.length > 0 && (
-                <div className="paper cliches-row">
-                  <span className="label">剪掉的旧枝（三根都避开的套路）</span>
-                  <div className="tags">
-                    {result.run.branches[0].cliches.map((c, i) => (
-                      <s key={i} className="tag">
-                        {c}
-                      </s>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <GraftTrail batch={result.batch} names={result.names} />
-              <p className="after-note">
-                三根都留在新枝里{nBranches ? `（共 ${nBranches} 根）` : ''}。
-                <button className="link" onClick={() => go('branches')}>
-                  去看看
-                </button>
-              </p>
-            </>
-          )}
-        </>
+          </section>
+        </div>
+      )}
+      {result && <GraftTrail batch={result.batch} names={result.names} />}
+      {result && (
+        <p className="after-note meta-text">
+          三根都留在新枝里{nBranches ? `（共 ${nBranches} 根）` : ''}。{' '}
+          <button className="linklike" onClick={() => go('branches')}>
+            去看看
+          </button>
+        </p>
       )}
     </section>
+  );
+}
+
+/** 已选的穗：无线表格，细体序号 + 标题 + 类型 + 日期（+ 换一穗） */
+function PickTable({ items, onOpen, onSwap }: { items: Item[]; onOpen: (i: Item) => void; onSwap?: (i: number) => void }) {
+  return (
+    <div className="table pick-table">
+      <div className="thead" aria-hidden>
+        <span className="tc tc-n" />
+        <span className="tc tc-title">穗</span>
+        <span className="tc tc-type">类型</span>
+        <span className="tc tc-date">日期</span>
+      </div>
+      {items.map((it, i) => (
+        <div key={it.id} className="trow pair-item" data-item-id={it.id}>
+          <span className="tc tc-n numeral small">{nn(i)}</span>
+          <button className="tc tc-title linklike" onClick={() => onOpen(it)}>
+            <span className="card-title">{displayTitle(it)}</span>
+          </button>
+          <span className="tc tc-type">{TYPE_LABEL[it.type]}</span>
+          <span className="tc tc-date num">
+            {onSwap ? (
+              <button className="btn text faint swap" onClick={() => onSwap(i)}>
+                换一穗
+              </button>
+            ) : (
+              shortDate(it.createdAt)
+            )}
+          </span>
+        </div>
+      ))}
+    </div>
   );
 }
