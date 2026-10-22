@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>灵感暗房 // LINGAN</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400&amp;family=ZCOOL+KuaiLe&amp;family=Noto+Serif+SC:wght@600;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed-dim": "#ffb4a7",
+            "on-error-container": "#93000a",
+            "surface-bright": "#fef8f4",
+            "tertiary-fixed": "#ffdad4",
+            "on-secondary-fixed": "#1c1b1b",
+            "on-tertiary-fixed": "#400100",
+            "inverse-primary": "#ffb4a7",
+            "surface-variant": "#e7e1dd",
+            "on-background": "#1d1b19",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed-variant": "#920800",
+            "secondary-fixed-dim": "#c8c6c5",
+            "inverse-on-surface": "#f6f0ec",
+            "on-primary-container": "#fffbff",
+            "outline": "#936e68",
+            "primary": "#b90d00",
+            "primary-container": "#e81300",
+            "surface-tint": "#be0d00",
+            "surface-container-high": "#ede7e3",
+            "secondary-container": "#e5e2e1",
+            "primary-fixed": "#ffdad4",
+            "error-container": "#ffdad6",
+            "primary-fixed-dim": "#ffb4a7",
+            "background": "#fef8f4",
+            "on-surface": "#1d1b19",
+            "surface-container-highest": "#e7e1dd",
+            "surface-container": "#f3ede9",
+            "on-primary-fixed": "#400200",
+            "on-tertiary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "secondary-fixed": "#e5e2e1",
+            "surface-dim": "#dfd9d5",
+            "on-primary-fixed-variant": "#910800",
+            "outline-variant": "#e9bcb4",
+            "on-secondary-container": "#656464",
+            "secondary": "#5f5e5e",
+            "on-secondary-fixed-variant": "#474646",
+            "on-primary": "#ffffff",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "inverse-surface": "#32302e",
+            "tertiary": "#ba0d00",
+            "on-surface-variant": "#5e3f39",
+            "tertiary-container": "#df2c18",
+            "on-tertiary-container": "#fffbff",
+            "surface-container-low": "#f8f2ee",
+            "surface": "#fef8f4"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "gutter": "1rem",
+            "gutter-mobile": "0.75rem",
+            "margin": "1.25rem",
+            "margin-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "headline-lg-mobile": ["Domine", "serif"],
+            "headline-xl": ["Domine", "serif"],
+            "label-md": ["Space Mono", "monospace"],
+            "label-sm": ["Space Mono", "monospace"],
+            "body-sm": ["Space Mono", "monospace"],
+            "headline-xl-mobile": ["Domine", "serif"],
+            "label-lg": ["Space Mono", "monospace"],
+            "body-lg": ["Space Mono", "monospace"],
+            "headline-sm": ["Domine", "serif"],
+            "body-md": ["Space Mono", "monospace"],
+            "headline-md": ["Domine", "serif"],
+            "headline-lg": ["Domine", "serif"],
+            "noto-serif": ["Noto Serif SC", "serif"]
+          },
+          "fontSize": {
+            "headline-lg-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-xl": ["44px", { "lineHeight": "48px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+            "label-md": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-xl-mobile": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-lg": ["13px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-lg": ["32px", { "lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+    .masking-tape {
+      background: rgba(239, 232, 220, 0.88);
+      box-shadow: 0 1px 2px rgba(29, 27, 25, 0.15);
+      backdrop-filter: blur(1px);
+    }
+    .masking-tape-amber {
+      background: rgba(245, 220, 160, 0.75);
+      box-shadow: 0 1px 1px rgba(29, 27, 25, 0.2);
+    }
+    .halftone-dot {
+      background-image: radial-gradient(#1d1b19 1px, transparent 1px);
+      background-size: 6px 6px;
+    }
+    .halftone-dot-dense {
+      background-image: radial-gradient(#1d1b19 1.2px, transparent 1.2px);
+      background-size: 4px 4px;
+    }
+    .grain-overlay {
+      background-image: radial-gradient(rgba(29, 27, 25, 0.08) 1px, transparent 0);
+      background-size: 3px 3px;
+    }
+    .torn-edge {
+      clip-path: polygon(0% 0%, 100% 0%, 98.5% 97%, 95% 100%, 91% 97.5%, 86% 99.5%, 81% 96.5%, 75% 100%, 68% 97%, 62% 99.5%, 55% 96.5%, 48% 100%, 41% 97%, 35% 99.5%, 28% 96.5%, 21% 100%, 14% 97%, 7% 99%, 0% 97%);
+    }
+    .ransom-box {
+      box-shadow: 2px 2px 0px #1d1b19;
+    }
+    .stamp-rotate {
+      transform: rotate(-12deg);
+    }
+    .stamp-rotate-right {
+      transform: rotate(8deg);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased font-body-md selection:bg-primary selection:text-on-primary min-h-screen pb-28 grain-overlay">
+<!-- Mobile Screen Frame Constraint -->
+<div class="max-w-[390px] mx-auto min-h-screen relative flex flex-col bg-surface border-x-2 border-on-surface shadow-[4px_4px_0px_#1d1b19]">
+<!-- SHARED COMPONENT: TopAppBar (Strict JSON adherence) -->
+<header class="flex justify-between items-center w-full px-margin-mobile py-space-sm border-b-2 border-on-surface dark:border-on-surface bg-surface dark:bg-surface shadow-[2px_2px_0px_#1d1b19] sticky top-0 z-40">
+<div class="flex items-center gap-space-xs">
+<button aria-label="Menu" class="flex items-center justify-center p-1 border border-on-surface bg-surface-container-high hover:bg-surface-variant active:translate-x-0.5 active:translate-y-0.5 transition-transform duration-75 shadow-[1px_1px_0px_#1d1b19]">
+<span class="material-symbols-outlined text-[20px]" data-icon="menu">menu</span>
+</button>
+<div class="flex flex-col">
+<div class="text-headline-sm font-headline-sm uppercase tracking-tight text-on-surface dark:text-on-surface flex items-center gap-1">
+<span class="bg-on-surface text-surface px-1 text-[13px] font-label-md">灵感暗房</span>
+<span class="text-[12px] font-label-md tracking-wider">// LINGAN</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Archivist ID Stamp -->
+<div class="border border-primary px-1.5 py-0.5 stamp-rotate bg-surface-container-lowest shadow-[1px_1px_0px_#b90d00]">
+<span class="text-label-sm font-label-sm text-primary uppercase font-bold tracking-tighter">BY: Q1f730</span>
+</div>
+<button aria-label="Add Inspiration" class="flex items-center justify-center p-1 border-2 border-on-surface bg-primary text-on-primary hover:bg-surface-variant active:translate-x-0.5 active:translate-y-0.5 transition-transform duration-75 shadow-[2px_2px_0px_#1d1b19]">
+<span class="material-symbols-outlined text-[20px]" data-icon="add_box">add_box</span>
+</button>
+</div>
+</header>
+<!-- ZINE MASTHEAD OVERLAY & SUBVERT BANNER -->
+<section class="px-margin-mobile pt-3 pb-2 border-b-2 border-dashed border-on-surface bg-surface-container-low relative overflow-hidden">
+<!-- Halftone accent strip -->
+<div class="absolute right-0 top-0 w-24 h-full halftone-dot opacity-20 pointer-events-none"></div>
+<!-- Cut-out Ransom Note Headline -->
+<div class="flex flex-wrap items-center gap-1.5 mb-2.5">
+<span class="bg-on-surface text-surface-container-lowest font-headline-sm text-headline-sm px-2 py-0.5 transform -rotate-2 ransom-box font-noto-serif">灵感</span>
+<span class="bg-primary text-on-primary font-label-lg text-label-lg px-2 py-1 transform rotate-1 shadow-[2px_2px_0px_#1d1b19] font-bold">DARKROOM</span>
+<span class="border-2 border-on-surface bg-surface-container-lowest text-on-surface font-headline-sm text-headline-sm px-1.5 py-0.5 transform -rotate-1 font-bold">胶片</span>
+<span class="text-label-sm font-label-sm text-secondary tracking-widest">[VOL. 09]</span>
+</div>
+<div class="flex items-center justify-between border-t border-on-surface/40 pt-1.5">
+<span class="text-label-sm font-label-sm text-on-surface tracking-wider">胶卷槽位: 06 / 36</span>
+<span class="text-label-sm font-label-sm bg-surface-container-high px-1 border border-on-surface">ISO-3200 PUNK PUSH</span>
+</div>
+</section>
+<!-- ACTION AREA: QUICK CAPTURE & COLLIDE IDEAS (显影) -->
+<div class="px-margin-mobile py-space-sm space-y-space-sm bg-surface-variant/40 border-b-2 border-on-surface relative">
+<!-- Quick Capture Field: Ripped Paper Bar with Tape -->
+<div class="relative pt-2">
+<!-- Masking tape on top -->
+<div class="absolute top-0 left-10 w-20 h-4 masking-tape border border-on-surface/30 transform -rotate-1 z-10"></div>
+<div class="flex items-stretch bg-surface-container-lowest border-2 border-on-surface shadow-[3px_3px_0px_#1d1b19]">
+<div class="bg-on-surface text-surface px-2.5 flex items-center justify-center font-label-md text-label-md border-r-2 border-on-surface">
+<span>&gt;_</span>
+</div>
+<input class="flex-1 bg-transparent px-space-sm py-2 font-body-sm text-body-sm text-on-surface placeholder:text-secondary focus:outline-none focus:bg-surface-bright" placeholder="记一笔… 撕下灵感碎片" type="text"/>
+<button aria-label="Confirm capture" class="bg-primary hover:bg-primary-container text-on-primary px-3 border-l-2 border-on-surface flex items-center justify-center active:translate-x-0.5 active:translate-y-0.5 transition-transform font-bold shadow-inner">
+<span class="text-label-lg font-label-lg">+ 贴上</span>
+</button>
+</div>
+</div>
+<!-- Urgent Fluorescent Red Overprinted '显影' Trigger -->
+<button class="w-full relative overflow-hidden bg-primary text-on-primary border-2 border-on-surface py-2.5 px-space-md shadow-[4px_4px_0px_#1d1b19] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0px_#1d1b19] transition-all flex items-center justify-between group">
+<!-- Halftone texture overlay in button -->
+<div class="absolute inset-0 halftone-dot opacity-25 mix-blend-multiply pointer-events-none"></div>
+<div class="flex items-center gap-2 relative z-10">
+<span class="border border-on-primary px-1 text-label-sm font-label-sm tracking-widest bg-on-surface/20">HOT ACTION</span>
+<span class="font-headline-sm text-headline-sm tracking-tight font-noto-serif">[ 显影 · 对撞灵感 ]</span>
+</div>
+<div class="flex items-center gap-1 relative z-10 bg-on-surface text-surface px-2 py-0.5 font-label-sm text-label-sm">
+<span>COLLIDE</span>
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+</div>
+</button>
+</div>
+<!-- SCRAP STREAM: The Punk Corkboard / Collage Bed -->
+<main class="flex-1 px-margin-mobile py-space-md space-y-5 relative">
+<!-- Ambient background scrap markers -->
+<div class="text-[9px] font-label-sm text-secondary/50 tracking-widest uppercase mb-1 flex justify-between items-center border-b border-on-surface/30 pb-0.5">
+<span>ARCHIVE_STREAM // CUT_UPS</span>
+<span>INDEX 01-06</span>
+</div>
+<!-- ITEM 1: Photo Scrap (Cathedral Spire) -->
+<article class="relative bg-surface-container-lowest border-2 border-on-surface p-2 shadow-[4px_4px_0px_#1d1b19] transform -rotate-1.5 transition-transform hover:rotate-0 hover:z-20">
+<!-- Top Tape piece -->
+<div class="absolute -top-2.5 right-6 w-16 h-5 masking-tape border border-on-surface/30 transform rotate-2 z-20"></div>
+<!-- Polaroid/Photocopy Bordered Image Container -->
+<div class="border border-on-surface bg-surface-container-high p-1 relative">
+<div class="relative overflow-hidden aspect-[16/10] border border-on-surface/50">
+<img class="w-full h-full object-cover grayscale contrast-150 brightness-90 filter" data-alt="A gritty high-contrast black and white xerox halftone photograph of a towering gothic cathedral spire piercing intense, stormy rainy clouds. Heavy mechanical film grain, stark blown-out highlights, and deep carbon ink photocopier blacks capture an analog underground punk zine aesthetic. Ambient moody overcast light emphasizes sharp architectural stone carvings." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDnhV57_3_W59hHJkcOja4CRH7WJVA3_wYjaIBlwwdPQaoSW9G7iMN72oYjB3ltSWIOPAgyRvoOTLJpF9y6hbBHSROUfTz6bw_dgBfccqGP9ueWMjqZs_vPcX1zJNLMKWGZuEQU-Cje548f11KdAuzcwSZzU-oDzmF7aFyPFoFBgS103cdtR3Px4wL9Qn2kxcvOkAJ_d32VUzHaZvM05OVH0sobjiry29JEe6vOD8dqGXAIn4LQM1ZyCLKBvKDjWQM6Z2lS95AyGA"/>
+<!-- Halftone dot layer simulation -->
+<div class="absolute inset-0 halftone-dot opacity-35 mix-blend-screen pointer-events-none"></div>
+<!-- Stamp overlay -->
+<div class="absolute bottom-1 right-1 bg-surface-container-lowest/90 border border-on-surface px-1 py-0.2 text-[8px] font-label-sm text-on-surface tracking-tighter">
+              HALVE_TONE // KÖLN
+            </div>
+</div>
+</div>
+<div class="mt-2 flex items-start justify-between">
+<div>
+<p class="font-headline-sm text-[15px] leading-tight text-on-surface font-noto-serif">雨天科隆大教堂尖顶阴影</p>
+<p class="text-body-sm text-[11px] text-secondary mt-0.5 font-label-sm">&gt; 尖刺穿透水汽，阴翳黑度极佳。</p>
+</div>
+<span class="border border-on-surface bg-surface-container-high px-1.5 py-0.5 text-label-sm font-label-sm whitespace-nowrap text-on-surface">今天 22:18</span>
+</div>
+</article>
+<!-- ITEM 2: Film Scrap (In the Mood for Love / Wong Kar-wai) -->
+<article class="relative bg-surface-container border-2 border-on-surface p-2.5 shadow-[4px_4px_0px_#1d1b19] transform rotate-1.5 transition-transform hover:rotate-0 hover:z-20">
+<!-- Masking tape amber left -->
+<div class="absolute -top-3 left-4 w-14 h-4.5 masking-tape-amber border border-on-surface/30 transform -rotate-3 z-20"></div>
+<div class="flex items-center justify-between border-b-2 border-dashed border-on-surface pb-1.5 mb-2">
+<span class="bg-primary text-on-primary px-1.5 py-0.5 text-label-sm font-label-sm font-bold tracking-tight">FILM // 王家卫</span>
+<span class="text-label-sm font-label-sm text-primary font-bold border border-primary px-1 stamp-rotate-right">REC//10.19</span>
+</div>
+<div class="grid grid-cols-5 gap-2 items-center">
+<div class="col-span-2 relative border border-on-surface overflow-hidden aspect-[4/3] bg-on-surface">
+<img class="w-full h-full object-cover filter contrast-125 saturate-150" data-alt="A vintage cinematic still from In the Mood for Love treated with vivid green and red risograph halftone color bleed. The scene captures two figures standing in a narrow, rain-slicked 1960s Hong Kong alley beneath the dim glow of street lamps. The image exudes rich analog texture, high contrast photocopy shadows, and poetic melancholy consistent with punk fanzine printing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHm0UEWlU309pg5RFO3Rz-nFbUOYgPT7vEdQTvk5vkaZKF-BvC-WsBxOZWeUrzwHfWh1aFFrLrvauxACogn3fmkSgessnVNgnndCpRnnZg4SX6d7rrXiaBAQwpWTIWBFfd6n86O4Ajjnf_O3zf54wuNJffXNCvToPXoG9Ed2uimh-P2y03Ysla0UFKpM0veyGyCO1Xa3pdnwmjLTQDa1Sj-LCo4AKbm3f7UjqmaBLq3gFzr5oEx-3-6_5f1S5zpEWemg6d9mao6k0"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-multiply pointer-events-none"></div>
+</div>
+<div class="col-span-3">
+<p class="text-label-md font-label-md font-bold text-on-surface leading-tight">《花样年华》(2000)</p>
+<blockquote class="mt-1 font-headline-sm text-[13px] leading-snug text-on-surface font-noto-serif border-l-2 border-primary pl-1.5 italic">
+              “如果有多一张船票，你会不会同我一起走？”
+            </blockquote>
+</div>
+</div>
+<div class="mt-2 text-right">
+<span class="text-label-sm font-label-sm text-secondary bg-surface-container-highest px-1 py-0.5 border border-on-surface/30">FRAME #0942 // 色彩位移</span>
+</div>
+</article>
+<!-- ITEM 3: Song Scrap (Radiohead Vinyl / Tape Snippet) -->
+<article class="relative bg-surface-container-highest border-2 border-on-surface p-2.5 shadow-[4px_4px_0px_#1d1b19] transform -rotate-1 transition-transform hover:rotate-0 hover:z-20">
+<!-- Corner tape scrap -->
+<div class="absolute -top-2 right-12 w-12 h-4 masking-tape border border-on-surface/30 transform rotate-1 z-20"></div>
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="lens_blur">lens_blur</span>
+<span class="text-label-sm font-label-sm uppercase font-bold text-on-surface">AUDIO_CASSETTE</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface font-mono">10/16 01:40</span>
+</div>
+<div class="bg-surface-container-lowest border-2 border-on-surface p-2 flex items-center gap-2.5">
+<!-- Raw cassette icon or vinyl groove diagram -->
+<div class="w-10 h-10 border-2 border-on-surface bg-on-surface flex flex-col items-center justify-center text-surface shrink-0">
+<div class="w-6 h-3 border border-surface flex justify-between items-center px-1">
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span>
+</div>
+<span class="text-[7px] font-label-sm tracking-tighter mt-0.5 text-primary">SIDE A</span>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="font-label-md text-label-md font-bold truncate text-on-surface">Subterranean Homesick Alien</p>
+<p class="text-body-sm text-[11px] text-secondary font-mono truncate">Radiohead — OK Computer</p>
+<!-- Needle / Waveform ASCII Punk representation -->
+<p class="text-[8px] font-mono tracking-tighter text-primary mt-0.5 select-none">|||ı|ı||ı|ı||||ı||ı|ıı||ı|| [4:27]</p>
+</div>
+</div>
+<div class="mt-2 flex items-center justify-between text-label-sm font-label-sm text-secondary">
+<span class="border border-on-surface/40 px-1 bg-surface-container-low">FEEDBACK // ECHO PEDAL</span>
+<span class="text-primary font-bold">RE-PLAY</span>
+</div>
+</article>
+<!-- ITEM 4: Torn Parchment Quote Note -->
+<article class="relative bg-[#f5ecdc] border-2 border-on-surface p-3 shadow-[4px_4px_0px_#1d1b19] torn-edge transform rotate-2 transition-transform hover:rotate-0 hover:z-20">
+<!-- Translucent scotch tape centered -->
+<div class="absolute -top-2.5 left-1/2 -translate-x-1/2 w-20 h-5 masking-tape border border-on-surface/30 transform -rotate-1 z-20"></div>
+<div class="flex justify-between items-center mb-1">
+<span class="text-primary font-label-sm text-[18px] font-bold leading-none">“</span>
+<div class="border border-primary px-1 py-0.2 stamp-rotate text-label-sm font-label-sm text-primary font-bold">
+            STAMP//10/12
+          </div>
+</div>
+<p class="font-headline-sm text-[15px] leading-relaxed text-on-surface font-noto-serif px-1">
+          我们在暗处洗印回忆，直到它在红光下显影清晰。
+        </p>
+<div class="mt-3 pt-1 border-t border-dashed border-on-surface/40 flex justify-between items-end pb-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant font-bold">— 罗兰·巴特《明室》</span>
+<span class="text-[9px] font-label-sm text-secondary">暗房手记 · P.48</span>
+</div>
+</article>
+<!-- ITEM 5: Idea Scrap (Yellowish Lined Notebook with Red Circle) -->
+<article class="relative bg-[#fcf9e8] border-2 border-on-surface p-3 shadow-[4px_4px_0px_#1d1b19] transform -rotate-1.5 transition-transform hover:rotate-0 hover:z-20">
+<!-- Top Tape piece amber -->
+<div class="absolute -top-3 left-8 w-16 h-4.5 masking-tape-amber border border-on-surface/30 transform rotate-2 z-20"></div>
+<div class="flex justify-between items-center mb-1">
+<span class="bg-on-surface text-surface px-1 text-label-sm font-label-sm">STORYBOARD // 分镜</span>
+<span class="text-label-sm font-label-sm text-on-surface font-bold">昨天 19:30</span>
+</div>
+<!-- Notebook Lined Pattern simulation -->
+<div class="border border-on-surface/40 p-2 bg-surface-container-lowest/80 relative space-y-1">
+<!-- Circled handwritten-feel annotation -->
+<div class="relative">
+<div class="border-2 border-primary border-dashed p-1 rounded-sm bg-primary/5">
+<p class="font-label-md text-label-md text-primary font-bold leading-tight">
+                ● 雨夜霓虹招牌与湿沥青反光的短片分镜构想
+              </p>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-1 pt-1">
+<div class="h-10 border border-on-surface bg-surface-container-high flex items-center justify-center text-[9px] font-label-sm text-secondary">
+              [CUT 1: 水洼]
+            </div>
+<div class="h-10 border border-on-surface bg-surface-container-high flex items-center justify-center text-[9px] font-label-sm text-secondary">
+              [CUT 2: 招牌闪烁]
+            </div>
+<div class="h-10 border border-on-surface bg-primary/20 flex items-center justify-center text-[9px] font-label-sm text-primary font-bold">
+              [CUT 3: 脚步]
+            </div>
+</div>
+</div>
+<div class="mt-2 flex justify-between items-center text-label-sm font-label-sm text-secondary">
+<span>灵感状态: [待扩展]</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface">draw</span>
+</div>
+</article>
+<!-- ITEM 6: Link Card (Xeroxed Web Ticket / Perforated Clipping) -->
+<article class="relative bg-surface-container-low border-2 border-on-surface shadow-[4px_4px_0px_#1d1b19] transform rotate-1 transition-transform hover:rotate-0 hover:z-20">
+<!-- Masking tape on top edge -->
+<div class="absolute -top-2.5 right-10 w-14 h-4 masking-tape border border-on-surface/30 transform -rotate-2 z-20"></div>
+<div class="p-2.5">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1">
+<span class="bg-primary text-on-primary text-[9px] font-label-sm px-1 py-0.2 font-bold">LINK · ARCHIVE</span>
+<span class="text-label-sm font-label-sm text-on-surface font-bold">FILM SOUND JOURNAL</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary font-mono">10/08</span>
+</div>
+<div class="mt-2 bg-surface-container-lowest border border-on-surface p-2">
+<p class="font-label-md text-label-md font-bold text-on-surface truncate">
+              HTTPS://MONO-SOUND-ARCHIVE.ORG/TAKE-82
+            </p>
+<p class="text-body-sm text-[11px] text-secondary mt-0.5 line-clamp-1">
+              独立电影低频声效制造实验报告与模拟混音带。
+            </p>
+</div>
+</div>
+<!-- Perforated Tear Edge and Barcode Footer -->
+<div class="border-t-2 border-dashed border-on-surface bg-surface-container-high p-2 flex items-center justify-between">
+<!-- ASCII Barcode -->
+<div class="flex items-center gap-0.5 select-none font-mono text-[12px] tracking-tighter text-on-surface">
+<span>|||||</span>
+<span class="text-primary">||</span>
+<span>||||</span>
+<span>|||</span>
+<span class="text-primary">||||</span>
+<span>||</span>
+<span class="text-[9px] ml-1 font-label-sm">#904128</span>
+</div>
+<button class="border border-on-surface bg-surface text-on-surface px-1.5 py-0.5 text-label-sm font-label-sm hover:bg-on-surface hover:text-surface flex items-center gap-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-transform">
+<span>打开外链</span>
+<span class="material-symbols-outlined text-[12px]">open_in_new</span>
+</button>
+</div>
+</article>
+</main>
+<!-- FOOTER PUNK REGISTRATION MARKERS -->
+<div class="px-margin-mobile py-2 flex justify-between items-center border-t-2 border-dashed border-on-surface text-[9px] font-label-sm text-secondary bg-surface-container-low">
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full border border-on-surface flex items-center justify-center">
+<span class="w-1 h-0.5 bg-on-surface"></span>
+</span>
+<span>REG_MARK // C-0 M-100 Y-100 K-90</span>
+</div>
+<span>ARCHIVE ID: Q1f730</span>
+</div>
+<!-- SHARED COMPONENT: BottomNavBar (Strict JSON adherence & Active State logic) -->
+<!-- Intent analysis: Primary page is LIBRARY HOME SCREEN ('灵感库'). 
+         Active item: '灵感库' (destination 0), applying style_active_navigation.
+         Remaining items: apply style_inactive_navigation. -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs bg-surface dark:bg-surface border-t-2 border-on-surface dark:border-on-surface shadow-[0px_-2px_0px_#1d1b19] max-w-[390px] mx-auto right-0">
+<!-- Tab 1: 灵感库 (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary border border-on-surface px-space-sm py-1 shadow-[2px_2px_0px_#1d1b19] active:translate-x-0.5 active:translate-y-0.5 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="folder_open">folder_open</span>
+<span class="text-label-sm font-label-sm font-bold tracking-tight">灵感库</span>
+</a>
+<!-- Tab 2: 显影 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-on-surface px-space-sm py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-high active:translate-x-0.5 active:translate-y-0.5 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="lens_blur">lens_blur</span>
+<span class="text-label-sm font-label-sm">显影</span>
+</a>
+<!-- Tab 3: 画像 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-on-surface px-space-sm py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-high active:translate-x-0.5 active:translate-y-0.5 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="face">face</span>
+<span class="text-label-sm font-label-sm">画像</span>
+</a>
+<!-- Tab 4: 设置 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-on-surface px-space-sm py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-high active:translate-x-0.5 active:translate-y-0.5 transition-transform duration-75" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm">设置</span>
+</a>
+</nav>
+</div>
+</body></html>
