@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>拾穗 · Glean</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Plus Jakarta Sans & Noto Sans SC -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;family=Noto+Serif+SC:wght@300;400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "outline-variant": "#bdc8ce",
+            "surface-container-low": "#eff4ff",
+            "surface-container-high": "#dce9ff",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-container": "#f5fff6",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#6cd3f7",
+            "inverse-primary": "#6cd3f7",
+            "on-surface-variant": "#3e484d",
+            "on-secondary-fixed": "#07006c",
+            "on-background": "#0b1c30",
+            "inverse-surface": "#213145",
+            "secondary": "#4648d4",
+            "on-primary-fixed": "#001f28",
+            "error-container": "#ffdad6",
+            "surface-container": "#e5eeff",
+            "tertiary-fixed-dim": "#4edea3",
+            "tertiary": "#006947",
+            "secondary-fixed": "#e1e0ff",
+            "on-tertiary-fixed": "#002113",
+            "primary-fixed": "#b7eaff",
+            "on-primary-fixed-variant": "#004e61",
+            "on-error": "#ffffff",
+            "surface-container-highest": "#d3e4fe",
+            "on-secondary-container": "#fffbff",
+            "on-surface": "#0b1c30",
+            "surface-bright": "#f8f9ff",
+            "tertiary-fixed": "#6ffbbe",
+            "primary": "#00647c",
+            "tertiary-container": "#00855b",
+            "surface-tint": "#006780",
+            "surface-variant": "#d3e4fe",
+            "primary-container": "#007f9d",
+            "outline": "#6e797e",
+            "on-tertiary-fixed-variant": "#005236",
+            "inverse-on-surface": "#eaf1ff",
+            "on-primary-container": "#fafdff",
+            "background": "#f8f9ff",
+            "surface": "#f8f9ff",
+            "secondary-fixed-dim": "#c0c1ff",
+            "on-secondary": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-dim": "#cbdbf5",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-fixed-variant": "#2f2ebe",
+            "error": "#ba1a1a",
+            "secondary-container": "#6063ee"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1rem",
+            "3xl": "1.5rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "gutter": "1.5rem",
+            "margin": "3rem",
+            "margin-mobile": "1.25rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "gutter-mobile": "1rem",
+            "space-xl": "2.5rem"
+          },
+          fontFamily: {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "serif-poetic": ["Noto Serif SC", "serif"]
+          },
+          fontSize: {
+            "headline-lg": ["2rem", { lineHeight: "2.5rem", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "label-md": ["0.875rem", { lineHeight: "1.25rem", letterSpacing: "0.01em", fontWeight: "600" }],
+            "body-sm": ["0.8125rem", { lineHeight: "1.25rem", letterSpacing: "0.01em", fontWeight: "400" }],
+            "body-md": ["0.9375rem", { lineHeight: "1.5rem", letterSpacing: "0em", fontWeight: "400" }],
+            "headline-md": ["1.25rem", { lineHeight: "1.75rem", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "display-lg-mobile": ["2.25rem", { lineHeight: "2.75rem", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-lg-mobile": ["1.5rem", { lineHeight: "2rem", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-lg": ["1.125rem", { lineHeight: "1.75rem", letterSpacing: "-0.005em", fontWeight: "400" }],
+            "display-lg": ["3.5rem", { lineHeight: "4.25rem", letterSpacing: "-0.03em", fontWeight: "700" }],
+            "label-sm": ["0.75rem", { lineHeight: "1rem", letterSpacing: "0.02em", fontWeight: "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom Neo-Skeuomorphic Glass and Optics */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 1px 0 rgba(255, 255, 255, 0.25),
+        0 8px 28px -4px rgba(70, 72, 212, 0.05),
+        0 4px 12px -2px rgba(0, 100, 124, 0.04);
+    }
+
+    .glass-input-dock {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 1),
+        inset 0 -1px 1px 0 rgba(255, 255, 255, 0.3),
+        0 12px 32px -4px rgba(99, 102, 241, 0.1),
+        0 4px 12px -2px rgba(0, 100, 124, 0.06);
+    }
+
+    .glass-pill-graft {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(230, 246, 255, 0.85) 50%, rgba(235, 237, 255, 0.9) 100%);
+      backdrop-filter: blur(24px) saturate(210%);
+      -webkit-backdrop-filter: blur(24px) saturate(210%);
+      border: 1px solid rgba(255, 255, 255, 0.98);
+      box-shadow: 
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 1),
+        inset 0 -1px 1px 0 rgba(70, 72, 212, 0.15),
+        0 10px 24px -2px rgba(0, 100, 124, 0.18),
+        0 4px 12px rgba(70, 72, 212, 0.15);
+    }
+
+    /* Ambient Aurora Backdrop */
+    .aurora-bg {
+      background: 
+        radial-gradient(circle at 10% 15%, rgba(183, 234, 255, 0.55) 0%, transparent 45%),
+        radial-gradient(circle at 90% 25%, rgba(225, 224, 255, 0.5) 0%, transparent 50%),
+        radial-gradient(circle at 50% 65%, rgba(255, 240, 235, 0.6) 0%, transparent 55%),
+        radial-gradient(circle at 85% 85%, rgba(111, 251, 190, 0.22) 0%, transparent 40%),
+        linear-gradient(180deg, #f8f9ff 0%, #f0f4ff 50%, #eff5fb 100%);
+    }
+
+    /* Specular Glow Tag */
+    .glass-tag {
+      background: rgba(255, 255, 255, 0.65);
+      border: 0.5px solid rgba(255, 255, 255, 0.9);
+      box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.8);
+    }
+
+    /* Custom Hide Scrollbar */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased overflow-hidden flex justify-center items-center h-full select-none">
+<!-- iPhone 13/14 Frame: 390x844 strict portrait -->
+<main class="w-[390px] h-[844px] relative flex flex-col overflow-hidden aurora-bg shadow-2xl">
+<!-- Top Status Bar & Header Navigation (TopAppBar Shared Component Anchor) -->
+<header class="docked full-width top-0 sticky z-40 bg-surface/80 backdrop-blur-xl border-b border-surface-container-highest/60 shadow-sm shadow-secondary/5 px-margin-mobile pt-3 pb-space-sm flex justify-between items-center transition-colors">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-fixed to-secondary-fixed flex items-center justify-center shadow-inner border border-white/80">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="grain">grain</span>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-on-surface tracking-tight">拾穗 · Glean</h1>
+</div>
+</div>
+<!-- Trailing Action: @Q1f730 Handle Badge -->
+<div class="flex items-center space-x-1.5">
+<div class="flex items-center space-x-1 px-2.5 py-1 rounded-full glass-tag text-primary font-label-md text-label-sm active:scale-95 transition-transform">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span class="tracking-tight text-on-surface-variant font-medium">@Q1f730</span>
+</div>
+<button class="w-7 h-7 rounded-full flex items-center justify-center hover:bg-surface-container-high/60 active:scale-95 transition-transform text-outline">
+<span class="material-symbols-outlined text-[19px]" data-icon="auto_awesome">auto_awesome</span>
+</button>
+</div>
+</header>
+<!-- Quick-Capture Floating Frosted Glass Dock (Search / Input Component) -->
+<section class="px-margin-mobile pt-2.5 pb-1 z-30">
+<div class="glass-input-dock rounded-2xl px-3.5 py-2.5 flex items-center justify-between shadow-sm transition-all duration-200">
+<div class="flex items-center space-x-2.5 flex-1">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="add_circle">add_circle</span>
+<input class="bg-transparent border-0 p-0 text-body-md font-body-md text-on-surface placeholder:text-outline-variant focus:ring-0 w-full cursor-pointer" placeholder="随手拾一穗…" readonly="" type="text"/>
+</div>
+<div class="flex items-center space-x-1.5 pl-2 border-l border-white/80">
+<button class="w-7 h-7 rounded-xl flex items-center justify-center hover:bg-surface-container/50 active:scale-90 transition-transform text-primary">
+<span class="material-symbols-outlined text-[19px]" data-icon="mic">mic</span>
+</button>
+<button class="w-7 h-7 rounded-xl flex items-center justify-center hover:bg-surface-container/50 active:scale-90 transition-transform text-outline">
+<span class="material-symbols-outlined text-[19px]" data-icon="center_focus_weak">center_focus_weak</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Main Scrollable Canvas: The 6 穗 items in Bento / Asymmetric Masonry Flow -->
+<div class="flex-1 overflow-y-auto no-scrollbar px-margin-mobile pt-2 pb-24 space-y-3">
+<!-- ITEM 1: PHOTO Item (Full Width Showcase Card) -->
+<article class="glass-card rounded-2xl p-3 relative group transition-all duration-200 active:scale-[0.99]">
+<div class="relative w-full h-44 rounded-xl overflow-hidden mb-2.5 shadow-inner">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida/AEtjO1UbVJfn8Nrd_xcfFL5vl-qYkYmDLBqv-cDjRhB21nGelhuXdOf0v-pmoh3zEJefh0NvKJvGLe_PQG2mfcVJeCwUTEeYXNCqk8DZH8UIuVCY6QZ38UlEIeupGFjUBi4yI82uh4iROgq25OO05OYqPTQp-bAXOmf2uN7zawvGwNhMNccK6oSLx11EFgkRbmeNJKTjgVqve5NrfBUQGTb6zWK36jCepKR0GCm3KjLRhcRjLGIe3EEp037VJI4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+<!-- Top Badges inside Photo -->
+<div class="absolute top-2.5 left-2.5 flex items-center space-x-1.5">
+<span class="glass-tag px-2 py-0.5 rounded-full text-on-surface font-label-sm text-[11px] backdrop-blur-md">摄影</span>
+</div>
+<div class="absolute top-2.5 right-2.5">
+<button class="w-6 h-6 rounded-full glass-tag flex items-center justify-center backdrop-blur-md text-on-surface/90">
+<span class="material-symbols-outlined text-[14px]" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<!-- Bottom Inside-Photo Caption -->
+<div class="absolute bottom-2 left-3 right-3 flex justify-between items-end text-white">
+<p class="font-headline-md text-[15px] font-semibold tracking-wide drop-shadow-sm">雨后的梧桐街</p>
+<span class="text-[11px] font-body-sm opacity-90 tracking-tight">今天 09:12</span>
+</div>
+</div>
+<div class="flex items-center justify-between px-1 text-on-surface-variant">
+<div class="flex items-center space-x-1 text-label-sm text-[12px]">
+<span class="material-symbols-outlined text-primary text-[15px]" data-icon="location_on">location_on</span>
+<span>淮海中路 · 光影漫射</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-outline hover:text-primary transition-colors" data-icon="bookmark">bookmark</span>
+<span class="material-symbols-outlined text-[16px] text-outline hover:text-secondary transition-colors" data-icon="alt_route">alt_route</span>
+</div>
+</div>
+</article>
+<!-- 2-Column Asymmetric Bento Grid (Items 2 & 3) -->
+<div class="grid grid-cols-2 gap-3">
+<!-- ITEM 2: FILM item (Portrait Cinema Specimen) -->
+<article class="glass-card rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 active:scale-[0.98]">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="glass-tag px-2 py-0.5 rounded-full text-secondary font-label-sm text-[11px] flex items-center space-x-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="movie">movie</span>
+<span>电影</span>
+</span>
+<span class="text-[11px] text-outline font-body-sm">昨天 23:40</span>
+</div>
+<!-- Sleek Glass Film Reel Accent Badge -->
+<div class="w-full h-14 rounded-xl bg-gradient-to-br from-secondary-fixed/40 to-surface-container-high/60 border border-white/60 p-2 flex items-center justify-center relative overflow-hidden mb-2.5">
+<div class="absolute -right-3 -top-3 w-12 h-12 bg-secondary/10 rounded-full blur-md"></div>
+<div class="flex items-center space-x-1.5 opacity-80">
+<span class="material-symbols-outlined text-secondary text-[22px]" data-icon="videocam">videocam</span>
+<div class="h-3.5 w-0.5 bg-outline-variant/60"></div>
+<div class="flex flex-col text-[9px] font-mono leading-none text-on-surface-variant">
+<span>35MM</span>
+<span>CINE</span>
+</div>
+</div>
+</div>
+<h3 class="font-headline-md text-[14px] font-semibold text-on-surface leading-snug line-clamp-2">
+              燃烧女子的肖像
+            </h3>
+<p class="text-body-sm text-[12px] text-outline mt-1">2019 · 瑟琳·席安玛</p>
+</div>
+<div class="mt-3 pt-2 border-t border-surface-container-highest/60 flex items-center justify-between text-outline">
+<span class="text-[11px] text-on-surface-variant/80 font-medium">色彩与凝视</span>
+<span class="material-symbols-outlined text-[15px]" data-icon="north_east">north_east</span>
+</div>
+</article>
+<!-- ITEM 3: SONG item (With Delicate Wave Play Preview Indicator) -->
+<article class="glass-card rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 active:scale-[0.98]">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="glass-tag px-2 py-0.5 rounded-full text-primary font-label-sm text-[11px] flex items-center space-x-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="music_note">music_note</span>
+<span>音乐</span>
+</span>
+<span class="text-[11px] text-outline font-body-sm">昨天 21:05</span>
+</div>
+<!-- Waveform & Play Component -->
+<div class="w-full h-14 rounded-xl bg-gradient-to-tr from-primary-fixed/40 to-surface-container-lowest/80 border border-white/80 p-2 flex items-center justify-between px-2.5 mb-2.5">
+<div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[15px] ml-0.5" data-icon="play_arrow">play_arrow</span>
+</div>
+<!-- Mini Audio Wave bars -->
+<div class="flex items-end space-x-0.5 h-5">
+<span class="w-1 bg-primary/40 rounded-full h-2"></span>
+<span class="w-1 bg-primary/70 rounded-full h-4"></span>
+<span class="w-1 bg-primary rounded-full h-5 animate-pulse"></span>
+<span class="w-1 bg-primary/80 rounded-full h-3"></span>
+<span class="w-1 bg-primary/50 rounded-full h-4"></span>
+<span class="w-1 bg-primary/30 rounded-full h-1.5"></span>
+</div>
+</div>
+<h3 class="font-headline-md text-[14px] font-semibold text-on-surface leading-snug">
+              夜空中最亮的星
+            </h3>
+<p class="text-body-sm text-[12px] text-outline mt-1">逃跑计划</p>
+</div>
+<div class="mt-3 pt-2 border-t border-surface-container-highest/60 flex items-center justify-between text-outline">
+<span class="text-[11px] text-on-surface-variant/80 font-medium">夜间慢跑</span>
+<span class="material-symbols-outlined text-[15px] text-primary" data-icon="graphic_eq">graphic_eq</span>
+</div>
+</article>
+</div>
+<!-- ITEM 4: QUOTE Item (Poetic Typography & Frosted Prism Accent) -->
+<article class="glass-card rounded-2xl p-4 transition-all duration-200 active:scale-[0.99] relative overflow-hidden">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-1.5">
+<span class="glass-tag px-2 py-0.5 rounded-full text-secondary font-label-sm text-[11px]">文案</span>
+<span class="text-label-sm text-outline-variant">#文学</span>
+</div>
+<span class="text-[11px] text-outline font-body-sm">10/19</span>
+</div>
+<div class="relative pl-3.5 my-1.5 border-l-2 border-secondary/40">
+<span class="font-serif-poetic text-[24px] text-secondary/30 absolute -left-1 -top-3.5 select-none">“</span>
+<p class="font-serif-poetic text-[15px] leading-relaxed text-on-surface font-normal tracking-wide">
+            我们读诗，是因为我们是人类的一员。
+          </p>
+<p class="text-[12px] text-outline mt-1 font-body-sm">—《死亡诗社》</p>
+</div>
+<div class="flex justify-end items-center space-x-2 pt-1">
+<span class="material-symbols-outlined text-[16px] text-outline hover:text-primary transition-colors cursor-pointer" data-icon="format_quote">format_quote</span>
+<span class="material-symbols-outlined text-[16px] text-outline hover:text-primary transition-colors cursor-pointer" data-icon="share">share</span>
+</div>
+</article>
+<!-- 2-Column Asymmetric Bento Grid (Items 5 & 6) -->
+<div class="grid grid-cols-2 gap-3">
+<!-- ITEM 5: IDEA Item (Ethereal Note Card with Soft Mint-Cyan Glass Glow) -->
+<article class="rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 active:scale-[0.98] border border-white/90" style="background: linear-gradient(145deg, rgba(235, 255, 247, 0.75) 0%, rgba(255, 255, 255, 0.7) 100%); backdrop-filter: blur(20px); box-shadow: inset 0 1px 1.5px rgba(255,255,255,0.9), 0 8px 24px -4px rgba(0, 133, 91, 0.08);">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="px-2 py-0.5 rounded-full text-tertiary bg-tertiary-fixed/40 font-label-sm text-[11px] flex items-center space-x-0.5">
+<span class="material-symbols-outlined text-[11px]" data-icon="lightbulb">lightbulb</span>
+<span>想法</span>
+</span>
+<span class="text-[11px] text-outline font-body-sm">10/18</span>
+</div>
+<p class="text-body-md text-[13.5px] text-on-surface font-medium leading-snug pt-1">
+              把通勤路上听到的对话写成一组短诗
+            </p>
+</div>
+<div class="mt-4 pt-2 border-t border-tertiary/10 flex items-center justify-between text-tertiary">
+<span class="text-[11px] font-medium tracking-tight">灵感碎片</span>
+<span class="material-symbols-outlined text-[15px]" data-icon="draw">draw</span>
+</div>
+</article>
+<!-- ITEM 6: LINK Item (External Link Specimen) -->
+<article class="glass-card rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-200 active:scale-[0.98]">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="glass-tag px-2 py-0.5 rounded-full text-primary font-label-sm text-[11px] flex items-center space-x-0.5">
+<span class="material-symbols-outlined text-[11px]" data-icon="link">link</span>
+<span>链接</span>
+</span>
+<span class="text-[11px] text-outline font-body-sm">10/16</span>
+</div>
+<!-- Are.na Minimal Channel badge -->
+<div class="w-full py-1.5 px-2 rounded-lg bg-surface-container-high/40 border border-white/70 mb-2 flex items-center space-x-1.5">
+<div class="w-2.5 h-2.5 rounded-sm bg-black/60"></div>
+<span class="text-[11px] font-mono font-medium text-on-surface-variant">are.na</span>
+</div>
+<h3 class="font-headline-md text-[13px] font-semibold text-on-surface leading-snug line-clamp-2">
+              Are.na · 关于收集的收集
+            </h3>
+</div>
+<div class="mt-3 pt-2 border-t border-surface-container-highest/60 flex items-center justify-between text-outline">
+<span class="text-[10.5px] text-outline truncate max-w-[80px]">are.na/channel</span>
+<span class="material-symbols-outlined text-[15px] text-primary" data-icon="open_in_new">open_in_new</span>
+</div>
+</article>
+</div>
+</div>
+<!-- Floating Entry Button: 嫁接 (Graft) - Luminous glass pill with tactile depth -->
+<div class="absolute bottom-20 right-4 z-40">
+<button class="glass-pill-graft group pl-3.5 pr-4 py-2 rounded-full flex items-center space-x-2 active:scale-95 transition-all duration-150">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-[17px] group-hover:rotate-45 transition-transform" data-icon="alt_route">alt_route</span>
+</div>
+<div class="flex flex-col text-left">
+<span class="text-label-md font-bold text-on-surface leading-tight tracking-wide">嫁接</span>
+<span class="text-[9px] font-semibold text-primary uppercase tracking-tighter">Graft (2)</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+</button>
+</div>
+<!-- Bottom Navigation Bar (BottomNavBar Shared Component Anchor) -->
+<!-- Destination count: 5 | Labels: 穗仓, 嫁接, 新枝, 口味, 设置 | 穗仓 active with dot indicator -->
+<nav class="fixed bottom-0 left-0 w-full z-50 rounded-t-xl bg-surface/85 backdrop-blur-2xl shadow-lg shadow-secondary/10 flex justify-around items-center px-gutter-mobile py-space-xs pb-5 select-none">
+<!-- Tab 1: 穗仓 (ACTIVE DESTINATION) -->
+<a class="flex flex-col items-center justify-center bg-primary-container/20 text-primary font-semibold rounded-full px-3 py-1 active:scale-95 transition-transform duration-150 relative" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-label-sm font-label-sm mt-0.5">穗仓</span>
+<span class="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary"></span>
+</a>
+<!-- Tab 2: 嫁接 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary px-3 py-1 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="alt_route">alt_route</span>
+<span class="text-label-sm font-label-sm mt-0.5">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary px-3 py-1 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="eco">eco</span>
+<span class="text-label-sm font-label-sm mt-0.5">新枝</span>
+</a>
+<!-- Tab 4: 口味 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary px-3 py-1 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="palette">palette</span>
+<span class="text-label-sm font-label-sm mt-0.5">口味</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary px-3 py-1 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm mt-0.5">设置</span>
+</a>
+</nav>
+</main>
+<script>
+    // Micro-interaction for tactile glass feedback
+    document.querySelectorAll('button, article, nav a').forEach(el => {
+      el.addEventListener('touchstart', function() {
+        this.style.filter = 'brightness(0.98)';
+      }, {passive: true});
+      el.addEventListener('touchend', function() {
+        this.style.filter = 'brightness(1)';
+      }, {passive: true});
+    });
+  </script>
+</body></html>
