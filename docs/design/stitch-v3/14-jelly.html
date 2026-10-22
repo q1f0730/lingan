@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>拾穗 · Glean</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&amp;family=Noto+Sans+SC:wght@500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            error: "#ba1a1a",
+            "on-surface": "#221821",
+            "outline-variant": "#e4bdc3",
+            "tertiary-container": "#bb5800",
+            "on-primary-fixed-variant": "#90003e",
+            "on-secondary-fixed": "#0b2000",
+            "on-secondary-container": "#367200",
+            "surface-dim": "#e7d5e2",
+            "primary-container": "#e40468",
+            "on-surface-variant": "#5b3f45",
+            "tertiary-fixed-dim": "#ffb68b",
+            "inverse-primary": "#ffb1c1",
+            "tertiary-fixed": "#ffdbc8",
+            "secondary-fixed": "#8bfe32",
+            "inverse-on-surface": "#feebf8",
+            "on-tertiary-fixed": "#321200",
+            "on-tertiary-fixed-variant": "#753400",
+            "on-background": "#221821",
+            "on-secondary-fixed-variant": "#245100",
+            "on-primary": "#ffffff",
+            "surface-variant": "#f0ddea",
+            "on-error-container": "#93000a",
+            tertiary: "#954500",
+            "surface-container-low": "#ffeff9",
+            "on-tertiary-container": "#fffbff",
+            "on-primary-container": "#fffbff",
+            "inverse-surface": "#382d37",
+            "secondary-fixed-dim": "#70e000",
+            "surface-bright": "#fff7fa",
+            "surface-container-high": "#f5e3f0",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary": "#ffffff",
+            outline: "#8f6f75",
+            "secondary-container": "#8bfe32",
+            primary: "#b70051",
+            "on-error": "#ffffff",
+            surface: "#fff7fa",
+            secondary: "#326b00",
+            "primary-fixed": "#ffd9df",
+            "surface-container-highest": "#f0ddea",
+            "error-container": "#ffdad6",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#bb0054",
+            "on-primary-fixed": "#3f0017",
+            "surface-container": "#fbe9f6",
+            background: "#fff7fa",
+            "primary-fixed-dim": "#ffb1c1"
+          },
+          borderRadius: {
+            DEFAULT: "1rem",
+            lg: "2rem",
+            xl: "3rem",
+            full: "9999px"
+          },
+          spacing: {
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2.5rem",
+            gutter: "1.25rem",
+            margin: "2rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem"
+          },
+          fontFamily: {
+            "label-lg": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "label-sm": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "headline-lg-mobile": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "display-lg": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "headline-xl-mobile": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "headline-sm": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "body-lg": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "label-md": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "body-md": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "headline-xl": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "display-lg-mobile": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "headline-md": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "headline-lg": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"],
+            "body-sm": ["Plus Jakarta Sans", "Noto Sans SC", "sans-serif"]
+          },
+          fontSize: {
+            "label-lg": ["15px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "700" }],
+            "label-sm": ["11px", { lineHeight: "16px", letterSpacing: "0.03em", fontWeight: "700" }],
+            "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "800" }],
+            "headline-xl-mobile": ["30px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "800" }],
+            "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "700" }],
+            "body-lg": ["18px", { lineHeight: "28px", fontWeight: "500" }],
+            "label-md": ["13px", { lineHeight: "18px", letterSpacing: "0.02em", fontWeight: "700" }],
+            "body-md": ["16px", { lineHeight: "24px", fontWeight: "500" }],
+            "headline-xl": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "800" }],
+            "display-lg-mobile": ["38px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "800" }],
+            "headline-md": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+            "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "body-sm": ["14px", { lineHeight: "20px", fontWeight: "500" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Jelly Tactile Physics & Gloss Specs */
+    .jelly-depth-primary {
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                  inset 0 -3px 4px rgba(0, 0, 0, 0.12),
+                  0 12px 28px -4px rgba(255, 42, 122, 0.35);
+    }
+    .jelly-depth-secondary {
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                  inset 0 -3px 4px rgba(0, 0, 0, 0.1),
+                  0 12px 24px -4px rgba(112, 224, 0, 0.35);
+    }
+    .jelly-depth-tertiary {
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                  inset 0 -3px 4px rgba(0, 0, 0, 0.1),
+                  0 12px 24px -4px rgba(255, 122, 0, 0.35);
+    }
+    .jelly-depth-quaternary {
+      box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                  inset 0 -3px 4px rgba(0, 0, 0, 0.1),
+                  0 12px 24px -4px rgba(157, 78, 221, 0.35);
+    }
+    .jelly-glass-panel {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 240, 247, 0.55) 100%);
+      backdrop-filter: blur(24px) saturate(190%);
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.9),
+                  inset 0 -2px 3px rgba(255, 177, 193, 0.3),
+                  0 8px 24px -4px rgba(183, 0, 81, 0.12);
+    }
+    .jelly-input-cavity {
+      box-shadow: inset 0 3px 6px rgba(74, 62, 72, 0.08),
+                  inset 0 1px 2px rgba(74, 62, 72, 0.05),
+                  0 4px 12px rgba(255, 255, 255, 0.7);
+    }
+    .specular-lip {
+      position: relative;
+      overflow: hidden;
+    }
+    .specular-lip::before {
+      content: '';
+      position: absolute;
+      top: 1px;
+      left: 10%;
+      right: 10%;
+      height: 35%;
+      border-radius: 9999px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+    }
+
+    /* Hide scrollbars for clean phone viewport */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-[#FFF0F6] text-on-surface antialiased select-none flex justify-center items-start min-h-screen">
+<!-- Fixed 390x844 Mobile Device Viewport Canvas -->
+<div class="relative w-[390px] h-[844px] overflow-hidden bg-gradient-to-b from-[#FFF0F6] via-[#FFE5F1] to-[#FFF4FA] flex flex-col justify-between shadow-[0_20px_60px_rgba(255,42,122,0.18)]">
+<!-- Atmospheric 3D Subsurface Jelly Orbs (Depth Layer) -->
+<div class="absolute -top-16 -left-16 w-60 h-60 rounded-full bg-gradient-to-br from-[#FF5396]/35 to-[#FF2A7A]/15 blur-2xl pointer-events-none"></div>
+<div class="absolute top-52 -right-20 w-64 h-64 rounded-full bg-gradient-to-bl from-[#70E000]/25 to-[#8BFE32]/10 blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-40 -left-12 w-56 h-56 rounded-full bg-gradient-to-tr from-[#9D4EDD]/25 to-[#FF5396]/15 blur-2xl pointer-events-none"></div>
+<div class="absolute top-[480px] right-2 w-44 h-44 rounded-full bg-gradient-to-br from-[#FF7A00]/20 to-[#FFDBC8]/10 blur-2xl pointer-events-none"></div>
+<!-- SHARED COMPONENT: TopAppBar (Docked Full Width) -->
+<header class="docked full-width top-0 sticky z-40 bg-surface/80 backdrop-blur-xl shadow-[0_4px_16px_-2px_rgba(255,42,122,0.15)] flex justify-between items-center w-full px-margin-mobile py-space-sm pt-4">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF5396] to-[#FF2A7A] flex items-center justify-center text-white shadow-[0_4px_10px_rgba(255,42,122,0.35)] specular-lip">
+<span class="material-symbols-outlined text-[19px]" data-icon="bubble_chart">bubble_chart</span>
+</div>
+<span class="text-headline-md font-headline-md font-extrabold text-primary tracking-tight ml-1">拾穗 · Glean</span>
+</div>
+<!-- Trailing Action: Author Handle Jelly Badge -->
+<button class="flex items-center gap-1 px-3 py-1 rounded-full bg-white/80 border border-white/90 shadow-[0_2px_8px_rgba(255,42,122,0.15)] hover:scale-105 active:scale-95 transition-transform duration-200">
+<span class="w-2 h-2 rounded-full bg-[#70E000] shadow-[0_0_6px_#70E000]"></span>
+<span class="text-label-md font-label-md text-primary font-bold tracking-tight">Q1f730</span>
+</button>
+</header>
+<!-- Scrollable Feed Area -->
+<main class="flex-1 overflow-y-auto px-4 pt-3 pb-28 space-y-3.5 relative z-10">
+<!-- Action Capsule & Grafting (嫁接) Primary Row -->
+<section class="space-y-3">
+<!-- Quick-Capture Gummy Input Capsule -->
+<div class="relative flex items-center w-full">
+<div class="w-full h-12 rounded-full bg-white/85 jelly-input-cavity border border-white flex items-center px-4 gap-2">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="edit_note">edit_note</span>
+<input class="w-full bg-transparent border-0 p-0 text-body-sm font-body-sm text-on-surface placeholder-on-surface-variant/50 focus:ring-0 focus:outline-none" placeholder="随手拾一穗…" type="text"/>
+</div>
+<button class="absolute right-1.5 w-9 h-9 rounded-full bg-gradient-to-br from-[#FF5396] to-[#FF2A7A] text-white flex items-center justify-center jelly-depth-primary specular-lip active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+<!-- Prominent '嫁接' (Grafting) 3D Jelly Banner -->
+<div class="w-full rounded-2xl p-[1.5px] bg-gradient-to-r from-white/90 via-primary-fixed to-white/70 shadow-[0_8px_20px_-3px_rgba(255,42,122,0.28)]">
+<div class="relative overflow-hidden rounded-[15px] bg-gradient-to-r from-[#FF2A7A] via-[#E40468] to-[#9D4EDD] p-3.5 text-white flex items-center justify-between jelly-depth-primary specular-lip">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-[22px] text-white" data-icon="alt_route">alt_route</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-headline-sm font-headline-sm tracking-tight text-white">灵感嫁接</span>
+<span class="text-[10px] px-2 py-0.5 rounded-full bg-white/25 text-white font-bold backdrop-blur-sm">新枝生成</span>
+</div>
+<p class="text-label-sm font-label-sm text-white/90 mt-0.5">连结两个异质穗点，催生全新认知枝条</p>
+</div>
+</div>
+<button class="px-3.5 py-1.5 rounded-full bg-white text-primary text-label-md font-label-md shadow-[0_4px_12px_rgba(0,0,0,0.15)] flex items-center gap-0.5 active:scale-95 transition-transform">
+<span>嫁接</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="auto_awesome">auto_awesome</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Asymmetrical 3D Jelly Inspiration Pods Grid (The 6 穗 Items) -->
+<section class="space-y-3">
+<!-- 1. PHOTO (摄影): Large glossy jelly pod with translucent border & real image -->
+<article class="jelly-glass-panel rounded-3xl p-3 border-2 border-white/80 shadow-[0_10px_26px_rgba(255,42,122,0.12)]">
+<div class="relative w-full h-44 rounded-2xl overflow-hidden shadow-inner">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Xsr-NX4Mwz0JBYqZze83Z_DuRQVua-8j-7aUYBIZvDr0Dk74eApMvfQObrFplhAxmVzFCIfRl6fvDca_w-1GYR1xtMCAyWoY2-U2k68Meb8_3jH8uIQWQAf2BExSOAb76R84rLJys3c72b7Xnj724UGaLLDV4HFrtTvRUlA8_ZUzVfyTtUdIG63c3k3gzhx_jKQgY991OhmYIc8gLDrzWmG_mmuP8ePULUZwyYZn1O5oFV_nK_MaIhSVZb"/>
+<!-- Glossy specular overlay top highlight -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none"></div>
+<div class="absolute top-2.5 left-2.5">
+<span class="px-2.5 py-1 rounded-full bg-[#70E000]/90 text-on-secondary-fixed backdrop-blur-md text-label-sm font-label-sm font-bold border border-white/70 shadow-[0_2px_8px_rgba(112,224,0,0.4)] flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="photo_camera">photo_camera</span>
+                摄影
+              </span>
+</div>
+<div class="absolute bottom-2.5 left-3 right-3 flex justify-between items-end text-white">
+<div>
+<h3 class="text-headline-sm font-headline-sm text-white drop-shadow-md">雨后的梧桐街</h3>
+<p class="text-label-sm font-label-sm text-white/80">巴黎林荫路 · 湿漉黄叶与初点微灯</p>
+</div>
+<span class="text-label-sm font-label-sm text-white/75 bg-black/30 backdrop-blur-md px-2 py-0.5 rounded-full">今天 09:12</span>
+</div>
+</div>
+</article>
+<!-- Bento Row: 2. FILM + 3. SONG -->
+<div class="grid grid-cols-2 gap-3">
+<!-- 2. FILM (电影): Glossy grape-violet jelly card -->
+<article class="relative overflow-hidden rounded-3xl p-3.5 bg-gradient-to-br from-[#9D4EDD] to-[#7B2CBF] text-white jelly-depth-quaternary border border-white/50 specular-lip flex flex-col justify-between h-[162px]">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="px-2 py-0.5 rounded-full bg-white/25 backdrop-blur-md text-white text-label-sm font-label-sm border border-white/40 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]" data-icon="movie">movie</span>
+                  电影
+                </span>
+<span class="text-label-sm font-label-sm text-white/70">昨天 23:40</span>
+</div>
+<h4 class="text-headline-sm font-headline-sm leading-tight text-white line-clamp-2">燃烧女子的肖像</h4>
+<p class="text-label-sm font-label-sm text-white/80 mt-1">2019, 瑟琳·席安玛</p>
+</div>
+<div class="pt-2 border-t border-white/15 flex items-center justify-between">
+<span class="text-[10px] text-white/70 tracking-wide">余烬凝视</span>
+<div class="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-white" data-icon="bookmark">bookmark</span>
+</div>
+</div>
+</article>
+<!-- 3. SONG (音乐): Tangerine-orange glowing gummy card -->
+<article class="relative overflow-hidden rounded-3xl p-3.5 bg-gradient-to-br from-[#FF9E00] to-[#FF6000] text-white jelly-depth-tertiary border border-white/50 specular-lip flex flex-col justify-between h-[162px]">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="px-2 py-0.5 rounded-full bg-white/25 backdrop-blur-md text-white text-label-sm font-label-sm border border-white/40 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]" data-icon="music_note">music_note</span>
+                  音乐
+                </span>
+<span class="text-label-sm font-label-sm text-white/70">昨天 21:05</span>
+</div>
+<h4 class="text-headline-sm font-headline-sm leading-tight text-white">夜空中最亮的星</h4>
+<p class="text-label-sm font-label-sm text-white/85 mt-0.5">逃跑计划</p>
+</div>
+<!-- Tactile Waveform + Play bead -->
+<div class="flex items-center gap-2 pt-2 border-t border-white/20">
+<button class="w-7 h-7 rounded-full bg-white text-[#FF6000] flex items-center justify-center shadow-md active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[16px]" data-icon="play_arrow">play_arrow</span>
+</button>
+<div class="flex-1 flex items-center gap-[3px] h-4">
+<div class="w-1 h-2 rounded-full bg-white/60"></div>
+<div class="w-1 h-3.5 rounded-full bg-white"></div>
+<div class="w-1 h-2.5 rounded-full bg-white/80"></div>
+<div class="w-1 h-4 rounded-full bg-white"></div>
+<div class="w-1 h-1.5 rounded-full bg-white/50"></div>
+<div class="w-1 h-3 rounded-full bg-white/90"></div>
+</div>
+</div>
+</article>
+</div>
+<!-- 4. QUOTE (文案): Raspberry-pink translucent jelly tile -->
+<article class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-r from-[#FF5396]/95 to-[#FF2A7A] text-white jelly-depth-primary border border-white/60 specular-lip">
+<div class="flex items-center justify-between mb-2">
+<span class="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-label-sm font-label-sm border border-white/40 flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="format_quote">format_quote</span>
+              文案
+            </span>
+<span class="text-label-sm font-label-sm text-white/80">10/19</span>
+</div>
+<div class="relative pl-3 border-l-2 border-white/60 my-1">
+<p class="text-body-md font-body-md font-bold text-white tracking-wide leading-snug">
+              “我们读诗，是因为我们是人类的一员。”
+            </p>
+</div>
+<div class="flex justify-between items-center mt-2.5 pt-2 border-t border-white/20 text-white/80 text-[11px]">
+<span>死亡诗社 · 麦克·纽维</span>
+<span class="material-symbols-outlined text-[16px] text-white/90" data-icon="favorite">favorite</span>
+</div>
+</article>
+<!-- Bento Row: 5. IDEA + 6. LINK -->
+<div class="grid grid-cols-2 gap-3">
+<!-- 5. IDEA (想法): Fresh lime-green bouncy jelly blob card -->
+<article class="relative overflow-hidden rounded-3xl p-3.5 bg-gradient-to-br from-[#8BFE32] to-[#70E000] text-on-secondary-fixed jelly-depth-secondary border border-white/60 specular-lip flex flex-col justify-between h-[150px]">
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<span class="px-2 py-0.5 rounded-full bg-black/10 backdrop-blur-md text-on-secondary-fixed text-label-sm font-label-sm border border-black/10 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]" data-icon="lightbulb">lightbulb</span>
+                  想法
+                </span>
+<span class="text-label-sm font-label-sm text-on-secondary-fixed/70">10/18</span>
+</div>
+<p class="text-body-sm font-body-sm font-bold text-on-secondary-fixed leading-snug line-clamp-3">
+                把通勤路上听到的对话写成一组短诗
+              </p>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-black/10">
+<span class="text-[10px] font-bold text-on-secondary-fixed/60">等待嫁接</span>
+<span class="material-symbols-outlined text-[16px] text-on-secondary-fixed/70" data-icon="bubble_chart">bubble_chart</span>
+</div>
+</article>
+<!-- 6. LINK (链接): Soft grape/sky jelly capsule -->
+<article class="relative overflow-hidden rounded-3xl p-3.5 bg-gradient-to-br from-white/90 via-[#F5E3F0]/90 to-[#E4BDC3]/80 border border-white text-on-surface shadow-[0_8px_20px_-3px_rgba(157,78,221,0.2)] specular-lip flex flex-col justify-between h-[150px]">
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-label-sm font-label-sm border border-primary/20 flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]" data-icon="link">link</span>
+                  链接
+                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/70">10/16</span>
+</div>
+<h4 class="text-label-lg font-label-lg font-bold text-on-surface line-clamp-2">Are.na · 关于收集的收集</h4>
+<p class="text-[11px] text-primary font-bold mt-1 tracking-tight">are.na</p>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant/40">
+<span class="text-[10px] text-on-surface-variant font-medium">外部灵感源</span>
+<div class="w-5 h-5 rounded-full bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[12px] text-primary" data-icon="north_east">north_east</span>
+</div>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- SHARED COMPONENT: BottomNavBar (Active: 穗仓) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-space-xs pb-safe bg-surface/85 backdrop-blur-2xl rounded-t-xl shadow-[0_-8px_32px_rgba(255,42,122,0.18)]">
+<!-- Tab 1: 穗仓 (ACTIVE - Strict style_active_navigation) -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-space-md py-space-xs shadow-[0_8px_20px_-4px_rgba(255,42,122,0.45)] ring-1 ring-white/60 -translate-y-1 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="grain">grain</span>
+<span class="text-label-sm font-label-sm tracking-wide">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-xs hover:scale-110 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="alt_route">alt_route</span>
+<span class="text-label-sm font-label-sm">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-xs hover:scale-110 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="eco">eco</span>
+<span class="text-label-sm font-label-sm">新枝</span>
+</a>
+<!-- Tab 4: 口味 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-xs hover:scale-110 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="palette">palette</span>
+<span class="text-label-sm font-label-sm">口味</span>
+</a>
+<!-- Tab 5: 设置 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-xs hover:scale-110 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm">设置</span>
+</a>
+</nav>
+</div>
+</body></html>
