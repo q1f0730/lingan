@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>拾穗 · GLEAN — 随手拾速记展开态 (390px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            textPrimary: '#000000',
+            textSecondary: '#7E7E7E',
+            textInactive: '#C6C6C6',
+            keyBg: '#FFFFFF',
+            keyboardBg: '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      width: 390px;
+      min-height: 844px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+      overflow-x: hidden;
+      overflow-y: hidden;
+    }
+    .cursor-blink {
+      display: inline-block;
+      width: 1.5px;
+      height: 20px;
+      background-color: #000000;
+      vertical-align: -2px;
+      animation: blink 1s infinite steps(1);
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      50.01%, 100% { opacity: 0; }
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="w-[390px] h-[844px] bg-white relative flex flex-col justify-between select-none">
+
+  <!-- BACKGROUND: 穗仓 10 穗网格 (上部 30% 可见) -->
+  <div class="absolute inset-0 w-full h-full bg-white z-0 overflow-hidden pointer-events-none">
+    <!-- Top Header in Background -->
+    <header class="pt-5 px-4 flex justify-between items-baseline border-b border-black">
+      <div class="text-[20px] font-semibold tracking-tight text-black">拾穗 · GLEAN</div>
+      <div class="text-[12px] text-textSecondary">设置</div>
+    </header>
+
+    <div class="px-4 pt-4 pb-2 flex justify-between items-baseline">
+      <div class="text-[56px] font-semibold tracking-[-0.04em] leading-[1.0] text-black">穗仓 (10)</div>
+      <div class="text-[12px] tracking-widest text-black">
+        <span class="text-black font-medium">网格</span>
+        <span class="text-textInactive mx-1">|</span>
+        <span class="text-textInactive">列表</span>
+      </div>
+    </div>
+
+    <!-- Grid Preview Background (2 Columns) -->
+    <div class="px-4 grid grid-cols-2 gap-[10px] pt-1">
+      <!-- 1 照片 轮渡上的雾 -->
+      <div class="relative w-full aspect-[4/5] bg-neutral-200 overflow-hidden">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" alt="轮渡上的雾" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent flex flex-col justify-end p-2.5">
+          <div class="text-white text-[15px] font-semibold leading-tight">轮渡上的雾</div>
+          <div class="text-white/80 text-[11px] mt-0.5">照片 · 10/21</div>
+        </div>
+      </div>
+
+      <!-- 2 电影 完美的日子 -->
+      <div class="relative w-full aspect-[4/5] bg-neutral-200 overflow-hidden">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1WIdVZRaOLGzNs3Aq7rWGyo0BUB51eCihOTXRp-V3J9tSfvFEiNUKKqFlg23ZjSzl3kQn9mLAb9w0MnymoCXaABZG4Z5WHbzD5I463MCUSqQZvBcXbQSw1kg9YUPOawjGCAaojd6TJDFIeOJn2KWzlxEISFbaeiV87S-aDWXFoPHGUTyJ9YNJlAa5NTOGkAOySgLUR79CedjhKwlMzt7NpYGiktN-MAMwF_LheMlBQFy0dWwkJUZ54p1bA" alt="完美的日子" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent flex flex-col justify-end p-2.5">
+          <div class="text-white text-[15px] font-semibold leading-tight">完美的日子</div>
+          <div class="text-white/80 text-[11px] mt-0.5">电影 · 10/20</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLAT WHITE 70% OVERLAY (NO BLUR, NO SHADOW) -->
+  <div class="absolute inset-0 w-full h-full bg-white/70 z-10 pointer-events-none"></div>
+
+  <!-- QUICK CAPTURE EXPANDED BOTTOM SHEET -->
+  <div class="relative z-20 mt-auto w-full bg-white border-t border-black flex flex-col">
+    <!-- Sheet Header Row -->
+    <div class="px-4 pt-3.5 pb-2 flex justify-between items-center">
+      <span class="text-[11px] text-textSecondary uppercase tracking-widest">速记</span>
+      <button class="text-[12px] text-black hover:opacity-70 transition-opacity bg-transparent border-0 p-0 cursor-pointer">收起</button>
+    </div>
+
+    <!-- Main Content Input with Cursor -->
+    <div class="px-4 pt-1 pb-3">
+      <div class="text-[20px] font-semibold text-black leading-snug tracking-tight">
+        地铁换乘通道里的回声，适合录一张专辑<span class="cursor-blink"></span>
+      </div>
+    </div>
+
+    <!-- Meta Fields List -->
+    <div class="px-4 space-y-3 pb-3">
+      <!-- 类型 -->
+      <div class="flex items-baseline space-x-3 text-[13px]">
+        <span class="text-[11px] text-textSecondary w-12 shrink-0">类型</span>
+        <div class="flex space-x-4 items-center">
+          <span class="text-textInactive cursor-pointer">照片</span>
+          <span class="text-textInactive cursor-pointer">歌</span>
+          <span class="text-textInactive cursor-pointer">电影</span>
+          <span class="text-textInactive cursor-pointer">摘抄</span>
+          <span class="text-black font-medium border-b border-black pb-0.5 cursor-pointer">想法</span>
+          <span class="text-textInactive cursor-pointer">链接</span>
+        </div>
+      </div>
+
+      <!-- 标签 -->
+      <div class="flex items-baseline space-x-3 text-[13px]">
+        <span class="text-[11px] text-textSecondary w-12 shrink-0">标签</span>
+        <div class="flex space-x-3 items-center">
+          <span class="text-black font-medium">#声音</span>
+          <span class="text-black font-medium">#城市</span>
+          <span class="text-textSecondary cursor-pointer">+ 加标签</span>
+        </div>
+      </div>
+
+      <!-- 来源 -->
+      <div class="flex items-center space-x-3 text-[13px]">
+        <span class="text-[11px] text-textSecondary w-12 shrink-0">来源</span>
+        <div class="flex-1 border-b border-black pb-1">
+          <span class="text-black">自己</span>
+        </div>
+      </div>
+
+      <!-- 为什么收 -->
+      <div class="flex items-center space-x-3 text-[13px]">
+        <span class="text-[11px] text-textSecondary w-12 shrink-0">为什么收</span>
+        <div class="flex-1 border-b border-black pb-1">
+          <span class="text-textInactive">一句话就够，嫁接时有用</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sheet Bottom Action Row -->
+    <div class="px-4 py-2.5 flex justify-between items-center border-t border-neutral-100">
+      <span class="text-[11px] text-textSecondary">回车直接存</span>
+      <button class="w-7 h-7 bg-black text-white text-[13px] font-medium flex items-center justify-center cursor-pointer hover:bg-neutral-800 transition-colors">
+        拾
+      </button>
+    </div>
+
+    <!-- SIMULATED KEYBOARD AREA (#F3F3F3) -->
+    <div class="w-full bg-[#F3F3F3] pt-2 pb-5 px-1.5 flex flex-col space-y-1.5 select-none">
+      <!-- Row 1 -->
+      <div class="grid grid-cols-10 gap-1 px-1">
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">Q</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">W</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">E</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">R</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">T</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">Y</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">U</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">I</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">O</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">P</div>
+      </div>
+      <!-- Row 2 -->
+      <div class="grid grid-cols-9 gap-1 px-4">
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">A</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">S</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">D</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">F</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">G</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">H</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">J</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">K</div>
+        <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">L</div>
+      </div>
+      <!-- Row 3 -->
+      <div class="flex space-x-1 px-1">
+        <div class="w-10 h-9 bg-neutral-200 text-[11px] text-black font-medium flex items-center justify-center border-b border-neutral-300">大写</div>
+        <div class="flex-1 grid grid-cols-7 gap-1">
+          <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">Z</div>
+          <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">X</div>
+          <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">C</div>
+          <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">V</div>
+          <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">B</div>
+          <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">N</div>
+          <div class="h-9 bg-white text-[14px] text-black font-medium flex items-center justify-center border-b border-neutral-300">M</div>
+        </div>
+        <div class="w-10 h-9 bg-neutral-200 text-[11px] text-black font-medium flex items-center justify-center border-b border-neutral-300">删除</div>
+      </div>
+      <!-- Row 4 -->
+      <div class="flex space-x-1.5 px-1 pt-0.5">
+        <div class="w-12 h-9 bg-neutral-200 text-[12px] text-black font-medium flex items-center justify-center border-b border-neutral-300">123</div>
+        <div class="w-12 h-9 bg-neutral-200 text-[12px] text-black font-medium flex items-center justify-center border-b border-neutral-300">中/英</div>
+        <div class="flex-1 h-9 bg-white text-[12px] text-textSecondary flex items-center justify-center border-b border-neutral-300">空格</div>
+        <div class="w-16 h-9 bg-black text-[12px] text-white font-medium flex items-center justify-center">换行</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
