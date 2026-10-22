@@ -102,7 +102,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
         ))}
       </div>
       <label className="field big">
-        <span className="label mono">此刻戳到你的是什么？</span>
+        <span className="label">此刻戳到你的是什么？</span>
         <input
           autoFocus
           value={d.title}
@@ -116,27 +116,27 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
         />
       </label>
       {sniff && (
-        <div className={`sniff mono${sniff === 'fail' ? ' red' : ''}`}>
+        <div className={`sniff${sniff === "fail" ? " warn" : ""}`}>
           {sniff === 'busy' ? '◌ 正在读取链接…' : sniff === 'ok' ? '✓ 已从链接读取标题和封面' : '× 读不到这个网页的信息，已保存链接，其余请手填'}
         </div>
       )}
       <div className="row2">
         {ph.creator && (
           <label className="field">
-            <span className="label mono">{ph.creator}</span>
+            <span className="label">{ph.creator}</span>
             <input value={d.creator || ''} onChange={(e) => set('creator', e.target.value)} maxLength={80} />
           </label>
         )}
         {(d.type === 'music' || d.type === 'film' || d.type === 'text') && (
           <label className="field narrow">
-            <span className="label mono">年份</span>
+            <span className="label">年份</span>
             <input value={d.year || ''} onChange={(e) => set('year', e.target.value.replace(/[^\d]/g, '').slice(0, 4))} inputMode="numeric" placeholder="2000" />
           </label>
         )}
       </div>
       {(d.type === 'link' || d.type === 'music' || d.type === 'film') && (
         <label className="field">
-          <span className="label mono">链接</span>
+          <span className="label">链接</span>
           <div className="inline">
             <input value={d.url || ''} onChange={(e) => set('url', e.target.value)} placeholder="https://" inputMode="url" />
             <button type="button" className="btn ghost small" disabled={!d.url || sniff === 'busy'} onClick={() => recognize(/^https?:/i.test(d.url || '') ? d.url! : 'https://' + d.url)}>
@@ -146,11 +146,11 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
         </label>
       )}
       <label className="field">
-        <span className="label mono">{ph.content}</span>
+        <span className="label">{ph.content}</span>
         <textarea value={d.content || ''} onChange={(e) => set('content', e.target.value)} rows={d.type === 'text' || d.type === 'idea' ? 4 : 2} maxLength={4000} />
       </label>
       <div className="field">
-        <span className="label mono">图片</span>
+        <span className="label">图片</span>
         <div className="img-pick">
           {d.image ? (
             <div className="img-preview">
@@ -174,11 +174,11 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
       )}
       {more && (<>
       <label className="field why">
-        <span className="label mono">为什么打动我 · 最重要的一句</span>
+        <span className="label">为什么打动我 · 最重要的一句</span>
         <input value={d.why || ''} onChange={(e) => set('why', e.target.value)} placeholder="AI 靠这句话认识你的口味" maxLength={200} />
       </label>
       <label className="field">
-        <span className="label mono">标签（空格分隔）</span>
+        <span className="label">标签（空格分隔）</span>
         <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="雨 克制 慢镜头" />
       </label>
       </>)}
@@ -188,7 +188,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
           取消
         </button>
         <button type="submit" className="btn primary" disabled={saving || imgBusy}>
-          {saving ? '保存中…' : '收进暗房'}
+          {saving ? '保存中…' : '拾进穗仓'}
         </button>
       </div>
     </form>
