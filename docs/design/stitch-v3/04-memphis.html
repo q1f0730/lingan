@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>拾穗 · Glean</title>
+<!-- Google Fonts: Space Grotesk & DM Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-high": "#eae7eb",
+            "surface-dim": "#dcd9dd",
+            "on-surface": "#1b1b1e",
+            "inverse-surface": "#303033",
+            "background": "#fbf8fc",
+            "secondary-fixed": "#68fcbf",
+            "tertiary": "#783eb2",
+            "tertiary-fixed": "#f0dbff",
+            "tertiary-container": "#9358cd",
+            "on-primary-fixed": "#40000d",
+            "secondary-container": "#64f9bc",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-fixed": "#002114",
+            "on-surface-variant": "#5b4041",
+            "on-secondary-container": "#00714e",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed-variant": "#62259b",
+            "on-tertiary": "#ffffff",
+            "primary": "#b90538",
+            "inverse-primary": "#ffb2b7",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed-variant": "#005137",
+            "inverse-on-surface": "#f3f0f4",
+            "on-tertiary-container": "#fffbff",
+            "on-background": "#1b1b1e",
+            "surface": "#fbf8fc",
+            "surface-container-low": "#f6f2f7",
+            "surface-container-highest": "#e4e1e6",
+            "on-primary": "#ffffff",
+            "surface-variant": "#e4e1e6",
+            "tertiary-fixed-dim": "#ddb8ff",
+            "on-primary-container": "#fffbff",
+            "on-tertiary-fixed": "#2c0051",
+            "secondary-fixed-dim": "#45dfa4",
+            "error": "#ba1a1a",
+            "outline": "#8f6f71",
+            "secondary": "#006c4b",
+            "on-primary-fixed-variant": "#92002a",
+            "error-container": "#ffdad6",
+            "surface-container": "#f0edf1",
+            "surface-bright": "#fbf8fc",
+            "primary-container": "#dc2c4f",
+            "primary-fixed-dim": "#ffb2b7",
+            "primary-fixed": "#ffdadb",
+            "outline-variant": "#e3bdbf",
+            "on-error-container": "#93000a",
+            "surface-tint": "#bc0b3b"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "gutter-mobile": "1rem",
+            "margin": "2.5rem",
+            "gutter": "1.5rem",
+            "space-lg": "1.5rem",
+            "margin-mobile": "1.25rem",
+            "space-xl": "2.5rem",
+            "space-xs": "0.25rem"
+          },
+          fontFamily: {
+            "body-md": ["DM Sans"],
+            "label-lg": ["Space Grotesk"],
+            "label-sm": ["Space Grotesk"],
+            "headline-xl": ["Space Grotesk"],
+            "title-md": ["Space Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "label-md": ["Space Grotesk"],
+            "body-sm": ["DM Sans"],
+            "body-lg": ["DM Sans"],
+            "headline-xl-mobile": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "headline-sm": ["Space Grotesk"]
+          },
+          fontSize: {
+            "body-md": ["15px", { lineHeight: "22px", letterSpacing: "0em", fontWeight: "400" }],
+            "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.04em", fontWeight: "700" }],
+            "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "700" }],
+            "headline-xl": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "700" }],
+            "title-md": ["18px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "600" }],
+            "headline-lg-mobile": ["30px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.06em", fontWeight: "700" }],
+            "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0.01em", fontWeight: "400" }],
+            "body-lg": ["18px", { lineHeight: "28px", letterSpacing: "0em", fontWeight: "400" }],
+            "headline-xl-mobile": ["38px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-lg": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-md": ["28px", { lineHeight: "34px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "headline-sm": ["22px", { lineHeight: "28px", letterSpacing: "0em", fontWeight: "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Memphis geometric terrazzo micro-pattern */
+    .memphis-dots {
+      background-image: radial-gradient(#1b1b1e 1.5px, transparent 1.5px);
+      background-size: 14px 14px;
+    }
+    .memphis-grid {
+      background-image: linear-gradient(to right, rgba(27,27,30,0.06) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(27,27,30,0.06) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .zigzag-edge {
+      background: radial-gradient(circle, transparent, transparent 50%, #fff 50%, #fff 100%);
+      background-size: 12px 12px;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col items-center justify-start overflow-x-hidden memphis-grid select-none">
+<!-- iPhone Mobile Viewport Container (390px width layout) -->
+<div class="w-full max-w-[390px] min-h-screen bg-surface flex flex-col relative pb-28 border-x-2 border-on-surface">
+<!-- TOP APP BAR (Shared Component JSON Blueprint) -->
+<header class="sticky top-0 z-40 bg-surface dark:bg-inverse-surface border-b-2 border-on-surface [box-shadow:0px_4px_0px_#1b1b1e] flex justify-between items-center w-full px-margin-mobile py-space-sm">
+<div class="flex items-center gap-2">
+<button aria-label="Menu" class="w-9 h-9 rounded-lg bg-secondary-fixed border-2 border-on-surface [box-shadow:2px_2px_0px_#1b1b1e] flex items-center justify-center hover:bg-surface-container-high transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none">
+<span class="material-symbols-outlined text-on-surface text-[22px]">grain</span>
+</button>
+<div class="flex flex-col">
+<h1 class="text-headline-sm font-headline-sm font-bold tracking-tight text-on-surface dark:text-inverse-on-surface flex items-center gap-1.5">
+<span>拾穗 · Glean</span>
+<!-- Geometric dot accent -->
+<span class="inline-block w-2.5 h-2.5 bg-primary rounded-full border border-on-surface"></span>
+</h1>
+</div>
+</div>
+<!-- User handle + Action -->
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 text-label-sm font-label-sm bg-tertiary-fixed text-on-tertiary-fixed border-2 border-on-surface [box-shadow:1.5px_1.5px_0px_#1b1b1e] rounded-md tracking-wider">
+          Q1f730
+        </span>
+<button aria-label="Add entry" class="w-9 h-9 rounded-lg bg-primary text-on-primary border-2 border-on-surface [box-shadow:2px_2px_0px_#1b1b1e] flex items-center justify-center hover:bg-surface-container-high transition-transform hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none">
+<span class="material-symbols-outlined text-[24px]">add_circle</span>
+</button>
+</div>
+</header>
+<!-- MEMPHIS ACCENT DECORATIVE STRIP -->
+<div class="w-full bg-[#fde047] border-b-2 border-on-surface px-margin-mobile py-1 flex items-center justify-between overflow-hidden">
+<div class="flex items-center gap-3">
+<!-- Memphis Squiggle SVG -->
+<svg class="w-16 h-3 text-on-surface flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 60 12">
+<path d="M2 6 Q 8 0, 15 6 T 28 6 T 42 6 T 56 6"></path>
+</svg>
+<span class="text-label-sm font-label-sm tracking-widest text-on-surface">RADICAL POST-MODERN COLLECT</span>
+</div>
+<div class="flex gap-1.5">
+<div class="w-2.5 h-2.5 rounded-full bg-primary border border-on-surface"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-secondary-container border border-on-surface"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed border border-on-surface"></div>
+</div>
+</div>
+<!-- MAIN BODY CONTENT CANVAS -->
+<main class="flex-1 px-margin-mobile pt-4 space-y-4">
+<!-- QUICK CAPTURE BAR (Always Visible) -->
+<section class="relative">
+<div class="w-full bg-[#fef08a] border-2 border-on-surface rounded-xl p-2 [box-shadow:3px_3px_0px_#1b1b1e] flex items-center gap-2">
+<div class="pl-2 flex items-center text-on-surface">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+</div>
+<input class="flex-1 bg-transparent border-none text-body-md font-body-md text-on-surface placeholder:text-on-surface/60 focus:ring-0 focus:outline-none py-1" placeholder="随手拾一穗…" type="text"/>
+<button class="bg-[#fda4af] hover:bg-primary text-on-surface hover:text-white px-3 py-1.5 rounded-lg border-2 border-on-surface [box-shadow:2px_2px_0px_#1b1b1e] flex items-center gap-1 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="text-label-sm font-label-sm">拾取</span>
+</button>
+</div>
+</section>
+<!-- SECTION TITLE & GRAFTING ACTION CTA ROW -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2">
+<span class="inline-block px-2 py-0.5 bg-secondary-fixed text-on-secondary-fixed text-label-sm font-label-sm border-2 border-on-surface [box-shadow:2px_2px_0px_#1b1b1e] -rotate-2">
+            穗仓库
+          </span>
+<span class="text-label-md font-label-md text-on-surface-variant font-bold">6 穗待嫁</span>
+</div>
+<!-- GRAFTING ACTION CTA BUTTON -->
+<button class="bg-[#fde047] hover:bg-[#fef08a] text-on-surface px-3.5 py-1.5 rounded-xl border-[2.5px] border-on-surface [box-shadow:3px_3px_0px_#1b1b1e] flex items-center gap-1.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all group">
+<span class="material-symbols-outlined text-[19px] text-primary group-hover:rotate-45 transition-transform">alt_route</span>
+<span class="text-label-lg font-label-lg font-bold">嫁接</span>
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+</button>
+</div>
+<!-- SIX COLLECTED ITEMS (穗) - ASYMMETRIC MEMPHIS BENTO -->
+<div class="space-y-4">
+<!-- ITEM 1: [PHOTO] - Street After Rain (Embedded Image) -->
+<article class="relative bg-surface-container-lowest border-[2.5px] border-on-surface rounded-xl [box-shadow:4px_4px_0px_#1b1b1e] overflow-hidden transform hover:-translate-y-0.5 transition-all">
+<!-- Top Accent Banner -->
+<div class="bg-[#6ee7b7] border-b-2 border-on-surface px-3 py-1 flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+<span class="text-label-sm font-label-sm uppercase tracking-wider">摄影</span>
+</div>
+<span class="text-label-sm font-label-sm">今天 09:12</span>
+</div>
+<!-- Real Photograph -->
+<div class="relative w-full h-44 bg-surface-container overflow-hidden border-b-2 border-on-surface">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjXaB9_gRmdCpA7M7T2ibNZHDMtJf9Y67OUNd1ybb6bZKRTzPh3c7jLyKI6WOzZsaSuylaVL9gxlF9TbqIc9szQllijO_ns3HA2Eo0w748F4Td1N3ujhdsZCOaGoNzLBWO7IgZVC6i6HmMHOFnXqF8bSylTxVPOygcaswVGR69NQR6w48-WeT1UXazpUZ_-HLYi0Z9l4QTY2FWR_ypPKJ5pVbD0Kxv9YTQxYeV1__A9E-W7loiOZ6CuPTkWLcxsHG0ZDQClkt1BXD5"/>
+<!-- Memphis floating pill overlay -->
+<div class="absolute bottom-2 left-2 bg-[#fde047] text-on-surface border-2 border-on-surface px-2.5 py-0.5 rounded-md text-label-sm font-label-sm [box-shadow:2px_2px_0px_#1b1b1e]">
+              35mm · 湿润巴黎感
+            </div>
+</div>
+<!-- Card Footer Details -->
+<div class="p-3 flex items-center justify-between bg-surface-container-low">
+<div>
+<h3 class="text-title-md font-title-md text-on-surface">雨后的梧桐街</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">路灯倒映在深色沥青中，空气里有湿漉漉的绿意。</p>
+</div>
+<button aria-label="Mark item" class="w-8 h-8 rounded-lg bg-surface border-2 border-on-surface [box-shadow:2px_2px_0px_#1b1b1e] flex items-center justify-center active:translate-x-0.5 active:translate-y-0.5">
+<span class="material-symbols-outlined text-[18px]">check_box_outline_blank</span>
+</button>
+</div>
+</article>
+<!-- TWO COLUMN ASYMMETRIC ROW: ITEM 2 [FILM] & ITEM 3 [SONG] -->
+<div class="grid grid-cols-2 gap-3 items-start">
+<!-- ITEM 2: [FILM] Movie Card in Lilac/Lemon Pop -->
+<article class="bg-[#ddd6fe] border-[2.5px] border-on-surface rounded-xl [box-shadow:3px_3px_0px_#1b1b1e] p-3 flex flex-col justify-between h-56 relative overflow-hidden">
+<!-- Memphis corner decorative sticker -->
+<div class="absolute -right-5 -top-5 w-12 h-12 bg-[#fde047] border-2 border-on-surface rotate-45"></div>
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="bg-[#fde047] text-on-surface border-2 border-on-surface px-2 py-0.5 text-label-sm font-label-sm rounded [box-shadow:1.5px_1.5px_0px_#1b1b1e]">
+                  电影
+                </span>
+<span class="text-label-sm font-label-sm text-on-surface/80">昨 23:40</span>
+</div>
+<div class="w-7 h-7 rounded-full bg-white border-2 border-on-surface flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[18px] text-tertiary">movie</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm leading-tight text-on-surface">燃烧女子的肖像</h3>
+<p class="text-body-sm font-body-sm text-on-surface/80 mt-1">2019 · 瑟琳·席安玛</p>
+</div>
+<div class="pt-2 border-t-2 border-on-surface flex items-center justify-between">
+<span class="text-label-sm font-label-sm bg-white px-1.5 py-0.5 rounded border border-on-surface">画作与回眸</span>
+<span class="material-symbols-outlined text-[20px] text-on-surface">arrow_outward</span>
+</div>
+</article>
+<!-- ITEM 3: [SONG] Cassette Inspired Card in Mint & Coral -->
+<article class="bg-[#a7f3d0] border-[2.5px] border-on-surface rounded-xl [box-shadow:3px_3px_0px_#1b1b1e] p-3 flex flex-col justify-between h-56 relative">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="bg-[#fda4af] text-on-surface border-2 border-on-surface px-2 py-0.5 text-label-sm font-label-sm rounded [box-shadow:1.5px_1.5px_0px_#1b1b1e]">
+                  音乐
+                </span>
+<span class="text-label-sm font-label-sm text-on-surface/80">昨 21:05</span>
+</div>
+<!-- Cassette stylized reel graphics -->
+<div class="w-full bg-[#1b1b1e] text-[#a7f3d0] p-1.5 rounded-lg border-2 border-on-surface flex items-center justify-around my-1.5 [box-shadow:2px_2px_0px_#fda4af]">
+<div class="w-5 h-5 rounded-full border-2 border-dashed border-[#a7f3d0] flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-[#fda4af] rounded-full"></div>
+</div>
+<div class="h-1.5 w-10 bg-white/40 rounded-full"></div>
+<div class="w-5 h-5 rounded-full border-2 border-dashed border-[#a7f3d0] flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-[#fda4af] rounded-full"></div>
+</div>
+</div>
+<h3 class="text-title-md font-title-md text-on-surface line-clamp-1 mt-1">夜空中最亮的星</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant font-medium">逃跑计划</p>
+</div>
+<div class="pt-2 border-t-2 border-on-surface flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+<span class="text-label-sm font-label-sm">旋律穗</span>
+</div>
+<span class="material-symbols-outlined text-[20px]">graphic_eq</span>
+</div>
+</article>
+</div>
+<!-- ITEM 4: [QUOTE] - Bold Typography Quote Card -->
+<article class="bg-surface-container-lowest border-[2.5px] border-on-surface rounded-xl [box-shadow:4px_4px_0px_#1b1b1e] p-4 relative overflow-hidden">
+<div class="flex items-center justify-between mb-3 border-b-2 border-on-surface pb-2">
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 bg-[#3b82f6] text-white text-label-sm font-label-sm border-2 border-on-surface [box-shadow:1.5px_1.5px_0px_#1b1b1e] rounded">
+                文案
+              </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">摘录于《死亡诗社》</span>
+</div>
+<span class="text-label-sm font-label-sm">10/19</span>
+</div>
+<!-- Memphis quotation symbol -->
+<div class="flex gap-2">
+<span class="text-headline-lg font-headline-lg leading-none text-primary font-bold select-none">“</span>
+<blockquote class="text-title-md font-title-md text-on-surface font-semibold leading-relaxed pt-1">
+              我们读诗，是因为我们是人类的一员。而人类是充满激情的。
+            </blockquote>
+</div>
+<!-- Bottom decorative Memphis confetti dots -->
+<div class="mt-3 pt-2 border-t-2 border-dashed border-on-surface/40 flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant">可用于新枝论述</span>
+</div>
+<div class="flex gap-1">
+<div class="w-3 h-3 bg-[#fde047] border border-on-surface"></div>
+<div class="w-3 h-3 rounded-full bg-primary border border-on-surface"></div>
+</div>
+</div>
+</article>
+<!-- TWO COLUMN ASYMMETRIC ROW: ITEM 5 [IDEA] & ITEM 6 [LINK] -->
+<div class="grid grid-cols-2 gap-3 items-stretch">
+<!-- ITEM 5: [IDEA] Sticky Note Memo with Terrazzo Dot Texture -->
+<article class="bg-[#fef08a] border-[2.5px] border-on-surface rounded-xl [box-shadow:3px_3px_0px_#1b1b1e] p-3 flex flex-col justify-between -rotate-1 relative memphis-dots">
+<div class="relative z-10">
+<div class="flex items-center justify-between mb-2">
+<span class="bg-primary text-white border-2 border-on-surface px-1.5 py-0.5 text-label-sm font-label-sm rounded [box-shadow:1.5px_1.5px_0px_#1b1b1e]">
+                  想法
+                </span>
+<span class="text-label-sm font-label-sm">10/18</span>
+</div>
+<div class="bg-white/90 p-2 rounded-lg border-2 border-on-surface mt-1">
+<p class="text-body-md font-body-md font-medium text-on-surface leading-snug">
+                  把通勤路上听到的对话写成一组短诗
+                </p>
+</div>
+</div>
+<div class="pt-2 flex items-center justify-between relative z-10">
+<span class="text-label-sm font-label-sm text-on-surface font-bold">灵感待催化</span>
+<span class="material-symbols-outlined text-[18px]">lightbulb</span>
+</div>
+</article>
+<!-- ITEM 6: [LINK] Bookmark Link Card -->
+<article class="bg-[#c084fc] border-[2.5px] border-on-surface rounded-xl [box-shadow:3px_3px_0px_#1b1b1e] p-3 flex flex-col justify-between rotate-1">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="bg-white text-on-surface border-2 border-on-surface px-1.5 py-0.5 text-label-sm font-label-sm rounded [box-shadow:1.5px_1.5px_0px_#1b1b1e]">
+                  链接
+                </span>
+<span class="text-label-sm font-label-sm text-white">10/16</span>
+</div>
+<h3 class="text-title-md font-title-md text-white font-bold leading-tight mt-1">Are.na · 关于收集的收集</h3>
+<div class="inline-block mt-2 px-2 py-0.5 bg-white text-on-surface rounded border border-on-surface text-label-sm font-label-sm font-mono">
+                are.na
+              </div>
+</div>
+<div class="pt-2 border-t-2 border-on-surface flex items-center justify-between text-white">
+<span class="text-label-sm font-label-sm">开放式知识图谱</span>
+<span class="material-symbols-outlined text-[20px]">link</span>
+</div>
+</article>
+</div>
+</div>
+<!-- BOTTOM SUMMARY WIDGET -->
+<section class="bg-surface-container-high border-2 border-on-surface rounded-xl p-3 [box-shadow:3px_3px_0px_#1b1b1e] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed border-2 border-on-surface flex items-center justify-center font-bold">
+            6
+          </div>
+<div class="text-body-sm font-body-sm">
+<span class="font-bold">今日已拾 2 穗</span> · 保持敏锐与好奇
+          </div>
+</div>
+<button class="text-label-sm font-label-sm px-2.5 py-1 bg-white border-2 border-on-surface rounded-md [box-shadow:1.5px_1.5px_0px_#1b1b1e] hover:bg-secondary-fixed transition-colors">
+          整理库
+        </button>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component JSON Blueprint & Semantic Active Tab) -->
+<!-- Destination count: 5 | label_texts: ["穗仓", "嫁接", "新枝", "口味", "设置"] -->
+<!-- Active tab: "穗仓" (Current library home screen) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-xs py-space-xs pb-safe bg-surface dark:bg-inverse-surface border-t-2 border-on-surface [box-shadow:0px_-4px_0px_#1b1b1e] max-w-[390px] left-1/2 -translate-x-1/2">
+<!-- Tab 1: 穗仓 (ACTIVE - Exact Execution of style_active_navigation) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary border-2 border-on-surface dark:border-inverse-on-surface [box-shadow:2px_2px_0px_#1b1b1e] rounded-lg px-2 py-1 active:translate-x-0.5 active:translate-y-0.5 transition-all" href="#warehouse">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2">inventory_2</span>
+<span class="text-label-sm font-label-sm font-bold mt-0.5">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 (Inactive - style_inactive_navigation) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-2 py-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#graft">
+<span class="material-symbols-outlined text-[20px]" data-icon="alt_route">alt_route</span>
+<span class="text-label-sm font-label-sm mt-0.5">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 (Inactive - style_inactive_navigation) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-2 py-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#branches">
+<span class="material-symbols-outlined text-[20px]" data-icon="eco">eco</span>
+<span class="text-label-sm font-label-sm mt-0.5">新枝</span>
+</a>
+<!-- Tab 4: 口味 (Inactive - style_inactive_navigation) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-2 py-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#taste">
+<span class="material-symbols-outlined text-[20px]" data-icon="palette">palette</span>
+<span class="text-label-sm font-label-sm mt-0.5">口味</span>
+</a>
+<!-- Tab 5: 设置 (Inactive - style_inactive_navigation) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-2 py-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#settings">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm mt-0.5">设置</span>
+</a>
+</nav>
+</div>
+</body></html>
