@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """
-Rebuild Glean's self-hosted font subsets (src/fonts/*.woff2 + src/fonts/fonts.css).
+Rebuild Glean's self-hosted font subsets (src/fonts/*.woff2 + src/fonts/fonts.css).  v0.16 Studio.
 Nothing is fetched from a CDN at runtime.
 
 Needs: pip install fonttools brotli, and the source fonts in a folder (arg 1, default ./src-fonts):
-  NotoSerifSC-Regular.otf, NotoSerifSC-Black.otf   github.com/notofonts/noto-cjk  Serif/SubsetOTF/SC
-  CormorantGaramond[wght].ttf, CormorantGaramond-Italic[wght].ttf   github.com/google/fonts ofl/cormorantgaramond
-  JetBrainsMono[wght].ttf                          github.com/google/fonts ofl/jetbrainsmono
+  NotoSansSC[wght].ttf      github.com/google/fonts  ofl/notosanssc   (思源黑体 / Noto Sans SC, variable)
+  Inter[opsz,wght].ttf      github.com/google/fonts  ofl/inter
 
-Sets (scripts/fonts/sets):
-  common.txt   ~3,800 most frequent hanzi (sliced by unicode-range; a slice loads only when a page uses it)
-  display.txt  what the Black display face covers (page titles, wordmark)
-  mono.txt     the wheat field / develop glyphs (ASCII always added)
-Every CJK character in src/ (UI words, samples) is added to the first slice automatically.
-Slices stay < 90 KB each.
+Faces written:
+  Glean Sans   Noto Sans SC, weight axis cut to 400–700, top-3000 hanzi in unicode-range slices
+               (a slice is only downloaded when a page actually shows one of its characters)
+  Glean Inter  Inter (opsz + wght 300–700), Latin only: GLEAN, numbers, counts (10), dates
+
+Every CJK character in src/ (UI words) goes into the first slice; from samples.ts only the rare ones.
 """
 import pathlib, re, subprocess, sys
 
@@ -22,15 +21,14 @@ root = here.parent.parent
 src = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'src-fonts')
 out = root / 'src/fonts'
 sets = here / 'sets'
-LATIN = 'U+0020-007E,U+00A0-00FF,U+0131,U+0152-0153,U+02C6,U+02DA,U+02DC,U+2013-2014,U+2018-201E,U+2022,U+2026,U+2039-203A,U+20AC'
-PUNCT = 'U+0020-007E,U+00A0-00FF,U+2010-2027,U+2030-203A,U+3000-303F,U+FF00-FF5E'
-SLICE = 380
+LATIN = 'U+0020-007E,U+00A0-00FF,U+0131,U+0152-0153,U+02C6,U+02DA,U+02DC,U+2013-2014,U+2018-201E,U+2022,U+2026,U+2039-203A,U+20AC,U+2190-2193,U+2197'
+# CJK punctuation (书名号《》 etc.) lives in the Chinese face so 《一一》 never falls back to a font where 一 looks like a dash
+PUNCT = 'U+2010-2012,U+2015-2017,U+2025,U+2027,U+2030-2038,U+3000-303F,U+FF00-FF5E'
+SLICE = 400
+WGHT = (400, 400, 700)  # CJK 400–700 only: one delta direction ≈ 27% smaller than 300–700; CJK 300 clamps to 400
+COMMON_LIMIT = 3000  # top-3000 hanzi ≈ 99.5% of modern text; rarer ones fall back to the system sans
 
 CJK = re.compile(r'[\u3400-\u9fff]')
-
-
-# Content files (the ~80-entry sample pool): only their *rare* characters go into the always-loaded first slice;
-# the common ones stay in the on-demand slices so the first slice doesn't balloon. (v0.14)
 CONTENT = {'samples.ts'}
 
 
@@ -44,8 +42,17 @@ def ui_chars():
     return s
 
 
-def sub(font, dest, *extra):
-    subprocess.run(['pyftsubset', str(src / font), '--flavor=woff2', f'--output-file={out / dest}', *extra], check=True)
+def instance(font, dest, **axes):
+    from fontTools.ttLib import TTFont
+    from fontTools.varLib import instancer
+    f = TTFont(src / font)
+    v = instancer.instantiateVariableFont(f, axes)
+    v.save(dest)
+    return dest
+
+
+def sub(path, dest, *extra):
+    subprocess.run([sys.executable, '-m', 'fontTools.subset', str(path), '--flavor=woff2', f'--output-file={out / dest}', *extra], check=True)
 
 
 def ranges(cps):
@@ -62,14 +69,17 @@ def ranges(cps):
 
 def main():
     try:
-        import brotli  # noqa: F401  WOFF2 needs it; fail before deleting anything
+        import brotli  # noqa: F401
     except ImportError:
         sys.exit('pip install brotli first')
     out.mkdir(parents=True, exist_ok=True)
+    tmp = pathlib.Path('/tmp/glean-font-work'); tmp.mkdir(exist_ok=True)
+    sans = instance('NotoSansSC[wght].ttf', tmp / 'sans.ttf', wght=WGHT)
+    inter = instance('Inter[opsz,wght].ttf', tmp / 'inter.ttf', wght=(300, 400, 700), opsz=None)
     for f in out.glob('*.woff2'):
         f.unlink()
     ui = sorted(ui_chars())
-    common = [c for c in (sets / 'common.txt').read_text(encoding='utf-8') if CJK.match(c)]
+    common = [c for c in (sets / 'common.txt').read_text(encoding='utf-8') if CJK.match(c)][:COMMON_LIMIT]
     order, seen = [], set()
     for c in ui + common:
         if c not in seen:
@@ -77,7 +87,6 @@ def main():
     first = len(ui)
     slices = [order[:max(first, 1)]]
     rest = order[first:]
-    # top the first slice up to SLICE with the most frequent characters
     room = max(0, SLICE - first)
     slices[0] += rest[:room]
     rest = rest[room:]
@@ -86,46 +95,38 @@ def main():
 
     css = [HEADER]
     for i, chars in enumerate(slices):
-        name = f'glean-serif-{i}.woff2'
-        txt = here / f'.slice{i}.txt'
+        name = f'glean-sans-{i}.woff2'
+        txt = tmp / f'slice{i}.txt'
         txt.write_text(''.join(chars), encoding='utf-8')
         extra = [f'--text-file={txt}', '--no-hinting', '--desubroutinize', '--layout-features=*']
         if i == 0:
             extra.append(f'--unicodes={PUNCT}')
-        sub('NotoSerifSC-Regular.otf', name, *extra)
-        txt.unlink()
+        sub(sans, name, *extra)
         rng = ranges([ord(c) for c in chars])
         if i == 0:
             rng = PUNCT + ',' + rng
-        css.append(FACE.format(fam='Glean Serif', file=name, w='400', st='normal', rng=f'\n  unicode-range: {rng};'))
-    disp = (sets / 'display.txt').read_text(encoding='utf-8').strip()
-    sub('NotoSerifSC-Black.otf', 'glean-display.woff2', f'--text=' + disp, '--unicodes=U+0020-007E,U+00B7,U+3000-303F,U+FF00-FF5E', '--no-hinting', '--desubroutinize')
-    css.append(FACE.format(fam='Glean Display', file='glean-display.woff2', w='900', st='normal', rng=''))
-    sub('CormorantGaramond[wght].ttf', 'glean-latin.woff2', f'--unicodes={LATIN}', '--layout-features=kern,liga,lnum,onum')
-    sub('CormorantGaramond-Italic[wght].ttf', 'glean-latin-italic.woff2', f'--unicodes={LATIN}', '--layout-features=kern,liga')
-    css.append(FACE.format(fam='Glean Latin', file='glean-latin.woff2', w='300 700', st='normal', rng=f'\n  unicode-range: {LATIN};'))
-    css.append(FACE.format(fam='Glean Latin', file='glean-latin-italic.woff2', w='300 700', st='italic', rng=f'\n  unicode-range: {LATIN};'))
-    mono = (sets / 'mono.txt').read_text(encoding='utf-8').strip()
-    sub('JetBrainsMono[wght].ttf', 'glean-mono.woff2', '--text=' + mono, '--unicodes=U+0020-007E', '--layout-features=')
-    css.append(FACE.format(fam='Glean Mono', file='glean-mono.woff2', w='100 800', st='normal', rng=''))
-    (out / 'fonts.css').write_text('\n'.join(css), encoding='utf-8')
+        css.append(FACE.format(fam='Glean Sans', file=name, w='400 700', rng=f'\n  unicode-range: {rng};'))
+    sub(inter, 'glean-inter.woff2', f'--unicodes={LATIN}', '--layout-features=kern,liga,calt,tnum,case,ss01')
+    css.insert(1, FACE.format(fam='Glean Inter', file='glean-inter.woff2', w='300 700', rng=f'\n  unicode-range: {LATIN};'))
+    (out / 'fonts.css').write_text('\n'.join(css) + '\n', encoding='utf-8')
+    total = 0
     for f in sorted(out.glob('*.woff2')):
+        total += f.stat().st_size
         print(f.name, f.stat().st_size)
+    print('slices', len(slices), 'first-slice chars', len(slices[0]), 'total', total)
 
 
 HEADER = """/*
  * Glean's type, self-hosted and subset (generated by scripts/fonts/subset.py — do not edit by hand).
  * All SIL OFL 1.1, see ./licenses.
- *   Glean Display  Noto Serif SC Black, only the words the UI sets large (page titles, wordmark)
- *   Glean Serif    Noto Serif SC Regular, ~3.8k common hanzi in unicode-range slices (loaded on demand)
- *   Glean Latin    Cormorant Garamond (variable, roman + italic): GLEAN, whispers, numbers
- *   Glean Mono     JetBrains Mono (variable), ASCII + a few glyphs: the wheat field and develop
+ *   Glean Inter  Inter (variable opsz + wght 300–700), Latin: GLEAN, numbers, counts, dates
+ *   Glean Sans   Noto Sans SC / 思源黑体 (variable wght 400–700), UI words + top-3000 hanzi in unicode-range slices (on demand)
  */"""
 FACE = """@font-face {{
   font-family: '{fam}';
   src: url('./{file}') format('woff2');
   font-weight: {w};
-  font-style: {st};
+  font-style: normal;
   font-display: swap;{rng}
 }}"""
 
