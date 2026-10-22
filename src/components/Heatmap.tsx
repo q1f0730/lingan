@@ -19,9 +19,9 @@ export function HeatmapPanel({ items }: { items: Item[] }) {
     if (el) el.scrollLeft = el.scrollWidth;
   }, [h.weeks]);
   return (
-    <div className="paper panel heat">
+    <section className="heat taste-sec">
       <div className="label">
-        拾穗的日子 · 近 365 天 <span className="dim">· {h.total} 穗 / {h.activeDays} 天 · 最长连续 {h.longest} 天</span>
+        拾穗的日子 · 近 365 天 <span className="dim">· {h.total} 穗 / {h.activeDays} 天</span>
       </div>
       <div className="heat-scroll" ref={scroller} tabIndex={0} aria-label="拾穗热力图，可横向滚动">
         <div className="heat-wrap" style={{ ['--weeks' as string]: h.weeks }}>
@@ -54,7 +54,6 @@ export function HeatmapPanel({ items }: { items: Item[] }) {
       </div>
       <div className="heat-legend dim" aria-hidden>
         少 {[0, 1, 2, 3, 4].map((l) => <i key={l} className={`heat-cell lv${l}`} />)} 多
-        <span className="heat-streak">{h.current > 0 ? `当前连续 ${h.current} 天` : '今天拾一穗，开始新的连续'}</span>
       </div>
       {selCell && (
         <div className="heat-day">
@@ -76,6 +75,6 @@ export function HeatmapPanel({ items }: { items: Item[] }) {
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }
