@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { decodeFrame, detectMotionLevel, revealCount, typeDuration, type MotionLevel } from '../lib/motion';
 
 let cached: MotionLevel | null = null;
@@ -43,7 +43,7 @@ export function DecodeText({ text, ms = 700 }: { text: string; ms?: number }) {
 }
 
 /** 逐字浮现：全文始终在 DOM（版面不跳），未浮现部分透明 */
-export function TypeReveal({ text, className }: { text: string; className?: string }) {
+export function TypeReveal({ text, className, done: doneContent }: { text: string; className?: string; /** 浮现完之后换成这份内容（如带高亮的正文） */ done?: ReactNode }) {
   const [n, setN] = useState(() => (level() === 'off' ? text.length : 0));
   useEffect(() => {
     if (level() === 'off') {
@@ -75,7 +75,7 @@ export function TypeReveal({ text, className }: { text: string; className?: stri
   return (
     <p className={className}>
       {done ? (
-        text
+        (doneContent ?? text)
       ) : (
         <>
           {chars.slice(0, n).join('')}
