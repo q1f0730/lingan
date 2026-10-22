@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 收集日历 2026 (214)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      width: 100%;
+      min-width: 1440px;
+      overflow-x: hidden;
+    }
+    /* Top Navigation identical to d1 desktop */
+    header.top-nav {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 72px;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #000000;
+      text-decoration: none;
+    }
+    nav.nav-links {
+      display: flex;
+      gap: 36px;
+    }
+    nav.nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: #7E7E7E;
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      padding-bottom: 4px;
+      position: relative;
+    }
+    nav.nav-links a.active {
+      color: #000000;
+      font-weight: 600;
+      border-bottom: 1px solid #000000;
+    }
+    .quick-capture {
+      width: 320px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 4px;
+    }
+    .quick-capture input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-size: 13px;
+      color: #000000;
+    }
+    .quick-capture input::placeholder {
+      color: #7E7E7E;
+    }
+
+    /* Main Container */
+    main.page-content {
+      padding: 0 40px;
+      padding-top: 140px;
+      padding-bottom: 120px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* Headline Area */
+    .headline-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 56px;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 24px;
+    }
+    .display-headline {
+      font-size: 110px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      line-height: 1.0;
+      color: #000000;
+    }
+    .headline-meta {
+      display: flex;
+      align-items: center;
+      gap: 48px;
+    }
+    .year-switcher {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+    }
+    .year-switcher a {
+      text-decoration: none;
+      color: #7E7E7E;
+      font-weight: 500;
+      padding-bottom: 2px;
+    }
+    .year-switcher a.active {
+      color: #000000;
+      font-weight: 600;
+      border-bottom: 1px solid #000000;
+    }
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #7E7E7E;
+      letter-spacing: 0.04em;
+    }
+    .legend-boxes {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+    .legend-box {
+      width: 11px;
+      height: 11px;
+    }
+    .c-0 { background-color: #F3F3F3; }
+    .c-1 { background-color: #C6C6C6; }
+    .c-2 { background-color: #7E7E7E; }
+    .c-3 { background-color: #000000; }
+    .c-future {
+      background-color: transparent;
+      border: 1px solid #E0E0E0;
+    }
+
+    /* 12-Month Calendar Grid (4 columns × 3 rows) */
+    .calendar-matrix {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      column-gap: 36px;
+      row-gap: 48px;
+      margin-bottom: 64px;
+    }
+    .month-card {
+      display: flex;
+      flex-direction: column;
+    }
+    .month-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #EAEAEA;
+      margin-bottom: 12px;
+    }
+    .month-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #000000;
+      letter-spacing: 0.02em;
+    }
+    .month-subcount {
+      font-size: 11px;
+      color: #7E7E7E;
+      font-weight: 400;
+    }
+
+    /* 7-column weekday headers */
+    .weekdays-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+    .weekday-initial {
+      font-size: 10px;
+      color: #7E7E7E;
+      text-align: center;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* Days grid */
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+    .day-cell {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      cursor: default;
+      position: relative;
+    }
+    .day-cell.interactive {
+      cursor: pointer;
+    }
+    .day-cell.is-selected {
+      outline: 2px solid #000000;
+      outline-offset: 1px;
+      z-index: 2;
+    }
+    .day-cell.is-today {
+      box-shadow: 0 0 0 2px #000000 inset;
+      z-index: 2;
+    }
+    .empty-slot {
+      visibility: hidden;
+    }
+
+    /* Interaction Note & Selected-Day Detail Section */
+    .section-divider {
+      border-top: 1px solid #000000;
+      margin-top: 24px;
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .interaction-hint {
+      font-size: 12px;
+      color: #7E7E7E;
+      letter-spacing: 0.05em;
+    }
+
+    .detail-panel {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      column-gap: 48px;
+      padding-top: 8px;
+    }
+    .detail-heading-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .detail-date-title {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #000000;
+    }
+    .detail-date-meta {
+      font-size: 13px;
+      color: #7E7E7E;
+      letter-spacing: 0.04em;
+    }
+
+    .detail-items-list {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid #EAEAEA;
+    }
+    .detail-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 16px 0;
+      border-bottom: 1px solid #EAEAEA;
+    }
+    .detail-item-row:hover {
+      background-color: #FAFAFA;
+    }
+    .detail-item-main {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+    .detail-item-index {
+      font-size: 12px;
+      color: #7E7E7E;
+      width: 20px;
+    }
+    .detail-item-title {
+      font-size: 15px;
+      color: #000000;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    .detail-item-tag {
+      font-size: 12px;
+      color: #7E7E7E;
+      letter-spacing: 0.04em;
+      padding-left: 24px;
+    }
+
+    /* Footer */
+    footer.page-footer {
+      margin-top: 96px;
+      padding-top: 24px;
+      border-top: 1px solid #EAEAEA;
+      font-size: 10px;
+      color: #7E7E7E;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+<!-- Top Nav identical to d1 / GLEAN suite -->
+<header class="top-nav">
+<a class="logo" href="#">拾穗 · GLEAN</a>
+<nav class="nav-links">
+<a href="#">穗仓</a>
+<a href="#">嫁接</a>
+<a href="#">新枝</a>
+<a class="active" href="#">口味</a>
+<a href="#">设置</a>
+</nav>
+<div class="quick-capture">
+<input placeholder="随手拾一穗 →" type="text"/>
+</div>
+</header>
+<!-- Page Main Content (1440px multi-column full-bleed grid) -->
+<main class="page-content">
+<!-- Big Headline row with Year switcher & Density legend -->
+<section class="headline-row">
+<h1 class="display-headline">2026 (214)</h1>
+<div class="headline-meta">
+<div class="legend">
+<span>少</span>
+<div class="legend-boxes">
+<span class="legend-box c-0"></span>
+<span class="legend-box c-1"></span>
+<span class="legend-box c-2"></span>
+<span class="legend-box c-3"></span>
+</div>
+<span>多</span>
+</div>
+<div class="year-switcher">
+<a href="#">2025</a>
+<a class="active" href="#">2026</a>
+</div>
+</div>
+</section>
+<!-- 12 Months Matrix (4 cols x 3 rows) -->
+<!-- 2026 Calendar: 
+         Jan 1 is Thursday (Mon-first: 3 empty lead days) - 31 days
+         Feb 1 is Sunday (6 empty lead days) - 28 days (sparse)
+         Mar 1 is Sunday (6 empty lead days) - 31 days
+         Apr 1 is Wednesday (2 empty lead days) - 30 days
+         May 1 is Friday (4 empty lead days) - 31 days
+         Jun 1 is Monday (0 empty lead days) - 30 days
+         Jul 1 is Wednesday (2 empty lead days) - 31 days
+         Aug 1 is Saturday (5 empty lead days) - 31 days
+         Sep 1 is Tuesday (1 empty lead day) - 30 days (denser)
+         Oct 1 is Thursday (3 empty lead days) - 31 days (dense, Oct 22 is today, Oct 17 selected)
+         Nov 1 is Sunday (6 empty lead days) - 30 days (future outlines)
+         Dec 1 is Tuesday (1 empty lead day) - 31 days (future outlines)
+    -->
+<section class="calendar-matrix">
+<!-- 1月 -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">1月</span>
+<span class="month-subcount">18 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+</div>
+</div>
+<!-- 2月 (Sparse) -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">2月</span>
+<span class="month-subcount">6 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+</div>
+</div>
+<!-- 3月 -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">3月</span>
+<span class="month-subcount">15 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+</div>
+</div>
+<!-- 4月 -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">4月</span>
+<span class="month-subcount">21 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+</div>
+</div>
+<!-- 5月 -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">5月</span>
+<span class="month-subcount">23 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+</div>
+</div>
+<!-- 6月 -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">6月</span>
+<span class="month-subcount">19 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+</div>
+</div>
+<!-- 7月 -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">7月</span>
+<span class="month-subcount">20 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+</div>
+</div>
+<!-- 8月 -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">8月</span>
+<span class="month-subcount">22 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-0"></div>
+</div>
+</div>
+<!-- 9月 (Dense) -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">9月</span>
+<span class="month-subcount">38 穗</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-0"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+<div class="day-cell c-3"></div>
+<div class="day-cell c-2"></div>
+<div class="day-cell c-1"></div>
+</div>
+</div>
+<!-- 10月 (Dense, Today Oct 22, Selected Oct 17) -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">10月</span>
+<span class="month-subcount">32 穗 (本月)</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-2 interactive" title="10月1日"></div>
+<div class="day-cell c-1 interactive" title="10月2日"></div>
+<div class="day-cell c-3 interactive" title="10月3日 · 凌晨四点的便利店"></div>
+<div class="day-cell c-0 interactive" title="10月4日"></div>
+<div class="day-cell c-2 interactive" title="10月5日 · 诗集小票"></div>
+<div class="day-cell c-1 interactive" title="10月6日"></div>
+<div class="day-cell c-2 interactive" title="10月7日"></div>
+<div class="day-cell c-0 interactive" title="10月8日"></div>
+<div class="day-cell c-3 interactive" title="10月9日 · 《一一》"></div>
+<div class="day-cell c-1 interactive" title="10月10日"></div>
+<div class="day-cell c-2 interactive" title="10月11日"></div>
+<div class="day-cell c-2 interactive" title="10月12日 · aqua"></div>
+<div class="day-cell c-1 interactive" title="10月13日"></div>
+<div class="day-cell c-3 interactive" title="10月14日 · 旧书店书脊"></div>
+<div class="day-cell c-0 interactive" title="10月15日"></div>
+<div class="day-cell c-2 interactive" title="10月16日 · Radio Garden"></div>
+<!-- 10月17日 (Saturday) - Selected Day -->
+<div class="day-cell c-3 interactive is-selected" title="10月17日 · 3 穗 (已选中)"></div>
+<div class="day-cell c-2 interactive" title="10月18日 · 卡尔维诺摘抄"></div>
+<div class="day-cell c-1 interactive" title="10月19日 · Re: Stacks"></div>
+<div class="day-cell c-3 interactive" title="10月20日 · 完美的日子"></div>
+<div class="day-cell c-2 interactive" title="10月21日 · 轮渡上的雾"></div>
+<!-- 10月22日 (Thursday) - Today with 2px black outline -->
+<div class="day-cell c-2 interactive is-today" title="10月22日 (今天)"></div>
+<!-- Future days in October -->
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+</div>
+</div>
+<!-- 11月 (Future - empty outline cells) -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">11月</span>
+<span class="month-subcount">—</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+</div>
+</div>
+<!-- 12月 (Future - empty outline cells) -->
+<div class="month-card">
+<div class="month-header">
+<span class="month-title">12月</span>
+<span class="month-subcount">—</span>
+</div>
+<div class="weekdays-row">
+<span class="weekday-initial">一</span>
+<span class="weekday-initial">二</span>
+<span class="weekday-initial">三</span>
+<span class="weekday-initial">四</span>
+<span class="weekday-initial">五</span>
+<span class="weekday-initial">六</span>
+<span class="weekday-initial">日</span>
+</div>
+<div class="days-grid">
+<div class="day-cell empty-slot"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+<div class="day-cell c-future"></div>
+</div>
+</div>
+</section>
+<!-- Interactive Hint and Selected Day Panel -->
+<div class="section-divider">
+<span class="interaction-hint">点任意一天，看那天拾了什么</span>
+</div>
+<!-- Selected Day Detail View (10月17日 · 3 穗) -->
+<section class="detail-panel">
+<div class="detail-heading-block">
+<h2 class="detail-date-title">10月17日 · 3 穗</h2>
+<span class="detail-date-meta">周六</span>
+</div>
+<div class="detail-items-list" style="border-top: none;">
+<div class="detail-item-row" style="border-bottom: none;">
+<div class="detail-item-main">
+<span class="detail-item-index">01</span>
+<span class="detail-item-title">给楼道里每一盏声控灯起一个名字</span>
+</div>
+<span class="detail-item-tag">想法</span>
+</div>
+<div class="detail-item-row" style="border-bottom: none;">
+<div class="detail-item-main">
+<span class="detail-item-index">02</span>
+<span class="detail-item-title">楼道里的声控灯</span>
+</div>
+<span class="detail-item-tag">照片</span>
+</div>
+<div class="detail-item-row" style="border-bottom: none;">
+<div class="detail-item-main">
+<span class="detail-item-index">03</span>
+<span class="detail-item-title">《一一》 片段</span>
+</div>
+<span class="detail-item-tag">摘抄</span>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="page-footer">
+<span>© 2026 Q1f730</span>
+</footer>
+</main>
+</body>
+</html>
