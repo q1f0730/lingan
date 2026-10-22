@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, user-scalable=no, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN - 离线错误</title>
+<!-- Google Fonts: Inter & Noto Sans SC -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary-fixed": "#1b1c1c",
+            "on-secondary-fixed-variant": "#464747",
+            "on-primary": "#ffffff",
+            "surface-variant": "#e2e2e2",
+            "primary-fixed-dim": "#c6c6c6",
+            "inverse-primary": "#c6c6c6",
+            "tertiary-container": "#1a1c1c",
+            "tertiary": "#000000",
+            "secondary-container": "#e3e2e2",
+            "surface-container": "#eeeeee",
+            "surface-bright": "#f9f9f9",
+            "secondary-fixed-dim": "#c7c6c6",
+            "surface-container-lowest": "#ffffff",
+            "secondary-fixed": "#e3e2e2",
+            "inverse-surface": "#2f3131",
+            "on-tertiary-fixed-variant": "#464747",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary": "#000000",
+            "on-secondary-container": "#646464",
+            "on-background": "#1a1c1c",
+            "surface-container-high": "#e8e8e8",
+            "secondary": "#7e7e7e",
+            "outline": "#7e7576",
+            "on-primary-container": "#848484",
+            "on-error": "#ffffff",
+            "outline-variant": "#cfc4c5",
+            "on-surface": "#1a1c1c",
+            "surface": "#ffffff",
+            "on-tertiary-fixed": "#1a1c1c",
+            "background": "#ffffff",
+            "surface-dim": "#dadada",
+            "on-secondary": "#ffffff",
+            "surface-container-low": "#f3f3f3",
+            "primary-fixed": "#e2e2e2",
+            "on-primary-fixed-variant": "#474747",
+            "on-primary-fixed": "#1b1b1b",
+            "on-tertiary-container": "#838484",
+            "primary-container": "#1b1b1b",
+            "surface-tint": "#5e5e5e",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "tertiary-fixed": "#e3e2e2",
+            "error": "#ba1a1a",
+            "on-surface-variant": "#4c4546",
+            "on-error-container": "#93000a",
+            "surface-container-highest": "#e2e2e2",
+            "inverse-on-surface": "#f1f1f1"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "none": "0px",
+            "sm": "0px",
+            "md": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "0px"
+          },
+          "spacing": {
+            "space-xl": "30px",
+            "space-xs": "4px",
+            "margin": "10px",
+            "space-lg": "20px",
+            "gutter": "10px",
+            "space-sm": "8px",
+            "space-md": "10px"
+          },
+          "fontFamily": {
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "Inter", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-mono-caps": ["Inter", "monospace"],
+            "display-hero": ["Noto Sans SC", "Inter", "sans-serif"],
+            "body-sm": ["Inter", "Noto Sans SC", "sans-serif"]
+          },
+          "fontSize": {
+            "label-micro": [
+              "10px",
+              {
+                "lineHeight": "12px",
+                "letterSpacing": "0.08em",
+                "fontWeight": "500"
+              }
+            ],
+            "headline-lg": [
+              "32px",
+              {
+                "lineHeight": "36px",
+                "letterSpacing": "-0.03em",
+                "fontWeight": "600"
+              }
+            ],
+            "display-hero-zh": [
+              "48px",
+              {
+                "lineHeight": "52px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "700"
+              }
+            ],
+            "headline-sm": [
+              "20px",
+              {
+                "lineHeight": "24px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "600"
+              }
+            ],
+            "body-lg": [
+              "15px",
+              {
+                "lineHeight": "22px",
+                "letterSpacing": "-0.01em",
+                "fontWeight": "400"
+              }
+            ],
+            "label-mono-caps": [
+              "11px",
+              {
+                "lineHeight": "14px",
+                "letterSpacing": "0.12em",
+                "fontWeight": "500"
+              }
+            ],
+            "display-hero": [
+              "56px",
+              {
+                "lineHeight": "56px",
+                "letterSpacing": "-0.04em",
+                "fontWeight": "600"
+              }
+            ],
+            "body-sm": [
+              "13px",
+              {
+                "lineHeight": "18px",
+                "letterSpacing": "0em",
+                "fontWeight": "400"
+              }
+            ]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      box-shadow: none !important;
+    }
+    body {
+      background-color: #ffffff;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    input:focus {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-surface text-primary antialiased selection:bg-primary selection:text-surface flex justify-center min-h-screen">
+<!-- Mobile Viewport Container: Exactly 390px Wide -->
+<div class="w-[390px] min-h-screen bg-surface flex flex-col justify-between relative pb-[105px]">
+<!-- Top Block: Banner + Header -->
+<div class="w-full">
+<!-- 1. Top Offline Strip -->
+<aside aria-label="网络状态" class="w-full bg-primary text-surface h-[26px] px-4 flex items-center justify-between">
+<span class="font-label-micro text-label-micro tracking-normal font-normal text-surface">
+          离线 · 速记照常保存，联网后可以嫁接
+        </span>
+</aside>
+<!-- 2. Top Bar / Header -->
+<header class="w-full h-12 px-4 flex justify-between items-center bg-surface">
+<h1 class="font-headline-sm text-headline-sm font-semibold tracking-tight text-primary">
+          拾穗 · GLEAN
+        </h1>
+<button class="font-body-sm text-body-sm text-secondary hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0 m-0" type="button">
+          设置
+        </button>
+</header>
+</div>
+<!-- 3. Main Content Stage -->
+<main class="w-full px-4 flex-1 flex flex-col justify-start">
+<!-- Huge Display Headline -->
+<h2 class="font-display-hero text-display-hero font-semibold text-primary mt-6 leading-none tracking-tight">
+        没接上
+      </h2>
+<!-- Lead Subheadline -->
+<p class="font-headline-sm text-[24px] leading-tight font-semibold text-primary mt-6 tracking-tight">
+        连不上智谱，这次嫁接没开始。
+      </p>
+<!-- Body Copy -->
+<p class="font-body-lg text-body-lg text-secondary mt-4 leading-relaxed">
+        选好的 3 穗还留着：轮渡上的雾 / 给楼道里每一盏声控灯起一个名字 / aqua。你的穗都在本机，一穗没丢。
+      </p>
+<!-- Diagnosis Section -->
+<section class="mt-8">
+<p class="text-[12px] leading-[14px] font-medium text-secondary tracking-wider mb-3">
+          可能是
+        </p>
+<ol class="space-y-2.5 text-[15px] leading-[22px] text-primary font-normal list-none p-0 m-0">
+<li class="flex items-baseline space-x-2">
+<span class="font-mono text-secondary text-[13px] w-3.5 inline-block">1</span>
+<span>手机没联网</span>
+</li>
+<li class="flex items-baseline space-x-2">
+<span class="font-mono text-secondary text-[13px] w-3.5 inline-block">2</span>
+<span>key 过期或填错了</span>
+</li>
+<li class="flex items-baseline space-x-2">
+<span class="font-mono text-secondary text-[13px] w-3.5 inline-block">3</span>
+<span>智谱那边暂时忙</span>
+</li>
+</ol>
+</section>
+<!-- Action Controls Stacked (24px vertical rhythm) -->
+<div class="mt-8 space-y-6 flex flex-col items-center w-full">
+<!-- Primary Button -->
+<button class="w-full h-12 bg-primary text-surface font-body-lg text-base font-medium flex items-center justify-center cursor-pointer hover:opacity-90 active:opacity-75 transition-opacity" type="button">
+          重试
+        </button>
+<!-- Secondary Text Action: Underlined -->
+<button class="w-full text-center text-primary text-[15px] font-normal underline underline-offset-4 decoration-1 hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-0 p-0" type="button">
+          换一个 AI 服务
+        </button>
+<!-- Tertiary Text Action -->
+<button class="w-full text-center text-primary text-[15px] font-normal hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-0 p-0" type="button">
+          检查 key
+        </button>
+<!-- Dismiss Action -->
+<button class="w-full text-center text-secondary text-[15px] font-normal hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-0" type="button">
+          稍后再说
+        </button>
+</div>
+<!-- Technical Error Meta Footer Line -->
+<div class="mt-8 text-center">
+<p class="font-label-mono-caps text-[12px] leading-[14px] text-secondary tracking-widest uppercase">
+          错误代码 401 · 10/22 12:31
+        </p>
+</div>
+<!-- Copyright -->
+<div class="mt-4 text-center pb-6">
+<p class="font-label-micro text-label-micro text-primary-fixed-dim tracking-wider">
+          © 2026 Q1f730
+        </p>
+</div>
+</main>
+<!-- 4. Pinned Bottom Quick-Capture & Navigation -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-surface z-50">
+<!-- Top Line: 1px black hairline rule -->
+<div class="w-full h-[1px] bg-primary"></div>
+<!-- Quick-capture Input Line -->
+<div class="w-full px-4 h-11 flex items-center justify-between bg-surface">
+<input aria-label="随手拾一穗" class="w-full bg-transparent text-[14px] text-primary placeholder-secondary border-0 p-0 m-0 focus:ring-0 focus:outline-none" placeholder="随手拾一穗" type="text"/>
+<button class="ml-2 font-medium text-primary text-[14px] px-1 py-1 hover:opacity-60 transition-opacity cursor-pointer bg-transparent border-0 flex-shrink-0" type="button">
+          拾
+        </button>
+</div>
+<!-- Divider: 1px subtle hairline rule -->
+<div class="w-full h-[1px] bg-[#eeeeee]"></div>
+<!-- Bottom Navigation: Exactly five words, zero icons, 390px distribution -->
+<nav aria-label="全局导航" class="w-full h-12 grid grid-cols-5 items-center px-1 bg-surface">
+<!-- 01 穗仓 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary text-[12px] tracking-widest font-normal transition-colors py-2" href="#storage">
+          穗仓
+        </a>
+<!-- 02 嫁接 (ACTIVE: pure black text with 1px black underline) -->
+<a class="flex flex-col items-center justify-center text-primary text-[12px] tracking-widest font-medium py-2" href="#graft">
+<span class="border-b border-primary pb-[2px]">嫁接</span>
+</a>
+<!-- 03 新枝 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary text-[12px] tracking-widest font-normal transition-colors py-2" href="#branches">
+          新枝
+        </a>
+<!-- 04 口味 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary text-[12px] tracking-widest font-normal transition-colors py-2" href="#taste">
+          口味
+        </a>
+<!-- 05 设置 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary text-[12px] tracking-widest font-normal transition-colors py-2" href="#settings">
+          设置
+        </a>
+</nav>
+</div>
+</div>
+</body></html>
