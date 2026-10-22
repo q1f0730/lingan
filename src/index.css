@@ -1962,6 +1962,95 @@ details[open] summary {
   padding: 12px 18px;
   font-size: 13px;
 }
+/* v0.18 五种接法：m23 稿，纯文字切换，无图标 */
+.modes {
+  margin-top: 32px;
+}
+.graft-side > .modes {
+  margin-top: 40px;
+}
+.modes > .label {
+  margin-bottom: 12px;
+}
+.mode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mode {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  text-align: left;
+  padding: 2px 0;
+  color: var(--fg-2);
+  transition: color 150ms;
+}
+.mode-name {
+  font-size: 16px;
+  font-weight: 400;
+  min-width: 3.5em;
+}
+.mode-note {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.mode:hover:not(:disabled) {
+  color: var(--fg);
+}
+.mode.on {
+  color: var(--fg);
+}
+.mode.on .mode-name {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+.mode.on .mode-note {
+  color: var(--fg-2);
+}
+.mode:disabled {
+  cursor: default;
+}
+.mode-rule {
+  margin-top: 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 38em;
+}
+.mode-rule-k {
+  color: var(--fg);
+  margin-right: 8px;
+}
+.mode-from {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.mode-warn {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg);
+  border-left: 1px solid var(--fg);
+  padding-left: 10px;
+}
+.pick-count {
+  margin-left: 10px;
+  font-size: 11px;
+  font-weight: 400;
+}
+@media (min-width: 1024px) {
+  .mode-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+  }
+  .mode {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
 .controls {
   display: grid;
   gap: 20px;
