@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 穗仓列表视图 (1440px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            pureBlack: '#000000',
+            pureWhite: '#FFFFFF',
+            secGrey: '#7E7E7E',
+            inactiveGrey: '#C6C6C6',
+            tileGrey: '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tabular-num {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Grid 12 cols with 16px gutter */
+    .grid-12 {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+  </style>
+</head>
+<body class="bg-white text-black min-h-screen flex flex-col">
+
+  <!-- TOP NAV BAR (Sticky/Fixed top, identical to d1 desktop) -->
+  <header class="fixed top-0 left-0 w-full z-50 bg-white border-b border-transparent h-16">
+    <div class="px-10 h-full flex items-center justify-between">
+      <!-- Left: Logo -->
+      <div class="text-[20px] font-semibold tracking-tight text-black select-none">
+        拾穗 · GLEAN
+      </div>
+
+      <!-- Center: Navigation (active: 穗仓) -->
+      <nav class="flex items-center space-x-8 text-[12px] font-medium tracking-widest">
+        <a href="#" class="text-black border-b border-black pb-0.5">穗仓</a>
+        <a href="#" class="text-secGrey hover:text-black transition-none">嫁接</a>
+        <a href="#" class="text-secGrey hover:text-black transition-none">新枝</a>
+        <a href="#" class="text-secGrey hover:text-black transition-none">口味</a>
+        <a href="#" class="text-secGrey hover:text-black transition-none">设置</a>
+      </nav>
+
+      <!-- Right: Quick capture input (320px wide underline) -->
+      <div class="w-[320px] relative">
+        <input 
+          type="text" 
+          placeholder="随手拾一穗 →" 
+          class="w-full bg-transparent border-0 border-b border-black rounded-none py-1 px-0 text-[13px] placeholder-secGrey focus:outline-none focus:ring-0"
+        />
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER (140px space below top nav) -->
+  <main class="w-full pt-[156px] px-10 flex-grow pb-24">
+    
+    <!-- Title & Toggle Row -->
+    <div class="flex items-baseline justify-between mb-8">
+      <!-- Huge headline left -->
+      <h1 class="text-[104px] font-semibold leading-none tracking-[-0.04em] text-black m-0 select-none">
+        穗仓 (20)
+      </h1>
+
+      <!-- Right Controls: Toggle & Button -->
+      <div class="flex flex-col items-end gap-3">
+        <!-- View Toggle -->
+        <div class="text-[12px] font-medium tracking-wider flex items-center gap-2 select-none">
+          <span class="text-inactiveGrey cursor-pointer hover:text-black">网格</span>
+          <span class="text-inactiveGrey">|</span>
+          <span class="text-black border-b border-black pb-0.5 cursor-pointer">列表</span>
+        </div>
+        <!-- 嫁接所选 Button -->
+        <button class="bg-black text-white text-[12px] px-3.5 py-1 rounded-none hover:opacity-90 font-medium tracking-wide transition-none">
+          嫁接所选
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLE AREA: 12-col grid, gap 16px -->
+    <div class="w-full">
+      <!-- Header row -->
+      <div class="grid-12 pb-3 border-b border-black text-[12px] text-secGrey font-medium tracking-wider">
+        <div class="col-span-5">穗</div>
+        <div class="col-span-2">类型</div>
+        <div class="col-span-3">来源</div>
+        <div class="col-span-1">标签</div>
+        <div class="col-span-1 text-right tabular-num">日期</div>
+      </div>
+
+      <!-- Rows container: NO lines between rows, no zebra, each ~64px tall -->
+      <div class="w-full">
+
+        <!-- 01 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">轮渡上的雾</div>
+          <div class="col-span-2">照片</div>
+          <div class="col-span-3 truncate pr-4">自己拍</div>
+          <div class="col-span-1 truncate">清晨 · 雾</div>
+          <div class="col-span-1 text-right tabular-num">10/21</div>
+        </div>
+
+        <!-- 02 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">《完美的日子》</div>
+          <div class="col-span-2">电影</div>
+          <div class="col-span-3 truncate pr-4">维姆·文德斯</div>
+          <div class="col-span-1 truncate">日常 · 清晨</div>
+          <div class="col-span-1 text-right tabular-num">10/20</div>
+        </div>
+
+        <!-- 03 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">Re: Stacks</div>
+          <div class="col-span-2">歌</div>
+          <div class="col-span-3 truncate pr-4">Bon Iver</div>
+          <div class="col-span-1 truncate">冬天 · 夜</div>
+          <div class="col-span-1 text-right tabular-num">10/19</div>
+        </div>
+
+        <!-- 04 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">“记忆中的形象一旦被词语固定住，就给抹掉了。”</div>
+          <div class="col-span-2">摘抄</div>
+          <div class="col-span-3 truncate pr-4">卡尔维诺《看不见的城市》</div>
+          <div class="col-span-1 truncate">记忆</div>
+          <div class="col-span-1 text-right tabular-num">10/18</div>
+        </div>
+
+        <!-- 05 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">“给楼道里每一盏声控灯起一个名字”</div>
+          <div class="col-span-2">想法</div>
+          <div class="col-span-3 truncate pr-4">自己</div>
+          <div class="col-span-1 truncate">楼道 · 日常</div>
+          <div class="col-span-1 text-right tabular-num">10/17</div>
+        </div>
+
+        <!-- 06 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">Radio Garden · 转动地球收听各地电台</div>
+          <div class="col-span-2">链接</div>
+          <div class="col-span-3 truncate pr-4">radio.garden</div>
+          <div class="col-span-1 truncate">声音</div>
+          <div class="col-span-1 text-right tabular-num">10/16</div>
+        </div>
+
+        <!-- 07 (Hover state with shifted title and floating 240x320 portrait preview) -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey relative">
+          <!-- Title shifted right by 16px -->
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4 pl-4 transition-all duration-75 flex items-center">
+            旧书店堆到天花板的书脊
+          </div>
+          <div class="col-span-2">照片</div>
+          <div class="col-span-3 truncate pr-4">自己拍</div>
+          <div class="col-span-1 truncate">书 · 收集</div>
+          <div class="col-span-1 text-right tabular-num">10/14</div>
+
+          <!-- Floating 240x320 photo preview floating beside cursor over 类型/来源 area -->
+          <div class="absolute left-[44%] top-1/2 -translate-y-1/2 z-30 pointer-events-none">
+            <div class="w-[240px] h-[320px] bg-[#EAEAEA] overflow-hidden">
+              <img 
+                src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ" 
+                alt="旧书店堆到天花板的书脊" 
+                class="w-full h-full object-cover grayscale contrast-[1.05]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 08 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">aqua</div>
+          <div class="col-span-2">歌</div>
+          <div class="col-span-3 truncate pr-4">坂本龙一</div>
+          <div class="col-span-1 truncate">钢琴 · 安静</div>
+          <div class="col-span-1 text-right tabular-num">10/12</div>
+        </div>
+
+        <!-- 09 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">《一一》</div>
+          <div class="col-span-2">电影</div>
+          <div class="col-span-3 truncate pr-4">杨德昌</div>
+          <div class="col-span-1 truncate">窗 · 夜</div>
+          <div class="col-span-1 text-right tabular-num">10/09</div>
+        </div>
+
+        <!-- 10 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">“把外卖小票上的备注收集成一本诗集”</div>
+          <div class="col-span-2">想法</div>
+          <div class="col-span-3 truncate pr-4">自己</div>
+          <div class="col-span-1 truncate">日常里的诗</div>
+          <div class="col-span-1 text-right tabular-num">10/05</div>
+        </div>
+
+        <!-- 11 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">凌晨四点的便利店</div>
+          <div class="col-span-2">照片</div>
+          <div class="col-span-3 truncate pr-4">自己拍</div>
+          <div class="col-span-1 truncate">夜 · 城市</div>
+          <div class="col-span-1 text-right tabular-num">10/03</div>
+        </div>
+
+        <!-- 12 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">Avril 14th</div>
+          <div class="col-span-2">歌</div>
+          <div class="col-span-3 truncate pr-4">Aphex Twin</div>
+          <div class="col-span-1 truncate">钢琴 · 安静</div>
+          <div class="col-span-1 text-right tabular-num">10/01</div>
+        </div>
+
+        <!-- 13 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">《东京物语》</div>
+          <div class="col-span-2">电影</div>
+          <div class="col-span-3 truncate pr-4">小津安二郎</div>
+          <div class="col-span-1 truncate">日常 · 家</div>
+          <div class="col-span-1 text-right tabular-num">09/28</div>
+        </div>
+
+        <!-- 14 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">“观看先于言语。”</div>
+          <div class="col-span-2">摘抄</div>
+          <div class="col-span-3 truncate pr-4">约翰·伯格《观看之道》</div>
+          <div class="col-span-1 truncate">观看</div>
+          <div class="col-span-1 text-right tabular-num">09/26</div>
+        </div>
+
+        <!-- 15 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">“在每张旧车票背面写下当天的天气”</div>
+          <div class="col-span-2">想法</div>
+          <div class="col-span-3 truncate pr-4">自己</div>
+          <div class="col-span-1 truncate">收集 · 天气</div>
+          <div class="col-span-1 text-right tabular-num">09/23</div>
+        </div>
+
+        <!-- 16 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">Cabinet · 一本关于物件与好奇心的杂志</div>
+          <div class="col-span-2">链接</div>
+          <div class="col-span-3 truncate pr-4">cabinetmagazine.org</div>
+          <div class="col-span-1 truncate">收集</div>
+          <div class="col-span-1 text-right tabular-num">09/20</div>
+        </div>
+
+        <!-- 17 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">老小区晾衣绳上的白床单</div>
+          <div class="col-span-2">照片</div>
+          <div class="col-span-3 truncate pr-4">自己拍</div>
+          <div class="col-span-1 truncate">日常 · 清晨</div>
+          <div class="col-span-1 text-right tabular-num">09/17</div>
+        </div>
+
+        <!-- 18 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">Gymnopédie No.1</div>
+          <div class="col-span-2">歌</div>
+          <div class="col-span-3 truncate pr-4">埃里克·萨蒂</div>
+          <div class="col-span-1 truncate">钢琴 · 安静</div>
+          <div class="col-span-1 text-right tabular-num">09/14</div>
+        </div>
+
+        <!-- 19 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">《海街日记》</div>
+          <div class="col-span-2">电影</div>
+          <div class="col-span-3 truncate pr-4">是枝裕和</div>
+          <div class="col-span-1 truncate">家 · 海</div>
+          <div class="col-span-1 text-right tabular-num">09/11</div>
+        </div>
+
+        <!-- 20 -->
+        <div class="grid-12 h-16 items-center text-[14px] text-secGrey">
+          <div class="col-span-5 text-[19px] font-medium text-black truncate pr-4">“收集图书馆借阅卡上陌生人的名字”</div>
+          <div class="col-span-2">想法</div>
+          <div class="col-span-3 truncate pr-4">自己</div>
+          <div class="col-span-1 truncate">书 · 陌生人</div>
+          <div class="col-span-1 text-right tabular-num">09/08</div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full px-10 pb-8 text-[10px] text-black tracking-[0.1em] uppercase select-none">
+    © 2026 Q1f730
+  </footer>
+
+</body>
+</html>
