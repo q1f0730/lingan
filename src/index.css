@@ -2790,3 +2790,311 @@ button.heat-cell {
     font-size: 96px;
   }
 }
+
+/* ———————————————————————— v0.17 秒搜（m18 / d8）———————————————————————— */
+/* 输入即出结果：结果区不做入场淡入（每敲一个字都直接换） */
+.search-view > .sq-results,
+.search-view > .sq-idle {
+  animation: none;
+}
+.sq-head {
+  padding-top: 24px;
+}
+.sq-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0 8px;
+  border-bottom: 1px solid var(--fg);
+  padding-bottom: 6px;
+}
+/* 输入框随内容变宽，计数 (n) 紧跟在字后面 */
+.sq-grow {
+  display: inline-grid;
+  min-width: 2ch;
+  max-width: calc(100% - 120px);
+}
+.sq-grow::after {
+  content: attr(data-v) ' ';
+  visibility: hidden;
+  white-space: pre;
+  grid-area: 1 / 1;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.1;
+  overflow: hidden;
+}
+.sq-input {
+  grid-area: 1 / 1;
+  /* 宽度只由上面的 ::after（当前文字）决定：中文字体的平均字宽很大，size=1 也会撑出好几个字宽 */
+  width: 0;
+  min-width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.1;
+  caret-color: var(--fg);
+}
+.sq-input::placeholder {
+  color: var(--fg-3);
+}
+.sq-input::-webkit-search-cancel-button {
+  display: none;
+}
+.sq-total {
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--fg-2);
+}
+.sq-acts {
+  margin-left: auto;
+  display: flex;
+  gap: 16px;
+  align-self: center;
+}
+.sq-count {
+  margin-top: 8px;
+}
+.sq-filters {
+  margin-top: 20px;
+}
+.sq-frow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-height: 30px;
+}
+.sq-fl {
+  flex: none;
+  width: 28px;
+  color: var(--fg-3);
+}
+.sq-opts {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0 18px;
+  min-width: 0;
+  align-items: baseline;
+}
+.sq-opts::-webkit-scrollbar {
+  display: none;
+}
+.sq-dates {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+.sq-date {
+  border: 0;
+  border-bottom: 1px solid var(--fg);
+  background: transparent;
+  padding: 2px 0;
+  font-size: 13px;
+  outline: none;
+  color-scheme: light;
+}
+[data-theme='dark'] .sq-date {
+  color-scheme: dark;
+}
+.sq-results {
+  margin-top: 28px;
+}
+.sq-sec + .sq-sec {
+  margin-top: 40px;
+}
+.sq-sec-head {
+  color: var(--fg-2);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--fg);
+}
+/* 手机：64×80 缩略图 + 标题 / 命中 / 类型 · 日期 */
+.sq-row {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0 14px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.sq-thumb {
+  flex: none;
+  width: 64px;
+  height: 80px;
+  overflow: hidden;
+  background: var(--tile);
+}
+.sq-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sq-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.sq-title {
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sq-hit {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sq-where + .sq-where {
+  margin-left: 10px;
+}
+.sq-meta {
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--fg-2);
+}
+.sq-results mark.hit {
+  font-weight: 600;
+  padding: 0 1px;
+}
+.sq-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 0;
+}
+.sq-btitle {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.sq-bbody {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.sq-more,
+.sq-none {
+  margin-top: 16px;
+}
+.sq-tips .sq-tip {
+  margin-left: 8px;
+  color: var(--fg);
+}
+.sq-idle {
+  margin-top: 28px;
+}
+.sq-recent {
+  margin-top: 28px;
+}
+.sq-recent-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 24px;
+  margin-top: 10px;
+}
+.sq-recent-q {
+  font-size: 14px;
+  color: var(--fg-2);
+}
+.sq-recent-q:hover {
+  color: var(--fg);
+}
+/* 桌面（d8）：96px 查询行、灰色计数、无线表格 穗 / 类型 / 命中 / 日期，悬停行底浅灰 + 光标旁预览 */
+@media (min-width: 1024px) {
+  .sq-head {
+    padding-top: 140px;
+  }
+  .sq-line {
+    padding-bottom: 18px;
+    gap: 0 4px;
+  }
+  .sq-grow::after,
+  .sq-input,
+  .sq-total {
+    font-size: 96px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .sq-total {
+    margin-left: 12px;
+  }
+  .sq-count {
+    margin-top: 12px;
+  }
+  .sq-filters {
+    margin-top: 20px;
+  }
+  .sq-results {
+    margin-top: 48px;
+  }
+  .sq-sec-head {
+    display: none;
+  }
+  .sq-branches .sq-sec-head {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .sq-items::before {
+    content: none;
+  }
+  .sq-thead,
+  .sq-table.wide .sq-row {
+    display: grid;
+    grid-template-columns: 4fr 1.2fr 6fr 1fr;
+    column-gap: 16px;
+    align-items: center;
+  }
+  .sq-thead {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-2);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--fg);
+  }
+  .sq-table.wide .sq-row {
+    padding: 16px 0;
+    font-size: 13px;
+  }
+  .sq-table.wide .sq-row:hover {
+    background: var(--tile);
+  }
+  .sq-table.wide .sq-title {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .sq-type-c {
+    color: var(--fg-2);
+  }
+  .sq-table.wide .sq-hit {
+    font-size: 13px;
+  }
+  .sq-table.wide .tc-date {
+    color: var(--fg-2);
+    text-align: right;
+  }
+  .sq-branch {
+    padding: 16px 0;
+  }
+  .sq-btitle {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+}
