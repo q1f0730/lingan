@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
-import { db, exportAll, importAll } from '../lib/db';
+import { clearAll, exportAll, importAll } from '../lib/db';
 import { embedAllMissing } from '../lib/enrich';
 import { readFileText, saveTextFile } from '../lib/files';
 import { PRESETS, embedConfig, type Settings } from '../lib/settings';
@@ -84,8 +84,7 @@ export function SettingsView() {
   async function wipe() {
     if (!confirm('清空所有穗和新枝？此操作不能撤销。建议先导出备份。')) return;
     if (!confirm('再确认一次：真的清空？')) return;
-    await db.items.clear();
-    await db.developments.clear();
+    await clearAll();
     toast('已清空');
   }
 
