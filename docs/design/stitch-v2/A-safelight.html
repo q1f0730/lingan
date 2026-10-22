@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>灵感暗房 · SAFELIGHT</title>
+<!-- Google Fonts: Noto Serif SC, JetBrains Mono, Source Sans 3 -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&amp;family=Noto+Serif+SC:wght@300;400;600;700;900&amp;family=Source+Sans+3:ital,wght@0,300;0,400;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-low": "#f8f3ea",
+            "secondary-fixed-dim": "#cbc5c2",
+            "primary": "#a51c05",
+            "on-secondary-fixed": "#1d1b19",
+            "surface-container-high": "#ece8df",
+            "tertiary-fixed": "#e8e1dc",
+            "on-primary-container": "#ffeae6",
+            "on-error-container": "#93000a",
+            "inverse-surface": "#32302a",
+            "background": "#fef9f0",
+            "surface-dim": "#ded9d1",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "on-surface": "#1d1c16",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#e8e1dd",
+            "surface-container-highest": "#e7e2d9",
+            "primary-fixed": "#ffdad3",
+            "on-secondary-fixed-variant": "#494643",
+            "surface-bright": "#fef9f0",
+            "inverse-on-surface": "#f5f0e7",
+            "on-background": "#1d1c16",
+            "primary-fixed-dim": "#ffb4a5",
+            "tertiary": "#57534f",
+            "tertiary-fixed-dim": "#ccc5c1",
+            "surface": "#fef9f0",
+            "outline-variant": "#e3beb7",
+            "on-tertiary-fixed-variant": "#4a4643",
+            "error": "#ba1a1a",
+            "surface-tint": "#b42810",
+            "on-primary-fixed": "#3f0400",
+            "surface-variant": "#e7e2d9",
+            "on-secondary": "#ffffff",
+            "on-error": "#ffffff",
+            "tertiary-container": "#706b67",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed": "#1e1b18",
+            "outline": "#8e706a",
+            "on-secondary-container": "#676461",
+            "primary-container": "#c8361d",
+            "inverse-primary": "#ffb4a5",
+            "surface-container": "#f2ede4",
+            "on-surface-variant": "#5a413b",
+            "secondary-container": "#e8e1dd",
+            "secondary": "#615e5b",
+            "on-primary-fixed-variant": "#8f1200",
+            "on-tertiary-container": "#f4ede8"
+          },
+          fontFamily: {
+            "headline-xl-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-xl": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-lg-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-sm": ["Noto Serif SC", "Noto Serif", "serif"],
+            "label-editorial": ["Noto Serif SC", "Noto Serif", "serif"],
+            "label-code-sm": ["JetBrains Mono", "monospace"],
+            "label-code-lg": ["JetBrains Mono", "monospace"],
+            "body-lg": ["\"Source Sans 3\"", "sans-serif"],
+            "body-md": ["\"Source Sans 3\"", "sans-serif"],
+            "body-sm": ["\"Source Sans 3\"", "sans-serif"]
+          },
+          fontSize: {
+            "headline-xl-mobile": ["28px", { lineHeight: "38px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "headline-xl": ["36px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-lg": ["26px", { lineHeight: "36px", fontWeight: "600" }],
+            "headline-lg-mobile": ["22px", { lineHeight: "30px", fontWeight: "600" }],
+            "headline-sm": ["18px", { lineHeight: "26px", fontWeight: "600" }],
+            "label-editorial": ["11px", { lineHeight: "14px", letterSpacing: "0.15em", fontWeight: "600" }],
+            "label-code-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "500" }],
+            "label-code-lg": ["13px", { lineHeight: "18px", letterSpacing: "0.04em", fontWeight: "500" }],
+            "body-lg": ["16px", { lineHeight: "26px", fontWeight: "400" }],
+            "body-md": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+            "body-sm": ["12px", { lineHeight: "18px", fontWeight: "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Physical Darkroom Atmosphere & Grain */
+    .safelight-aura {
+      background: radial-gradient(circle at 50% -10%, #c8361d 0%, #7c1404 35%, #2a0804 60%, transparent 85%);
+    }
+    .darkroom-grain {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+      background-size: 3px 3px;
+    }
+    .clip-shadow {
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+    }
+    /* Ghostly half-developed emulsion effect */
+    .emulsion-developing {
+      filter: contrast(0.7) brightness(0.85) sepia(0.25) hue-rotate(330deg);
+      opacity: 0.88;
+    }
+    /* Hide scrollbars for aesthetic film track */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .glowing-ruby-btn {
+      box-shadow: 0 0 24px rgba(200, 54, 29, 0.75), inset 0 2px 4px rgba(255, 255, 255, 0.35);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#0b0a0a] text-on-surface flex justify-center items-center min-h-screen p-0 m-0 overflow-hidden font-body-md select-none">
+<!-- Mobile Viewport Shell: 390px x 844px -->
+<main class="relative w-[390px] h-[844px] bg-[#0c0b0b] text-[#e8e1dd] overflow-hidden flex flex-col justify-between border border-[#2a2724] shadow-2xl">
+<!-- Safelight Overhead Lamp Gradient Aura -->
+<div class="absolute top-0 left-0 right-0 h-[380px] safelight-aura pointer-events-none opacity-90 z-0"></div>
+<div class="absolute inset-0 darkroom-grain pointer-events-none opacity-40 z-10"></div>
+<!-- Edge Registration Guides & Optical Metas -->
+<div class="absolute top-3 left-4 z-20 flex items-center space-x-2 font-label-code-sm text-label-code-sm text-[#ffdad3]/60 tracking-wider">
+<span>SAFELIGHT 650nm</span>
+<span class="text-[#c8361d]">●</span>
+<span>Q1f730</span>
+</div>
+<div class="absolute top-3 right-4 z-20 font-label-code-sm text-label-code-sm text-[#ffdad3]/50">
+<span>EMULSION · AG-PLUS</span>
+</div>
+<!-- SHARED COMPONENT: TopAppBar (Docked full-width top) -->
+<header class="relative z-30 pt-7 px-4 pb-2 flex justify-between items-center w-full max-w-md mx-auto border-b border-[#c8361d]/20">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[#ffdad3] text-lg">camera</span>
+<span class="font-label-code-sm text-label-code-sm tracking-widest text-[#ffdad3]">灵感暗房 · ROLL #04 / 36 EXP</span>
+</div>
+<div class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-[#c8361d] text-xs animate-pulse" style="font-variation-settings: 'FILL' 1;">fiber_manual_record</span>
+<span class="font-label-code-sm text-label-code-sm text-[#ffdad3]/70">REC</span>
+</div>
+</header>
+<!-- DRAMATIC CHINESE SERIF TITLE (Bleeding off edge, Avant-garde Darkroom Editorial) -->
+<div class="relative z-20 px-4 pt-1 pointer-events-none">
+<div class="flex items-baseline justify-between overflow-visible">
+<h1 class="font-headline-xl text-[68px] leading-[68px] tracking-tight font-black text-[#ffdad3] opacity-95 -ml-2 -mb-2 select-none drop-shadow-[0_2px_12px_rgba(200,54,29,0.4)]">
+          灵感暗房
+        </h1>
+<div class="text-right flex flex-col items-end pb-1 font-label-code-sm text-label-code-sm text-[#cbc5c2]/70">
+<span class="text-[#c8361d] font-bold">KODAK TRI-X 400</span>
+<span>BATH TEMP: 20°C</span>
+<span class="border border-[#c8361d]/40 px-1 mt-0.5 text-[#ffdad3] text-[9px]">FRAME 18-24</span>
+</div>
+</div>
+<div class="w-full flex items-center justify-between border-b border-[#c8361d]/40 pt-1">
+<span class="font-label-code-sm text-[9px] text-[#ffdad3]/60 tracking-widest">DRYING LINE // 晾片绳索 06 张底片悬挂显影中</span>
+<span class="font-label-code-sm text-[9px] text-[#ffdad3]/60">[ 6 PIECES PINNED ]</span>
+</div>
+</div>
+<!-- PHYSICAL HANGING WIRE + PRINTS CANVAS (Scrollable / Tactile Gallery) -->
+<div class="relative z-20 flex-1 overflow-y-auto no-scrollbar px-3 pt-3 pb-24">
+<!-- WIRE 1: Metal tension cable across darkroom space -->
+<div class="relative w-full mb-6 mt-1">
+<!-- Suspended Darkroom Steel Wire -->
+<div class="absolute top-2 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#8e706a] to-transparent shadow-[0_1px_4px_rgba(200,54,29,0.3)] z-10"></div>
+<!-- Hanging Items Cluster 1 (Two items of differing aspect ratios & tilts) -->
+<div class="flex justify-between items-start pt-1 px-1">
+<!-- ITEM 1: Photo print (Gothic Cathedral in cold rain) -->
+<div class="relative w-[172px] bg-[#e8e1d5] text-[#141210] p-1.5 pb-2.5 shadow-2xl rotate-[-2.2deg] transition-transform duration-200 hover:rotate-0 clip-shadow border border-[#141210]">
+<!-- Clothespin Anchor -->
+<div class="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
+<div class="w-2.5 h-6 bg-[#3a2f26] border border-[#141210] rounded-[1px] shadow-sm relative">
+<div class="absolute top-2 left-0 right-0 h-[2px] bg-[#d5cdc0]"></div>
+</div>
+</div>
+<!-- Silver Gelatin Photo Frame -->
+<div class="relative w-full h-[142px] bg-[#141210] overflow-hidden border border-[#141210]/40">
+<img class="w-full h-full object-cover grayscale contrast-125" data-alt="A haunting black and white high-contrast photograph of gothic cathedral spires piercing through heavy cold rain and mist. The light creates stark tonal gradients on carved stone gargoyles and wet slate roofs, invoking a timeless analog darkroom print feel with natural silver grain." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWp4uDmhvmRskj_2U-jRLZzB598cSzmmwhlfCqxfILb1zJ0GHvFLvMAj8IHNK4FaOIymj1Jvz18PMbfPl06h8-k3xE2A_u7qkkIW0Xzr62ryzsbfHx-U1rKI6UdYudAuQ1F5TsMtEscB8Mbi2KO-b8uEH49tG_KWP6Tp7SygNP7RfKBKnS5GL9KGomIO0E77VmzdfaELDda1Rpt_jKfrr86xqT_uYQjk1VuRg56Ay-lfnn4UEVFdeTR4tSwD3rU2hAcZ4dALmd9x4"/>
+<!-- Darkroom Frame Metadata Stamp -->
+<span class="absolute bottom-1 right-1 font-label-code-sm text-[8px] bg-black/80 text-[#e8e1d5] px-1 py-0.5 tracking-tighter">AGFA 100</span>
+</div>
+<!-- Label Margin on Fiber Paper -->
+<div class="mt-1.5 px-0.5 flex flex-col">
+<div class="flex justify-between items-center text-[10px] font-label-code-sm text-[#57534f]">
+<span>№ 0411-A</span>
+<span>今天 22:18</span>
+</div>
+<p class="font-headline-sm text-[12px] leading-[16px] text-[#141210] font-semibold mt-0.5 line-clamp-2">
+                哥特教堂尖顶在冷雨中
+              </p>
+<span class="text-[9px] font-label-code-sm text-[#c8361d] mt-0.5">#ARCHITECTURE #SILVER</span>
+</div>
+</div>
+<!-- ITEM 2: Film print / 35mm contact strip (In the Mood for Love / Wong Kar-wai) -->
+<div class="relative w-[180px] bg-[#1a1715] text-[#e8e1dd] p-2 shadow-2xl rotate-[1.8deg] transition-transform duration-200 hover:rotate-0 border border-[#c8361d]/60 clip-shadow">
+<!-- Dual Clothespin Clips -->
+<div class="absolute -top-3.5 left-6 z-20">
+<div class="w-2 h-5 bg-[#8e706a] border border-[#141210] rounded-[1px]"></div>
+</div>
+<div class="absolute -top-3.5 right-6 z-20">
+<div class="w-2 h-5 bg-[#8e706a] border border-[#141210] rounded-[1px]"></div>
+</div>
+<!-- 35mm Perforated Edge Strip -->
+<div class="flex justify-between items-center mb-1 text-[8px] font-label-code-sm text-[#ffdad3]/50 border-b border-[#ffdad3]/20 pb-0.5">
+<span>▶ 23A</span>
+<span class="tracking-widest">KODAK 5207</span>
+<span>24</span>
+</div>
+<div class="relative w-full h-[98px] bg-[#0c0b0b] overflow-hidden border border-[#c8361d]/40">
+<img class="w-full h-full object-cover contrast-110 brightness-90" data-alt="A cinematic 35mm film still reminiscent of Wong Kar-wai's In the Mood for Love, featuring slow shutter motion blur in an atmospheric, dim hallway illuminated by rich crimson safelight and saturated emerald green neon hues. The textures evoke tactile analog film emulsion with grain." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMoRyMpdpFAkM8xi1OXielu8h6PlB-equtwsG3GBmoVC7hoPc7yqB9LMRAqY43bvJl_T40dnUAZ_-vBbfuVa0i4rHVyWUKPtsPvP6viQo6hIYMx9R2a33Kd-1OGEF5HcBBUvK9wg3ce-9PwNECWrZT5lKt_11h9jDQLjyewkOY6Ykd1YuTAA17zic2aog4QmK86YEa7AqQclk6WTyUZF_ykWo9txOXab694Q3gL0hjedR3ffvXs7TC6p6lYrasMO9HsKceom0qRfI"/>
+<div class="absolute inset-0 bg-[#c8361d]/15 mix-blend-color"></div>
+</div>
+<div class="mt-1.5 flex flex-col">
+<div class="flex justify-between items-center text-[10px] font-label-code-sm text-[#ffdad3]/60">
+<span class="text-[#c8361d]">王家卫 (2000)</span>
+<span>昨天 19:40</span>
+</div>
+<p class="font-headline-sm text-[11px] leading-[15px] text-[#ffdad3] font-medium mt-0.5">
+                电影《花样年华》：慢速快门红绿暗涌剧照与幽微台词
+              </p>
+</div>
+</div>
+</div>
+</div>
+<!-- WIRE 2: Intermediate tension cable -->
+<div class="relative w-full mb-6 pt-3">
+<!-- Suspended Darkroom Steel Wire -->
+<div class="absolute top-5 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#8e706a] to-transparent shadow-[0_1px_4px_rgba(200,54,29,0.3)] z-10"></div>
+<!-- Hanging Items Cluster 2 (Audio Negative & Cotton Rag Quote Card) -->
+<div class="flex justify-between items-start pt-3 px-1">
+<!-- ITEM 3: Audio Negative (Radiohead vinyl slip) -->
+<div class="relative w-[168px] bg-[#141210] text-[#e8e1dd] p-2 shadow-2xl rotate-[-1.2deg] border border-[#32302a] clip-shadow">
+<!-- Pin -->
+<div class="absolute -top-3.5 left-8 z-20">
+<div class="w-2.5 h-5 bg-[#4a4643] border border-[#141210] rounded-[1px]"></div>
+</div>
+<div class="border border-[#706b67]/40 p-1.5 bg-[#0e0d0c]">
+<div class="flex justify-between items-center text-[9px] font-label-code-sm text-[#cbc5c2]">
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-xs text-[#c8361d]" style="font-variation-settings: 'FILL' 1;">graphic_eq</span>
+<span>45 RPM</span>
+</span>
+<span>10/21</span>
+</div>
+<!-- Waveform Negative Plate -->
+<div class="my-2 h-10 w-full bg-[#1b1917] border border-[#c8361d]/30 flex items-center justify-center px-1 space-x-0.5">
+<div class="w-1 h-3 bg-[#c8361d]"></div>
+<div class="w-1 h-6 bg-[#ffdad3]"></div>
+<div class="w-1 h-8 bg-[#c8361d]"></div>
+<div class="w-1 h-4 bg-[#ffdad3]"></div>
+<div class="w-1 h-7 bg-[#c8361d]"></div>
+<div class="w-1 h-2 bg-[#ffdad3]/50"></div>
+<div class="w-1 h-5 bg-[#c8361d]"></div>
+<div class="w-1 h-8 bg-[#ffdad3]"></div>
+<div class="w-1 h-6 bg-[#c8361d]"></div>
+<div class="w-1 h-3 bg-[#ffdad3]/50"></div>
+</div>
+<p class="font-headline-sm text-[11px] leading-[14px] text-[#ffdad3] font-medium truncate">
+                Subterranean Homesick Alien
+              </p>
+<p class="font-label-code-sm text-[9px] text-[#cbc5c2]/80 mt-0.5">Radiohead · OK Computer</p>
+</div>
+</div>
+<!-- ITEM 4: Handset Type Quote on Cotton Rag Paper -->
+<div class="relative w-[184px] bg-[#ded9d1] text-[#141210] p-2.5 pb-3 shadow-2xl rotate-[2.4deg] clip-shadow border-t-2 border-r border-b-2 border-l border-[#8e706a]/60">
+<!-- Wooden Clip -->
+<div class="absolute -top-3.5 right-10 z-20">
+<div class="w-2.5 h-6 bg-[#4e3d30] border border-[#141210] rounded-[1px]"></div>
+</div>
+<!-- Archival Index Stamp Top Right -->
+<div class="flex justify-between items-start border-b border-[#141210]/20 pb-1 mb-1.5">
+<span class="font-label-code-sm text-[9px] text-[#57534f]">RAG FIBER 320g</span>
+<span class="font-label-code-sm text-[9px] text-[#c8361d] font-bold border border-[#c8361d] px-1">№ 00294-B</span>
+</div>
+<!-- Quote Text in Noto Serif SC -->
+<blockquote class="font-headline-sm text-[12px] leading-[18px] text-[#1d1c16] font-medium tracking-wide">
+              “我们在暗处洗印回忆，直到它在红光下显影清晰。”
+            </blockquote>
+<div class="mt-2 pt-1 border-t border-[#141210]/15 flex justify-between items-center font-label-code-sm text-[9px] text-[#57534f]">
+<span>罗兰·巴特《明室》</span>
+<span>10/20</span>
+</div>
+</div>
+</div>
+</div>
+<!-- WIRE 3: Developing tray immersion zone -->
+<div class="relative w-full mb-4 pt-2">
+<!-- Suspended Darkroom Steel Wire -->
+<div class="absolute top-4 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#8e706a] to-transparent shadow-[0_1px_4px_rgba(200,54,29,0.3)] z-10"></div>
+<!-- Hanging Items Cluster 3 (Half-Developed Ghostly Memo & Torn Archival Link) -->
+<div class="flex justify-between items-start pt-3 px-1">
+<!-- ITEM 5: Half-Developed Ghostly Memo (Faint milky silver tones emerging) -->
+<div class="relative w-[172px] bg-[#24211f] text-[#ded9d1] p-2.5 pb-3 shadow-2xl rotate-[-2.8deg] border border-[#c8361d]/50 emulsion-developing clip-shadow">
+<!-- Steel Clip -->
+<div class="absolute -top-3.5 left-8 z-20">
+<div class="w-2 h-5 bg-[#57534f] border border-[#141210]"></div>
+</div>
+<div class="flex items-center justify-between text-[8px] font-label-code-sm text-[#ffb4a5]/70 mb-1">
+<span class="animate-pulse">● 显影池浸润 45%</span>
+<span>10/19</span>
+</div>
+<!-- Milky half-emerged handwritten thought -->
+<div class="border border-dashed border-[#ffb4a5]/30 p-1.5 bg-[#171514]">
+<p class="font-headline-sm text-[11px] leading-[16px] text-[#ffdad3]/90 italic font-normal">
+                “雨夜霓虹招牌与湿沥青反光的短片分镜构想……”
+              </p>
+<div class="mt-2 flex items-center space-x-1 font-label-code-sm text-[8px] text-[#ffb4a5]/60">
+<span class="material-symbols-outlined text-[10px]">opacity</span>
+<span>BATH: D-76 (1:1)</span>
+</div>
+</div>
+</div>
+<!-- ITEM 6: Link Print / Torn Edge Paper (collo-archive) -->
+<div class="relative w-[176px] bg-[#e8e1d5] text-[#141210] p-2 shadow-2xl rotate-[1.5deg] border-t-2 border-l border-r border-[#141210] clip-shadow">
+<!-- Clip -->
+<div class="absolute -top-3.5 right-8 z-20">
+<div class="w-2.5 h-6 bg-[#3a2f26] border border-[#141210]"></div>
+</div>
+<div class="flex justify-between items-center text-[9px] font-label-code-sm text-[#57534f] mb-1">
+<span>ARCHIVE LINK</span>
+<span>10/18</span>
+</div>
+<!-- Tear paper serrated edge effect at bottom -->
+<div class="border-b border-dashed border-[#141210]/40 pb-1.5 mb-1">
+<span class="material-symbols-outlined text-[#c8361d] text-sm align-middle">attachment</span>
+<span class="font-label-code-sm text-[10px] text-[#141210] font-semibold underline decoration-[#c8361d]">
+                collo-archive.org/neg-088
+              </span>
+</div>
+<p class="font-headline-sm text-[10px] leading-[14px] text-[#1d1c16]">
+              摄影档案文献：1920年代硝酸片基保存与接触印相规范记录。
+            </p>
+</div>
+</div>
+</div>
+</div>
+<!-- TACTILE INTERACTION BAR & COLLIDE TRIGGER -->
+<div class="relative z-30 px-3 pb-2 pt-1 flex items-center justify-between bg-gradient-to-t from-[#0b0a0a] via-[#121010] to-transparent">
+<!-- Quick Capture Bar ('记一笔…') -->
+<div class="flex-1 mr-2 flex items-center bg-[#1e1b19]/90 border border-[#8e706a]/40 px-3 py-2 shadow-inner">
+<span class="material-symbols-outlined text-[#c8361d] text-base mr-2">edit_note</span>
+<input class="bg-transparent border-none p-0 text-[12px] font-headline-sm text-[#e8e1dd] placeholder-[#706b67] focus:ring-0 focus:outline-none w-full" placeholder="记一笔未显影的灵感…" type="text"/>
+<span class="font-label-code-sm text-[9px] text-[#ffdad3]/40 border border-[#ffdad3]/20 px-1 py-0.5">RAW</span>
+</div>
+<!-- COLLIDE TRIGGER ('显影槽 COLLIDE') -->
+<button class="flex items-center space-x-1 bg-[#2a2724] hover:bg-[#c8361d] transition-colors duration-150 border border-[#c8361d]/80 px-2.5 py-2 text-[#ffdad3] shadow-md mr-1.5">
+<span class="material-symbols-outlined text-sm text-[#ffdad3]">science</span>
+<span class="font-label-code-sm text-[11px] font-bold tracking-tight">显影碰撞</span>
+</button>
+<!-- GLOWING RUBY CAPTURE ROUND BUTTON (Focal Tactile Puck) -->
+<button aria-label="快拍采集" class="relative w-11 h-11 rounded-full bg-[#c8361d] hover:bg-[#a51c05] transition-transform active:scale-95 flex items-center justify-center glowing-ruby-btn border border-[#ffdad3]/40 flex-shrink-0">
+<span class="material-symbols-outlined text-white text-2xl font-light" style="font-variation-settings: 'FILL' 0;">add</span>
+</button>
+</div>
+<!-- SHARED COMPONENT: BottomNavBar (Docked minimal darkroom dock) -->
+<!-- Executing styles: 
+         - bg: bg-[#141210] 
+         - active navigation: text-primary flex flex-col items-center justify-center border-b-2 border-primary pb-1 pt-1
+         - inactive: text-secondary flex flex-col items-center justify-center pt-1
+    -->
+<nav class="relative z-40 bg-[#121010] border-t border-[#32302a] w-full px-2 py-1.5 flex justify-around items-center">
+<!-- 1. 灵感库 (ACTIVE: Exact match for Inspiration Library) -->
+<a class="flex flex-col items-center justify-center text-[#ffdad3] border-b-2 border-[#c8361d] pb-1 pt-0.5 px-3" href="#">
+<span class="material-symbols-outlined text-[20px] text-[#c8361d]" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="font-label-code-sm text-[10px] font-bold text-[#ffdad3] tracking-widest mt-0.5">灵感库</span>
+</a>
+<!-- 2. 显影 -->
+<a class="flex flex-col items-center justify-center text-[#615e5b] hover:text-[#ffdad3] transition-colors duration-150 pt-0.5 px-3" href="#">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+<span class="font-label-code-sm text-[10px] text-[#8e706a] tracking-widest mt-0.5">显影</span>
+</a>
+<!-- 3. 记录 -->
+<a class="flex flex-col items-center justify-center text-[#615e5b] hover:text-[#ffdad3] transition-colors duration-150 pt-0.5 px-3" href="#">
+<span class="material-symbols-outlined text-[20px]">add_box</span>
+<span class="font-label-code-sm text-[10px] text-[#8e706a] tracking-widest mt-0.5">记录</span>
+</a>
+<!-- 4. 画像 -->
+<a class="flex flex-col items-center justify-center text-[#615e5b] hover:text-[#ffdad3] transition-colors duration-150 pt-0.5 px-3" href="#">
+<span class="material-symbols-outlined text-[20px]">person_pin</span>
+<span class="font-label-code-sm text-[10px] text-[#8e706a] tracking-widest mt-0.5">画像</span>
+</a>
+<!-- 5. 设置 -->
+<a class="flex flex-col items-center justify-center text-[#615e5b] hover:text-[#ffdad3] transition-colors duration-150 pt-0.5 px-3" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-label-code-sm text-[10px] text-[#8e706a] tracking-widest mt-0.5">设置</span>
+</a>
+</nav>
+</main>
+<script>
+    // Micro-interactions: Subtle clothespin sway on physical card clicks
+    document.querySelectorAll('.clip-shadow').forEach(card => {
+      card.addEventListener('click', () => {
+        card.style.transform = 'scale(1.02) rotate(0deg)';
+        setTimeout(() => {
+          card.style.transform = '';
+        }, 300);
+      });
+    });
+  </script>
+</body></html>
