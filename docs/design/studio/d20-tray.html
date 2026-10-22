@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=1440, initial-scale=1.0"/>
+  <title>拾穗 · GLEAN — 桌面操作系统环境 (OS Context · 1440px)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      width: 1440px;
+      min-width: 1440px;
+      margin: 0 auto;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      overflow-x: hidden;
+      background-color: #2b2d30;
+      user-select: none;
+    }
+    @keyframes cursor-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .blinking-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 26px;
+      background-color: #000000;
+      vertical-align: text-bottom;
+      animation: cursor-blink 1.05s infinite step-start;
+      margin-left: 2px;
+    }
+    /* Neutral blurred Windows 11 style abstract minimal desktop background */
+    .desktop-bg {
+      background: radial-gradient(circle at 50% 30%, #52555a 0%, #3a3c40 55%, #232528 100%);
+    }
+    /* Subtle desktop grid wallpaper texture hint */
+    .wallpaper-bloom {
+      background: radial-gradient(ellipse 900px 600px at 50% 45%, rgba(130, 135, 142, 0.28) 0%, rgba(35, 37, 40, 0) 70%);
+    }
+  </style>
+</head>
+<body class="w-[1440px] h-[900px] relative overflow-hidden text-black antialiased desktop-bg">
+
+  <!-- WALLPAPER SUBTLE VIGNETTE / ATMOSPHERE (PURE NEUTRAL GREY BLURRED) -->
+  <div class="absolute inset-0 wallpaper-bloom pointer-events-none"></div>
+
+  <!-- SUBTLE BACKGROUND DESKTOP ICONS (MINIMAL, MUTED FOR OS CONTEXT) -->
+  <div class="absolute top-10 left-10 flex flex-col space-y-8 pointer-events-none opacity-20">
+    <div class="w-14 flex flex-col items-center space-y-1.5">
+      <div class="w-10 h-10 border border-white/40"></div>
+      <span class="text-[11px] text-white tracking-wide">回收站</span>
+    </div>
+    <div class="w-14 flex flex-col items-center space-y-1.5">
+      <div class="w-10 h-10 border border-white/40"></div>
+      <span class="text-[11px] text-white tracking-wide">工作区</span>
+    </div>
+  </div>
+
+  <!-- MAIN DESKTOP OS WORKSPACE -->
+  <main class="w-[1440px] h-[864px] relative">
+
+    <!-- (2) GLOBAL QUICK-CAPTURE MINI WINDOW (CENTERED IN UPPER THIRD) -->
+    <div class="absolute top-[130px] left-1/2 -translate-x-1/2 flex flex-col items-center z-30">
+      
+      <!-- MINI WINDOW 640px WIDE, PURE WHITE, 1px BLACK BORDER, SQUARE CORNERS, NO SHADOW -->
+      <section class="w-[640px] bg-[#FFFFFF] border border-[#000000] p-6 flex flex-col">
+        
+        <!-- TOP ROW: TITLE BAR HINT (ULTRA-MINIMAL) -->
+        <div class="w-full flex items-center justify-between pb-4 border-b border-[#F3F3F3] mb-5">
+          <div class="flex items-center space-x-2">
+            <span class="text-[12px] font-semibold tracking-wider text-[#000000]">拾穗 · GLEAN</span>
+            <span class="text-[12px] text-[#C6C6C6]">/</span>
+            <span class="text-[12px] text-[#7E7E7E] tracking-normal">随手拾速记</span>
+          </div>
+          <span class="text-[11px] text-[#7E7E7E] tracking-widest font-normal">ESC 收起</span>
+        </div>
+
+        <!-- LARGE INPUT LINE: 24px TEXT WITH BLINKING CURSOR & 1px BLACK UNDERLINE -->
+        <div class="w-full pb-3 border-b border-[#000000] flex items-baseline justify-between mb-4">
+          <div class="flex items-baseline flex-1 overflow-hidden pr-3">
+            <span class="text-[24px] leading-tight font-medium text-[#000000] tracking-tight">Avril 14th 很适合凌晨四点</span>
+            <span class="blinking-cursor"></span>
+          </div>
+          <button type="button" class="px-3.5 py-1.5 bg-[#000000] text-[#FFFFFF] text-[13px] font-medium tracking-widest shrink-0 hover:opacity-80 transition-none">
+            拾 ↵
+          </button>
+        </div>
+
+        <!-- CONTROLS ROW: TOGGLES + AUTO DETECTION -->
+        <div class="w-full flex items-center justify-between pt-1">
+          <!-- TYPE TOGGLES: 想法 摘抄 链接 歌 (歌 black underlined) -->
+          <div class="flex items-center space-x-4 text-[13px]">
+            <button type="button" class="text-[#7E7E7E] hover:text-[#000000] transition-none">想法</button>
+            <button type="button" class="text-[#7E7E7E] hover:text-[#000000] transition-none">摘抄</button>
+            <button type="button" class="text-[#7E7E7E] hover:text-[#000000] transition-none">链接</button>
+            <button type="button" class="text-[#000000] font-semibold border-b border-[#000000] pb-0.5">歌</button>
+          </div>
+
+          <!-- AUTO-IDENTIFICATION LABEL -->
+          <div class="text-[12px] text-[#7E7E7E] tracking-normal">
+            自动识别：<span class="text-[#000000] font-medium">歌 · Aphex Twin</span>
+          </div>
+        </div>
+
+        <!-- HINT FOOTER ROW -->
+        <div class="w-full flex items-center justify-between mt-5 pt-3 border-t border-[#F3F3F3]">
+          <span class="text-[11px] text-[#7E7E7E] tracking-wide">Esc 关闭 · 拖入图片也可以</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-widest">© 2026 Q1f730</span>
+        </div>
+
+      </section>
+
+      <!-- CAPTION UNDER THE WINDOW: 12px WHITE -->
+      <div class="mt-3 text-[12px] text-white/90 font-normal tracking-wide">
+        Ctrl+Shift+L · 在任何程序里唤出
+      </div>
+
+    </div>
+
+    <!-- (1) SYSTEM TRAY MENU (POPPING UP ABOVE TASKBAR AT BOTTOM-RIGHT) -->
+    <!-- 260px WIDE, PURE WHITE, 1px BLACK BORDER, SQUARE CORNERS, NO SHADOW -->
+    <div class="absolute bottom-3 right-6 z-40 w-[260px] bg-[#FFFFFF] border border-[#000000]">
+      
+      <!-- MENU HEADER: 拾穗 · GLEAN 20 穗 -->
+      <div class="w-full px-3.5 py-2.5 bg-[#FFFFFF] border-b border-[#F3F3F3] flex items-center justify-between">
+        <span class="text-[12px] font-semibold text-[#000000] tracking-wide">拾穗 · GLEAN</span>
+        <span class="text-[11px] text-[#7E7E7E] tracking-normal">20 穗</span>
+      </div>
+
+      <!-- TRAY MENU ITEMS -->
+      <div class="py-1">
+        
+        <!-- ITEM 1 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">随手拾一穗</span>
+          <span class="text-[12px] text-[#7E7E7E] tracking-tight">Ctrl+Shift+L</span>
+        </div>
+
+        <!-- ITEM 2 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">拾剪贴板里的内容</span>
+          <span class="text-[12px] text-[#7E7E7E] tracking-tight">Ctrl+Shift+V</span>
+        </div>
+
+        <!-- ITEM 3 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">截屏拾一穗</span>
+          <span class="text-[12px] text-[#7E7E7E] tracking-tight">Ctrl+Shift+S</span>
+        </div>
+
+        <!-- THIN HAIRLINE 1 -->
+        <div class="my-1 border-t border-[#F3F3F3]"></div>
+
+        <!-- ITEM 4 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">打开穗仓</span>
+          <span class="text-[12px] text-[#C6C6C6]"></span>
+        </div>
+
+        <!-- ITEM 5 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">今日一穗</span>
+          <span class="text-[12px] text-[#C6C6C6]"></span>
+        </div>
+
+        <!-- ITEM 6 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">暂停快捷键</span>
+          <span class="text-[12px] text-[#C6C6C6]"></span>
+        </div>
+
+        <!-- THIN HAIRLINE 2 -->
+        <div class="my-1 border-t border-[#F3F3F3]"></div>
+
+        <!-- ITEM 7 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">设置</span>
+          <span class="text-[12px] text-[#C6C6C6]"></span>
+        </div>
+
+        <!-- ITEM 8 -->
+        <div class="w-full px-3.5 py-2 flex items-center justify-between cursor-pointer hover:bg-[#F3F3F3] transition-none">
+          <span class="text-[14px] text-[#000000]">退出拾穗</span>
+          <span class="text-[12px] text-[#C6C6C6]"></span>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM ACCENT STRIP -->
+      <div class="w-full px-3.5 py-1.5 bg-[#F9F9F9] border-t border-[#F3F3F3] flex justify-between items-center text-[10px] text-[#7E7E7E]">
+        <span>本地运行 · 隐私留存</span>
+        <span class="font-sans text-[#C6C6C6]">v0.4.0</span>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- WINDOWS 11 THIN BLACK TASKBAR (HEIGHT: 36px, FULL-WIDTH, AT BOTTOM) -->
+  <footer class="w-[1440px] h-[36px] bg-[#111214] border-t border-[#26282c] px-4 flex items-center justify-between absolute bottom-0 left-0 z-50">
+    
+    <!-- LEFT: MINIMAL TASKBAR APP ICON HINTS (WINDOWS START & APPS) -->
+    <div class="flex items-center space-x-3 text-white/70">
+      <div class="w-4 h-4 border border-white/50 flex items-center justify-center">
+        <div class="w-1.5 h-1.5 bg-white/70"></div>
+      </div>
+      <div class="w-3.5 h-3.5 border border-white/30"></div>
+      <div class="w-3.5 h-3.5 border border-white/30"></div>
+      <div class="w-3.5 h-3.5 border border-white/30"></div>
+    </div>
+
+    <!-- CENTER: EMPTY / CLEAN WINDOWS 11 AIRSPACE -->
+    <div class="text-[11px] text-white/30 tracking-widest uppercase">
+      
+    </div>
+
+    <!-- RIGHT: TRAY AREA SHOWING GLEAN TRAY INDICATOR & TIME 12:30 -->
+    <div class="flex items-center space-x-3 text-white/90">
+      
+      <!-- GLEAN ACTIVE TRAY ICON (SQUARE WITH INNER DOT) -->
+      <div class="flex items-center space-x-1.5 px-1.5 py-0.5 bg-white/10 border border-white/20">
+        <span class="text-[11px] font-semibold text-white tracking-tight">穗</span>
+      </div>
+
+      <!-- SYSTEM STATUS INDICATORS (NETWORK / SOUND / INPUT METHOD) -->
+      <span class="text-[11px] text-white/60 tracking-wider">中</span>
+      <span class="text-[11px] text-white/50 tracking-wider">ENG</span>
+
+      <!-- SYSTEM CLOCK: ONLY THE TIME '12:30' -->
+      <span class="text-[12px] font-medium text-white tracking-wide pl-1">
+        12:30
+      </span>
+
+    </div>
+
+  </footer>
+
+</body>
+</html>
