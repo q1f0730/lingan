@@ -564,3 +564,40 @@ html[data-motion='off'] *, html[data-motion='off'] *::before, html[data-motion='
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .seed-burst, .ripple { display: none; }
 }
+
+/* ——— v0.12 新枝溯源：因为这几穗 ——— */
+.sprigs { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.sprigs-head { display: flex; align-items: baseline; gap: 10px; }
+.sprigs-head .label { margin: 0; color: var(--accent-ink); }
+.sprigs-whisper { font-family: var(--latin); font-style: italic; font-size: 0.98rem; color: var(--ink-soft); }
+.sprig-row { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding: 2px 2px 6px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.sprig {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 9px; width: 168px; padding: 7px 10px 7px 7px;
+  border: 1px solid var(--line); border-radius: 16px; background: var(--panel-solid); color: var(--ink);
+  text-align: left; font: inherit; scroll-snap-align: start; cursor: pointer;
+  -webkit-touch-callout: none; user-select: none;
+  transition: transform 0.5s ease, box-shadow 0.5s ease, border-color 0.5s ease, background-color 0.5s ease;
+}
+.sprig:hover, .sprig.on { border-color: var(--gold-2); box-shadow: 0 6px 18px -10px rgba(110, 80, 20, 0.45); }
+.sprig.on { background: color-mix(in srgb, var(--gold-1) 38%, var(--panel-solid)); }
+html[data-motion='full'] .sprig.on, html[data-motion='lite'] .sprig.on { transform: translateY(-2px); }
+.sprig.gone { cursor: default; color: var(--ink-faint); border-style: dashed; background: transparent; }
+.sprig-thumb { flex: 0 0 auto; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; overflow: hidden; background: var(--accent-soft); }
+.sprig-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sprig-glyph { font-family: var(--serif); font-weight: 700; font-size: 1.15rem; color: var(--accent-ink); }
+.sprig-music .sprig-thumb, .sprig-film .sprig-thumb { background: color-mix(in srgb, var(--gold-1) 55%, var(--panel-solid)); }
+.sprig-music .sprig-glyph, .sprig-film .sprig-glyph { color: var(--ink); }
+.sprig-text { min-width: 0; display: flex; flex-direction: column; }
+.sprig-title { font-size: 0.9rem; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.sprig-sub { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mention { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--gold-1) 70%, transparent) 62%); color: inherit; border-radius: 3px; padding: 0 1px; cursor: pointer; transition: background-color 0.4s ease; }
+.mention.on { background: color-mix(in srgb, var(--gold-1) 80%, transparent); }
+html[data-sky='dark'] .mention { background: linear-gradient(transparent 62%, color-mix(in srgb, var(--gold-3) 55%, transparent) 62%); }
+html[data-sky='dark'] .mention.on, html[data-sky='dark'] .sprig.on { background: color-mix(in srgb, var(--gold-3) 40%, var(--panel-solid)); }
+.sprigs-weak { margin: 8px 0 2px; padding: 10px 14px; border-radius: 14px; background: color-mix(in srgb, var(--paper-deep) 80%, transparent); color: var(--ink); font-size: 0.9rem; line-height: 1.7; }
+.sprigs-weak strong { color: var(--accent-ink); }
+.sprigs-note { margin: 6px 0 0; font-size: 0.84rem; color: var(--ink-soft); }
+.weak-badge, .hrow-weak { display: inline-block; margin-right: 8px; padding: 0 8px; border-radius: 999px; background: var(--paper-deep); color: var(--ink-soft); font-size: 0.74rem; letter-spacing: 0.06em; font-weight: 400; }
+.hrow-weak { margin: 0 0 0 8px; }
+.idea-weak { outline: 1px dashed var(--gold-2); outline-offset: -7px; }
+.idea-weak .idea-title { color: var(--ink-soft); }
