@@ -3,13 +3,14 @@ import { DAILY_COMBO, pickDaily, pickStillValid, todayKey } from './daily';
 import { migrateDevelopment } from './provenance';
 import { drawSamples, sampleTimes } from './samples';
 import { blobToDataUrl, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
-import type { DailyPick, Development, Item, StoredImage } from './types';
+import type { DailyPick, Development, FtRow, Item, StoredImage } from './types';
 
 export class LinganDB extends Dexie {
   items!: Table<Item, number>;
   developments!: Table<Development, number>;
   images!: Table<StoredImage, number>;
   daily!: Table<DailyPick, string>;
+  ftidx!: Table<FtRow, string>;
   constructor(name = 'lingan') {
     super(name);
     this.version(1).stores({
@@ -52,6 +53,9 @@ export class LinganDB extends Dexie {
             if (t && t > (it.touchedAt || 0)) it.touchedAt = t;
           });
       });
+    // v0.17 秒搜：全文索引表（每件穗 / 每根新枝一行：切好的词 + 内容签名）。升级时不切词、不动旧数据，
+    // 打开后由 lib/ftsync 在空闲时后台补齐；增删改穗 / 新枝时增量更新
+    this.version(5).stores({ ftidx: '&key, kind' });
   }
 }
 
@@ -145,11 +149,12 @@ export async function restoreItem(s: ItemSnapshot, d: LinganDB = db): Promise<nu
 
 /** 清空所有穗、新枝、原图（连同每日一穗记录） */
 export async function clearAll(d: LinganDB = db) {
-  await d.transaction('rw', [d.items, d.developments, d.images, d.daily], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.images, d.daily, d.ftidx], async () => {
     await d.items.clear();
     await d.developments.clear();
     await d.images.clear();
     await d.daily.clear();
+    await d.ftidx.clear();
   });
 }
 
