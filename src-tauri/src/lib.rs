@@ -31,7 +31,7 @@ pub fn run() {
         .build(),
     )
     .on_window_event(|window, event| {
-      // closing the window keeps Lingan in the tray
+      // closing the window keeps Glean in the tray
       if let tauri::WindowEvent::CloseRequested { api, .. } = event {
         api.prevent_close();
         let _ = window.hide();
@@ -48,7 +48,7 @@ pub fn run() {
         let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
         let menu = Menu::with_items(app, &[&quick, &quit])?;
         let mut tray = TrayIconBuilder::new()
-          .tooltip("灵感暗房 Lingan")
+          .tooltip("拾穗 Glean")
           .menu(&menu)
           .show_menu_on_left_click(false)
           .on_menu_event(|app, e| match e.id().as_ref() {
