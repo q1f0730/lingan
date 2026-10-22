@@ -3,196 +3,171 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=1440, initial-scale=1.0" name="viewport"/>
-<title>拾穗 · GLEAN — 穗仓</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 穗仓 (1440px)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Noto+Sans+SC:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <style>
-    * {
-      box-sizing: border-box;
-      border-radius: 0 !important;
-    }
     body {
-      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
       background-color: #FFFFFF;
       color: #000000;
+      -webkit-font-smoothing: antialiased;
       margin: 0;
       padding: 0;
-      -webkit-font-smoothing: antialiased;
     }
-    .headline-display {
-      font-size: 96px;
-      line-height: 1.0;
+    .tracking-tight-custom {
       letter-spacing: -0.04em;
     }
-    .scrim-gradient {
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0) 100%);
-    }
-    .hairline-b {
-      border-bottom: 1px solid #E5E5E5;
-    }
-    .hairline-t {
-      border-top: 1px solid #000000;
-    }
-    input:focus {
-      outline: none;
+    .aspect-4-5 {
+      aspect-ratio: 4 / 5;
     }
   </style>
 </head>
-<body class="bg-white text-black min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+<body class="bg-white text-black min-h-screen flex flex-col selection:bg-black selection:text-white pb-24">
 <!-- TOP NAV BAR -->
-<header class="w-full bg-white z-40 fixed top-0 left-0 border-b border-[#EBEBEB]">
-<div class="w-[1440px] max-w-full mx-auto h-[64px] px-10 flex items-center justify-between">
-<!-- Logo Left -->
-<div class="text-[20px] font-semibold tracking-tight text-black flex items-center">
+<header class="w-full border-b border-[#EFEFEF] sticky top-0 bg-white/95 backdrop-blur-sm z-40">
+<div class="max-w-[1440px] w-full mx-auto px-10 h-16 flex items-center justify-between">
+<!-- Logo -->
+<div class="text-[20px] font-semibold tracking-tight text-black select-none">
         拾穗 · GLEAN
       </div>
-<!-- Centered Tiny Nav -->
-<nav class="flex items-center space-x-9 text-[11px] font-medium tracking-[0.12em]">
-<a class="text-black pb-[3px] border-b border-black" href="#">穗仓</a>
-<a class="text-[#7E7E7E] hover:text-black transition-colors pb-[3px]" href="#">嫁接</a>
-<a class="text-[#7E7E7E] hover:text-black transition-colors pb-[3px]" href="#">新枝</a>
-<a class="text-[#7E7E7E] hover:text-black transition-colors pb-[3px]" href="#">口味</a>
-<a class="text-[#7E7E7E] hover:text-black transition-colors pb-[3px]" href="#">设置</a>
+<!-- Centered Tiny Navigation -->
+<nav class="flex items-center space-x-9 text-[11px] font-medium tracking-[0.18em]">
+<a class="text-black border-b border-black pb-0.5" href="#">穗仓</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">嫁接</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">新枝</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">口味</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">设置</a>
 </nav>
-<!-- Right Quick Capture Input (320px hairline underline) -->
-<div class="w-[320px] flex items-center border-b border-black pb-1.5 pt-1">
-<input class="w-full text-[12px] placeholder-[#7E7E7E] text-black bg-transparent border-none p-0 focus:ring-0 font-normal" placeholder="随手拾一穗 →" type="text"/>
+<!-- Right Quick Capture Input -->
+<div class="w-[320px] flex items-center border-b border-black pb-1">
+<input class="w-full bg-transparent text-[12px] placeholder-[#7E7E7E] text-black focus:outline-none border-none p-0 tracking-wider font-normal" placeholder="随手拾一穗 →" type="text"/>
 </div>
 </div>
 </header>
-<!-- MAIN WRAPPER -->
-<main class="w-[1440px] max-w-full mx-auto px-10 pt-[224px] pb-[140px] flex-grow">
-<!-- HEADER SECTION: Headline & Grid/List Toggle Baseline Aligned -->
-<div class="flex items-baseline justify-between mb-8 pb-3">
-<h1 class="headline-display font-semibold tracking-[-0.04em] text-black select-none">
-        穗仓 <span class="font-normal text-black">(10)</span>
+<!-- MAIN CONTENT CONTAINER -->
+<main class="max-w-[1440px] w-full mx-auto px-10 flex-1">
+<!-- HEADER SECTION (~160px top whitespace, Huge Headline & Baseline Toggle) -->
+<div class="pt-[140px] pb-10 flex items-baseline justify-between">
+<h1 class="text-[96px] font-semibold leading-none tracking-tight-custom text-black m-0">
+        穗仓 <span class="font-normal text-[86px] tracking-tight">(10)</span>
 </h1>
-<!-- Grid / List Toggle -->
-<div class="text-[12px] font-medium tracking-[0.08em] select-none flex items-center space-x-1.5">
-<span class="text-black cursor-pointer font-semibold">网格</span>
-<span class="text-[#C6C6C6]">|</span>
-<span class="text-[#C6C6C6] cursor-pointer hover:text-black transition-colors">列表</span>
+<div class="flex items-center text-[12px] font-medium tracking-widest text-[#C6C6C6] select-none">
+<span class="text-black font-semibold cursor-default">网格</span>
+<span class="mx-2 text-[#C6C6C6]">|</span>
+<span class="text-[#7E7E7E] hover:text-black cursor-pointer transition-colors">列表</span>
 </div>
 </div>
-<!-- 3-COLUMN FULL-BLEED GRID, 10px GAP, 4:5 TILES -->
+<!-- 3-COLUMN FULL-BLEED IMAGE GRID (10px gaps, 4:5 tiles, exactly 10 items) -->
 <div class="grid grid-cols-3 gap-[10px] w-full">
 <!-- ITEM 1: 照片『轮渡上的雾』 -->
-<div class="relative aspect-[4/5] w-full overflow-hidden bg-[#F3F3F3] group cursor-pointer">
-<img alt="轮渡上的雾" class="w-full h-full object-cover grayscale contrast-105" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
-<div class="absolute inset-0 scrim-gradient flex flex-col justify-end p-6">
-<h3 class="text-white text-[16px] font-semibold leading-snug tracking-tight">轮渡上的雾</h3>
-<p class="text-white/80 text-[12px] font-normal tracking-wide mt-1">照片 · 10/21</p>
+<div class="relative w-full aspect-4-5 overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="轮渡上的雾" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks"/>
+<!-- Bottom-left white caption with subtle gradient scrim -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-6 text-white">
+<div class="text-[16px] font-semibold leading-snug tracking-tight">轮渡上的雾</div>
+<div class="text-[12px] font-normal text-white/80 mt-1 tracking-wide">照片 · 10/21</div>
 </div>
 </div>
-<!-- ITEM 2: 电影『完美的日子』 2023 · 维姆·文德斯 -->
-<div class="relative aspect-[4/5] w-full overflow-hidden bg-[#F3F3F3] group cursor-pointer">
-<img alt="完美的日子" class="w-full h-full object-cover contrast-95" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
-<div class="absolute inset-0 scrim-gradient flex flex-col justify-end p-6">
-<h3 class="text-white text-[16px] font-semibold leading-snug tracking-tight">完美的日子</h3>
-<p class="text-white/80 text-[12px] font-normal tracking-wide mt-1">电影 · 10/20</p>
+<!-- ITEM 2: 电影『完美的日子』 -->
+<div class="relative w-full aspect-4-5 overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="完美的日子" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1VwRjAApBlw0cvYV3mNMlQzujVjYPgk5WXPj28qCa_Ru-cY-MzE_uAnqQYpqHML3FRqlygqu2YpLhZGoUdNrNY48FBokjg6of-mFxlEynN8YFHbEDlwLmaZ_CRqH4fJ745Jo6tFsclKRVmPXJs6zUDwvgpNzGB3Et7qxTGfIUE9yt34hm1nrteJ5CsRO_LsfMS_2RgB30QiKmDr4Sq9aXdTCBz4_BFJkBzMEPv_FZEI-1XlZowcKhx5TA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-6 text-white">
+<div class="text-[16px] font-semibold leading-snug tracking-tight">完美的日子</div>
+<div class="text-[12px] font-normal text-white/80 mt-1 tracking-wide">电影 · 10/20</div>
 </div>
 </div>
-<!-- ITEM 3: 歌『Re: Stacks』 Bon Iver -->
-<div class="relative aspect-[4/5] w-full overflow-hidden bg-[#F3F3F3] group cursor-pointer">
-<img alt="Re: Stacks" class="w-full h-full object-cover" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
-<div class="absolute inset-0 scrim-gradient flex flex-col justify-end p-6">
-<h3 class="text-white text-[16px] font-semibold leading-snug tracking-tight">Re: Stacks</h3>
-<p class="text-white/80 text-[12px] font-normal tracking-wide mt-1">歌 · 10/19</p>
+<!-- ITEM 3: 歌『Re: Stacks』 -->
+<div class="relative w-full aspect-4-5 overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="Re: Stacks" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1Vi-LhX-l8RD3zrf3It4rRe_YiL3BWt5MnmjjywiB3w_5kVgyD0MEdV50ibhvu8lkDzfOT6JhH7AEmJ-Tyw565Mpw2MlbfuJG1YtErrlaPD5WmZqsM6Xw3iL_8GvfOUOUMpubG2-I6dK3oDbsSBh3GWqupWhQqb4NSg8sXCg617wEEp0c3XDas90mE052bZcXnJ97GO6BRBPprkvvM0sfXXH1IJ_PHrCWMTss8GxWSBBjx30DAjaDi8yQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-6 text-white">
+<div class="text-[16px] font-semibold leading-snug tracking-tight">Re: Stacks</div>
+<div class="text-[12px] font-normal text-white/80 mt-1 tracking-wide">歌 · 10/19</div>
 </div>
 </div>
-<!-- ITEM 4: 摘抄『记忆中的形象一旦被词语固定住，就给抹掉了。』 卡尔维诺《看不见的城市》 -->
-<div class="relative aspect-[4/5] w-full bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
-<div class="pt-2">
-<blockquote class="text-black text-[22px] font-medium leading-[1.4] tracking-tight">
+<!-- ITEM 4: 摘抄『记忆中的形象一旦被词语固定住，就给抹掉了。』 (Text-only tile in #F3F3F3) -->
+<div class="relative w-full aspect-4-5 bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
+<div class="pt-4">
+<p class="text-[25px] font-semibold leading-[1.38] tracking-tight text-black m-0">
             “记忆中的形象一旦被词语固定住，就给抹掉了。”
-          </blockquote>
+          </p>
 </div>
-<div class="border-t border-[#E5E5E5] pt-4">
-<h3 class="text-black text-[15px] font-medium tracking-tight">卡尔维诺《看不见的城市》</h3>
-<p class="text-[#7E7E7E] text-[12px] font-normal tracking-wide mt-1">摘抄 · 10/18</p>
+<div class="pb-1">
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-normal mb-1">卡尔维诺《看不见的城市》</div>
+<div class="text-[12px] font-normal text-black tracking-wide">摘抄 · 10/18</div>
 </div>
 </div>
-<!-- ITEM 5: 想法『给楼道里每一盏声控灯起一个名字』 -->
-<div class="relative aspect-[4/5] w-full bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
-<div class="pt-2">
-<blockquote class="text-black text-[22px] font-medium leading-[1.4] tracking-tight">
+<!-- ITEM 5: 想法『给楼道里每一盏声控灯起一个名字』 (Text-only tile in #F3F3F3) -->
+<div class="relative w-full aspect-4-5 bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
+<div class="pt-4">
+<p class="text-[25px] font-semibold leading-[1.38] tracking-tight text-black m-0">
             “给楼道里每一盏声控灯起一个名字。”
-          </blockquote>
+          </p>
 </div>
-<div class="border-t border-[#E5E5E5] pt-4">
-<p class="text-[#7E7E7E] text-[12px] font-normal tracking-wide">想法 · 10/17</p>
+<div class="pb-1">
+<div class="text-[12px] font-normal text-black tracking-wide">想法 · 10/17</div>
 </div>
 </div>
-<!-- ITEM 6: 链接『Radio Garden · 转动地球收听各地电台』 radio.garden -->
-<div class="relative aspect-[4/5] w-full bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
-<div class="pt-2">
-<h2 class="text-black text-[22px] font-medium leading-[1.35] tracking-tight">
+<!-- ITEM 6: 链接『Radio Garden · 转动地球收听各地电台』 (Text-only tile in #F3F3F3) -->
+<div class="relative w-full aspect-4-5 bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
+<div class="pt-4">
+<p class="text-[25px] font-semibold leading-[1.38] tracking-tight text-black m-0">
             Radio Garden · 转动地球收听各地电台
-          </h2>
-<span class="inline-block mt-3 text-[13px] text-black underline underline-offset-4 font-normal">
+          </p>
+<p class="text-[14px] text-[#7E7E7E] font-mono mt-3 tracking-normal">
             radio.garden
-          </span>
+          </p>
 </div>
-<div class="border-t border-[#E5E5E5] pt-4">
-<p class="text-[#7E7E7E] text-[12px] font-normal tracking-wide">链接 · 10/16</p>
+<div class="pb-1">
+<div class="text-[12px] font-normal text-black tracking-wide">链接 · 10/16</div>
 </div>
 </div>
 <!-- ITEM 7: 照片『旧书店堆到天花板的书脊』 -->
-<div class="relative aspect-[4/5] w-full overflow-hidden bg-[#F3F3F3] group cursor-pointer">
-<img alt="旧书店堆到天花板的书脊" class="w-full h-full object-cover grayscale contrast-110" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
-<div class="absolute inset-0 scrim-gradient flex flex-col justify-end p-6">
-<h3 class="text-white text-[16px] font-semibold leading-snug tracking-tight">旧书店堆到天花板的书脊</h3>
-<p class="text-white/80 text-[12px] font-normal tracking-wide mt-1">照片 · 10/14</p>
+<div class="relative w-full aspect-4-5 overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="旧书店堆到天花板的书脊" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-6 text-white">
+<div class="text-[16px] font-semibold leading-snug tracking-tight">旧书店堆到天花板的书脊</div>
+<div class="text-[12px] font-normal text-white/80 mt-1 tracking-wide">照片 · 10/14</div>
 </div>
 </div>
 <!-- ITEM 8: 歌『aqua』 坂本龙一 -->
-<div class="relative aspect-[4/5] w-full overflow-hidden bg-[#F3F3F3] group cursor-pointer">
-<img alt="aqua" class="w-full h-full object-cover" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
-<div class="absolute inset-0 scrim-gradient flex flex-col justify-end p-6">
-<h3 class="text-white text-[16px] font-semibold leading-snug tracking-tight">aqua</h3>
-<p class="text-white/80 text-[12px] font-normal tracking-wide mt-1">歌 · 10/12</p>
+<div class="relative w-full aspect-4-5 overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="aqua" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1VNEkLPApRT2dQX1op0NyFcM1bZ3Wb1flttLMHNs6ZLxYDwcuq2hA5hv5m6C7Mrm0XXoFtc7YEP_ED7laokNuVr0YjdCyfGi5D8QwliBG7Yty90-4KUAiaJlKxmXe6c9j_D3LLWHjVLQI7eWSKv3KSVyODK4u98e85qmxxewgpFd8SecCh-nflYNXZ79Sfc-RDOs45VQFBNXgyd02zLaJmieCcwNLkydiFGzfyw6arSk1mhClS41HzL9PE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-6 text-white">
+<div class="text-[16px] font-semibold leading-snug tracking-tight">aqua</div>
+<div class="text-[12px] font-normal text-white/80 mt-1 tracking-wide">歌 · 10/12</div>
 </div>
 </div>
 <!-- ITEM 9: 电影『一一』 2000 · 杨德昌 -->
-<div class="relative aspect-[4/5] w-full overflow-hidden bg-[#F3F3F3] group cursor-pointer">
-<img alt="一一" class="w-full h-full object-cover grayscale contrast-125" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
-<div class="absolute inset-0 scrim-gradient flex flex-col justify-end p-6">
-<h3 class="text-white text-[16px] font-semibold leading-snug tracking-tight">一一</h3>
-<p class="text-white/80 text-[12px] font-normal tracking-wide mt-1">电影 · 10/09</p>
+<div class="relative w-full aspect-4-5 overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="一一" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1VIxP_AS_m2Q0g_Ne7PJQkOCurfb6jpWH2Pprj9MF9rE2TC5uWot9QJSKNdmEDINXzXLQgu6YFk0hbb40-KG2BvUCvrHOtbxbjakFe-uV0jhUHXY5GNRGV3quQDwEtTrp1B_I1iE15ELfUiU8G-std6vy3aisMqbZZsW1xcme9aKGqvLvXAitWXdMaQUTB9mdOyEfoqI2XCCXulrwyp310CK10kRPl6AbNPDy-IJixWQ04od9zVPwsWFQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-6 text-white">
+<div class="text-[16px] font-semibold leading-snug tracking-tight">《一一》</div>
+<div class="text-[12px] font-normal text-white/80 mt-1 tracking-wide">电影 · 10/09</div>
 </div>
 </div>
-<!-- ITEM 10: 想法『把外卖小票上的备注收集成一本诗集』 -->
-<div class="relative aspect-[4/5] w-full bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
-<div class="pt-2">
-<blockquote class="text-black text-[22px] font-medium leading-[1.4] tracking-tight">
+<!-- ITEM 10: 想法『把外卖小票上的备注收集成一本诗集』 (Text-only tile in #F3F3F3) -->
+<div class="relative w-full aspect-4-5 bg-[#F3F3F3] p-8 flex flex-col justify-between cursor-pointer">
+<div class="pt-4">
+<p class="text-[25px] font-semibold leading-[1.38] tracking-tight text-black m-0">
             “把外卖小票上的备注收集成一本诗集。”
-          </blockquote>
+          </p>
 </div>
-<div class="border-t border-[#E5E5E5] pt-4">
-<p class="text-[#7E7E7E] text-[12px] font-normal tracking-wide">想法 · 10/05</p>
+<div class="pb-1">
+<div class="text-[12px] font-normal text-black tracking-wide">想法 · 10/05</div>
 </div>
 </div>
 </div>
 <!-- FOOTER TINY LEFT -->
-<div class="mt-20 pt-8 pb-12 flex justify-start items-center">
-<span class="text-[11px] text-[#7E7E7E] tracking-[0.14em]">
+<footer class="pt-20 pb-12">
+<div class="text-[11px] font-mono text-[#7E7E7E] tracking-widest uppercase">
         © 2026 Q1f730
-      </span>
-</div>
+      </div>
+</footer>
 </main>
-<!-- PERSISTENT QUICK-CAPTURE BOTTOM BAR -->
-<aside class="fixed bottom-0 left-0 w-full bg-white z-40 hairline-t">
-<div class="w-[1440px] max-w-full mx-auto h-[56px] px-10 flex items-center justify-between">
-<div class="flex-grow flex items-center pr-8">
-<input class="w-full text-[13px] placeholder-[#7E7E7E] text-black bg-transparent border-none p-0 focus:ring-0 font-normal" placeholder="随手拾一穗" type="text"/>
-</div>
-<button class="text-black text-[14px] font-semibold tracking-wide hover:opacity-70 transition-opacity px-2 py-1">
-        拾
-      </button>
-</div>
-</aside>
+<!-- PERSISTENT QUICK-CAPTURE BAR PINNED AT THE BOTTOM -->
 </body>
 </html>
