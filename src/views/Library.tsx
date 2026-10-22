@@ -1,9 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { AsciiEmpty, AsciiLoader } from '../components/AsciiDevelop';
 import { ItemCard } from '../components/ItemCard';
 import { PageTitle } from '../components/PageTitle';
 import { QuickBar } from '../components/QuickBar';
+import { VirtualList, VirtualMasonry } from '../components/Virtual';
+import { estimateCardHeight } from '../lib/virtual';
 import { addItem, db } from '../lib/db';
 import { SAMPLES } from '../lib/samples';
 import { staggerDelay } from '../lib/motion';
@@ -11,9 +13,18 @@ import { groupByDay, throwbacks } from '../lib/memory';
 import { PHASE_LABEL, PHASE_WHISPER } from '../lib/phases';
 import { itemText } from '../lib/similarity';
 import { useApp } from '../lib/store';
-import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
+import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 
 const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+/** 入场错落动画只给首屏这几张；虚拟滚动后来挂上的卡片不再动 */
+const STAGGER_FIRST = 24;
+const TL_GAP = 18; // 与 index.css `.timeline > * + *` 一致
+
+declare global {
+  interface Window {
+    __gleanReady?: number;
+  }
+}
 
 export function Library() {
   const { openItem, openCapture, toast, developFrom, phase } = useApp();
@@ -32,6 +43,27 @@ export function Library() {
   const backs = useMemo(() => (items ? throwbacks(items) : []), [items]);
   const days = useMemo(() => (timeline ? groupByDay(filtered) : []), [timeline, filtered]);
   const now = new Date();
+  // 冷启动打点：第一次把穗仓（含卡片）画出来的时刻，e2e 读它
+  useEffect(() => {
+    if (!items || window.__gleanReady) return;
+    requestAnimationFrame(() => {
+      if (window.__gleanReady) return;
+      window.__gleanReady = performance.now();
+      try {
+        performance.mark('glean:ready', { detail: { items: items.length } });
+      } catch {
+        /* old webview */
+      }
+    });
+  }, [items]);
+  // 只有首屏渲染那一刻的卡片做入场动画（换筛选也不重放，避免滚动时卡片一张张飞进来）
+  const firstPaint = useRef(true);
+  useEffect(() => {
+    if (!items?.length) return;
+    const t = setTimeout(() => (firstPaint.current = false), 1600);
+    return () => clearTimeout(t);
+  }, [items]);
+  const cellStyle = useCallback((i: number): CSSProperties => (firstPaint.current && i < STAGGER_FIRST ? ({ '--i': staggerDelay(i, 60) } as CSSProperties) : { animation: 'none' }), []);
   const todayN = items ? items.filter((i) => new Date(i.createdAt).toDateString() === now.toDateString()).length : 0;
 
   async function loadSamples() {
@@ -119,9 +151,15 @@ export function Library() {
           <p>田里没找到这一穗。</p>
         </div>
       ) : timeline ? (
-        <div className="timeline">
-          {days.map((g) => (
-            <div key={g.key} className="tl-day">
+        <VirtualList
+          className="timeline"
+          rowClassName="tl-day"
+          gap={TL_GAP}
+          items={days}
+          keyOf={(g) => g.key}
+          estimate={() => 330}
+          render={(g) => (
+            <>
               <div className="tl-date">
                 <span>{g.key.slice(5).replace('-', ' 月 ')} 日</span>
                 <span className="dim">{g.items.length} 穗</span>
@@ -133,17 +171,17 @@ export function Library() {
                   </div>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
+            </>
+          )}
+        />
       ) : (
-        <div className="masonry">
-          {filtered.map((it, i) => (
-            <div key={it.id} className="masonry-cell" style={{ '--i': staggerDelay(i, 60) } as CSSProperties}>
-              <ItemCard item={it} onOpen={openItem} />
-            </div>
-          ))}
-        </div>
+        <VirtualMasonry<Item>
+          items={filtered}
+          keyOf={(it) => it.id!}
+          estimate={estimateCardHeight}
+          cellStyle={cellStyle}
+          render={(it) => <ItemCard item={it} onOpen={openItem} />}
+        />
       )}
       {items.length > 0 && <TagCloud items={items.flatMap((i) => i.tags)} onPick={setTag} />}
     </section>
