@@ -2,17 +2,21 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useState, type CSSProperties } from 'react';
 import { AsciiEmpty, AsciiLoader } from '../components/AsciiDevelop';
 import { ItemCard } from '../components/ItemCard';
+import { PageTitle } from '../components/PageTitle';
 import { QuickBar } from '../components/QuickBar';
 import { addItem, db } from '../lib/db';
 import { SAMPLES } from '../lib/samples';
 import { staggerDelay } from '../lib/motion';
 import { groupByDay, throwbacks } from '../lib/memory';
+import { PHASE_LABEL, PHASE_WHISPER } from '../lib/phases';
 import { itemText } from '../lib/similarity';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
 
+const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+
 export function Library() {
-  const { openItem, openCapture, toast, developFrom } = useApp();
+  const { openItem, openCapture, toast, developFrom, phase } = useApp();
   const items = useLiveQuery(() => db.items.orderBy('createdAt').reverse().toArray(), []);
   const [q, setQ] = useState('');
   const [type, setType] = useState<ItemType | 'all'>('all');
@@ -27,79 +31,83 @@ export function Library() {
 
   const backs = useMemo(() => (items ? throwbacks(items) : []), [items]);
   const days = useMemo(() => (timeline ? groupByDay(filtered) : []), [timeline, filtered]);
+  const now = new Date();
+  const todayN = items ? items.filter((i) => new Date(i.createdAt).toDateString() === now.toDateString()).length : 0;
 
   async function loadSamples() {
     for (const s of SAMPLES) await addItem(s);
-    toast('已放入 10 件示例素材，可以随时删除');
+    toast('放进了 10 穗示例，随时可以删');
   }
 
   if (!items) return <AsciiLoader />;
 
   return (
     <section className="view">
-      <header className="roll-head">
-        <span className="roll-ic" aria-hidden>◉</span>
-        <h1>
-          灵感库 <span className="mono roll-no">ROLL #{String(Math.floor(items.length / 36) + 1).padStart(2, '0')} / 36 EXP</span>
-        </h1>
-        <span className="rec mono">○ REC</span>
-      </header>
-      <div className="strip mono">
-        <span className="red">LINGAN TRI-X 400</span>
-        <span>· {items.length} ITEMS</span>
-        <span className="strip-date">{new Date().toLocaleDateString('zh-CN').replace(/\//g, '.')}</span>
-      </div>
+      <PageTitle title="穗仓" whisper={PHASE_WHISPER[phase]} />
+      <p className="dateline">
+        {now.getMonth() + 1}月{now.getDate()}日 · 周{WEEK[now.getDay()]} · {PHASE_LABEL[phase]}
+        {items.length > 0 && (
+          <>
+            {' '}· 共 {items.length} 穗{todayN > 0 ? `，今天拾了 ${todayN}` : ''}
+          </>
+        )}
+      </p>
       <QuickBar />
       {backs.map((b) => (
-        <div key={b.label} className="throwback">
-          <div className="kicker mono">⟲ {b.label}</div>
+        <div key={b.label} className="paper throwback">
+          <div className="kicker">{b.label}</div>
           <ul>
             {b.items.slice(0, 3).map((it) => (
               <li key={it.id}>
-                <button className="btnlike" onClick={() => openItem(it)}>{it.title || '无题'}</button>
+                <button className="btnlike" onClick={() => openItem(it)}>
+                  {it.title || '无题'}
+                </button>
               </li>
             ))}
           </ul>
           <button className="btn ghost small" onClick={() => developFrom(b.items.map((i) => i.id!).filter(Boolean).slice(0, 3))}>
-            拉进显影室
+            拿去嫁接
           </button>
         </div>
       ))}
-      <div className="search">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="搜索标题、作者、句子、标签…" aria-label="搜索" />
-        {q && (
-          <button className="icon-btn" onClick={() => setQ('')} aria-label="清除搜索">
-            ✕
-          </button>
-        )}
-      </div>
-      <div className="chips scroll">
-        <button className={`chip${type === 'all' ? ' on' : ''}`} onClick={() => setType('all')}>
-          全部
-        </button>
-        {TYPE_ORDER.map((t) => (
-          <button key={t} className={`chip${type === t ? ' on' : ''}`} onClick={() => setType(t)}>
-            {TYPE_LABEL[t]}
-          </button>
-        ))}
-        <button className={`chip${timeline ? ' on' : ''}`} onClick={() => setTimeline((v) => !v)} aria-pressed={timeline}>
-          ▤ 时间线
-        </button>
-        {tag && (
-          <button className="chip on red" onClick={() => setTag(null)}>
-            #{tag} ✕
-          </button>
-        )}
-      </div>
+      {items.length > 0 && (
+        <div className="paper filters">
+          <div className="search">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="找一找：标题、作者、句子、标签…" aria-label="搜索" />
+            {q && (
+              <button className="icon-btn" onClick={() => setQ('')} aria-label="清除搜索">
+                ✕
+              </button>
+            )}
+          </div>
+          <div className="chips scroll">
+            <button className={`chip${type === 'all' ? ' on' : ''}`} onClick={() => setType('all')}>
+              全部
+            </button>
+            {TYPE_ORDER.map((t) => (
+              <button key={t} className={`chip${type === t ? ' on' : ''}`} onClick={() => setType(t)}>
+                {TYPE_LABEL[t]}
+              </button>
+            ))}
+            <button className={`chip${timeline ? ' on' : ''}`} onClick={() => setTimeline((v) => !v)} aria-pressed={timeline}>
+              时间线
+            </button>
+            {tag && (
+              <button className="chip on" onClick={() => setTag(null)}>
+                #{tag} ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {items.length === 0 ? (
-        <div className="empty">
+        <div className="paper empty">
           <AsciiEmpty />
-          <div className="empty-frame mono">№ 000</div>
-          <h2>暗房还是空的</h2>
-          <p>收进第一件打动你的东西：一首歌、一部电影、一张图、一句话。</p>
+          <h2>穗仓还是空的</h2>
+          <p>拾第一穗打动你的东西：一首歌、一部电影、一张图、一句话。</p>
           <div className="actions center">
             <button className="btn primary" onClick={openCapture}>
-              收集第一件
+              拾第一穗
             </button>
             <button className="btn ghost" onClick={loadSamples}>
               先放点示例
@@ -107,14 +115,17 @@ export function Library() {
           </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="empty small">
-          <p>没有匹配的素材。</p>
+        <div className="paper empty small">
+          <p>田里没找到这一穗。</p>
         </div>
       ) : timeline ? (
         <div className="timeline">
           {days.map((g) => (
             <div key={g.key} className="tl-day">
-              <div className="tl-date mono">{g.key.replace(/-/g, '.')} · {g.items.length}</div>
+              <div className="tl-date">
+                <span>{g.key.slice(5).replace('-', ' 月 ')} 日</span>
+                <span className="dim">{g.items.length} 穗</span>
+              </div>
               <div className="tl-strip">
                 {g.items.map((it) => (
                   <div key={it.id} className="tl-frame">
@@ -128,20 +139,10 @@ export function Library() {
       ) : (
         <div className="masonry">
           {filtered.map((it, i) => (
-            <div key={it.id} className="masonry-cell" style={{ '--i': staggerDelay(i) } as CSSProperties}>
+            <div key={it.id} className="masonry-cell" style={{ '--i': staggerDelay(i, 60) } as CSSProperties}>
               <ItemCard item={it} onOpen={openItem} />
             </div>
           ))}
-        </div>
-      )}
-      {items.length > 0 && (
-        <div className="ruler mono" aria-hidden>
-          <div className="ruler-ticks" />
-          <div className="ruler-labels">
-            <span>FRAME 01</span>
-            <span className="red">CURRENT: EXP {String(items.length % 36 || 36).padStart(2, '0')}</span>
-            <span>FRAME 36 END</span>
-          </div>
         </div>
       )}
       {items.length > 0 && <TagCloud items={items.flatMap((i) => i.tags)} onPick={setTag} />}
@@ -157,12 +158,12 @@ function TagCloud({ items, onPick }: { items: string[]; onPick: (t: string) => v
   }, [items]);
   if (!top.length) return null;
   return (
-    <footer className="tagcloud">
-      <div className="kicker mono">CONTACT SHEET · 标签</div>
+    <footer className="paper tagcloud">
+      <div className="kicker">常拾的标签</div>
       <div className="tags">
         {top.map(([t, n]) => (
           <button key={t} className="tag btnlike" onClick={() => onPick(t)}>
-            #{t} <span className="mono dim">{n}</span>
+            #{t} <span className="dim">{n}</span>
           </button>
         ))}
       </div>
