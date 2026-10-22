@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>灵感暗房 · REEL 01</title>
+<!-- Google Fonts: Bodoni Moda & Noto Serif SC & Space Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&amp;family=Noto+Serif+SC:wght@300;400;600;700;900&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-lowest": "#0f0e0c",
+            "inverse-primary": "#7e5713",
+            "inverse-on-surface": "#32302d",
+            "on-surface-variant": "#d3c4b3",
+            "primary-fixed-dim": "#f2be71",
+            "surface-bright": "#3b3936",
+            "on-primary-fixed": "#291800",
+            "on-error-container": "#ffdad6",
+            "surface-container-low": "#1d1b19",
+            "inverse-surface": "#e7e2dd",
+            "secondary-fixed-dim": "#ffb4a5",
+            "surface-dim": "#141311",
+            "primary-container": "#d4a359",
+            "tertiary-fixed": "#ebe2d0",
+            "on-surface": "#e7e2dd",
+            "tertiary-container": "#b3ab9b",
+            "error": "#ffb4ab",
+            "on-primary-fixed-variant": "#614000",
+            "on-tertiary": "#353025",
+            "error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#4b463a",
+            "tertiary-fixed-dim": "#cec6b5",
+            "surface-container-highest": "#363432",
+            "on-secondary": "#650a00",
+            "outline": "#9c8f7f",
+            "surface-variant": "#363432",
+            "on-secondary-container": "#ffaf9f",
+            "outline-variant": "#4f4538",
+            "on-tertiary-container": "#443f33",
+            "surface": "#141311",
+            "tertiary": "#cec6b6",
+            "on-error": "#690005",
+            "secondary-container": "#9f1701",
+            "surface-container": "#211f1d",
+            "on-tertiary-fixed": "#1f1b11",
+            "on-secondary-fixed": "#3f0400",
+            "on-primary-container": "#583a00",
+            "primary": "#f2be71",
+            "surface-container-high": "#2b2a27",
+            "surface-tint": "#f2be71",
+            "on-secondary-fixed-variant": "#8f1200",
+            "secondary": "#ffb4a5",
+            "background": "#141311",
+            "primary-fixed": "#ffddb1",
+            "secondary-fixed": "#ffdad3",
+            "on-primary": "#442b00",
+            "on-background": "#e7e2dd"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2.5rem",
+            "space-xs": "0.25rem",
+            "gutter-desktop": "2rem",
+            "gutter-tablet": "1.5rem",
+            "space-md": "1rem",
+            "margin-tablet": "2rem",
+            "margin": "1rem",
+            "margin-desktop": "3rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-lg-mobile": ["Bodoni Moda", "Noto Serif SC", "serif"],
+            "body-sm": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-display": ["Bodoni Moda", "Noto Serif SC", "serif"],
+            "headline-display-mobile": ["Bodoni Moda", "Noto Serif SC", "serif"],
+            "label-sm": ["Space Grotesk", "sans-serif"],
+            "body-md": ["Noto Serif SC", "Noto Serif", "serif"],
+            "label-lg": ["Space Grotesk", "sans-serif"],
+            "label-md": ["Space Grotesk", "sans-serif"],
+            "headline-sm": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-md": ["Bodoni Moda", "Noto Serif SC", "serif"],
+            "headline-lg": ["Bodoni Moda", "Noto Serif SC", "serif"]
+          },
+          "fontSize": {
+            "body-lg": ["17px", {"lineHeight": "28px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+            "headline-lg-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "0.04em", "fontWeight": "600"}],
+            "body-sm": ["13px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+            "headline-display": ["44px", {"lineHeight": "52px", "letterSpacing": "0.06em", "fontWeight": "700"}],
+            "headline-display-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+            "label-sm": ["10px", {"lineHeight": "14px", "letterSpacing": "0.22em", "fontWeight": "500"}],
+            "body-md": ["15px", {"lineHeight": "25px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+            "label-lg": ["13px", {"lineHeight": "18px", "letterSpacing": "0.18em", "fontWeight": "600"}],
+            "label-md": ["11px", {"lineHeight": "16px", "letterSpacing": "0.16em", "fontWeight": "500"}],
+            "headline-sm": ["19px", {"lineHeight": "26px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+            "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "0.03em", "fontWeight": "500"}],
+            "headline-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "0.04em", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Grain & Vignette optical simulation */
+    .film-grain {
+      background-image: radial-gradient(circle at 50% 30%, rgba(242, 190, 113, 0.04) 0%, rgba(11, 10, 8, 0.94) 85%);
+    }
+    .sprocket-hole {
+      width: 6px;
+      height: 9px;
+      background-color: #0b0a08;
+      border: 1px solid #363432;
+      border-radius: 1px;
+    }
+    /* Subtle breathing projector flicker */
+    @keyframes projectorPulse {
+      0%, 100% { opacity: 0.97; }
+      50% { opacity: 1; filter: contrast(102%); }
+    }
+    .projector-glow {
+      animation: projectorPulse 7s ease-in-out infinite alternate;
+    }
+    /* Hide scrollbars for pure cinematic immersive canvas */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body-md antialiased min-h-screen flex justify-center selection:bg-primary selection:text-on-primary">
+<!-- Mobile Cinema Frame Shell (Portrait 390px Width Container) -->
+<div class="w-full max-w-[390px] min-h-screen bg-surface-container-lowest flex flex-col relative overflow-hidden shadow-2xl film-grain border-x border-outline-variant/40">
+<!-- Cinema Projection Ambient Vignette Overlay -->
+<div class="pointer-events-none fixed inset-0 max-w-[390px] mx-auto z-40 bg-[radial-gradient(circle_at_50%_40%,rgba(0,0,0,0)_30%,rgba(15,14,12,0.85)_100%)]"></div>
+<!-- SHARED COMPONENT 1: TopAppBar -->
+<header class="sticky top-0 z-50 bg-surface-container-lowest/95 backdrop-blur-md">
+<div class="flex justify-between items-center w-full px-space-md h-14 max-w-[390px] mx-auto border-b border-outline-variant">
+<!-- Leading Icon -->
+<button aria-label="暗房放映机" class="flex items-center text-primary hover:text-primary-fixed transition-colors duration-150 active:opacity-80 focus:outline-none">
+<span class="material-symbols-outlined text-[20px]" data-icon="movie_filter">movie_filter</span>
+</button>
+<!-- Brand / Headline -->
+<div class="flex flex-col items-center">
+<span class="text-headline-sm font-headline-sm tracking-widest text-primary uppercase text-center font-bold">
+            灵感暗房 · REEL 01
+          </span>
+<span class="font-label-sm text-label-sm text-outline tracking-[0.28em] -mt-0.5">
+            ARCHIVE 1927 · Q1f730
+          </span>
+</div>
+<!-- Trailing Action -->
+<div class="flex items-center">
+<span class="font-label-md text-label-md text-primary tracking-widest px-2 py-0.5 border border-outline-variant/80 bg-surface-container-low hover:text-primary-fixed transition-colors duration-150">
+            ACT I
+          </span>
+</div>
+</div>
+</header>
+<!-- MAIN SCROLLABLE CONTINUOUS FILM REEL CANVAS -->
+<main class="flex-1 px-3.5 pt-3 pb-28 space-y-6 projector-glow overflow-y-auto">
+<!-- QUICK CAPTURE: Vintage Hand-Crank / Film Reel Input Bar -->
+<section class="relative bg-surface-container-low border border-outline-variant p-2.5 shadow-inner">
+<!-- Corner filigree brackets -->
+<div class="absolute -top-[3px] -left-[3px] w-2 h-2 border-t-2 border-l-2 border-primary"></div>
+<div class="absolute -top-[3px] -right-[3px] w-2 h-2 border-t-2 border-r-2 border-primary"></div>
+<div class="absolute -bottom-[3px] -left-[3px] w-2 h-2 border-b-2 border-l-2 border-primary"></div>
+<div class="absolute -bottom-[3px] -right-[3px] w-2 h-2 border-b-2 border-r-2 border-primary"></div>
+<div class="flex items-center justify-between gap-2.5">
+<div class="flex items-center gap-2 flex-1">
+<span class="material-symbols-outlined text-primary text-[20px] select-none" data-icon="camera_roll">camera_roll</span>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant/80 pb-0.5 text-body-sm font-body-sm text-on-surface placeholder:text-outline placeholder:italic focus:outline-none focus:border-primary transition-colors text-left" placeholder="记一笔… 摇动曲柄压入底片" type="text"/>
+</div>
+<!-- Hand-crank action slate button -->
+<button class="bg-primary text-on-primary-container px-2.5 py-1 text-label-sm font-label-sm uppercase tracking-widest font-bold flex items-center gap-1 active:scale-95 transition-transform">
+<span>显影刻录</span>
+<span class="text-xs">✦</span>
+</button>
+</div>
+</section>
+<!-- COLLIDE TRIGGER: Theatrical Optical Aperture Button -->
+<section class="relative">
+<button class="w-full group bg-surface-container border border-outline-variant hover:border-primary/80 transition-all duration-300 py-2.5 px-3 flex items-center justify-between">
+<div class="flex items-center space-x-2.5">
+<div class="w-6 h-6 rounded-none border border-primary flex items-center justify-center rotate-45 group-hover:rotate-90 transition-transform duration-500 bg-surface-container-lowest">
+<div class="w-2 h-2 bg-primary"></div>
+</div>
+<div class="text-left">
+<div class="font-headline-sm text-[14px] text-primary tracking-widest font-semibold flex items-center gap-1.5">
+<span>启动显影 · COLLIDE</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+</div>
+<p class="font-label-sm text-[9px] text-outline tracking-wider -mt-0.5">撞击相隔数月的底片记忆 · 生成全新银盐灵感</p>
+</div>
+</div>
+<span class="font-label-md text-label-md text-primary tracking-widest group-hover:translate-x-0.5 transition-transform">[ 碰撞 ↗ ]</span>
+</button>
+</section>
+<!-- CHAPTER TRANSITION INTERTITLE: Act Header -->
+<div class="flex items-center justify-center gap-3 py-1">
+<div class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-outline-variant to-transparent"></div>
+<div class="font-label-sm text-label-sm text-primary tracking-[0.3em] uppercase">· SCENE I · 银盐切片 ·</div>
+<div class="h-[1px] flex-1 bg-gradient-to-l from-transparent via-outline-variant to-transparent"></div>
+</div>
+<!-- CARD 1: Image Card — Gothic Cathedral in Rain (Photo-Plate Frame) -->
+<article class="relative bg-surface-container-lowest border border-outline-variant p-3.5 group">
+<!-- Double concentric inner border -->
+<div class="border border-outline-variant/60 p-2.5 bg-surface-container-low/50">
+<!-- Archival Header Bar -->
+<div class="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant/50">
+<div class="flex items-center space-x-2">
+<span class="font-label-sm text-[10px] text-primary tracking-widest">PLATE 084</span>
+<span class="text-outline text-[10px]">/</span>
+<span class="font-label-sm text-[10px] text-outline tracking-wider">NITRATE FILM</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline tracking-widest">今天 22:18</span>
+</div>
+<!-- Archival Photo Plate with 1.33:1 aspect ratio -->
+<div class="relative overflow-hidden border border-outline-variant/80 bg-surface-container-highest">
+<img class="w-full h-48 object-cover filter contrast-125 sepia-[0.25] brightness-90 group-hover:scale-[1.02] transition-transform duration-700" data-alt="A theatrical monochrome photograph of the towering spires of Cologne Cathedral in heavy torrential rain, shot in the dramatic style of 1920s German Expressionist silent cinema. The ancient gothic stone carvings are glistening with wet ink-like deep black shadows, surrounded by low moody atmospheric fog and fine optical film grain. High contrast dramatic side lighting pierces through misty dark cinema clouds with faint warm sepia undertones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKcO9Q5Dyi913nPzS_XM9e4ukRB5rxZW4vkcCx6x3wkGYNrSqw54fj3STOZZvPEk2R-Yb47ZF_rVYlztoo5Dt4964oQTEJb6Dp1iTAGSITpEZvVolnJ9xzQsC6RmQsExg0qIULkqd1NVKPXdXpG3mog2iqbqdcVIZ6RTlbHcyWrss5tVquVPHcOl7MkE9oMcyH-zJvcqi0XzjPfi_pVeOULJo9yVum1HMESKDt0ROZwagFsv5kAmZA4LvHTy-yymhoHs_6H2Mtxuo"/>
+<!-- Vignette shadow inside photo -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent opacity-80 pointer-events-none"></div>
+<!-- Filigree corner accents on photo -->
+<div class="absolute top-1.5 left-1.5 text-primary text-[10px] font-label-sm select-none">⌜</div>
+<div class="absolute top-1.5 right-1.5 text-primary text-[10px] font-label-sm select-none">⌝</div>
+<div class="absolute bottom-1.5 left-1.5 text-primary text-[10px] font-label-sm select-none">⌞</div>
+<div class="absolute bottom-1.5 right-1.5 text-primary text-[10px] font-label-sm select-none">⌟</div>
+</div>
+<!-- Caption & Typography -->
+<div class="mt-3 text-center px-1">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold tracking-wider">
+              雨天科隆大教堂尖顶阴影
+            </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant italic mt-1 leading-relaxed">
+              “石雕受潮后显出近乎油墨般的深沉黑度”
+            </p>
+</div>
+<!-- Metadata Footer -->
+<div class="mt-3 pt-2 border-t border-outline-variant/40 flex items-center justify-between text-outline">
+<span class="font-label-sm text-[9px] tracking-widest text-primary-fixed-dim">LOC: 50.9413° N · 硝酸银感光</span>
+<span class="font-label-sm text-[9px] tracking-widest">[ ↗ 放大检视 ]</span>
+</div>
+</div>
+</article>
+<!-- CARD 2: Film Card (1920s Intertitle Act Card) — 《花样年华》(2000) · 王家卫 -->
+<article class="relative bg-surface-container-lowest border-2 border-outline-variant p-4 text-center">
+<!-- Classical Art Deco Inner Gold Hairline Frame -->
+<div class="border border-primary-container/80 p-5 relative bg-gradient-to-b from-surface-container-lowest via-surface-container-low to-surface-container-lowest">
+<!-- Stepped Corner Deco Motifs -->
+<div class="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-primary"></div>
+<div class="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-primary"></div>
+<div class="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-primary"></div>
+<div class="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-primary"></div>
+<!-- Card Reel Sequence Header -->
+<div class="flex items-center justify-center space-x-2 mb-3">
+<span class="h-[1px] w-6 bg-primary"></span>
+<span class="font-label-sm text-label-sm text-primary tracking-[0.25em] uppercase font-bold">FILM TITLE CARD · ACT II</span>
+<span class="h-[1px] w-6 bg-primary"></span>
+</div>
+<!-- Subject Title Stamp -->
+<div class="font-label-md text-label-md text-outline tracking-[0.2em] mb-2">
+            《花样年华》(2000) · 王家卫
+          </div>
+<!-- Theatrical Quotation Core -->
+<div class="my-3 py-1">
+<div class="text-primary-container text-2xl font-headline-display opacity-40 leading-none mb-1">“</div>
+<p class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold tracking-wide leading-snug px-1">
+              如果有多一张船票，<br/>你会不会同我一起走？
+            </p>
+<div class="text-primary-container text-2xl font-headline-display opacity-40 leading-none mt-1">”</div>
+</div>
+<!-- Antique Filigree Divider -->
+<div class="flex items-center justify-center my-3 text-primary text-xs tracking-[0.5em]">
+            ❖ · ❖ · ❖
+          </div>
+<!-- Card Stamp Footer -->
+<div class="flex items-center justify-between text-outline font-label-sm text-[9px] pt-1">
+<span class="tracking-widest">35MM · 24 FRAMES</span>
+<span class="text-primary-fixed-dim">昨天 19:40</span>
+</div>
+</div>
+</article>
+<!-- CARD 3: Song Card (Gramophone Disc / Vinyl Audio Intertitle) — Subterranean Homesick Alien -->
+<article class="relative bg-surface-container-low border border-outline-variant p-3.5">
+<div class="flex items-start justify-between border-b border-outline-variant/60 pb-2 mb-3">
+<div class="flex items-center space-x-2">
+<span class="font-label-sm text-[10px] text-secondary tracking-widest uppercase">78 RPM RECORDING</span>
+<span class="text-outline text-xs">·</span>
+<span class="font-label-sm text-[10px] text-outline">SHELLAC DISC</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline tracking-wider">10/22</span>
+</div>
+<div class="flex items-center space-x-4">
+<!-- Engraved Gramophone Vinyl Disk Graphic -->
+<div class="w-20 h-20 rounded-full border border-primary/60 bg-surface-container-lowest flex items-center justify-center relative flex-shrink-0 shadow-inner">
+<div class="w-16 h-16 rounded-full border border-outline-variant/40 flex items-center justify-center">
+<div class="w-10 h-10 rounded-full border border-outline flex items-center justify-center">
+<div class="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+<div class="w-1 h-1 rounded-full bg-surface-container-lowest"></div>
+</div>
+</div>
+</div>
+<!-- Needle pointer indicator -->
+<div class="absolute -top-1 right-1 w-3 h-3 text-secondary text-[12px] rotate-45 select-none">▲</div>
+</div>
+<!-- Song Details & Sound Specimen Fragment -->
+<div class="flex-1 min-w-0">
+<div class="font-label-md text-label-md text-primary tracking-widest truncate">RADIOHEAD</div>
+<h4 class="font-headline-sm text-[15px] text-on-surface font-semibold truncate mt-0.5">
+              Subterranean Homesick Alien
+            </h4>
+<div class="mt-2 p-2 bg-surface-container-lowest/80 border-l-2 border-primary">
+<p class="font-body-sm text-[12px] text-on-surface-variant italic leading-relaxed">
+                “渴望被冰冷飞行器带离地表的情绪标本”
+              </p>
+</div>
+</div>
+</div>
+<!-- Simulated Acoustic Waveform / Sprocket Notch Bar -->
+<div class="mt-3.5 pt-2 border-t border-outline-variant/50 flex items-center justify-between">
+<div class="flex items-center space-x-1">
+<span class="w-1 h-2 bg-outline-variant"></span>
+<span class="w-1 h-3.5 bg-primary"></span>
+<span class="w-1 h-5 bg-primary-container"></span>
+<span class="w-1 h-3 bg-primary"></span>
+<span class="w-1 h-2 bg-outline-variant"></span>
+<span class="w-1 h-4 bg-primary"></span>
+<span class="w-1 h-6 bg-primary"></span>
+<span class="w-1 h-3 bg-outline-variant"></span>
+<span class="w-1 h-1.5 bg-outline-variant"></span>
+<span class="font-label-sm text-[9px] text-outline ml-2">TRACK 03 · OK COMPUTER</span>
+</div>
+<span class="font-label-sm text-[9px] text-primary tracking-widest">[ 聆听 · 4:27 ]</span>
+</div>
+</article>
+<!-- CARD 4: Quote Card (Literary Title Card with Aged Paper Texture) — Roland Barthes -->
+<article class="relative bg-surface-container-lowest border border-outline-variant p-4">
+<!-- Dual Corner Stepped Accents -->
+<div class="absolute top-2 left-2 w-2 h-2 bg-primary/40"></div>
+<div class="absolute top-2 right-2 w-2 h-2 bg-primary/40"></div>
+<div class="absolute bottom-2 left-2 w-2 h-2 bg-primary/40"></div>
+<div class="absolute bottom-2 right-2 w-2 h-2 bg-primary/40"></div>
+<div class="border border-dashed border-outline-variant/90 p-4 text-center bg-surface-container-low/30">
+<div class="font-label-sm text-[9px] text-primary tracking-[0.3em] uppercase mb-3">
+            — LITERARY FRAGMENT · 卷宗摘录 —
+          </div>
+<!-- Deep Literary Typography -->
+<blockquote class="font-headline-sm text-headline-sm text-on-surface font-medium leading-relaxed my-2 px-1">
+            “我们在暗处洗印回忆，直到它在红光下显影清晰。”
+          </blockquote>
+<!-- Author attribution & book title -->
+<div class="mt-3 flex items-center justify-center space-x-2 text-outline">
+<span class="h-[1px] w-4 bg-outline-variant"></span>
+<cite class="font-body-sm text-[12px] text-primary-fixed-dim not-italic tracking-wider">
+              罗兰·巴特《明室》
+            </cite>
+<span class="h-[1px] w-4 bg-outline-variant"></span>
+</div>
+<div class="mt-4 pt-2 border-t border-outline-variant/40 flex justify-between items-center text-outline">
+<span class="font-label-sm text-[9px] tracking-widest">P. 74 · 摄影札记</span>
+<span class="font-label-sm text-[9px] text-outline tracking-wider">10/20</span>
+</div>
+</div>
+</article>
+<!-- CARD 5: Idea Card (Scenario Draft & Editorial Red Safelight Markup) -->
+<article class="relative bg-surface-container-low border border-outline-variant p-3.5">
+<div class="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 bg-secondary rounded-none"></span>
+<span class="font-label-sm text-[10px] text-secondary tracking-widest uppercase">分镜草案 · SCENARIO</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline tracking-widest">10/19</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-[16px] text-on-surface font-semibold tracking-wide leading-snug">
+            《雨夜霓虹招牌与湿沥青反光的短片分镜构想》
+          </h4>
+<!-- Manuscript typewriter styling segment -->
+<div class="mt-2.5 p-2.5 bg-surface-container-lowest border border-outline-variant/60 relative">
+<!-- Safelight Red Editorial Stamp -->
+<div class="absolute -top-2 right-2 px-1.5 py-0.5 bg-secondary-container text-on-secondary text-label-sm font-label-sm tracking-widest uppercase border border-secondary shadow-sm">
+              ✓ 暗房待拍
+            </div>
+<p class="font-body-sm text-[13px] text-on-surface-variant leading-relaxed">
+              镜头从积水水洼的倒影起摇，霓虹招牌闪烁频率设定为每秒两次。湿润沥青路面呈现金属般的冷质感。
+            </p>
+<div class="mt-2 flex items-center gap-1.5 text-secondary text-[11px] font-body-sm italic">
+<span>✎ 编辑批注:</span>
+<span class="underline decoration-secondary/60 underline-offset-2">需使用柯达5207日光型底片补拍特写</span>
+</div>
+</div>
+</div>
+<div class="mt-3 flex items-center justify-between text-outline">
+<span class="font-label-sm text-[9px] tracking-widest">REEL 02 · TAKE 04</span>
+<span class="font-label-sm text-[9px] text-primary tracking-widest">[ 展开分镜板 ]</span>
+</div>
+</article>
+<!-- CARD 6: Link Card (External Archival Bookmark with Gilded Link Seal) -->
+<article class="relative bg-surface-container-lowest border border-outline-variant p-3 group">
+<div class="border border-outline-variant/70 p-3 bg-surface-container-low/40 flex items-start justify-between gap-3">
+<div class="space-y-1.5 flex-1 min-w-0">
+<div class="flex items-center space-x-2">
+<span class="font-label-sm text-[9px] text-primary tracking-widest uppercase">外部档案标引</span>
+<span class="text-outline text-[10px]">·</span>
+<span class="font-label-sm text-[9px] text-outline">REFERENCE 409</span>
+</div>
+<h4 class="font-headline-sm text-[15px] text-on-surface font-semibold tracking-wide leading-snug group-hover:text-primary transition-colors">
+              《世界尽头的冷酷海啸与深海建筑群》
+            </h4>
+<p class="font-body-sm text-[12px] text-outline italic truncate">
+              archival-monograph.org/deep-ocean-expressionism
+            </p>
+</div>
+<!-- Gilded Link Medallion -->
+<div class="w-10 h-10 border border-primary flex items-center justify-center bg-surface-container-lowest flex-shrink-0 group-hover:bg-primary group-hover:text-on-primary transition-all duration-200">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary text-[18px]" data-icon="link">link</span>
+</div>
+</div>
+<div class="mt-2.5 px-1 flex items-center justify-between text-outline">
+<span class="font-label-sm text-[9px] tracking-widest">INDEX: 09/EXT</span>
+<span class="font-label-sm text-[9px] text-outline tracking-wider">10/15</span>
+</div>
+</article>
+<!-- ARCHIVAL REEL END STAMP & AUTHOR WATERMARK -->
+<div class="pt-6 pb-2 text-center space-y-2">
+<div class="flex items-center justify-center space-x-3">
+<span class="sprocket-hole"></span>
+<span class="sprocket-hole"></span>
+<div class="font-label-sm text-[9px] text-outline tracking-[0.3em] uppercase">
+            REEL 01 END · OPERATOR: Q1f730 · 1927
+          </div>
+<span class="sprocket-hole"></span>
+<span class="sprocket-hole"></span>
+</div>
+<div class="text-[10px] text-outline/60 font-body-sm italic">
+          — 灵感暗房 · 静默放映中 —
+        </div>
+</div>
+</main>
+<!-- SHARED COMPONENT 2: BottomNavBar (Docked at Screen Bottom) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 max-w-[390px] mx-auto px-space-xs pb-safe bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant">
+<!-- Nav Item 1: 灵感库 (Active Destination) -->
+<button aria-current="page" class="flex flex-col items-center justify-center text-primary border-t-2 border-primary pt-1 w-1/4 hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[22px]" data-icon="local_library">local_library</span>
+<span class="font-label-sm text-label-sm tracking-widest mt-0.5">灵感库</span>
+</button>
+<!-- Nav Item 2: 显影 (Inactive) -->
+<button class="flex flex-col items-center justify-center text-outline pt-1 w-1/4 hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[22px]" data-icon="blur_on">blur_on</span>
+<span class="font-label-sm text-label-sm tracking-widest mt-0.5">显影</span>
+</button>
+<!-- Nav Item 3: 画像 (Inactive) -->
+<button class="flex flex-col items-center justify-center text-outline pt-1 w-1/4 hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[22px]" data-icon="face">face</span>
+<span class="font-label-sm text-label-sm tracking-widest mt-0.5">画像</span>
+</button>
+<!-- Nav Item 4: 设置 (Inactive) -->
+<button class="flex flex-col items-center justify-center text-outline pt-1 w-1/4 hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[22px]" data-icon="tune">tune</span>
+<span class="font-label-sm text-label-sm tracking-widest mt-0.5">设置</span>
+</button>
+</nav>
+</div>
+</body></html>
