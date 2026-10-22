@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>灵感暗房 · 灵感库</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Noto+Serif+SC:wght@300;400;600;700&amp;family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&amp;family=Source+Sans+3:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#3f0400",
+            "tertiary-fixed": "#e8e1dc",
+            "surface-container-high": "#ece8df",
+            "on-surface": "#1d1c16",
+            "surface-dim": "#ded9d1",
+            "surface-bright": "#fef9f0",
+            "on-secondary": "#ffffff",
+            "surface-container": "#f2ede4",
+            "on-primary-container": "#ffeae6",
+            "on-surface-variant": "#5a413b",
+            "on-error": "#ffffff",
+            "inverse-surface": "#32302a",
+            "on-tertiary-container": "#f4ede8",
+            "inverse-primary": "#ffb4a5",
+            "inverse-on-surface": "#f5f0e7",
+            "background": "#fef9f0",
+            "surface": "#fef9f0",
+            "on-tertiary-fixed-variant": "#4a4643",
+            "surface-container-low": "#f8f3ea",
+            "surface-tint": "#b42810",
+            "secondary-container": "#e8e1dd",
+            "outline": "#8e706a",
+            "on-primary": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "on-error-container": "#93000a",
+            "secondary-fixed-dim": "#cbc5c2",
+            "tertiary-fixed-dim": "#ccc5c1",
+            "on-secondary-fixed": "#1d1b19",
+            "secondary": "#615e5b",
+            "primary-container": "#c8361d",
+            "tertiary": "#57534f",
+            "on-secondary-container": "#676461",
+            "on-background": "#1d1c16",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "surface-container-highest": "#e7e2d9",
+            "tertiary-container": "#706b67",
+            "secondary-fixed": "#e8e1dd",
+            "primary": "#a51c05",
+            "outline-variant": "#e3beb7",
+            "on-primary-fixed-variant": "#8f1200",
+            "surface-variant": "#e7e2d9",
+            "primary-fixed": "#ffdad3",
+            "on-secondary-fixed-variant": "#494643",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed": "#1e1b18",
+            "primary-fixed-dim": "#ffb4a5"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "label-editorial": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-md": ["\"Source Sans 3\"", "sans-serif"],
+            "label-code-sm": ["JetBrains Mono", "monospace"],
+            "label-code-lg": ["JetBrains Mono", "monospace"],
+            "headline-xl-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-lg-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-xl": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-sm": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-sm": ["\"Source Sans 3\"", "sans-serif"],
+            "body-lg": ["\"Source Sans 3\"", "sans-serif"]
+          },
+          "fontSize": {
+            "label-editorial": ["11px", { "lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "label-code-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "label-code-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-xl-mobile": ["28px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "headline-lg": ["26px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "headline-xl": ["36px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+    }
+    /* Hairline paper texture simulation */
+    .rag-paper-grain {
+      background-color: #FEF9F0;
+      background-image: radial-gradient(#1D1C16 0.5px, transparent 0.5px);
+      background-size: 24px 24px;
+      background-position: 0 0;
+    }
+    /* Archival mount cutouts */
+    .mat-bevel {
+      box-shadow: inset 1px 1px 0px 0px rgba(29, 28, 22, 0.15), inset -1px -1px 0px 0px rgba(254, 249, 240, 0.8);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-high text-on-surface flex justify-center items-center min-h-screen p-0 sm:p-4 selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile Viewport Shell (390 x 844 Portrait) -->
+<div class="w-[390px] h-[844px] bg-surface relative flex flex-col overflow-hidden border border-on-surface/10 shadow-2xl">
+<!-- Top Status / Film Edge Margins -->
+<header class="bg-surface z-40 px-4 pt-3 pb-2 flex-shrink-0 border-b border-outline-variant/30">
+<!-- Shared TopAppBar Component Layout -->
+<div class="flex justify-between items-center w-full">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[17px]">camera</span>
+<span class="font-label-editorial text-label-editorial text-on-surface font-semibold tracking-widest">灵感暗房 · ROLL #04 / 36 EXP</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-code-sm text-[10px] text-secondary tracking-widest">CURATOR: Q1f730</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container inline-block animate-pulse"></span>
+</div>
+</div>
+<!-- Curatorial Subtitle & Collision Trigger Bar -->
+<div class="mt-2.5 pt-2 border-t border-on-surface/5 flex justify-between items-baseline">
+<div>
+<h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">展厅 01 · 常设藏品</h1>
+<p class="font-label-code-sm text-[10px] text-secondary tracking-wider mt-0.5">ROOM 01 : PERMANENT ARCHIVE / SALON HANG</p>
+</div>
+<!-- Quick Collision Action Trigger -->
+<button class="bg-primary-container text-on-primary text-[10px] font-label-code-sm px-2.5 py-1 tracking-wider border border-on-surface active:bg-on-surface active:text-surface transition-colors flex items-center gap-1">
+<span class="text-[9px]">✦</span>
+<span>开启显影 · COLLIDE</span>
+</button>
+</div>
+<!-- Quick Capture Bar (Always Reachable) -->
+<div class="mt-2.5 bg-surface-container border border-outline-variant/40 px-2.5 py-1.5 flex items-center justify-between">
+<div class="flex items-center gap-2 flex-1">
+<span class="w-2 h-2 rounded-full bg-primary-container flex-shrink-0"></span>
+<span class="font-label-editorial text-[12px] text-secondary">记一笔… 记录此刻感官或暗室切片</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-code-sm text-[10px] text-secondary border-l border-outline-variant/50 pl-2">
+<span class="hover:text-primary cursor-pointer">摘录</span>
+<span class="text-outline-variant">/</span>
+<span class="hover:text-primary cursor-pointer text-on-surface font-medium">瞬间</span>
+<span class="text-outline-variant">/</span>
+<span class="hover:text-primary cursor-pointer">见闻</span>
+</div>
+</div>
+</header>
+<!-- Main Salon Hang Canvas (Asymmetric Art Wall) -->
+<main class="flex-1 overflow-y-auto px-4 py-5 space-y-7 pb-24 scroll-smooth">
+<!-- ITEM 1: Photo Artwork (Gothic Cathedral) -->
+<section class="flex flex-col items-center">
+<!-- Matted Archival Frame -->
+<div class="bg-surface-container-low p-3.5 border border-on-surface w-[320px] shadow-sm">
+<div class="relative bg-inverse-surface border border-on-surface/20 mat-bevel p-1.5">
+<img class="w-full h-[190px] object-cover grayscale contrast-125" data-alt="A striking museum-grade black and white silver gelatin photograph of the gothic Cologne Cathedral spires piercing misty rain clouds. The architectural stonework shows rich tactile grain, intense deep charcoal blacks, and pristine wet highlights. Shot on 35mm film with high contrast and historical depth, perfectly echoing darkroom photographic chemistry." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWjH7CLkI2_YEmzjCLsIuH55az72cbOIVi1EVhoUGS2D0hyhH0t8T4e34QhHqIiwT4HSa2-Bkb0NLbKrHB5SHjgZyxmFtIQ-2TjCLscEl1G8CDGls8NmdeS_TMEg1lyS4rn0TQtlKrELrD_ARIytQbY1vFmU1k7V0sRLf3_4EqsKK91bnt82kpy_lIrRxpmRBxqb9ELd55t069CDLEsQyDExmGIS5CEVdYtQ5ObiSsj_S_hFnfQHRTKpoO95nAJapq51KkvE_gWnI"/>
+<div class="absolute bottom-2 right-2 text-[9px] font-label-code-sm text-surface-bright bg-inverse-surface/80 px-1 py-0.5 tracking-widest border border-surface/20">
+              FRAME #18A
+            </div>
+</div>
+<!-- Corner Crosshairs -->
+<div class="flex justify-between items-center text-[9px] font-label-code-sm text-secondary mt-1.5 px-0.5">
+<span>┌ ARCHIVAL MOUNT ┐</span>
+<span>120 FILM / 6X7</span>
+</div>
+</div>
+<!-- Museum Wall Placard -->
+<aside class="mt-2 w-[320px] pl-1 border-l-2 border-primary-container flex justify-between items-start">
+<div>
+<div class="font-headline-sm text-[13px] text-on-surface font-semibold tracking-wide">雨中科隆 · 大教堂尖顶阴影</div>
+<div class="font-label-editorial text-[10px] text-secondary mt-0.5">银盐相纸 / 摄影 · 尺寸 30×40cm</div>
+</div>
+<div class="text-right">
+<span class="font-label-code-sm text-[10px] text-primary-container font-semibold">№ 01</span>
+<div class="font-label-code-sm text-[9px] text-secondary">10/19 · 14:32</div>
+</div>
+</aside>
+</section>
+<!-- ASYMMETRIC ROW: Item 2 & Item 3 (Salon Pairing) -->
+<div class="grid grid-cols-12 gap-3 items-start">
+<!-- ITEM 2: Film Still / Plaque (In the Mood for Love) - Width 7 cols -->
+<section class="col-span-7 flex flex-col">
+<div class="bg-inverse-surface p-2 border border-on-surface">
+<!-- Sprocket Holes Accent -->
+<div class="flex justify-between py-0.5 px-1 border-b border-surface/10 mb-1">
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+</div>
+<div class="relative overflow-hidden border border-surface/10">
+<img class="w-full h-[120px] object-cover" data-alt="A cinematic 35mm film still capturing the moody, smoke-filled atmospheric romance reminiscent of Wong Kar-wai's In the Mood for Love. Rich saturated emerald green wall tiles, low warm amber light, and deep shadows evoke sensory longing and 1960s Hong Kong cinematic poetry, treated like a real film negative cell." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_zLvB8ZrudTYaP3sj-aydoIGywmOwOkP1kapkcA67scRZH_BVhyghYH-6WCIaOVqc-vmlhsB4s2XBe1ZOdIaSQUINYoF4ah5x_vZmC-OC2Tx4NzYtUny72ucdGgtptSacaVFQJ_BYUXiYn4eKhgCw_48PzqbqWOQrKy1N6NUOsyHhJR66XgSlGaNNuK8YUX_5KatVrxs9tXkWBKRmGw0aVOrTe3YaHDE8uc-82KIW3jcu7rtDbLbDBWKLj6lKy8VKQs6-_nR8RYw"/>
+<div class="absolute top-1 left-1 bg-primary-container text-on-primary font-label-code-sm text-[8px] px-1 tracking-tighter">
+                KODAK 5279
+              </div>
+</div>
+<!-- Bottom Sprockets -->
+<div class="flex justify-between py-0.5 px-1 border-t border-surface/10 mt-1">
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+<span class="w-1.5 h-1 bg-surface-variant/30"></span>
+</div>
+</div>
+<!-- Placard -->
+<aside class="mt-1.5 pl-1 border-l border-on-surface/40">
+<div class="font-headline-sm text-[12px] text-on-surface font-semibold leading-tight">《花样年华》王家卫</div>
+<div class="font-label-editorial text-[9px] text-secondary mt-0.5">胶片切片 · 35毫米放映拷贝</div>
+<div class="flex justify-between items-baseline mt-1 font-label-code-sm text-[9px]">
+<span class="text-primary-container font-medium">№ 02</span>
+<span class="text-secondary">今天 22:18</span>
+</div>
+</aside>
+</section>
+<!-- ITEM 3: Sonic Vinyl Archive (Radiohead) - Width 5 cols -->
+<section class="col-span-5 flex flex-col pt-3">
+<!-- Vinyl Sleeve Card Plate -->
+<div class="bg-surface-container border border-on-surface p-2.5 flex flex-col items-center aspect-square justify-between relative">
+<span class="absolute top-1 right-1 font-label-code-sm text-[8px] text-secondary">33⅓ RPM</span>
+<!-- Minimal vinyl grooving graphic -->
+<div class="w-16 h-16 rounded-full border border-on-surface/40 flex items-center justify-center my-auto bg-surface-dim">
+<div class="w-8 h-8 rounded-full border border-primary-container flex items-center justify-center bg-inverse-surface">
+<span class="w-2 h-2 rounded-full bg-surface"></span>
+</div>
+</div>
+<div class="w-full text-center">
+<div class="font-label-code-sm text-[9px] text-on-surface font-bold truncate">HOMESICK ALIEN</div>
+<div class="font-label-editorial text-[8px] text-secondary">RADIOHEAD / OK COMP.</div>
+</div>
+</div>
+<!-- Placard -->
+<aside class="mt-1.5 pl-1 border-l border-on-surface/40">
+<div class="font-headline-sm text-[11px] text-on-surface font-semibold leading-tight">Subterranean Homesick Alien</div>
+<div class="font-label-editorial text-[9px] text-secondary mt-0.5">声音样本 · 磁带翻录</div>
+<div class="flex justify-between items-baseline mt-1 font-label-code-sm text-[9px]">
+<span class="text-primary-container font-medium">№ 03</span>
+<span class="text-secondary">昨天 16:40</span>
+</div>
+</aside>
+</section>
+</div>
+<!-- ITEM 4: Literary Letterpress Card (Deckle-edge Roland Barthes Quote) -->
+<section class="flex flex-col items-end">
+<div class="w-[330px] bg-surface-bright border border-on-surface p-4 relative shadow-[2px_2px_0px_0px_#1D1C16]">
+<!-- Technical stamp top right -->
+<div class="absolute top-2 right-2 border border-primary-container text-primary-container font-label-code-sm text-[9px] px-1 py-0.5 tracking-widest">
+            № 00294-B
+          </div>
+<!-- Lead Type Excerpt -->
+<div class="pr-12">
+<span class="text-primary-container font-serif text-lg leading-none">“</span>
+<p class="font-headline-sm text-[13px] leading-relaxed text-on-surface tracking-wide mt-[-6px]">
+              我们在暗处洗印回忆，直到它在红光下显影清晰。
+            </p>
+<div class="text-right mt-2 font-label-editorial text-[10px] text-secondary">
+              —— 罗兰·巴特《明室》 (Camera Lucida)
+            </div>
+</div>
+<!-- Bottom rule & press metadata -->
+<div class="mt-3 pt-2 border-t border-on-surface/10 flex justify-between font-label-code-sm text-[8px] text-secondary tracking-wider">
+<span>TYPE: BERTHOLD BASKERVILLE</span>
+<span>PRESS: SALON LEIDEN</span>
+</div>
+</div>
+<!-- Placard -->
+<aside class="mt-1.5 w-[330px] pr-1 flex justify-between items-baseline">
+<div class="font-label-editorial text-[10px] text-secondary">
+            手印活字 · 文学语丝 · 纯棉手工纸
+          </div>
+<div class="font-label-code-sm text-[10px]">
+<span class="text-primary-container font-medium">№ 04</span>
+<span class="text-secondary ml-1.5">10/15</span>
+</div>
+</aside>
+</section>
+<!-- ASYMMETRIC ROW: Item 5 & Item 6 -->
+<div class="grid grid-cols-12 gap-3 items-start pt-1">
+<!-- ITEM 5: Idea Note (Storyboard Concept) - Width 6 cols -->
+<section class="col-span-6 flex flex-col">
+<div class="bg-surface-container-low border border-on-surface p-3 relative">
+<div class="flex items-center justify-between border-b border-on-surface/15 pb-1 mb-2">
+<span class="font-label-code-sm text-[9px] text-primary-container font-semibold">NOTE DRAFT</span>
+<span class="w-1.5 h-1.5 bg-primary-container rounded-none"></span>
+</div>
+<!-- Storyboard sketch note text -->
+<p class="font-label-editorial text-[12px] leading-snug text-on-surface">
+              雨夜霓虹招牌与湿沥青反光的短片分镜构想。
+            </p>
+<div class="mt-3 bg-surface-dim p-1.5 border border-on-surface/20">
+<div class="font-label-code-sm text-[8px] text-secondary tracking-tight">
+                [SCENE 04 / SHOT 12]<br/>
+                CAMERA: 50MM T1.3<br/>
+                PUDDLE REFLECTION
+              </div>
+</div>
+</div>
+<!-- Placard -->
+<aside class="mt-1.5 pl-1 border-l border-on-surface/40">
+<div class="font-headline-sm text-[11px] text-on-surface font-semibold leading-tight">案头笔记 · 视听构想</div>
+<div class="font-label-editorial text-[9px] text-secondary mt-0.5">铅笔便签 / 打字机墨迹</div>
+<div class="flex justify-between items-baseline mt-1 font-label-code-sm text-[9px]">
+<span class="text-primary-container font-medium">№ 05</span>
+<span class="text-secondary">10/12</span>
+</div>
+</aside>
+</section>
+<!-- ITEM 6: Link Artifact (Cahiers du Cinéma / Architectural Essay) - Width 6 cols -->
+<section class="col-span-6 flex flex-col pt-4">
+<div class="bg-surface-container-highest border border-on-surface p-2.5">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-code-sm text-[8px] bg-inverse-surface text-surface px-1 tracking-wider">ARCHIVE DOC</span>
+<span class="material-symbols-outlined text-[13px] text-primary-container">link</span>
+</div>
+<div class="font-headline-sm text-[12px] font-semibold text-on-surface mt-1 leading-snug">
+              《电影手册》专栏：建筑空间的光影秩序
+            </div>
+<div class="mt-2 text-[9px] font-label-code-sm text-secondary truncate">
+              ref: cahiersducinema.com/art/08
+            </div>
+<div class="mt-2 pt-1 border-t border-on-surface/20 flex justify-between items-center text-[8px] font-label-code-sm text-primary-container">
+<span>[ VIEW NEGATIVE ]</span>
+<span>↗</span>
+</div>
+</div>
+<!-- Placard -->
+<aside class="mt-1.5 pl-1 border-l border-on-surface/40">
+<div class="font-headline-sm text-[11px] text-on-surface font-semibold leading-tight">外部文献 · 卷宗归档</div>
+<div class="font-label-editorial text-[9px] text-secondary mt-0.5">学术书目 / 影评年鉴</div>
+<div class="flex justify-between items-baseline mt-1 font-label-code-sm text-[9px]">
+<span class="text-primary-container font-medium">№ 06</span>
+<span class="text-secondary">10/08</span>
+</div>
+</aside>
+</section>
+</div>
+<!-- Exhibition Footnote Indicator -->
+<footer class="pt-4 pb-2 text-center border-t border-on-surface/10">
+<span class="font-label-code-sm text-[10px] text-secondary tracking-widest">
+          — END OF ROOM 01 / 6 OF 36 CATALOGED —
+        </span>
+</footer>
+</main>
+<!-- Shared BottomNavBar Component -->
+<!-- Destination Rule: Top-level ecosystem home screen. Active Tab: '灵感库' (Exact Match) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 max-w-md mx-auto bg-surface-container-low border-t border-outline-variant/40 shadow-lg">
+<!-- Tab 1: 灵感库 (ACTIVE: Exact match for Library Home) -->
+<a class="flex flex-col items-center justify-center text-primary border-b-2 border-primary pb-1 pt-1 flex-1" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="auto_stories">auto_stories</span>
+<span class="font-label-code-sm text-[10px] mt-0.5 font-bold tracking-wider">灵感库</span>
+</a>
+<!-- Tab 2: 显影 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 flex-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+<span class="font-label-code-sm text-[10px] mt-0.5 tracking-wider">显影</span>
+</a>
+<!-- Tab 3: 记录 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 flex-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="add_box">add_box</span>
+<span class="font-label-code-sm text-[10px] mt-0.5 tracking-wider">记录</span>
+</a>
+<!-- Tab 4: 画像 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 flex-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="person_pin">person_pin</span>
+<span class="font-label-code-sm text-[10px] mt-0.5 tracking-wider">画像</span>
+</a>
+<!-- Tab 5: 设置 (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 flex-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="font-label-code-sm text-[10px] mt-0.5 tracking-wider">设置</span>
+</a>
+</nav>
+</div>
+</body></html>
