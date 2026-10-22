@@ -2,10 +2,6 @@ import { formatWhen } from '../lib/quick';
 import { AsciiImage } from './AsciiDevelop';
 import { TYPE_LABEL, type Item } from '../lib/types';
 
-export function frameNo(id?: number) {
-  return '№ ' + String(id ?? 0).padStart(3, '0');
-}
-
 export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: Item) => void; compact?: boolean }) {
   return (
     <article
@@ -20,24 +16,17 @@ export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: I
         }
       }}
     >
-      <div className="card-meta">
-        <span className="mono">{frameNo(item.id)}</span>
-        <time className="card-when mono" dateTime={new Date(item.createdAt).toISOString()}>
-          {formatWhen(item.createdAt)}
-        </time>
-        <span className="type-badge">{TYPE_LABEL[item.type]}</span>
-      </div>
       {item.image && (
         <div className="card-imgwrap">
           <AsciiImage className="card-img" id={item.id} src={item.image} alt={item.title} />
-          <span className="exp mono">EXP {String(item.id ?? 0).padStart(2, '0')}A</span>
         </div>
       )}
-      {item.type === 'music' && !item.image && (
-        <div className="vinyl" aria-hidden>
-          <span />
-        </div>
-      )}
+      <div className="card-meta">
+        <span className="type-badge">{TYPE_LABEL[item.type]}</span>
+        <time className="card-when" dateTime={new Date(item.createdAt).toISOString()}>
+          {formatWhen(item.createdAt)}
+        </time>
+      </div>
       <h3 className={`card-title${item.type === 'text' && item.content ? ' quote' : ''}`}>
         {item.type === 'text' && item.content ? `「${item.content.replace(/^[「“"『]+|[」”"』]+$/g, '')}」` : item.title}
       </h3>
@@ -50,7 +39,7 @@ export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: I
         </div>
       )}
       {item.type === 'idea' && item.content && !compact && <p className="card-body">{item.content}</p>}
-      {item.type === 'link' && item.url && <div className="card-url mono">{safeHost(item.url)}</div>}
+      {item.type === 'link' && item.url && <div className="card-url">{safeHost(item.url)}</div>}
       {item.why && !compact && <p className="card-why">{item.why}</p>}
       {item.tags.length > 0 && !compact && (
         <div className="tags">
