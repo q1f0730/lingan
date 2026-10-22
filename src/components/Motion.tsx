@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { decodeFrame, detectMotionLevel, magnetOffset, revealCount, typeDuration, type MotionLevel } from '../lib/motion';
+import { decodeFrame, detectMotionLevel, revealCount, typeDuration, type MotionLevel } from '../lib/motion';
 
 let cached: MotionLevel | null = null;
 export function level(): MotionLevel {
@@ -26,9 +26,9 @@ export function DecodeText({ text, ms = 700 }: { text: string; ms?: number }) {
         setShown(text);
         return;
       }
-      if (now - last > 45) {
+      if (now - last > 70) {
         last = now;
-        setShown(decodeFrame(text, p, seedBase + Math.floor(now / 45)));
+        setShown(decodeFrame(text, p, seedBase + Math.floor(now / 70)));
       }
       raf = requestAnimationFrame(tick);
     };
@@ -50,7 +50,7 @@ export function TypeReveal({ text, className }: { text: string; className?: stri
       setN(text.length);
       return;
     }
-    const total = typeDuration(text.length) * (level() === 'lite' ? 0.6 : 1);
+    const total = typeDuration(text.length) * (level() === 'lite' ? 0.8 : 1.4);
     let raf = 0;
     let last = 0;
     const t0 = performance.now();
@@ -86,13 +86,12 @@ export function TypeReveal({ text, className }: { text: string; className?: stri
   );
 }
 
-/** 全局按钮效果（只挂一次）：点击涟漪（full/lite）+ 鼠标靠近主按钮磁吸（仅 full 且有精确指针） */
+/** 全局按钮效果（只挂一次）：按下时一圈很淡的水波（full/lite）。拾穗版不做磁吸。 */
 export function useButtonFx() {
   useEffect(() => {
-    const lv = level();
-    if (lv === 'off') return;
+    if (level() === 'off') return;
     const down = (e: PointerEvent) => {
-      const el = (e.target as HTMLElement | null)?.closest?.('.btn, .nav-add, .fab') as HTMLElement | null;
+      const el = (e.target as HTMLElement | null)?.closest?.('.btn, .nav-add') as HTMLElement | null;
       if (!el || (el as HTMLButtonElement).disabled) return;
       const r = el.getBoundingClientRect();
       const size = Math.max(r.width, r.height) * 2;
@@ -100,34 +99,9 @@ export function useButtonFx() {
       s.className = 'ripple';
       s.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - r.left - size / 2}px;top:${e.clientY - r.top - size / 2}px`;
       el.appendChild(s);
-      setTimeout(() => s.remove(), 650);
+      setTimeout(() => s.remove(), 900);
     };
     document.addEventListener('pointerdown', down, { passive: true });
-    let magnet: HTMLElement | null = null;
-    let raf = 0;
-    const move = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse') return;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const el = (e.target as HTMLElement | null)?.closest?.('.btn.primary, .btn.big, .nav-add') as HTMLElement | null;
-        if (magnet && magnet !== el) {
-          magnet.style.removeProperty('--mx');
-          magnet.style.removeProperty('--my');
-          magnet = null;
-        }
-        if (!el) return;
-        magnet = el;
-        const r = el.getBoundingClientRect();
-        const o = magnetOffset(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2), Math.max(r.width, r.height), 5);
-        el.style.setProperty('--mx', o.x + 'px');
-        el.style.setProperty('--my', o.y + 'px');
-      });
-    };
-    if (lv === 'full' && window.matchMedia?.('(pointer: fine)').matches) document.addEventListener('pointermove', move, { passive: true });
-    return () => {
-      document.removeEventListener('pointerdown', down);
-      document.removeEventListener('pointermove', move);
-      cancelAnimationFrame(raf);
-    };
+    return () => document.removeEventListener('pointerdown', down);
   }, []);
 }
