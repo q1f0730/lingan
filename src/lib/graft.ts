@@ -4,10 +4,11 @@
 // 没配 key / 调用失败时，离线同样走四步，确定性地出 3 根变形法两两不同的新枝。
 import { AIError, chat, parseJSONLoose } from './ai';
 import { graftCount, modeBrief, modeDef, oppositeWords, vibeOf, vibeWords, type GraftMode } from './modes';
-import { pickOblique } from './oblique';
+import { OBLIQUE } from './oblique';
 import { checkRefs, evidenceClean, evidenceIds, minEvidence, padRefs, weakNote, type RefCheck } from './provenance';
 import type { Settings } from './settings';
 import { TYPE_LABEL, type GraftSeed, type GraftTension, type Idea, type Item, type ItemType } from './types';
+import { branchHits, emptyReport, enforcedKeys, enforceWall, findHits, forbiddenBlock, promptWall, type Cliche, type WallReport } from './wall';
 
 export interface Transform {
   id: string;
@@ -79,7 +80,15 @@ export function transformsDistinct(branches: Idea[]): boolean {
 }
 
 // ——— prompt ———
-const FORBIDDEN = '禁用词与框架：沉浸式、旅程、交织、融合、碰撞出火花、灵魂、治愈、氛围感、赋能、打破边界、时光的、岁月的、独一无二；以及任何素材里没有依据的说法。';
+/** v0.19：斜策略也不能撞墙（离线正文会写出「约束：…」）——从随机起点往后找第一张不撞的 */
+export function pickObliqueClean(rand: () => number = Math.random, keys: string[] = []): string {
+  const start = Math.floor(rand() * OBLIQUE.length);
+  for (let i = 0; i < OBLIQUE.length; i++) {
+    const o = OBLIQUE[(start + i) % OBLIQUE.length];
+    if (!findHits(o, keys).length) return o;
+  }
+  return OBLIQUE[start];
+}
 
 /** 每件素材前面标上它的素材 ID（穗在库里的真实 id），模型必须用这个 ID 引用 */
 export function describeForGraft(it: Item, idx: number): string {
@@ -102,7 +111,7 @@ function idList(refs: number[], ids: number[]): string {
   return refs.map((r) => `#${ids[r - 1] ?? r}`).join('、');
 }
 
-type Ctx = { theme?: string; oblique: string; taste?: string; mode?: GraftMode };
+type Ctx = { theme?: string; oblique: string; taste?: string; mode?: GraftMode; /** v0.19 套路墙（原文，写进 FORBIDDEN） */ wall?: string[] };
 
 function context(items: Item[], opts: Ctx) {
   return [
@@ -117,17 +126,19 @@ function context(items: Item[], opts: Ctx) {
     .join('\n\n');
 }
 
-const SYS_HEAD = [
-  '你是只为一个人的私人收藏工作的「嫁接器」：把相距很远的几件素材嫁接出新枝。',
-  '只能使用给出的素材。不要引入大众流行梗、名人名作、行业套路或泛泛建议。证据不够就直说。',
-  '不要输出思考过程，只输出要求的 JSON。',
-  FORBIDDEN,
-].join('\n');
+function sysHead(opts: Ctx): string {
+  return [
+    '你是只为一个人的私人收藏工作的「嫁接器」：把相距很远的几件素材嫁接出新枝。',
+    '只能使用给出的素材。不要引入大众流行梗、名人名作、行业套路或泛泛建议。证据不够就直说。',
+    '不要输出思考过程，只输出要求的 JSON。',
+    forbiddenBlock(opts.wall || []),
+  ].join('\n');
+}
 
 export function buildMapPrompt(items: Item[], opts: Ctx): { system: string; user: string } {
   const k = minRefs(items.length);
   const system = [
-    SYS_HEAD,
+    sysHead(opts),
     '这一次只做 PHASE A 和 PHASE B，不要写完整创意，不要排序。',
     opts.mode ? `这次按「${modeDef(opts.mode)?.name}」接法抽的穗（规则与要求见用户消息开头），张力和种子都要照这个接法的要求来。` : '',
     'PHASE A — MAP：找出 4 个素材之间的张力或意外的桥（结构、节奏、情绪、材料、动作上的同构或冲突，而不是表面题材相似），每个标出依据的素材 ID。',
@@ -148,18 +159,20 @@ export function buildConvergePrompt(
   tensions: GraftTension[],
   seeds: GraftSeed[],
   recheck?: string,
+  wallNote?: string,
 ): { system: string; user: string } {
   const k = minRefs(items.length);
   const ids = evidenceIds(items);
   const system = [
-    SYS_HEAD,
+    sysHead(opts),
     '这一次做 PHASE C 和 PHASE D。',
     `PHASE C — DEFIX：看下面 8 粒种子，用一句话指出它们重复的结构、场景、语气或动词（pattern）；把最相像的 3 粒换成落在完全不同语义区域的新种子。新种子沿用被换掉那粒的变形法，仍至少引用 ${k} 件素材 ID。`,
     opts.mode ? `三根新枝都必须满足「${modeDef(opts.mode)?.name}」接法的要求（见用户消息开头）。` : '',
     'PHASE D — CONVERGE：从换过之后的 8 粒里，选 3 粒彼此最不一样、且变形法两两不同的，各长成一根新枝。挑选标准：证据扎实、在这一批里新、对我有用、做得出来、忠于这些素材。',
     '每根新枝给出：seed（种子编号 1-8）、title（12 字内，不要冒号）、idea（100-180 字，具体到画面 / 声音 / 结构）、form（形式，如短片 / 歌 / 海报 / 装置 / 文案 / 游戏）、refs（这根新枝真正用到的素材 ID，至少 ${k} 个，只能是上面方括号里的数字）、unlike（它和另外两根哪里不同，40 字内）、experiment（我 20 分钟内就能完成的一个小实验）。',
     'idea 正文里用到哪件素材，就点出它的名字（如《花样年华》），方便我对照。说不出依据的新枝宁可不写。',
-    '再列出 3-5 个这组素材最容易落入的套路（cliches），三根新枝都必须避开。',
+    '再列出 3-5 个这组素材最容易落入的套路（cliches，每条 2-16 字的词或短语，不要整句），三根新枝都必须避开；它们会被加进我的套路墙。',
+    wallNote ? `注意：上一版新枝里${wallNote}。这一次三根新枝都不许出现套路墙上的任何一条。` : '',
     recheck ? `注意：上一次的回答里${recheck}。这一次每根新枝的 refs 必须是至少 ${k} 个真实存在的素材 ID。` : '',
     '只输出一个 JSON 对象：',
     '{"pattern":"…","replaced":[{"n":2,"text":"新种子","refs":[素材ID,素材ID,素材ID]}],"branches":[{"seed":1,"title":"…","idea":"…","form":"…","refs":[素材ID,素材ID,素材ID],"unlike":"…","experiment":"…"}],"cliches":["…"]}',
@@ -509,14 +522,47 @@ export interface GraftResult {
   recheck?: boolean;
   /** 重来之后仍然证据不足的根数 */
   weak?: number;
+  /** v0.19 这次模型列出的套路（会沉淀进套路墙） */
+  cliches?: string[];
+  /** v0.19 套路墙校验：撞墙几根、重写 / 重长 / 删字各几根 */
+  wall?: WallReport;
+}
+
+/** v0.19 撞墙时的替补：先用没被选中的种子长，再用离线句式（8 种变形 × 2 种句式）长 */
+function wallPool(seeds: GraftSeed[], items: Item[], oblique: string, theme?: string, mode?: GraftMode): () => Idea[] {
+  return () => {
+    const list = items.length === 1 ? [items[0], items[0]] : items;
+    const out: Idea[] = [];
+    seeds.forEach((sd, k) => {
+      if (!sd.chosen && sd.text) out.push(branchFromSeed(sd, list, oblique, k, theme, mode));
+    });
+    TRANSFORMS.forEach((t, i) => {
+      for (const alt of [false, true]) out.push(branchFromSeed(seedFor(t.id, i, list, alt), list, oblique, i, theme, mode));
+    });
+    return out;
+  };
+}
+
+/** v0.19 新枝过墙：撞墙的那根换成替补（变形法不撞），都不行就删字；最后补齐「哪里不同」并再过一遍（只删字） */
+export function applyWall(branches: Idea[], keys: string[], pool: () => Idea[], report: WallReport = emptyReport()): { branches: Idea[]; report: WallReport } {
+  const first = enforceWall(branches, keys, pool, report);
+  const fixed = first.branches.map((b, i) => {
+    if (b.wall !== 'replaced') return b;
+    const others = first.branches.filter((_, j) => j !== i).map((x) => x.transform || '');
+    return { ...b, unlike: computeUnlike(b.transform || '', others), firstStep: b.experiment };
+  });
+  const last = enforceWall(fixed, keys, () => [], first.report, false);
+  return last;
 }
 
 /** 离线四步：张力 → 8 种变形各一粒 → 换掉最相像的 3 粒 → 收拢 3 根变形法两两不同的 */
-export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number; mode?: GraftMode } = {}): GraftResult {
+export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number; mode?: GraftMode; wall?: Cliche[] } = {}): GraftResult {
   const rand = opts.rand || Math.random;
   if (!items.length) throw new Error('没有穗');
   const list = items.length === 1 ? [items[0], items[0]] : items;
-  const oblique = pickOblique(rand);
+  // v0.19 离线同样遵守套路墙（内置禁用词 + 墙上没划掉的）
+  const keys = enforcedKeys(opts.wall || []);
+  const oblique = pickObliqueClean(rand, keys);
   const tensions = tensionTexts(list, opts.mode);
   // 随机一个起点，让同一组穗多次离线嫁接不完全一样
   const off = Math.floor(rand() * list.length);
@@ -539,7 +585,8 @@ export function graftOffline(items: Item[], opts: { theme?: string; rand?: () =>
   const chosen = [first, ...rest];
   const branches = chosen.map((i, k) => branchFromSeed(seeds[i], list, oblique, k, opts.theme, opts.mode));
   const fin = finishBranches(branches, seeds, chosen);
-  return { mode: opts.mode, branches: fin.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0 };
+  const walled = applyWall(fin.branches, keys, wallPool(fin.seeds, list, oblique, opts.theme, opts.mode));
+  return { mode: opts.mode, branches: walled.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0, wall: walled.report };
 }
 
 /** 给模型的「上一次哪里不对」 */
@@ -600,6 +647,8 @@ export interface GraftProgress {
   retry?: RetryInfo;
   /** v0.12：有新枝说不清从哪几穗长出来，正在重长一次 */
   recheck?: boolean;
+  /** v0.19：有新枝撞了套路墙，正在让模型重写 */
+  wall?: boolean;
 }
 
 /** AI 四步嫁接：2 次调用。第 2 次失败时用第 1 次的种子本地收拢（仍是 3 根） */
@@ -614,10 +663,14 @@ export async function graftWithAI(
     signal?: AbortSignal;
     onProgress?: (p: GraftProgress) => void;
     sleep?: (ms: number) => Promise<void>;
+    /** v0.19 套路墙 */
+    wall?: Cliche[];
   } = {},
 ): Promise<GraftResult> {
-  const oblique = pickOblique(opts.rand);
-  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode };
+  const wall = opts.wall || [];
+  const baseKeys = enforcedKeys(wall);
+  const oblique = pickObliqueClean(opts.rand || Math.random, baseKeys);
+  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode, wall: promptWall(wall) };
   const temp = Math.max(0.2, Math.min(1.3, s.temperature || 1));
   let calls = 0;
   const rOpts = (stage: GraftStage) => ({
@@ -643,9 +696,9 @@ export async function graftWithAI(
   }, rOpts('map'));
 
   opts.onProgress?.({ stage: 'defix' });
-  const converge = (recheck?: string) =>
+  const converge = (recheck?: string, wallNote?: string) =>
     withRetry(async () => {
-      const p2 = buildConvergePrompt(items, ctx, map.tensions, map.seeds, recheck);
+      const p2 = buildConvergePrompt(items, ctx, map.tensions, map.seeds, recheck, wallNote);
       calls++;
       const out = await chat(
         s,
@@ -673,14 +726,36 @@ export async function graftWithAI(
         // 重来那次没跑通：保留第一次的结果，不合格的已经标好了「证据不足」
       }
     }
+    // v0.19 套路墙：墙上的 + 这次模型自己列出的套路，三根新枝里都不许出现。撞了就让模型重写一次
+    const report = emptyReport();
+    let keys = enforcedKeys(wall, conv.cliches);
+    const hitIdx = conv.branches.map((b, i) => [branchHits(b, keys), i] as const).filter(([h]) => h.length);
+    if (hitIdx.length) {
+      report.hit = hitIdx.length;
+      report.retried = true;
+      hitIdx.forEach(([h]) => h.forEach((k) => report.keys.includes(k) || report.keys.push(k)));
+      opts.onProgress?.({ stage: 'defix', wall: true });
+      const note = hitIdx.map(([h, i]) => `第 ${i + 1} 根用了套路墙上的「${h.slice(0, 4).join('」「')}」`).join('；');
+      try {
+        const again = await converge(conv.faults > 0 ? describeFaults(conv.checks, minRefs(items.length)) : undefined, note);
+        // 重写后溯源变差就不换（溯源优先），套路交给下面本地处理
+        if (again.faults <= conv.faults) conv = again;
+      } catch (e) {
+        if (opts.signal?.aborted) throw e;
+      }
+      keys = enforcedKeys(wall, conv.cliches);
+    }
+    const walled = applyWall(conv.branches, keys, wallPool(conv.seeds, items, oblique, opts.theme, opts.mode), { ...report, hit: 0 });
+    walled.report.hit = Math.max(report.hit, walled.report.hit);
     opts.onProgress?.({ stage: 'done' });
-    const weak = conv.branches.filter((b) => b.evidence === 'weak').length;
-    return { mode: opts.mode, branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak };
+    const weak = walled.branches.filter((b) => b.evidence === 'weak').length;
+    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak, cliches: conv.cliches, wall: walled.report };
   } catch (e) {
     if (opts.signal?.aborted) throw e;
     // 第二步没跑完：用第一步的 8 粒种子本地收拢
     const conv = normalizeConverge({}, map.seeds, items, oblique);
+    const walled = applyWall(conv.branches, baseKeys, wallPool(conv.seeds, items, oblique, opts.theme, opts.mode));
     opts.onProgress?.({ stage: 'done' });
-    return { mode: opts.mode, branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true };
+    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true, wall: walled.report };
   }
 }
