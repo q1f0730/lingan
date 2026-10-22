@@ -18,7 +18,7 @@ export function describeItem(it: Item, idx: number): string {
 
 export function buildPrompt(items: Item[], opts: { theme?: string; oblique: string; taste?: string }): { system: string; user: string } {
   const system = [
-    '你是一个反套路的创意显影师。你只能使用用户自己收藏的素材来提炼创意，不能引入大众化的流行梗、鸡汤、常见营销套路。',
+    '你是一个反套路的创意嫁接师。你只能使用用户自己收藏的素材来提炼创意，不能引入大众化的流行梗、鸡汤、常见营销套路。',
     '工作方法（必须按顺序在心里完成）：',
     '1. 先列出面对这些素材，大多数人和大多数AI会想到的 5 个最常见、最平庸的创意方向（套路清单）。',
     '2. 这些套路全部禁止使用，连近义改写也不行。',
@@ -30,7 +30,7 @@ export function buildPrompt(items: Item[], opts: { theme?: string; oblique: stri
     '{"cliches":["套路1","套路2","套路3","套路4","套路5"],"title":"创意标题(12字内,不要用冒号)","bridge":"素材之间的隐秘联系(60-120字)","idea":"创意正文(150-260字,具体到画面/声音/结构)","form":"适合的形式(如短片/歌/海报/装置/文案/游戏)","firstStep":"今天30分钟内就能做的第一步","oblique":"实际使用的斜策略"}',
   ].join('\n');
   const user = [
-    opts.theme ? `我这次想做的方向：${opts.theme}` : '我这次没有指定方向，请自由显影。',
+    opts.theme ? `我这次想做的方向：${opts.theme}` : '我这次没有指定方向，请自由嫁接。',
     `斜策略：${opts.oblique}`,
     opts.taste ? `我的口味画像（参考，不要复述）：${opts.taste.slice(0, 500)}` : '',
     '素材如下：',
@@ -46,7 +46,7 @@ export function normalizeIdea(raw: unknown, oblique: string): Idea | null {
   const r = raw as Record<string, unknown>;
   const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
   const idea: Idea = {
-    title: str(r.title) || '未命名显影',
+    title: str(r.title) || '未命名新枝',
     bridge: str(r.bridge),
     idea: str(r.idea),
     form: str(r.form) || undefined,
@@ -68,7 +68,7 @@ export async function developWithAI(s: Settings, items: Item[], opts: { theme?: 
   const parsed = normalizeIdea(parseJSONLoose(out), oblique);
   if (parsed) return parsed;
   // model ignored JSON: keep its text
-  return { title: '显影结果', bridge: '', idea: out.slice(0, 1200), cliches: [], oblique };
+  return { title: '新枝', bridge: '', idea: out.slice(0, 1200), cliches: [], oblique };
 }
 
 const FORMS = ['一分钟短片', '一首歌的副歌', '一张海报', '一段旁白', '一个房间装置', '一组三张照片', '一条朋友圈文案', '一个小游戏的玩法'];
