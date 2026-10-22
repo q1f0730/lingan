@@ -98,6 +98,30 @@ async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok' } = {}) {
   return log;
 }
 const MOCK_SETTINGS = (origin, extra = {}) => JSON.stringify({ chat: { baseUrl: origin + '/mock-ai/v1', apiKey: 'e2e-mock', chatModel: 'mock-model', visionModel: '', extraBody: '' }, autoCaption: false, autoEmbed: false, ...extra });
+// v0.14 示例是从约 80 条里随机抽的：断言不再写死某几条，而是读库里实际抽到的
+async function dbItems(pg) {
+  return pg.evaluate(() => new Promise((res, rej) => {
+    const r = indexedDB.open('lingan');
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => {
+      const q = r.result.transaction('items').objectStore('items').getAll();
+      q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ id: x.id, type: x.type, title: x.title, content: x.content || '', creator: x.creator || '', tags: x.tags, sample: x.sample || 0, createdAt: x.createdAt }))); };
+      q.onerror = () => rej(q.error);
+    };
+  }));
+}
+/** 挑一件「好认」的示例：不是摘抄（卡片标题显示原文），标题里没有引号 */
+const plainSample = (list, not = []) => list.find((x) => x.sample && x.type !== 'text' && !/["'「」]/.test(x.title) && !not.includes(x.id));
+const cardSel = (id) => `.card[data-item-id="${id}"]`;
+async function dailyState(pg) {
+  return pg.evaluate(() => {
+    const el = document.querySelector('.daily-ear');
+    if (!el) return null;
+    return { day: el.dataset.day, folded: el.classList.contains('folded'), old: [...el.querySelectorAll('.daily-old button[data-item-id]')].map((b) => Number(b.dataset.itemId)), combo: [...el.querySelectorAll('.daily-combo button[data-item-id]')].map((b) => Number(b.dataset.itemId)), comboText: [...el.querySelectorAll('.daily-combo button')].map((b) => b.textContent), untouched: [...el.querySelectorAll('.daily-old li')].map((li) => li.textContent) };
+  });
+}
+const localKey = (t) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
 async function run(name, viewport) {
   const ctx = await b.newContext({ viewport, deviceScaleFactor: 1, permissions: ['clipboard-read', 'clipboard-write'] });
   const pg = await ctx.newPage();
@@ -150,8 +174,19 @@ async function run(name, viewport) {
   await pg.click('button:has-text("清空")');
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.click('text=先放点示例');
-  await pg.waitForSelector('.card:has-text("花样年华")');
+  await pg.waitForSelector('.card[data-sample="1"]');
   await pg.waitForTimeout(400);
+  // v0.14 示例：随机 10 条、标着「示例」、六种类型都有
+  const sm = (await dbItems(pg)).filter((x) => x.sample);
+  if (sm.length !== 10) errs.push(`[${name}] expected 10 samples got ${sm.length}`);
+  if (new Set(sm.map((x) => x.type)).size !== 6) errs.push(`[${name}] samples should cover 6 types: ${sm.map((x) => x.type)}`);
+  if ((await pg.locator('.card[data-sample="1"] .sample-badge:has-text("示例")').count()) !== 10) errs.push(`[${name}] sample badge missing`);
+  if (!(await pg.locator('.samples-bar .samples-clear').count())) errs.push(`[${name}] clear-samples button missing`);
+  const A = plainSample(sm);
+  const B = plainSample(sm, [A?.id]);
+  if (!A || !B) throw new Error('no plain samples to test with ' + JSON.stringify(sm.map((x) => x.title)));
+  // 每日一穗在示例上也出现（只有示例时示例也算）
+  await pg.waitForSelector('.daily-ear', { timeout: 4000 }).catch(() => errs.push(`[${name}] daily card missing after samples`));
   // v0.3 quick bar: type + Enter saves, time shown, optional why after save
   await pg.fill('.quick-input', '速记测试一句 #速记');
   await pg.press('.quick-input', 'Enter');
@@ -183,18 +218,23 @@ async function run(name, viewport) {
   await pg.waitForTimeout(900);
   await pg.screenshot({ path: `${out}/${name}-shot-library.png` });
   await noOverlap(pg, name);
-  // search + filter
-  await pg.fill('.search input', '钢琴');
+  // search + filter（关键词与期望数量来自这次实际抽到的示例）
+  const all = await dbItems(pg);
+  const kw = A.title;
+  const expN = all.filter((x) => [x.title, x.creator, x.content, x.tags.join(' ')].join(' ').toLowerCase().includes(kw.toLowerCase())).length;
+  await pg.fill('.search input', kw);
   await pg.waitForTimeout(200);
   const n = await pg.locator('.masonry .card').count();
-  if (n !== 1) errs.push(`[${name}] search expected 1 got ${n}`);
+  if (n < 1 || n > expN + 1 || !(await pg.locator(`.masonry ${cardSel(A.id)}`).count())) errs.push(`[${name}] search ${kw} expected ~${expN} incl. #${A.id} got ${n}`);
   await pg.fill('.search input', '');
   await pg.click('.chips.scroll .chip:has-text("音乐")');
   const m = await pg.locator('.masonry .card').count();
-  if (m !== 3) errs.push(`[${name}] filter music expected 3 got ${m}`);
+  const expM = all.filter((x) => x.type === 'music').length;
+  if (m !== expM) errs.push(`[${name}] filter music expected ${expM} got ${m}`);
   await pg.click('.chips.scroll .chip:has-text("全部")');
   // detail
-  await pg.click('.card:has-text("花样年华")');
+  await pg.click(cardSel(A.id));
+  if (!(await pg.locator('.sheet:has-text("示例 · ")').count())) errs.push(`[${name}] sample detail not labelled 示例`);
   await pg.waitForSelector('.detail');
   await pg.fill('.when-input', '2025-10-19T08:30');
   await pg.waitForSelector('.toast:has-text("时间已改")');
@@ -374,12 +414,12 @@ async function run(name, viewport) {
   await pg.screenshot({ path: `${out}/${name}-5-settings-dark.png`, fullPage: true });
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.screenshot({ path: `${out}/${name}-6-library-dark.png`, fullPage: true });
-  const w2 = await pg.locator('.card:has-text("花样年华") .card-when').innerText();
+  const w2 = await pg.locator(`${cardSel(A.id)} .card-when`).innerText();
   if (w2 !== '2025/10/19') errs.push(`[${name}] edited time expected 2025/10/19 got ${w2}`);
   // edit + delete
-  await pg.click('.card:has-text("Avril 14th")');
+  await pg.click(cardSel(B.id));
   await pg.click('.detail button:has-text("编辑")');
-  await pg.fill('.capture .field.big input', 'Avril 14th (edited)');
+  await pg.fill('.capture .field.big input', `${B.title} (edited)`);
   await pg.click('.capture button[type=submit]');
   await pg.waitForSelector('.card:has-text("(edited)")');
   await pg.click('.card:has-text("(edited)")');
@@ -388,7 +428,7 @@ async function run(name, viewport) {
   if (await pg.locator('.card:has-text("(edited)")').count()) errs.push(`[${name}] delete failed`);
   // reload persistence
   await pg.reload();
-  await pg.waitForSelector('.card:has-text("花样年华")');
+  await pg.waitForSelector(cardSel(A.id));
   const th = await pg.evaluate(() => document.documentElement.dataset.phase);
   if (th !== 'night') errs.push(`[${name}] phase not persisted: ${th}`);
   // v0.4 ASCII 显影：塞一张图片素材（直接写 IndexedDB），刷新后应先出字符画再显影成照片
@@ -415,6 +455,8 @@ async function run(name, viewport) {
   });
   await pg.reload();
   await pg.waitForSelector('.card:has-text("渐变测试图")');
+  // v0.14 穗仓顶部多了「今日一穗」和示例条，新卡片可能在首屏下面：滚到它（显影只在看得见时播）
+  await pg.locator('.card:has-text("渐变测试图")').scrollIntoViewIfNeeded();
   await pg.waitForSelector('.ascii-canvas', { timeout: 3000 });
   await pg.waitForTimeout(450);
   await pg.screenshot({ path: `${out}/${name}-7-ascii-mid.png` });
@@ -443,7 +485,13 @@ async function shots() {
   await pg.addInitScript((v) => { if (!localStorage.getItem('lingan.settings.v1')) localStorage.setItem('lingan.settings.v1', v); }, MOCK_SETTINGS(new URL(base).origin, { phase: 'day' }));
   await pg.goto(base);
   await pg.click('text=先放点示例');
-  await pg.waitForSelector('.card:has-text("花样年华")');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  // v0.14 截图：穗仓顶部的「今日一穗」
+  await pg.waitForSelector('.daily-ear', { timeout: 4000 }).catch(() => errs.push('[shots] daily card missing'));
+  await pg.evaluate(() => { const el = document.querySelector('.daily-ear'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 120); });
+  await pg.waitForTimeout(500);
+  await pg.screenshot({ path: `${out}/shot-daily.png` });
+  await pg.evaluate(() => window.scrollTo(0, 0));
   await pg.evaluate(async () => {
     const c = document.createElement('canvas');
     c.width = 480; c.height = 320;
@@ -504,6 +552,123 @@ async function shots() {
   await ctx.close();
 }
 
+// v0.14 每日一穗：断网 + 没 key；同一天反复打开一致、第二天变化、回到今天还是原样；一键带进嫁接且 4 穗已选好；
+// 「收起」只管当天；清掉示例只留自己的；换一批示例
+async function daily() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[daily] pageerror ${e.message}`));
+  pg.on('console', (m) => m.type() === 'error' && !/ERR_INTERNET_DISCONNECTED|net::ERR_FAILED/.test(m.text()) && errs.push(`[daily] console ${m.text()}`));
+  pg.on('dialog', (d) => d.accept());
+  const origin = new URL(base).origin;
+  let outside = 0;
+  // 断网：除了 App 自己，任何外部请求都掐掉（也没有 API key）
+  await ctx.route('**/*', (r) => (r.request().url().startsWith(origin) ? r.continue() : (outside++, r.abort())));
+  const T0 = new Date();
+  T0.setHours(10, 0, 0, 0);
+  const DAYMS = 86400000;
+  await pg.clock.setFixedTime(T0);
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  if (await pg.locator('.daily-ear').count()) errs.push('[daily] card shown on empty library');
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  // 自己再拾 5 穗：自己的够 4 穗时每日一穗只用自己的（第二天起生效）
+  for (const t of ['地铁口卖烤红薯的炉子', '旧收音机调频时的沙沙声', '雨后操场的塑胶味', '把日历撕下来折纸飞机', '楼道感应灯一层层亮起来']) {
+    await pg.fill('.quick-input', t);
+    await pg.press('.quick-input', 'Enter');
+    await pg.waitForSelector(`.card:has-text("${t}")`);
+  }
+  await pg.waitForSelector('.daily-ear');
+  const d1 = await dailyState(pg);
+  if (!d1 || d1.old.length !== 3 || d1.combo.length !== 4) errs.push(`[daily] expected 3 old + 4 combo ${JSON.stringify(d1)}`);
+  if (d1 && d1.day !== localKey(T0)) errs.push(`[daily] day ${d1.day} != ${localKey(T0)}`);
+  if (d1 && !d1.untouched.every((t) => /天没碰|今天碰过/.test(t))) errs.push(`[daily] untouched label missing ${d1.untouched}`);
+  if (d1 && new Set([...d1.old, ...d1.combo]).size < 4) errs.push('[daily] combo ids not distinct');
+  await pg.screenshot({ path: `${out}/daily-1.png`, fullPage: true });
+  // 打开一件旧穗（会记「碰过」），再刷新：内容不变
+  await pg.click(`.daily-old button[data-item-id="${d1.old[0]}"]`);
+  await pg.waitForSelector('.detail');
+  await pg.click('.sheet .icon-btn[aria-label="关闭"]');
+  for (let i = 0; i < 2; i++) {
+    await pg.reload();
+    await pg.waitForSelector('.daily-ear');
+    const again = await dailyState(pg);
+    if (JSON.stringify(again.old) !== JSON.stringify(d1.old) || JSON.stringify(again.combo) !== JSON.stringify(d1.combo)) errs.push(`[daily] same day changed ${JSON.stringify(d1)} -> ${JSON.stringify(again)}`);
+  }
+  // 收起：当天刷新仍收着
+  await pg.click('.daily-fold');
+  await pg.reload();
+  await pg.waitForSelector('.daily-ear');
+  if (!(await dailyState(pg)).folded) errs.push('[daily] fold not kept for the day');
+  // 第二天：内容变化、重新展开、昨天那三件旧穗不再出现、只用自己的穗
+  await pg.clock.setFixedTime(new Date(T0.getTime() + DAYMS));
+  await pg.reload();
+  await pg.waitForSelector('.daily-ear');
+  const d2 = await dailyState(pg);
+  if (d2.folded) errs.push('[daily] fold leaked into next day');
+  if (d2.day !== localKey(T0.getTime() + DAYMS)) errs.push(`[daily] next day key ${d2.day}`);
+  if (JSON.stringify(d2.old) === JSON.stringify(d1.old) && JSON.stringify(d2.combo) === JSON.stringify(d1.combo)) errs.push('[daily] next day did not change');
+  const items = await dbItems(pg);
+  const own = new Set(items.filter((x) => !x.sample).map((x) => x.id));
+  if (![...d2.old, ...d2.combo].every((id) => own.has(id))) errs.push(`[daily] next day should use own ears only ${JSON.stringify(d2)}`);
+  await pg.screenshot({ path: `${out}/daily-2-nextday.png`, fullPage: true });
+  // 回到今天：还是今天存下的那份
+  await pg.clock.setFixedTime(T0);
+  await pg.reload();
+  await pg.waitForSelector('.daily-ear');
+  let back = await dailyState(pg);
+  if (!back.folded) errs.push('[daily] back to today: should still be folded');
+  await pg.click('.daily-unfold');
+  back = await dailyState(pg);
+  if (JSON.stringify(back.old) !== JSON.stringify(d1.old) || JSON.stringify(back.combo) !== JSON.stringify(d1.combo)) errs.push('[daily] today record not stable');
+  // 彻底断网（浏览器离线）后在 App 里来回切，卡片照样在；一键去嫁接 → 4 穗已选好，离线长出三根
+  await ctx.setOffline(true);
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.waitForSelector('.daily-ear');
+  const comboText = (await dailyState(pg)).comboText;
+  await pg.click('.daily-go');
+  await pg.waitForSelector('.graft .pair-item');
+  const picked = await pg.locator('.graft .pair-item').count();
+  if (picked !== 4) errs.push(`[daily] graft should have 4 picked got ${picked}`);
+  const seg = await pg.locator('.controls .ctrl:has-text("几穗") .seg button.on').innerText().catch(() => '');
+  if (seg.trim() !== '4') errs.push(`[daily] count segment should be 4 got ${seg}`);
+  const pickedText = await pg.locator('.graft .pair-item').allInnerTexts();
+  for (const t of comboText) {
+    const core = t.replace(/[…「」]/g, '').slice(0, 6);
+    if (!pickedText.some((p) => p.replace(/[「」]/g, '').includes(core))) errs.push(`[daily] combo item ${t} not in graft picks`);
+  }
+  await pg.screenshot({ path: `${out}/daily-3-graft.png`, fullPage: true });
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 10000 }).catch(() => errs.push('[daily] offline graft from daily failed'));
+  if ((await pg.locator('.three .idea').count()) !== 3) errs.push('[daily] expected 3 offline branches');
+  await ctx.setOffline(false);
+  // 换一批示例：仍是 10 条示例，自己的 5 穗不动
+  await pg.click('.nav-btn:has-text("穗仓")');
+  const before = (await dbItems(pg)).filter((x) => x.sample).map((x) => x.title + x.content).sort().join('|');
+  await pg.click('.samples-again');
+  await pg.waitForSelector('.toast:has-text("换了一批示例")');
+  const afterList = await dbItems(pg);
+  const after = afterList.filter((x) => x.sample).map((x) => x.title + x.content).sort().join('|');
+  if (afterList.filter((x) => x.sample).length !== 10) errs.push('[daily] reshuffle should keep 10 samples');
+  if (after === before) errs.push('[daily] reshuffle gave identical samples');
+  if (afterList.filter((x) => !x.sample).length !== 5) errs.push('[daily] reshuffle touched own ears');
+  // 清掉示例：只留自己的
+  await pg.click('.samples-clear');
+  await pg.waitForSelector('.toast:has-text("清掉了 10 穗示例")');
+  await pg.waitForTimeout(300);
+  if (await pg.locator('.card[data-sample="1"]').count()) errs.push('[daily] sample cards still shown');
+  if (await pg.locator('.samples-bar').count()) errs.push('[daily] samples bar should hide');
+  const left = await dbItems(pg);
+  if (left.length !== 5 || left.some((x) => x.sample)) errs.push(`[daily] after clear expected own 5 got ${left.length}`);
+  await pg.waitForSelector('.daily-ear', { timeout: 3000 }).catch(() => errs.push('[daily] card gone after clearing samples (5 own ears left)'));
+  const d3 = await dailyState(pg);
+  if (d3 && ![...d3.old, ...d3.combo].every((id) => left.some((x) => x.id === id))) errs.push('[daily] card still points at cleared samples');
+  if (outside) console.log(`daily: blocked ${outside} outside requests`);
+  await ctx.close();
+}
+
 // v0.12 兼容旧数据：先在同源页面用 v0.11 的库结构（Dexie version 1 = IndexedDB 10）写入旧新枝，再打开 App
 async function legacy() {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
@@ -550,7 +715,7 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 30) errs.push(`[legacy] db version expected 30 (Dexie v3) got ${ver}`);
+  if (ver !== 40) errs.push(`[legacy] db version expected 40 (Dexie v4) got ${ver}`);
   await ctx.close();
 }
 
@@ -734,7 +899,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 30) errs.push(`[perf] db version ${integ.version}`);
+  if (integ.version !== 40) errs.push(`[perf] db version (expected 40 = Dexie v4) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
@@ -810,6 +975,8 @@ try {
     throw Object.assign(new Error('perf only'), { only: true });
   }
   await legacy();
+  await daily();
+  if (process.env.E2E_ONLY === 'daily') throw Object.assign(new Error('daily only'), { only: true });
   // v0.5 reduced-motion：系统要求减少动效时，档位必须是 off
   const rctx = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   const rpg = await rctx.newPage();
@@ -829,7 +996,7 @@ try {
   await mockAI(rpg, { delay: 2500 });
   await rpg.reload();
   await rpg.click('text=先放点示例');
-  await rpg.waitForSelector('.card:has-text("花样年华")');
+  await rpg.waitForSelector('.card[data-sample="1"]');
   await rpg.click('.nav-btn:has-text("嫁接")');
   await rpg.click('.controls button:has-text("抽几穗")');
   await rpg.click('.graft-btn');
