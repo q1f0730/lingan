@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=1440, user-scalable=yes"/>
+  <title>拾穗 · GLEAN — 组件 (9) (1440px)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      border-radius: 0px !important;
+      -webkit-font-smoothing: antialiased;
+      box-shadow: none !important;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      width: 1440px;
+      min-width: 1440px;
+      margin: 0 auto;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    }
+    .hover-shift:hover .hover-title {
+      transform: translateX(16px);
+      transition: transform 0.15s ease-out;
+    }
+    .hover-title {
+      transition: transform 0.15s ease-out;
+    }
+  </style>
+</head>
+<body class="bg-[#FFFFFF] text-[#000000] antialiased min-h-screen flex flex-col justify-between selection:bg-[#000000] selection:text-[#FFFFFF]">
+
+  <!-- TOP NAV BAR (Identical to d1 desktop) -->
+  <header class="w-full h-16 px-10 flex items-center justify-between bg-[#FFFFFF] sticky top-0 z-50 border-b border-transparent">
+    <!-- Brand Logo -->
+    <div class="flex items-center">
+      <span class="text-[20px] font-semibold tracking-tight text-[#000000]">拾穗 · GLEAN</span>
+    </div>
+
+    <!-- Center Text Navigation (设置 active) -->
+    <nav class="flex items-center space-x-8 text-[12px] font-medium tracking-widest">
+      <a href="#" class="text-[#7E7E7E] hover:text-[#000000] pb-1 transition-none">穗仓</a>
+      <a href="#" class="text-[#7E7E7E] hover:text-[#000000] pb-1 transition-none">嫁接</a>
+      <a href="#" class="text-[#7E7E7E] hover:text-[#000000] pb-1 transition-none">新枝</a>
+      <a href="#" class="text-[#7E7E7E] hover:text-[#000000] pb-1 transition-none">口味</a>
+      <a href="#" class="text-[#000000] border-b border-[#000000] pb-1">设置</a>
+    </nav>
+
+    <!-- Quick-capture Input (320px wide hairline) -->
+    <div class="w-[320px] border-b border-[#000000] pb-1 flex items-center justify-between">
+      <input type="text" placeholder="随手拾一穗 →" class="w-full bg-transparent border-0 p-0 text-[13px] text-[#000000] placeholder-[#7E7E7E] focus:outline-none focus:ring-0"/>
+    </div>
+  </header>
+
+  <!-- MAIN CANVAS -->
+  <main class="w-full px-10 pt-[140px] pb-32 flex-1">
+    <!-- DISPLAY HEADLINE -->
+    <section class="mb-20">
+      <h1 class="text-[108px] leading-[1.0] font-semibold tracking-[-0.04em] text-[#000000]">
+        组件 (9)
+      </h1>
+      <p class="text-[14px] text-[#7E7E7E] mt-4 tracking-wide">
+        拾穗 · GLEAN 设计规范与基础组件
+      </p>
+    </section>
+
+    <!-- 3 COLUMNS × 3 ROWS GRID (16px GUTTER) -->
+    <section class="grid grid-cols-3 gap-x-12 gap-y-16">
+
+      <!-- ================= 01 按钮 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">01 按钮</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-6 flex-1 flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-2">主按钮</span>
+            <div class="flex items-center gap-4">
+              <button type="button" class="px-5 py-2.5 bg-[#000000] text-[#FFFFFF] text-[13px] font-medium tracking-widest">
+                嫁接所选
+              </button>
+              <button type="button" disabled class="px-5 py-2.5 bg-[#000000] opacity-30 text-[#FFFFFF] text-[13px] font-medium tracking-widest cursor-not-allowed">
+                嫁接所选
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#F3F3F3]">
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-2">文本动作按钮</span>
+            <div class="flex items-center space-x-6 text-[13px]">
+              <button type="button" class="text-[#000000] font-medium hover:underline underline-offset-4 decoration-1">留下</button>
+              <button type="button" class="text-[#7E7E7E] hover:text-[#000000]">再接一次</button>
+              <button type="button" class="text-[#C6C6C6] hover:text-[#7E7E7E]">不要</button>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#F3F3F3] text-[12px] text-[#7E7E7E] leading-relaxed">
+            极简直角几何体，无圆角、无阴影、无图标。主操作为纯黑块配白字，次级动作使用明度阶梯（#000000 / #7E7E7E / #C6C6C6）。
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 02 输入 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">02 输入</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-6 flex-1 flex flex-col justify-between">
+          <!-- State 1: Empty -->
+          <div>
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-1">空状态</span>
+            <div class="w-full border-b border-[#000000] pb-1.5 flex items-center justify-between">
+              <span class="text-[14px] text-[#7E7E7E]">随手拾一穗 →</span>
+            </div>
+          </div>
+
+          <!-- State 2: Focused with 2px underline -->
+          <div>
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-1">聚焦态</span>
+            <div class="w-full border-b-2 border-[#000000] pb-1 flex items-center justify-between">
+              <span class="text-[14px] text-[#000000] font-medium">雨天公交车窗上的水痕<span class="inline-block w-[1px] h-4 bg-[#000000] ml-0.5 align-middle animate-pulse"></span></span>
+              <span class="text-[11px] text-[#7E7E7E] tracking-widest">拾 ↵</span>
+            </div>
+          </div>
+
+          <!-- State 3: Error state with 12px black text -->
+          <div>
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-1">错误提示</span>
+            <div class="w-full border-b border-[#000000] pb-1.5 flex items-center justify-between">
+              <span class="text-[14px] text-[#000000]">https://invalid-api-entry</span>
+            </div>
+            <p class="text-[12px] text-[#000000] mt-1.5 font-medium tracking-tight">接口地址不对</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 03 切换 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">03 切换</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-7 flex-1 flex flex-col justify-between">
+          <!-- View switcher -->
+          <div>
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-2">视图切换</span>
+            <div class="flex items-center space-x-1.5 text-[13px]">
+              <span class="font-medium text-[#000000]">网格</span>
+              <span class="text-[#C6C6C6]">|</span>
+              <span class="text-[#C6C6C6] hover:text-[#000000] cursor-pointer">列表</span>
+            </div>
+          </div>
+
+          <!-- Frequency tabs -->
+          <div class="pt-4 border-t border-[#F3F3F3]">
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-3">选项组</span>
+            <div class="flex items-center space-x-6 text-[13px]">
+              <span class="text-[#000000] font-medium border-b border-[#000000] pb-0.5 cursor-pointer">每天</span>
+              <span class="text-[#7E7E7E] hover:text-[#000000] pb-0.5 cursor-pointer">每周</span>
+              <span class="text-[#7E7E7E] hover:text-[#000000] pb-0.5 cursor-pointer">从不</span>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#F3F3F3] text-[12px] text-[#7E7E7E] leading-relaxed">
+            摒弃胶囊开关与拟物按钮。仅以文字字重、细线标底（1px border-b）或竖线分隔（|）表达视图与状态分级。
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 04 表格行 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">04 表格行</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-2 flex-1">
+          <!-- Table Header (one black rule) -->
+          <div class="grid grid-cols-12 pb-2 border-b border-[#000000] text-[11px] text-[#7E7E7E] font-medium">
+            <span class="col-span-5">穗</span>
+            <span class="col-span-2">类型</span>
+            <span class="col-span-3">来源</span>
+            <span class="col-span-2 text-right">日期</span>
+          </div>
+
+          <!-- Normal Row -->
+          <div class="grid grid-cols-12 py-3 text-[13px] items-baseline">
+            <span class="col-span-5 font-medium text-[#000000] truncate pr-2">轮渡上的雾</span>
+            <span class="col-span-2 text-[#7E7E7E]">照片</span>
+            <span class="col-span-3 text-[#7E7E7E] truncate">自己拍</span>
+            <span class="col-span-2 text-right text-[#7E7E7E] font-sans text-[11px]">10/21</span>
+          </div>
+
+          <!-- Hover Row (Title shifted 16px right) -->
+          <div class="hover-shift grid grid-cols-12 py-3 text-[13px] items-baseline cursor-pointer">
+            <span class="col-span-5 font-medium text-[#000000] truncate pr-2">
+              <span class="inline-block hover-title translate-x-4">《完美的日子》</span>
+            </span>
+            <span class="col-span-2 text-[#7E7E7E]">电影</span>
+            <span class="col-span-3 text-[#7E7E7E] truncate">维姆·文德斯</span>
+            <span class="col-span-2 text-right text-[#000000] font-sans text-[11px]">10/20</span>
+          </div>
+
+          <p class="text-[11px] text-[#7E7E7E] pt-2">悬停：标题右移 16px。</p>
+        </div>
+      </article>
+
+      <!-- ================= 05 标签 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">05 标签</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-6 flex-1 flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-3">纯文本标签</span>
+            <div class="flex items-center space-x-2 text-[12px] text-[#7E7E7E]">
+              <span>清晨</span>
+              <span>·</span>
+              <span>雾</span>
+              <span>·</span>
+              <span>通勤</span>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#F3F3F3]">
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-3">选中与过滤态</span>
+            <div class="flex items-center space-x-4 text-[12px]">
+              <span class="text-[#000000] font-semibold border-b border-[#000000] pb-0.5 cursor-pointer">夜里</span>
+              <span class="text-[#7E7E7E] hover:text-[#000000] cursor-pointer">城市</span>
+              <span class="text-[#7E7E7E] hover:text-[#000000] cursor-pointer">声音</span>
+              <span class="text-[#7E7E7E] hover:text-[#000000] cursor-pointer">书</span>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-[#F3F3F3] text-[12px] text-[#7E7E7E] leading-relaxed">
+            不用胶囊、不加底色。标签只是文字与中圆点「·」，选中用 1px 下划线。
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 06 Toast ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">06 Toast</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-4 flex-1 flex flex-col justify-center">
+          <!-- Toast Sample 1 -->
+          <div class="w-full h-12 bg-[#000000] text-[#FFFFFF] px-4 flex items-center justify-between">
+            <span class="text-[14px] text-[#FFFFFF]">已拾 · 撤销</span>
+            <span class="text-[11px] text-[#7E7E7E] tracking-widest">5s</span>
+          </div>
+
+          <!-- Toast Sample 2 -->
+          <div class="w-full h-12 bg-[#000000] text-[#FFFFFF] px-4 flex items-center justify-between">
+            <span class="text-[14px] text-[#FFFFFF]">嫁接好了，去看看 →</span>
+            <span class="text-[11px] text-[#FFFFFF]/70 hover:text-[#FFFFFF] cursor-pointer tracking-wider">查看</span>
+          </div>
+
+          <p class="text-[11px] text-[#7E7E7E] pt-2">
+            通栏纯黑直角矩形条，14px 白色清晰文字，带有直白、内敛的信息提示与撤销机制。
+          </p>
+        </div>
+      </article>
+
+      <!-- ================= 07 弹层 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">07 弹层</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center py-2">
+          <!-- Modal Panel (1px black border, zero radius, zero shadow) -->
+          <div class="w-full max-w-[340px] border border-[#000000] bg-[#FFFFFF] p-6 flex flex-col justify-between">
+            <div>
+              <h4 class="text-[18px] font-semibold tracking-tight text-[#000000] mb-2">移出穗仓？</h4>
+              <p class="text-[13px] text-[#7E7E7E] leading-relaxed mb-6">这一穗会进回收站，30 天后删除。</p>
+            </div>
+            <div class="flex items-center justify-end space-x-4">
+              <button type="button" class="text-[13px] text-[#7E7E7E] hover:text-[#000000] px-2 py-1">取消</button>
+              <button type="button" class="px-4 py-2 bg-[#000000] text-[#FFFFFF] text-[13px] font-medium tracking-wider">移出</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 08 字号阶梯 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">08 字号阶梯</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-4 flex-1">
+          <div>
+            <span class="text-[10px] text-[#7E7E7E] tracking-widest block mb-0.5">display 120 / line-height 1.0</span>
+            <div class="text-[44px] leading-tight font-semibold tracking-[-0.04em] text-[#000000] truncate">
+              穗仓 (20)
+            </div>
+          </div>
+
+          <div class="border-t border-[#F3F3F3] pt-2">
+            <span class="text-[10px] text-[#7E7E7E] tracking-widest block mb-0.5">manifesto 64</span>
+            <div class="text-[32px] leading-tight font-semibold tracking-[-0.03em] text-[#000000]">
+              新枝
+            </div>
+          </div>
+
+          <div class="border-t border-[#F3F3F3] pt-2">
+            <span class="text-[10px] text-[#7E7E7E] tracking-widest block mb-0.5">lead 32</span>
+            <div class="text-[20px] leading-snug font-semibold text-[#000000]">
+              你在收集安静的东西
+            </div>
+          </div>
+
+          <div class="border-t border-[#F3F3F3] pt-2">
+            <span class="text-[10px] text-[#7E7E7E] tracking-widest block mb-0.5">title 24</span>
+            <div class="text-[16px] font-semibold text-[#000000]">
+              轮渡上的雾
+            </div>
+          </div>
+
+          <div class="border-t border-[#F3F3F3] pt-2 flex items-baseline justify-between text-[13px]">
+            <div>
+              <span class="text-[10px] text-[#7E7E7E] tracking-widest block">body 16</span>
+              <span class="text-[#000000]">正文内容</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-[#7E7E7E] tracking-widest block">meta 14</span>
+              <span class="text-[#7E7E7E]">照片 · 10/21</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-[#7E7E7E] tracking-widest block">label 12</span>
+              <span class="text-[#7E7E7E]">因为这几穗</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ================= 09 色板与照片瓦片 ================= -->
+      <article class="flex flex-col">
+        <div class="border-b border-[#000000] pb-2 mb-6 flex justify-between items-baseline">
+          <span class="text-[12px] font-medium text-[#7E7E7E] tracking-widest">09 色板与照片瓦片</span>
+          <span class="text-[11px] text-[#C6C6C6] tracking-wider"></span>
+        </div>
+
+        <div class="space-y-6 flex-1 flex flex-col justify-between">
+          <!-- Color Swatches Grid -->
+          <div>
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-2">主色与灰阶</span>
+            <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-sans">
+              <div>
+                <div class="w-full h-10 bg-[#000000] border border-[#000000]"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#000000</span>
+              </div>
+              <div>
+                <div class="w-full h-10 bg-[#7E7E7E] border border-transparent"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#7E7E7E</span>
+              </div>
+              <div>
+                <div class="w-full h-10 bg-[#C6C6C6] border border-transparent"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#C6C6C6</span>
+              </div>
+              <div>
+                <div class="w-full h-10 bg-[#E2E2E2] border border-transparent"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#E2E2E2</span>
+              </div>
+              <div>
+                <div class="w-full h-10 bg-[#F3F3F3] border border-transparent"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#F3F3F3</span>
+              </div>
+              <div>
+                <div class="w-full h-10 bg-[#FFFFFF] border border-[#E2E2E2]"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#FFFFFF</span>
+              </div>
+              <div>
+                <div class="w-full h-10 bg-[#1B1B1B] border border-transparent"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#1B1B1B</span>
+              </div>
+              <div>
+                <div class="w-full h-10 bg-[#131313] border border-transparent"></div>
+                <span class="text-[#7E7E7E] mt-1 block">#131313</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photo Tile Sample with Bottom Scrim -->
+          <div class="pt-4 border-t border-[#F3F3F3]">
+            <span class="text-[11px] text-[#7E7E7E] tracking-wider block mb-2">照片瓦片与底蒙层</span>
+            <div class="relative w-[140px] aspect-[4/5] bg-[#F3F3F3] overflow-hidden">
+              <img src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" alt="轮渡上的雾" class="w-full h-full object-cover grayscale contrast-125"/>
+              <div class="absolute inset-x-0 bottom-0 pt-8 pb-2 px-2 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end">
+                <span class="text-[#FFFFFF] text-[12px] font-semibold leading-tight">轮渡上的雾</span>
+                <span class="text-[#FFFFFF]/80 text-[10px] mt-0.5">照片 · 10/21</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </section>
+  </main>
+
+  <!-- ARCHIVAL FOOTER (Identical to project standard) -->
+  <footer class="w-full px-10 py-8 border-t border-[#F3F3F3] flex justify-between items-center text-[10px] tracking-[0.1em] text-[#7E7E7E]">
+    <span>© 2026 Q1f730</span>
+    <span class="font-sans text-[#C6C6C6]"></span>
+  </footer>
+
+</body>
+</html>
