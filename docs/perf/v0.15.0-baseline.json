@@ -1,0 +1,98 @@
+{
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 1084,
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 5923,
+    "wallMs": 7205
+  },
+  "storage": {
+    "version": 40,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102219137,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "coldStartMs": {
+    "median": 197,
+    "runs": [
+      206,
+      194,
+      197
+    ],
+    "firstThumbsDecodedMedian": 224,
+    "cardsOnFirstScreen": 6
+  },
+  "coldStartCpu4xMs": {
+    "median": 572,
+    "runs": [
+      572,
+      606,
+      559
+    ],
+    "firstThumbsDecodedMedian": 658
+  },
+  "scrollMasonry": {
+    "frames": 419,
+    "scrolledPx": 16800,
+    "scrollHeight": 137368,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 20,
+    "maxLiveObjectUrls": 6,
+    "virtual": {
+      "total": 1000,
+      "mounted": 19,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 3,
+    "objectUrlsCreated": 48
+  },
+  "scrollTimeline": {
+    "frames": 359,
+    "scrolledPx": 14408,
+    "scrollHeight": 92254,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 32,
+    "maxLiveObjectUrls": 11,
+    "virtual": {
+      "total": 255,
+      "mounted": 7
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 299,
+    "scrolledPx": 8013,
+    "scrollHeight": 137398,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 20,
+    "maxLiveObjectUrls": 6
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400
+}
