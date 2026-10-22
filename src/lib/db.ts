@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import { DAILY_COMBO, pickDaily, pickStillValid, todayKey } from './daily';
+import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
 import { drawSamples, sampleTimes } from './samples';
 import { blobToDataUrl, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
@@ -56,6 +57,22 @@ export class LinganDB extends Dexie {
     // v0.17 秒搜：全文索引表（每件穗 / 每根新枝一行：切好的词 + 内容签名）。升级时不切词、不动旧数据，
     // 打开后由 lib/ftsync 在空闲时后台补齐；增删改穗 / 新枝时增量更新
     this.version(5).stores({ ftidx: '&key, kind' });
+    // v0.18 五种嫁接：每件穗记被嫁接的次数（graftCount，带索引）与最后一次时间（graftedAt）。
+    // 迁移：按已有新枝回填（同一批三根算一次，旧的单根新枝每根算一次），从没接过的补 0；不动正文
+    this.version(6)
+      .stores({ items: '++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt, graftCount' })
+      .upgrade(async (tx) => {
+        const devs = (await tx.table('developments').toArray()) as Development[];
+        const stats = graftStatsFromDevs(devs);
+        await tx
+          .table('items')
+          .toCollection()
+          .modify((it: Item) => {
+            const st = it.id != null ? stats.get(it.id) : undefined;
+            it.graftCount = st ? st.count : 0;
+            if (st && st.last) it.graftedAt = st.last;
+          });
+      });
   }
 }
 
@@ -83,7 +100,7 @@ const notifyImage = () => imageListeners.forEach((f) => f());
 /** 新增一件穗：有图时原图进 images 表，行里只标「待做缩略图」 */
 export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db): Promise<number> {
   const now = Date.now();
-  const row: Item = { ...data, tags: normalizeTags(data.tags), createdAt: now, updatedAt: now };
+  const row: Item = { graftCount: 0, ...data, tags: normalizeTags(data.tags), createdAt: now, updatedAt: now };
   delete row.thumb;
   delete row.thumbW;
   delete row.thumbH;
@@ -167,11 +184,27 @@ export async function touchItems(ids: number[], d: LinganDB = db, now = Date.now
   });
 }
 
+/** v0.18 这几穗刚被嫁接了一次：次数 +1、记下时间（也算「碰过」） */
+export async function markGrafted(ids: number[], d: LinganDB = db, now = Date.now()) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return;
+  await d.transaction('rw', d.items, async () => {
+    await d.items
+      .where(':id')
+      .anyOf(list)
+      .modify((it: Item) => {
+        it.graftCount = (it.graftCount || 0) + 1;
+        it.graftedAt = now;
+        it.touchedAt = now;
+      });
+  });
+}
+
 /** v0.14 从示例池随机抽 n 条放进穗仓（打上 sample 标记），返回新 id */
 export async function addSamples(n = 10, d: LinganDB = db, rand: () => number = Math.random, now = Date.now()): Promise<number[]> {
   const picks = drawSamples(n, rand);
   const times = sampleTimes(picks.length, now, rand);
-  const rows: Item[] = picks.map((s, i) => ({ ...s, tags: normalizeTags(s.tags), sample: 1, createdAt: times[i], updatedAt: times[i] }));
+  const rows: Item[] = picks.map((s, i) => ({ ...s, tags: normalizeTags(s.tags), sample: 1, graftCount: 0, createdAt: times[i], updatedAt: times[i] }));
   return (await d.items.bulkAdd(rows, { allKeys: true })) as number[];
 }
 
@@ -252,6 +285,8 @@ export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: 
   let n = 0;
   let m = 0;
   let imgs = 0;
+  const noCount: number[] = [];
+  const added: Development[] = [];
   await d.transaction('rw', [d.items, d.developments, d.images], async () => {
     for (const it of bk.items) {
       if (!it || typeof it.title !== 'string' || !it.type) continue;
@@ -266,6 +301,7 @@ export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: 
         imgs++;
       }
       if (typeof id === 'number') map.set(id, nid);
+      if (typeof rest.graftCount !== 'number') noCount.push(nid);
       n++;
     }
     for (const dv of bk.developments || []) {
@@ -276,7 +312,16 @@ export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: 
       const nd: Development = { ...rest, itemIds: (rest.itemIds || []).map((x) => map.get(x) ?? -1) };
       migrateDevelopment(nd);
       await d.developments.add(nd);
+      added.push(nd);
       m++;
+    }
+    // v0.18 旧备份没有嫁接次数：按一起导入的新枝回填，没有就补 0
+    if (noCount.length) {
+      const stats = graftStatsFromDevs(added);
+      for (const nid of noCount) {
+        const st = stats.get(nid);
+        await d.items.update(nid, st ? { graftCount: st.count, graftedAt: st.last } : { graftCount: 0 });
+      }
     }
   });
   if (imgs) notifyImage();
