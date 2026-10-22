@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { IcClose } from './Icons';
 
 export function Sheet({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
@@ -10,11 +11,11 @@ export function Sheet({ open, onClose, title, children, wide }: { open: boolean;
   if (!open) return null;
   return (
     <div className="sheet-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`sheet${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
+      <div className={`sheet paper${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
         <header className="sheet-head">
           <h2>{title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label="关闭">
-            ✕
+            <IcClose />
           </button>
         </header>
         <div className="sheet-body">{children}</div>
