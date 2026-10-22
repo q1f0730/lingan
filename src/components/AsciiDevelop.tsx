@@ -1,15 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
-import { emptyFrames, gridFor, lumToChar, prefersReducedMotion, revealTimes, SPINNER } from '../lib/ascii';
+import { gridFor, inkOnPaper, lumToChar, prefersReducedMotion, revealTimes, SPINNER, sproutFrames } from '../lib/ascii';
 
 // 每张图每次打开 App 只显影一次，之后直接显示照片，避免滚动时反复动
 const played = new Set<string>();
-const DURATION = 1100;
+const DURATION = 1500;
+const MONO = '"Glean Mono", "JetBrains Mono", ui-monospace, Consolas, monospace';
 
-/** 图片 ASCII 显影：先是一层字符雾，再从中心向外“显影”成真正的照片。支持 reduced-motion。 */
+function cssVar(name: string, fallback: string) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
+/** 图片 ASCII 显影：先是纸上一层用图片自身颜色写成的字符，再从中心向外慢慢显成照片。支持减少动态效果。 */
 export function AsciiImage({ src, alt, id, className }: { src: string; alt: string; id?: number; className?: string }) {
   const key = `${id ?? ''}:${src.length}:${src.slice(-24)}`;
   const skip = played.has(key) || prefersReducedMotion();
   const [done, setDone] = useState(skip);
+  const [fresh, setFresh] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const img = useRef<HTMLImageElement>(null);
   const cvs = useRef<HTMLCanvasElement>(null);
@@ -24,9 +31,11 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
     let cancelled = false;
     let started = false;
 
-    const finish = () => {
+    const finish = (developed = false) => {
       played.add(key);
-      if (!cancelled) setDone(true);
+      if (cancelled) return;
+      if (developed) setFresh(true);
+      setDone(true);
     };
 
     const start = () => {
@@ -35,7 +44,7 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
       try {
         const w = Math.max(1, im.clientWidth);
         const h = Math.max(1, im.clientHeight);
-        const { cols, rows } = gridFor(im.naturalWidth || w, im.naturalHeight || h, w < 260 ? 36 : 48);
+        const { cols, rows } = gridFor(im.naturalWidth || w, im.naturalHeight || h, w < 260 ? 38 : 52);
         const small = document.createElement('canvas');
         small.width = cols;
         small.height = rows;
@@ -51,18 +60,23 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
         g.scale(dpr, dpr);
         const cw = w / cols;
         const ch = h / rows;
-        g.fillStyle = '#100d0c';
+        const dark = document.documentElement.dataset.sky === 'dark';
+        g.fillStyle = cssVar('--panel-solid', dark ? '#191f2e' : '#fcf9f2');
         g.fillRect(0, 0, w, h);
-        g.font = `${Math.max(6, ch * 1.05)}px ui-monospace, "JetBrains Mono", Consolas, monospace`;
+        g.font = `700 ${Math.max(6, ch * 1.02)}px ${MONO}`;
         g.textBaseline = 'middle';
         g.textAlign = 'center';
         for (let y = 0; y < rows; y++) {
           for (let x = 0; x < cols; x++) {
             const o = (y * cols + x) * 4;
-            const lum = (0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2]) / 255;
-            const c = lumToChar(1 - lum); // 亮处字符更密：像暗房里的光
+            const r = data[o];
+            const gg = data[o + 1];
+            const b = data[o + 2];
+            const lum = (0.299 * r + 0.587 * gg + 0.114 * b) / 255;
+            // 浅纸：暗处字符密；夜晚深纸：亮处字符密
+            const c = lumToChar(dark ? 1 - lum : lum * 0.94);
             if (c === ' ') continue;
-            g.fillStyle = (x * 7 + y * 13) % 11 === 0 ? '#e0452a' : `rgba(239,230,218,${0.35 + lum * 0.65})`;
+            g.fillStyle = inkOnPaper(r, gg, b, dark);
             g.fillText(c, x * cw + cw / 2, y * ch + ch / 2);
           }
         }
@@ -70,21 +84,25 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
         const times = revealTimes(cols, rows, (id ?? 1) * 97 + cols);
         const t0 = performance.now();
         let last = -1;
+        let lastPaint = 0;
         const step = (now: number) => {
           if (cancelled) return;
           const t = Math.min(1, (now - t0) / DURATION);
-          const p = 1 - Math.pow(1 - t, 2.2);
-          for (let i = 0; i < times.length; i++) {
-            const ti = times[i];
-            if (ti > last && ti <= p) {
-              const x = i % cols;
-              const y = (i / cols) | 0;
-              g.clearRect(Math.floor(x * cw), Math.floor(y * ch), Math.ceil(cw) + 1, Math.ceil(ch) + 1);
+          if (now - lastPaint >= 33 || t >= 1) {
+            lastPaint = now;
+            const p = 1 - Math.pow(1 - t, 2.2);
+            for (let i = 0; i < times.length; i++) {
+              const ti = times[i];
+              if (ti > last && ti <= p) {
+                const x = i % cols;
+                const y = (i / cols) | 0;
+                g.clearRect(Math.floor(x * cw), Math.floor(y * ch), Math.ceil(cw) + 1, Math.ceil(ch) + 1);
+              }
             }
+            last = p;
           }
-          last = p;
           if (t < 1) raf = requestAnimationFrame(step);
-          else finish();
+          else finish(true);
         };
         raf = requestAnimationFrame(step);
       } catch {
@@ -92,6 +110,7 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
       }
     };
 
+    const cleanups: Array<() => void> = [];
     const ready = () => {
       if (!im.complete || !im.naturalWidth) return;
       if (typeof IntersectionObserver === 'undefined') return start();
@@ -107,14 +126,12 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
       io.observe(el);
       cleanups.push(() => io.disconnect());
     };
-    const cleanups: Array<() => void> = [];
     if (im.complete && im.naturalWidth) ready();
     else {
       im.addEventListener('load', ready, { once: true });
-      im.addEventListener('error', finish, { once: true });
+      im.addEventListener('error', () => finish(), { once: true });
       cleanups.push(() => im.removeEventListener('load', ready));
     }
-    // 兜底：4 秒内没能开始（比如在屏幕外）就保持隐藏等进入视野；图片出错则直接显示
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
@@ -123,23 +140,23 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
   }, [done, key, id]);
 
   return (
-    <div ref={wrap} className={`ascii-wrap${done ? ' ascii-done' : ''}`}>
+    <div ref={wrap} className={`ascii-wrap${done ? ' ascii-done' : ''}${fresh ? ' ascii-fresh' : ''}`}>
       <img ref={img} className={className} src={src} alt={alt} loading={done ? 'lazy' : undefined} />
       {!done && <canvas ref={cvs} className="ascii-canvas" aria-hidden />}
     </div>
   );
 }
 
-/** 暗房里“冲洗中”的 ASCII 小转圈 */
-export function AsciiLoader({ text = '冲洗中' }: { text?: string }) {
+/** 等待：一排种子轻轻起伏 */
+export function AsciiLoader({ text = '去田里拾' }: { text?: string }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const t = setInterval(() => setI((n) => (n + 1) % SPINNER.length), 90);
+    const t = setInterval(() => setI((n) => (n + 1) % SPINNER.length), 220);
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="loading mono" role="status">
+    <div className="loading" role="status">
       <span className="spin-ch" aria-hidden>
         {SPINNER[i]}
       </span>{' '}
@@ -148,24 +165,24 @@ export function AsciiLoader({ text = '冲洗中' }: { text?: string }) {
   );
 }
 
-/** 空状态：一格底片从噪点里慢慢显出 ◉ */
+/** 空状态：一根麦子慢慢长出来，停在完整的穗上 */
 export function AsciiEmpty() {
-  const frames = useRef(emptyFrames()).current;
+  const frames = useRef(sproutFrames()).current;
   const [i, setI] = useState(prefersReducedMotion() ? frames.length - 1 : 0);
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const t = setInterval(() => setI((n) => (n + 1) % (frames.length + 6)), 260);
+    const t = setInterval(() => setI((n) => (n >= frames.length - 1 ? n : n + 1)), 280);
     return () => clearInterval(t);
   }, [frames]);
   return (
-    <pre className="ascii-empty mono" aria-hidden>
+    <pre className="ascii-empty" aria-hidden>
       {frames[Math.min(i, frames.length - 1)]}
     </pre>
   );
 }
 
-/** 点击“显影”时，按钮上散开一团 ASCII 雾 */
-export function FogBurst() {
+/** 点「嫁接」时，几粒种子从按钮上轻轻飞起 */
+export function SeedBurst() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current;
@@ -178,19 +195,24 @@ export function FogBurst() {
     const g = cv.getContext('2d');
     if (!g) return;
     g.scale(dpr, dpr);
-    const chars = '.:-=+*#%@';
-    const N = Math.min(70, Math.round(w / 8));
+    const color = cssVar('--accent', '#3f8a2f');
+    const gold = cssVar('--gold-3', '#b88c2c');
+    const chars = "·'`,.";
+    const N = Math.min(26, Math.round(w / 14));
+    let seed = 7;
+    const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     const ps = Array.from({ length: N }, (_, k) => ({
-      x: (k / N) * w + Math.random() * 8,
-      y: h * (0.35 + Math.random() * 0.5),
-      vx: (Math.random() - 0.5) * 30,
-      vy: -(20 + Math.random() * 60),
-      c: chars[Math.floor(Math.random() * chars.length)],
-      s: 11 + Math.random() * 10,
+      x: w / 2 + (r() - 0.5) * Math.min(220, w * 0.5),
+      y: h * 0.62,
+      vx: (r() - 0.5) * 50,
+      vy: -(30 + r() * 45),
+      c: chars[k % chars.length],
+      s: 13 + r() * 6,
+      col: k % 3 === 0 ? color : gold,
     }));
     const t0 = performance.now();
     let raf = 0;
-    const T = 950;
+    const T = 1400;
     const step = (now: number) => {
       const t = (now - t0) / T;
       g.clearRect(0, 0, w, h);
@@ -198,15 +220,15 @@ export function FogBurst() {
       g.textAlign = 'center';
       for (const p of ps) {
         const dt = t * (T / 1000);
-        g.globalAlpha = Math.max(0, 0.85 * (1 - t));
-        g.fillStyle = '#efe6da';
-        g.font = `${p.s}px ui-monospace, Consolas, monospace`;
-        g.fillText(p.c, p.x + p.vx * dt, p.y + p.vy * dt);
+        g.globalAlpha = Math.max(0, 0.9 * (1 - t));
+        g.fillStyle = p.col;
+        g.font = `700 ${p.s}px ${MONO}`;
+        g.fillText(p.c, p.x + p.vx * dt, p.y + p.vy * dt + 18 * dt * dt);
       }
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, []);
-  return <canvas ref={ref} className="fog-burst" aria-hidden />;
+  return <canvas ref={ref} className="seed-burst" aria-hidden />;
 }
