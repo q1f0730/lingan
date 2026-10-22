@@ -1,27 +1,56 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaptureForm, emptyDraft, type Draft } from './components/CaptureForm';
-import { frameNo, safeHost } from './components/ItemCard';
+import { safeHost } from './components/ItemCard';
 import { ClipOffer } from './components/QuickBar';
 import { level, useButtonFx } from './components/Motion';
+import { Field } from './components/Field';
+import { IcGear, IcGraft, IcPlus, IcSheaf, IcSprout, IcTaste } from './components/Icons';
 import { Sheet } from './components/Sheet';
-import { fromLocalInput, toLocalInput } from './lib/quick';
+import { formatWhen, fromLocalInput, toLocalInput } from './lib/quick';
 import { addItem, db, updateItem } from './lib/db';
 import { enrichItem } from './lib/enrich';
+import { msToNextPhase, phaseCssVars, PHASES, resolvePhase, type Phase } from './lib/phases';
 import { shareToDraft, takeShared } from './lib/share';
 import { loadSettings, saveSettings, type Settings } from './lib/settings';
 import { Ctx, type View } from './lib/store';
 import { TYPE_LABEL, type Item } from './lib/types';
+import { Branches } from './views/Branches';
 import { Develop } from './views/Develop';
 import { Library } from './views/Library';
 import { SettingsView } from './views/SettingsView';
 import { Taste } from './views/Taste';
 
-const NAV: Array<{ v: View; label: string; icon: string }> = [
-  { v: 'library', label: '灵感库', icon: '▦' },
-  { v: 'develop', label: '显影', icon: '◐' },
-  { v: 'taste', label: '画像', icon: '◎' },
-  { v: 'settings', label: '设置', icon: '⚙' },
+const NAV: Array<{ v: View; label: string; Icon: typeof IcSheaf }> = [
+  { v: 'library', label: '穗仓', Icon: IcSheaf },
+  { v: 'develop', label: '嫁接', Icon: IcGraft },
+  { v: 'branches', label: '新枝', Icon: IcSprout },
+  { v: 'taste', label: '口味', Icon: IcTaste },
+  { v: 'settings', label: '设置', Icon: IcGear },
 ];
+
+/** 当前时段：设置里固定，或跟随本地时间（到点自动切换） */
+function usePhase(pref: Settings['phase']): Phase {
+  const [phase, setPhase] = useState<Phase>(() => resolvePhase(pref));
+  useEffect(() => {
+    setPhase(resolvePhase(pref));
+    if (pref !== 'auto') return;
+    let t = 0;
+    const arm = () => {
+      t = window.setTimeout(() => {
+        setPhase(resolvePhase('auto'));
+        arm();
+      }, msToNextPhase());
+    };
+    arm();
+    const onVis = () => document.visibilityState === 'visible' && setPhase(resolvePhase('auto'));
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [pref]);
+  return phase;
+}
 
 export default function App() {
   const [view, setView] = useState<View>('library');
@@ -33,15 +62,25 @@ export default function App() {
   const [preset, setPreset] = useState<number[] | null>(null);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+  const phase = usePhase(settings.phase);
+  const motion = level();
 
   useButtonFx();
   useEffect(() => {
-    document.documentElement.dataset.motion = level();
-  }, []);
+    document.documentElement.dataset.motion = motion;
+  }, [motion]);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = settings.theme;
-  }, [settings.theme]);
+    const root = document.documentElement;
+    for (const [k, v] of Object.entries(phaseCssVars(phase))) root.style.setProperty(k, v);
+    root.dataset.phase = phase;
+    root.dataset.sky = PHASES[phase].ui.dark ? 'dark' : 'light';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', PHASES[phase].ui.paper);
+  }, [phase]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [view]);
 
   const toast = useCallback((msg: string, kind: 'ok' | 'err' = 'ok') => {
     const id = Date.now() + Math.random();
@@ -62,19 +101,19 @@ export default function App() {
   }, []);
 
   const ctx = useMemo(
-    () => ({ settings, setSettings, toast, openItem, openCapture, go: setView, developFrom }),
-    [settings, setSettings, toast, openItem, openCapture, developFrom],
+    () => ({ settings, setSettings, toast, openItem, openCapture, go: setView, developFrom, phase }),
+    [settings, setSettings, toast, openItem, openCapture, developFrom, phase],
   );
 
-  // Android share sheet → straight into the darkroom
+  // 安卓分享菜单 → 直接拾进穗仓
   useEffect(() => {
     const pull = async () => {
       const d = shareToDraft(takeShared());
       if (!d) return;
       const id = await addItem(d);
-      toast('已收进暗房 ' + frameNo(id));
+      toast('已拾进穗仓');
       enrichItem(id, settingsRef.current).then((err) => {
-        if (err) toast('AI 加工失败：' + err, 'err');
+        if (err) toast('AI 整理失败：' + err, 'err');
       });
     };
     void pull();
@@ -89,7 +128,7 @@ export default function App() {
     };
   }, [toast]);
 
-  // keyboard shortcut: N = new
+  // 快捷键：N = 速记
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -115,12 +154,12 @@ export default function App() {
         toast('已更新');
       } else {
         id = await addItem(d);
-        toast('已收进暗房 ' + frameNo(id));
+        toast('已拾进穗仓');
       }
       setCapture(null);
       setDetail(null);
       enrichItem(id, settingsRef.current).then((err) => {
-        if (err) toast('AI 加工失败：' + err, 'err');
+        if (err) toast('AI 整理失败：' + err, 'err');
       });
     } catch (e) {
       toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
@@ -139,46 +178,69 @@ export default function App() {
 
   return (
     <Ctx.Provider value={ctx}>
+      <Field phase={phase} still={motion === 'off' || settings.fieldStill} lite={motion === 'lite'} />
       <div className="app">
-        <div className="grain" aria-hidden />
         <nav className="nav" aria-label="主导航">
           <div className="brand">
-            <span className="brand-dot" />
-            <span className="brand-name">灵感暗房</span>
-            <span className="mono brand-sub">LINGAN</span>
+            <span className="brand-name">拾穗</span>
+            <span className="brand-sub">Glean</span>
           </div>
           {NAV.map((n, idx) => [
             idx === 2 && (
-              <button key="add" className="nav-add" onClick={openCapture} aria-label="收集">
-                ＋
+              <button key="add" className="nav-add" onClick={openCapture} aria-label="速记">
+                <IcPlus />
               </button>
             ),
             <button key={n.v} className={`nav-btn${view === n.v ? ' on' : ''}`} onClick={() => setView(n.v)} aria-current={view === n.v ? 'page' : undefined}>
-              <span className="nav-ic" aria-hidden>
-                {n.icon}
-              </span>
+              <n.Icon />
               <span>{n.label}</span>
             </button>,
           ])}
+          <button className="nav-write" onClick={openCapture}>
+            <IcPlus /> 拾一穗
+          </button>
         </nav>
         <main className="main">
           {view === 'library' && <Library />}
           {view === 'develop' && <Develop preset={preset} clearPreset={() => setPreset(null)} />}
+          {view === 'branches' && <Branches />}
           {view === 'taste' && <Taste />}
           {view === 'settings' && <SettingsView />}
         </main>
-        {view !== 'settings' && (
-          <button className="fab" onClick={openCapture} aria-label="收集">
-            ＋
-          </button>
-        )}
 
-        <Sheet open={!!capture} onClose={() => setCapture(null)} title={capture?.editId ? '编辑素材' : '收集'}>
+        <Sheet open={!!capture} onClose={() => setCapture(null)} title={capture?.editId ? '编辑这一穗' : '速记'}>
           {capture && <CaptureForm initial={capture.draft} onSave={onSave} onCancel={() => setCapture(null)} saving={saving} />}
         </Sheet>
 
-        <Sheet open={!!detail && !capture} onClose={() => setDetail(null)} title={detail ? `${frameNo(detail.id)} · ${TYPE_LABEL[detail.type]}` : ''}>
-          {detail && <Detail it={detail} onEdit={() => { const { id, createdAt: _c, updatedAt: _u, ...rest } = detail; void _c; void _u; setCapture({ draft: rest, editId: id }); }} onDelete={() => onDelete(detail)} onDevelop={() => { setDetail(null); developFrom([detail.id!]); }} onWhen={async (ts) => { await updateItem(detail.id!, { createdAt: ts }); const fresh = await db.items.get(detail.id!); if (fresh) setDetail(fresh); toast('时间已改'); }} onReAI={async () => { const err = await enrichItem(detail.id!, settings, true); toast(err ? 'AI 加工失败：' + err : 'AI 已重新加工', err ? 'err' : 'ok'); const fresh = await db.items.get(detail.id!); if (fresh) setDetail(fresh); }} />}
+        <Sheet open={!!detail && !capture} onClose={() => setDetail(null)} title={detail ? `${TYPE_LABEL[detail.type]} · ${formatWhen(detail.createdAt)}` : ''}>
+          {detail && (
+            <Detail
+              it={detail}
+              onEdit={() => {
+                const { id, createdAt: _c, updatedAt: _u, ...rest } = detail;
+                void _c;
+                void _u;
+                setCapture({ draft: rest, editId: id });
+              }}
+              onDelete={() => onDelete(detail)}
+              onDevelop={() => {
+                setDetail(null);
+                developFrom([detail.id!]);
+              }}
+              onWhen={async (ts) => {
+                await updateItem(detail.id!, { createdAt: ts });
+                const fresh = await db.items.get(detail.id!);
+                if (fresh) setDetail(fresh);
+                toast('时间已改');
+              }}
+              onReAI={async () => {
+                const err = await enrichItem(detail.id!, settings, true);
+                toast(err ? 'AI 整理失败：' + err : 'AI 已重新整理', err ? 'err' : 'ok');
+                const fresh = await db.items.get(detail.id!);
+                if (fresh) setDetail(fresh);
+              }}
+            />
+          )}
         </Sheet>
 
         {!capture && !detail && <ClipOffer />}
@@ -209,19 +271,19 @@ function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item;
       )}
       {it.content && <p className="detail-content">{it.content}</p>}
       {it.url && (
-        <a className="detail-url mono" href={it.url} target="_blank" rel="noreferrer">
+        <a className="detail-url" href={it.url} target="_blank" rel="noreferrer">
           ↗ {safeHost(it.url)}
         </a>
       )}
       {it.why && (
         <blockquote className="detail-why">
-          <span className="label mono">为什么打动我</span>
+          <span className="label">为什么打动我</span>
           {it.why}
         </blockquote>
       )}
       {it.caption && (
         <div className="detail-caption">
-          <span className="label mono">AI 看到的</span>
+          <span className="label">AI 看到的</span>
           {it.caption}
         </div>
       )}
@@ -234,9 +296,9 @@ function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item;
           ))}
         </div>
       )}
-      <div className="mono dim small-meta when-row">
+      <div className="when-row">
         <label>
-          收于{' '}
+          拾于{' '}
           <input
             type="datetime-local"
             className="when-input"
@@ -249,17 +311,17 @@ function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item;
             }}
           />
         </label>
-        {it.embedding ? ' · 已向量化' : ''}
+        {it.embedding ? <span className="dim"> · 已向量化</span> : null}
       </div>
       <div className="actions">
         <button className="btn primary" onClick={onDevelop}>
-          以此显影
+          以此嫁接
         </button>
         <button className="btn ghost" onClick={onEdit}>
           编辑
         </button>
         <button className="btn ghost" onClick={onReAI}>
-          AI 重新加工
+          AI 重新整理
         </button>
         <button className="btn ghost danger" onClick={onDelete}>
           删除
