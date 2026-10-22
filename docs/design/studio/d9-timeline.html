@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=1440, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 穗仓时间线视图 (1440px)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Sans+SC:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .headline-huge {
+      font-size: 110px;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      font-weight: 600;
+    }
+    .top-nav {
+      height: 60px;
+      position: sticky;
+      top: 0;
+      background-color: #FFFFFF;
+      z-index: 50;
+      border-bottom: 0px solid transparent;
+    }
+    .input-underline {
+      border: none;
+      border-bottom: 1px solid #000000;
+      outline: none;
+      background: transparent;
+    }
+    .tile-dim {
+      width: 184px;
+      height: 230px; /* 4:5 aspect ratio */
+      flex-shrink: 0;
+    }
+    .timeline-line {
+      width: 1px;
+      background-color: #E2E2E2;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+<!-- TOP NAV -->
+<header class="top-nav px-[40px] flex items-center justify-between">
+<!-- Brand Logo -->
+<div class="text-[20px] font-semibold tracking-tight text-black select-none">
+      拾穗 · GLEAN
+    </div>
+<!-- Center Navigation -->
+<nav class="flex items-center space-x-8 text-[12px] font-medium tracking-wider">
+<a class="text-black pb-[2px] border-b border-black" href="#">穗仓</a>
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">嫁接</a>
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">新枝</a>
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">口味</a>
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">设置</a>
+</nav>
+<!-- Quick Capture Input -->
+<div class="w-[320px]">
+<input class="input-underline w-full py-1 text-[13px] text-black placeholder-[#7E7E7E]" placeholder="随手拾一穗 →" type="text"/>
+</div>
+</header>
+<!-- MAIN WRAPPER -->
+<main class="px-[40px] pt-[140px] pb-[160px] max-w-[1440px] mx-auto w-full flex-1">
+<!-- HEADER BAR: Headline & View Toggle -->
+<div class="flex items-baseline justify-between mb-[90px]">
+<h1 class="headline-huge">
+        时间线 (20)
+      </h1>
+<!-- View Toggle -->
+<div class="text-[12px] font-medium tracking-wider text-[#C6C6C6] select-none">
+<a class="hover:text-black text-[#7E7E7E]" href="#">网格</a>
+<span class="mx-2 text-[#C6C6C6]">|</span>
+<a class="hover:text-black text-[#7E7E7E]" href="#">列表</a>
+<span class="mx-2 text-[#C6C6C6]">|</span>
+<span class="text-black pb-[2px] border-b border-black">时间线</span>
+</div>
+</div>
+<!-- TIMELINE STRUCTURE -->
+<section class="relative"><!-- Timeline continuous vertical guideline line -->
+<div class="timeline-line absolute left-[220px] top-[10px] bottom-0"></div>
+<div class="space-y-[64px] relative">
+<!-- WEEK 1: 10/19 — 10/21 -->
+<div class="grid grid-cols-12 gap-[16px]">
+<div class="col-span-2 pr-[28px]">
+<h2 class="text-[32px] font-[300] tracking-tight text-black leading-tight">10月 第3周</h2>
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-wider mt-1">10/19 — 10/21</div>
+</div>
+<div class="col-span-10 pl-[32px] flex flex-wrap gap-[10px] items-start">
+<!-- Tile 1 (10/21) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/21</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="轮渡上的雾" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">轮渡上的雾</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">照片 · 10/21</span>
+</div>
+</div>
+</div>
+<!-- Tile 2 (10/20) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/20</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="《完美的日子》" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VwRjAApBlw0cvYV3mNMlQzujVjYPgk5WXPj28qCa_Ru-cY-MzE_uAnqQYpqHML3FRqlygqu2YpLhZGoUdNrNY48FBokjg6of-mFxlEynN8YFHbEDlwLmaZ_CRqH4fJ745Jo6tFsclKRVmPXJs6zUDwvgpNzGB3Et7qxTGfIUE9yt34hm1nrteJ5CsRO_LsfMS_2RgB30QiKmDr4Sq9aXdTCBz4_BFJkBzMEPv_FZEI-1XlZowcKhx5TA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">《完美的日子》</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">电影 · 10/20</span>
+</div>
+</div>
+</div>
+<!-- Tile 3 (10/19) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/19</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="Re: Stacks" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vi-LhX-l8RD3zrf3It4rRe_YiL3BWt5MnmjjywiB3w_5kVgyD0MEdV50ibhvu8lkDzfOT6JhH7AEmJ-Tyw565Mpw2MlbfuJG1YtErrlaPD5WmZqsM6Xw3iL_8GvfOUOUMpubG2-I6dK3oDbsSBh3GWqupWhQqb4NSg8sXCg617wEEp0c3XDas90mE052bZcXnJ97GO6BRBPprkvvM0sfXXH1IJ_PHrCWMTss8GxWSBBjx30DAjaDi8yQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">Re: Stacks</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">歌 · 10/19</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- WEEK 2: 10/12 — 10/18 -->
+<div class="grid grid-cols-12 gap-[16px]">
+<div class="col-span-2 pr-[28px]">
+<h2 class="text-[32px] font-[300] tracking-tight text-black leading-tight">10月 第2周</h2>
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-wider mt-1">10/12 — 10/18</div>
+</div>
+<div class="col-span-10 pl-[32px] flex flex-wrap gap-[10px] items-start">
+<!-- Tile 1 (10/18) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/18</span>
+<div class="tile-dim bg-[#F3F3F3] p-5 flex flex-col justify-between cursor-pointer">
+<p class="text-[14px] font-medium leading-relaxed text-black">
+                  “记忆中的形象一旦被词语固定住，就给抹掉了。”
+                </p>
+<div>
+<div class="text-[11px] text-[#7E7E7E] mb-1">卡尔维诺《看不见的城市》</div>
+<div class="text-[11px] text-[#7E7E7E]">摘抄 · 10/18</div>
+</div>
+</div>
+</div>
+<!-- Tile 2 (10/17) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/17</span>
+<div class="tile-dim bg-[#F3F3F3] p-5 flex flex-col justify-between cursor-pointer">
+<p class="text-[14px] font-medium leading-relaxed text-black">
+                  “给楼道里每一盏声控灯起一个名字。”
+                </p>
+<div>
+<div class="text-[11px] text-[#7E7E7E] mb-1">自己</div>
+<div class="text-[11px] text-[#7E7E7E]">想法 · 10/17</div>
+</div>
+</div>
+</div>
+<!-- Tile 3 (10/16) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/16</span>
+<div class="tile-dim bg-[#F3F3F3] p-5 flex flex-col justify-between cursor-pointer">
+<div>
+<p class="text-[14px] font-medium leading-snug text-black mb-2">
+                    Radio Garden · 转动地球收听各地电台
+                  </p>
+<p class="text-[12px] text-[#7E7E7E] underline decoration-1 underline-offset-2">radio.garden</p>
+</div>
+<div class="text-[11px] text-[#7E7E7E]">链接 · 10/16</div>
+</div>
+</div>
+<!-- Tile 4 (10/14) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/14</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="旧书店堆到天花板的书脊" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">旧书店堆到天花板的书脊</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">照片 · 10/14</span>
+</div>
+</div>
+</div>
+<!-- Tile 5 (10/12) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/12</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="aqua" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VNEkLPApRT2dQX1op0NyFcM1bZ3Wb1flttLMHNs6ZLxYDwcuq2hA5hv5m6C7Mrm0XXoFtc7YEP_ED7laokNuVr0YjdCyfGi5D8QwliBG7Yty90-4KUAiaJlKxmXe6c9j_D3LLWHjVLQI7eWSKv3KSVyODK4u98e85qmxxewgpFd8SecCh-nflYNXZ79Sfc-RDOs45VQFBNXgyd02zLaJmieCcwNLkydiFGzfyw6arSk1mhClS41HzL9PE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">aqua</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">歌 · 10/12</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- WEEK 3: 10/05 — 10/11 -->
+<div class="grid grid-cols-12 gap-[16px]">
+<div class="col-span-2 pr-[28px]">
+<h2 class="text-[32px] font-[300] tracking-tight text-black leading-tight">10月 第1周</h2>
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-wider mt-1">10/05 — 10/11</div>
+</div>
+<div class="col-span-10 pl-[32px] flex flex-wrap gap-[10px] items-start">
+<!-- Tile 1 (10/09) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/09</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="《一一》" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIxP_AS_m2Q0g_Ne7PJQkOCurfb6jpWH2Pprj9MF9rE2TC5uWot9QJSKNdmEDINXzXLQgu6YFk0hbb40-KG2BvUCvrHOtbxbjakFe-uV0jhUHXY5GNRGV3quQDwEtTrp1B_I1iE15ELfUiU8G-std6vy3aisMqbZZsW1xcme9aKGqvLvXAitWXdMaQUTB9mdOyEfoqI2XCCXulrwyp310CK10kRPl6AbNPDy-IJixWQ04od9zVPwsWFQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">《一一》</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">电影 · 10/09</span>
+</div>
+</div>
+</div>
+<!-- Tile 2 (10/05) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/05</span>
+<div class="tile-dim bg-[#F3F3F3] p-5 flex flex-col justify-between cursor-pointer">
+<p class="text-[14px] font-medium leading-relaxed text-black">
+                  “把外卖小票上的备注收集成一本诗集。”
+                </p>
+<div>
+<div class="text-[11px] text-[#7E7E7E] mb-1">自己</div>
+<div class="text-[11px] text-[#7E7E7E]">想法 · 10/05</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- WEEK 4: 09/28 — 10/04 -->
+<div class="grid grid-cols-12 gap-[16px]">
+<div class="col-span-2 pr-[28px]">
+<h2 class="text-[32px] font-[300] tracking-tight text-black leading-tight">9月 第4周</h2>
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-wider mt-1">09/28 — 10/04</div>
+</div>
+<div class="col-span-10 pl-[32px] flex flex-wrap gap-[10px] items-start">
+<!-- Tile 1 (10/03) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/03</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="凌晨四点的便利店" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Ujc58Kd3tmvLG_j_dwXSDedhzAbAAyw3VeFfe04RwrX94ZPkRh5rjG4_E1KJzwG05Rvta9HmCJlbmDkv3ockZqkWVOPDArg7ho_oxgMYQP7rjeCUW56S_HHuP_JMfBtYTGj-6u6H6oCk7ZdM_Cev0qCYSTbHQzXyNd-88ijf1RpWFH4wu9thnz0k4oE9ajkBK_4u8zGY5zGLA_qM9-KS6-X_WYD_YbJ8J4yOYlTBU0QkjEvyTLGY-USA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">凌晨四点的便利店</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">照片 · 10/03</span>
+</div>
+</div>
+</div>
+<!-- Tile 2 (10/01) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">10/01</span>
+<div class="tile-dim relative overflow-hidden bg-black group cursor-pointer">
+<img alt="Avril 14th" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WN0ylFqkm7jsSvUoJj9JM71JOKd8goswqJQ0vIlLTcRjjZTxU1z-AKqFy6IIeqywSJUBgWsHve2zE5dcisODtZqR7k0ZL0d_VHxqU8tepRymK3Xl0Rtwin1Sf2sGwXvzysmFAC37n0feg_ywFXzv31mDTE18yw6pzFwNU1gL4O6u3JB48Ihm4pHas3erP-swYil4tvGf2GcCs9rzx0qUVfq0i2SyfDd8dPP0HqxfehjhRakVbpdeNznLg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+<span class="text-white text-[13px] font-medium leading-snug">Avril 14th</span>
+<span class="text-[#C6C6C6] text-[11px] mt-1">歌 · 10/01</span>
+</div>
+</div>
+</div>
+<!-- Tile 3 (09/28) -->
+<div class="flex flex-col">
+<span class="text-[11px] font-medium text-[#7E7E7E] mb-2 tracking-wide">09/28</span>
+<div class="tile-dim bg-[#F3F3F3] p-5 flex flex-col justify-between cursor-pointer">
+<div>
+
+<p class="text-[18px] font-medium leading-snug text-black">
+                    《东京物语》
+                  </p>
+<p class="text-[12px] text-[#7E7E7E] mt-1">小津安二郎 · 1953</p>
+</div>
+<div class="text-[11px] text-[#7E7E7E]">电影 · 09/28</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Historical More Footer -->
+<div class="pt-[72px] grid grid-cols-12 gap-[16px] items-baseline">
+<div class="col-span-2 pr-[28px]">
+
+</div>
+<div class="col-span-10 pl-[32px] flex items-center">
+<span class="text-[12px] font-medium text-[#C6C6C6] cursor-pointer hover:text-black text-[#7E7E7E]">更早 →</span>
+</div>
+</div></section>
+</main>
+<!-- FOOTER -->
+<footer class="px-[40px] pb-[40px] w-full max-w-[1440px] mx-auto flex items-center justify-between text-[10px] text-[#7E7E7E] tracking-[0.1em] select-none">
+<div>© 2026 Q1f730</div>
+</footer>
+</body>
+</html>
