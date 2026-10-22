@@ -15,3 +15,15 @@ export async function onQuickFocus(cb: () => void): Promise<() => void> {
     return () => {};
   }
 }
+
+/** v0.16 tray menu: 打开穗仓 / 今日一穗 / 设置 → the UI switches view */
+export const GO_EVENT = 'glean-go';
+export async function onTrayGo(cb: (view: string) => void): Promise<() => void> {
+  if (!isTauriEnv()) return () => {};
+  try {
+    const { listen } = await import('@tauri-apps/api/event');
+    return await listen<string>(GO_EVENT, (e) => cb(String(e.payload || '')));
+  } catch {
+    return () => {};
+  }
+}
