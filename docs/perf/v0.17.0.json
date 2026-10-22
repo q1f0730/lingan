@@ -1,0 +1,186 @@
+{
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 962,
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 5992,
+    "wallMs": 7253
+  },
+  "storage": {
+    "version": 50,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102219137,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 75,
+    "rows": 1000,
+    "reopenLoadMs": 15,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 17.9,
+        "results": 176,
+        "coreMs": 1.6
+      },
+      {
+        "q": "海边",
+        "ms": 17,
+        "results": 178,
+        "coreMs": 0.8
+      },
+      {
+        "q": "钢琴",
+        "ms": 16.7,
+        "results": 172,
+        "coreMs": 0.5
+      },
+      {
+        "q": "夜车",
+        "ms": 16.7,
+        "results": 174,
+        "coreMs": 0.6
+      },
+      {
+        "q": "麦田",
+        "ms": 16.7,
+        "results": 63,
+        "coreMs": 0.4
+      },
+      {
+        "q": "黄昏",
+        "ms": 17.5,
+        "results": 176,
+        "coreMs": 0.4
+      }
+    ],
+    "maxMs": 17.9,
+    "medianMs": 17,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 43.4,
+        "results": 176,
+        "coreMs": 2.8
+      },
+      {
+        "q": "便利",
+        "ms": 46.8,
+        "results": 125,
+        "coreMs": 2.5
+      },
+      {
+        "q": "霓虹",
+        "ms": 47,
+        "results": 176,
+        "coreMs": 2.7
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 210,
+    "runs": [
+      252,
+      189,
+      210
+    ],
+    "firstThumbsDecodedMedian": 242,
+    "cardsOnFirstScreen": 10
+  },
+  "coldStartCpu4xMs": {
+    "median": 519,
+    "runs": [
+      524,
+      504,
+      519
+    ],
+    "firstThumbsDecodedMedian": 599
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16812,
+    "scrollHeight": 115081,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 8,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 3,
+    "objectUrlsCreated": 59
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14403,
+    "scrollHeight": 67056,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 26,
+    "virtual": {
+      "total": 37,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14422,
+    "scrollHeight": 45126,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 59,
+    "maxLiveObjectUrls": 0,
+    "virtual": {
+      "total": 1000,
+      "mounted": 59
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 300,
+    "scrolledPx": 8016,
+    "scrollHeight": 115081,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 24,
+    "maxLiveObjectUrls": 8
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400
+}
