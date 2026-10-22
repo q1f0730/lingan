@@ -16,11 +16,63 @@ async function brand(pg, name) {
   if (r.title !== '拾穗 Glean') errs.push(`[${name}] title ${r.title}`);
   if (r.bad.length) errs.push(`[${name}] old words on ${r.view}: ${r.bad.join(',')}`);
 }
+
+// v0.11 一次三枝：模拟模型（同源 /mock-ai/v1，免 CORS）。第 1 次调用含 PHASE A，第 2 次含 PHASE C。
+const MOCK_MAP = {
+  tensions: [
+    { text: '一个慢得像等人，一个快得像赶车', refs: [1, 2] },
+    { text: '都在讲一样东西过期以前的那几天', refs: [1, 2] },
+    { text: '一边全是颜色，一边几乎没有画面', refs: [2, 1] },
+    { text: '重复本身变成了情绪', refs: [1, 2] },
+  ],
+  seeds: [
+    { t: 'invert', text: '让被等的那个人来讲等待', refs: [1, 2] },
+    { t: '换媒介', text: '把旋律改成一张只有门牌号的地图', refs: [2, 1] },
+    { t: 'eras', text: '把这场相遇搬到没有手机的年代', refs: [1, 2] },
+    { t: 'remove', text: '拿掉所有对白，只留下脚步声', refs: [1, 2] },
+    { t: 'scale', text: '缩到一个罐头那么大的房间', refs: [1, 2] },
+    { t: 'material', text: '只用便利店的小票做一本书', refs: [2, 1] },
+    { t: 'viewpoint', text: '从那台旧收音机的角度看一整晚', refs: [1, 2] },
+    { t: 'flaw', text: '留着录音里那一声咳嗽当副歌', refs: [2, 1] },
+  ],
+};
+const MOCK_CONV = {
+  pattern: '好几粒都落在「夜里的小房间」',
+  replaced: [
+    { n: 5, text: '放大到整条街，每扇窗都在放同一首歌', refs: [1, 2] },
+    { n: 7, text: '从楼下修鞋师傅的角度看他们路过一百次', refs: [1, 2] },
+    { n: 3, text: '搬到一九二〇年的早市，用吆喝声代替旋律', refs: [1, 2] },
+  ],
+  branches: [
+    { seed: 6, title: '小票上的情书', idea: '一本用便利店小票装订的小书：每张小票记录一次路过，商品名连起来读是一封没寄出的信。最后一张小票上的日期，正好是罐头过期的那天。', form: '手作小书', refs: [1, 2], unlike: '它是能拿在手里的物件，另外两根都要靠声音', experiment: '收集你今天的三张小票，把商品名改写成三行诗。' },
+    { seed: 6, title: '撞了变形的那根', idea: '这根和第一根用的是同一种变形，应该被拿掉。', form: '海报', refs: [1, 2], unlike: '无', experiment: '无' },
+    { seed: 8, title: '咳嗽副歌', idea: '一首歌把录音里那声咳嗽循环成节拍，主歌是两个人轮流念购物清单，副歌只有那一声咳嗽和楼下的车声，越唱越像在笑。', form: '一首歌', refs: [2, 1], unlike: '它保留了失误，另外两根都在找新东西', experiment: '用手机录 30 秒房间声，找出最不想要的那一秒，循环它。' },
+    { seed: 7, title: '修鞋师傅的一百次', idea: '一分钟短片，镜头钉在修鞋摊的高度，只拍路过的鞋。同一双鞋路过一百次，从匆忙到停下，最后一次两双鞋并排停住。', form: '一分钟短片', refs: [1, 2], unlike: '它换了讲述的人，全程不出现主角的脸', experiment: '在窗边拍 20 分钟路人的鞋，挑出三双编一个故事。' },
+  ],
+  cliches: ['雨夜霓虹的孤独', '遗憾的错过', '城市里的陌生人'],
+};
+async function mockAI(pg, { fail429 = 0, delay = 500 } = {}) {
+  const log = { calls: 0, phases: [] };
+  let left = fail429;
+  await pg.route('**/mock-ai/v1/chat/completions', async (route) => {
+    const body = JSON.parse(route.request().postData() || '{}');
+    const sys = String(body.messages?.[0]?.content || '');
+    log.calls++;
+    if (left-- > 0) return route.fulfill({ status: 429, contentType: 'application/json', headers: { 'retry-after': '1' }, body: JSON.stringify({ error: { message: 'rate limited' } }) });
+    await new Promise((r) => setTimeout(r, delay));
+    const a = sys.includes('PHASE A');
+    log.phases.push(a ? 'A' : sys.includes('PHASE C') ? 'C' : '?');
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message: { content: '```json\n' + JSON.stringify(a ? MOCK_MAP : MOCK_CONV) + '\n```' } }] }) });
+  });
+  return log;
+}
+const MOCK_SETTINGS = (origin, extra = {}) => JSON.stringify({ chat: { baseUrl: origin + '/mock-ai/v1', apiKey: 'e2e-mock', chatModel: 'mock-model', visionModel: '', extraBody: '' }, autoCaption: false, autoEmbed: false, ...extra });
 async function run(name, viewport) {
   const ctx = await b.newContext({ viewport, deviceScaleFactor: 1, permissions: ['clipboard-read', 'clipboard-write'] });
   const pg = await ctx.newPage();
   pg.on('pageerror', (e) => errs.push(`[${name}] pageerror ${e.message}`));
-  pg.on('console', (m) => m.type() === 'error' && errs.push(`[${name}] console ${m.text()}`));
+  // 模拟限流时浏览器会打一条 429 的资源错误，那是故意的
+  pg.on('console', (m) => m.type() === 'error' && !m.text().includes('status of 429') && errs.push(`[${name}] console ${m.text()}`));
   pg.on('dialog', (d) => d.accept());
   await pg.goto(base);
   await pg.waitForSelector('text=穗仓还是空的');
@@ -159,7 +211,48 @@ async function run(name, viewport) {
   await pg.waitForSelector('.hrow');
   await brand(pg, name);
   const hist = await pg.locator('.hrow').count();
-  if (hist !== 2) errs.push(`[${name}] expected 2 history got ${hist}`);
+  if (hist !== 6) errs.push(`[${name}] expected 6 branches (2×3) got ${hist}`);
+  const nb = await pg.locator('.hbatch').count();
+  if (nb !== 2) errs.push(`[${name}] expected 2 graft batches got ${nb}`);
+  // v0.11 一次三枝 · 模拟模型：第 1 次 429 → 退避重试；2 次正式调用（A+B / C+D）；模型撞了变形也要修成三根两两不同
+  await pg.evaluate((v) => localStorage.setItem('lingan.settings.v1', v), MOCK_SETTINGS(new URL(base).origin));
+  const ai = await mockAI(pg, { fail429: 1, delay: 700 });
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls button:has-text("抽几穗")');
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.growing[data-stage="map"]', { timeout: 3000 }).catch(() => errs.push(`[${name}] growing progress missing`));
+  await pg.waitForSelector('.growing .grow-line:has-text("秒后再试")', { timeout: 4000 }).catch(() => errs.push(`[${name}] retry notice missing`));
+  if ((await pg.locator('.grow-steps li').count()) !== 4) errs.push(`[${name}] expected 4 grow steps`);
+  await pg.waitForSelector('.growing[data-stage="defix"]', { timeout: 8000 }).catch(() => errs.push(`[${name}] stage defix never shown`));
+  await pg.waitForSelector('.three .idea', { timeout: 15000 });
+  const three = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ t: e.dataset.transform, src: e.querySelector('.idea-src')?.textContent, exp: !!e.querySelector('.idea-exp'), un: !!e.querySelector('.idea-unlike'), title: e.querySelector('.idea-title .decode')?.getAttribute('aria-label') || e.querySelector('.idea-title')?.textContent })));
+  if (three.length !== 3) errs.push(`[${name}] AI graft expected 3 branches got ${three.length}`);
+  if (new Set(three.map((x) => x.t)).size !== 3 || three.some((x) => !x.t)) errs.push(`[${name}] transforms not distinct ${JSON.stringify(three.map((x) => x.t))}`);
+  if (three.some((x) => x.src !== 'AI 嫁接')) errs.push(`[${name}] AI branch source wrong ${three.map((x) => x.src)}`);
+  if (three.some((x) => !x.exp || !x.un)) errs.push(`[${name}] branch missing experiment/unlike`);
+  if (three.some((x) => (x.title || '').includes('撞了变形'))) errs.push(`[${name}] duplicate-transform branch not dropped`);
+  if (ai.calls !== 3 || ai.phases.join('') !== 'AC') errs.push(`[${name}] AI calls expected 3 (429+A+C) got ${ai.calls} ${ai.phases.join('')}`);
+  await pg.click('.view > .trail summary');
+  const trail = await pg.evaluate(() => ({ t: document.querySelectorAll('.view > .trail .trail-tensions li').length, s: document.querySelectorAll('.view > .trail .trail-seeds li').length, r: document.querySelectorAll('.view > .trail .trail-seeds li.replaced').length, c: document.querySelectorAll('.view > .trail .trail-seeds li.chosen').length }));
+  if (trail.t !== 4 || trail.s !== 8 || trail.r !== 3 || trail.c !== 3) errs.push(`[${name}] trail wrong ${JSON.stringify(trail)}`);
+  if (!(await pg.locator('.cliches-row s').count())) errs.push(`[${name}] cliches row missing`);
+  await pg.screenshot({ path: `${out}/${name}-3b-three.png`, fullPage: true });
+  await brand(pg, name);
+  await pg.click('.nav-btn:has-text("新枝")');
+  await pg.waitForSelector('.hbatch');
+  if ((await pg.locator('.hbatch').count()) !== 3) errs.push(`[${name}] expected 3 batches after AI graft`);
+  await pg.click('.hbatch >> nth=0 >> .hbatch-star');
+  await pg.waitForSelector('.toast:has-text("三根都收藏了")', { timeout: 3000 }).catch(() => errs.push(`[${name}] star-all toast missing`));
+  await pg.click('.chip:has-text("只看收藏")');
+  const starredRows = await pg.locator('.hrow').count();
+  if (starredRows !== 4) errs.push(`[${name}] starred rows expected 4 (1+3) got ${starredRows}`);
+  await pg.click('.chip:has-text("只看收藏")');
+  await pg.unroute('**/mock-ai/v1/chat/completions');
+  await pg.evaluate(() => localStorage.removeItem('lingan.settings.v1'));
+  await pg.reload();
+  await pg.waitForSelector('.view');
   // taste
   await pg.click('.nav-btn:has-text("口味")');
   await pg.waitForSelector('.stat-n');
@@ -246,7 +339,7 @@ async function shots() {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const pg = await ctx.newPage();
   pg.on('pageerror', (e) => errs.push(`[shots] pageerror ${e.message}`));
-  await pg.addInitScript(() => { if (!localStorage.getItem('lingan.settings.v1')) localStorage.setItem('lingan.settings.v1', JSON.stringify({ phase: 'day' })); });
+  await pg.addInitScript((v) => { if (!localStorage.getItem('lingan.settings.v1')) localStorage.setItem('lingan.settings.v1', v); }, MOCK_SETTINGS(new URL(base).origin, { phase: 'day' }));
   await pg.goto(base);
   await pg.click('text=先放点示例');
   await pg.waitForSelector('.card:has-text("花样年华")');
@@ -284,11 +377,17 @@ async function shots() {
   await pg.waitForTimeout(250);
   await pg.screenshot({ path: `${out}/shot-library.png` });
   await pg.click('.nav-btn:has-text("嫁接")');
+  await mockAI(pg, { delay: 2600 });
   await pg.click('text=嫁接今日两穗');
-  await pg.waitForSelector('.idea');
-  await pg.waitForFunction(() => !document.querySelector('.idea .tw-rest'), null, { timeout: 9000 }).catch(() => {});
+  await pg.waitForSelector('.growing');
+  await pg.waitForTimeout(2000);
+  await pg.evaluate(() => { const el = document.querySelector('.growing'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 220); });
+  await pg.waitForTimeout(300);
+  await pg.screenshot({ path: `${out}/shot-growing.png` });
+  await pg.waitForSelector('.three .idea', { timeout: 15000 });
+  await pg.waitForFunction(() => !document.querySelector('.idea .tw-rest'), null, { timeout: 12000 }).catch(() => {});
   await pg.waitForTimeout(400);
-  await pg.evaluate(() => { const el = document.querySelector('.graft'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 10); });
+  await pg.evaluate(() => { const el = document.querySelector('.three-head'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 10); });
   await pg.waitForTimeout(500);
   await pg.screenshot({ path: `${out}/shot-graft.png` });
   await pg.click('.nav-btn:has-text("口味")');
@@ -313,6 +412,23 @@ try {
   const st2 = await rpg.evaluate(() => window.__gleanField?.frames);
   if (st.mode !== 'still') errs.push(`[reduced] field should be still, got ${st.mode}`);
   if (st2 !== st.frames) errs.push(`[reduced] still field kept drawing ${st.frames}->${st2}`);
+  // v0.11 嫁接等待：减少动态效果时麦子是静图
+  await rpg.evaluate((v) => localStorage.setItem('lingan.settings.v1', v), MOCK_SETTINGS(new URL(base).origin));
+  await mockAI(rpg, { delay: 2500 });
+  await rpg.reload();
+  await rpg.click('text=先放点示例');
+  await rpg.waitForSelector('.card:has-text("花样年华")');
+  await rpg.click('.nav-btn:has-text("嫁接")');
+  await rpg.click('.controls button:has-text("抽几穗")');
+  await rpg.click('.graft-btn');
+  await rpg.waitForSelector('.growing', { timeout: 3000 });
+  const g1 = await rpg.evaluate(() => ({ still: document.querySelector('.growing')?.dataset.still, txt: document.querySelector('.grow-wheat')?.textContent }));
+  await rpg.waitForTimeout(700);
+  const g2 = await rpg.evaluate(() => document.querySelector('.grow-wheat')?.textContent);
+  if (g1.still !== '1') errs.push(`[reduced] growing should be still, got ${g1.still}`);
+  if (g1.txt !== g2) errs.push('[reduced] growing wheat animated');
+  await rpg.waitForSelector('.three .idea', { timeout: 15000 });
+  if ((await rpg.locator('.three .idea').count()) !== 3) errs.push('[reduced] expected 3 branches');
   await rctx.close();
   await run('desktop', { width: 1366, height: 860 });
   await run('mobile', { width: 390, height: 844 });
