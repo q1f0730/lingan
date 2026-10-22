@@ -18,7 +18,7 @@ describe('动效逻辑', () => {
     expect(staggerDelay(NaN)).toBe(0);
   });
   it('解码：长度不变、空白标点保留、progress=1 还原原文', () => {
-    const t = '《暗房 里的 光》，好';
+    const t = '《麦田 里的 光》，好';
     for (const p of [0, 0.3, 0.9]) {
       const f = decodeFrame(t, p, 5);
       expect(Array.from(f).length).toBe(Array.from(t).length);
