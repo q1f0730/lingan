@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>拾穗 · GLEAN — 穗仓时间线视图 (390px)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        background: '#FFFFFF',
+        foreground: '#000000',
+        secondary: '#7E7E7E',
+        faint: '#C6C6C6',
+      },
+      fontFamily: {
+        sans: ['Inter', 'Noto Sans SC', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+* {
+  box-sizing: border-box;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+body {
+  background-color: #FFFFFF;
+  color: #000000;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+.headline-huge {
+  font-size: 56px;
+  line-height: 1.0;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+}
+.underline-active {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+</style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-white text-black min-h-screen flex flex-col items-center">
+  <!-- 390px Mobile Canvas Container -->
+  <div class="w-full max-w-[390px] min-h-screen bg-white flex flex-col justify-between relative px-4 pb-28">
+
+    <!-- Top Header Bar -->
+    <header class="pt-5 pb-3 flex justify-between items-center w-full">
+      <div class="text-[20px] font-semibold tracking-tight text-black">拾穗 · GLEAN</div>
+      <div class="text-[12px] text-secondary cursor-pointer hover:text-black">设置</div>
+    </header>
+
+    <!-- Main Title & View Toggle -->
+    <section class="mt-4 mb-6">
+      <div class="flex items-baseline justify-between">
+        <h1 class="headline-huge text-black">穗仓 (10)</h1>
+      </div>
+      <div class="flex items-center space-x-2 text-[12px] text-faint mt-3">
+        <span class="cursor-pointer text-secondary hover:text-black">网格</span>
+        <span>|</span>
+        <span class="cursor-pointer text-secondary hover:text-black">列表</span>
+        <span>|</span>
+        <span class="text-black font-medium underline-active">时间线</span>
+      </div>
+    </section>
+
+    <!-- Vertical Timeline Content -->
+    <main class="w-full flex flex-col space-y-7">
+
+      <!-- Group 1: 10/19 — 10/21 (3 穗) -->
+      <section class="w-full">
+        <!-- Group Header -->
+        <div class="flex items-baseline justify-between border-b border-black pb-1 mb-3">
+          <span class="text-[12px] text-secondary font-medium tracking-tight">10/19 — 10/21</span>
+          <span class="text-[11px] text-secondary">3 穗</span>
+        </div>
+
+        <div class="flex flex-col divide-y divide-[#F0F0F0]">
+          <!-- Item 1: 轮渡上的雾 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/21 07:12</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug truncate">轮渡上的雾</h2>
+              <span class="text-[12px] text-secondary mt-1">照片 · #清晨 #城市</span>
+            </div>
+            <img src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" alt="轮渡上的雾" class="w-[48px] h-[60px] object-cover flex-shrink-0 bg-neutral-100" />
+          </article>
+
+          <!-- Item 2: 完美的日子 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/20 22:41</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug truncate">《完美的日子》</h2>
+              <span class="text-[12px] text-secondary mt-1">电影 · 维姆·文德斯 · #清晨 #重复</span>
+            </div>
+            <img src="https://lh3.googleusercontent.com/aida/AEtjO1VwRjAApBlw0cvYV3mNMlQzujVjYPgk5WXPj28qCa_Ru-cY-MzE_uAnqQYpqHML3FRqlygqu2YpLhZGoUdNrNY48FBokjg6of-mFxlEynN8YFHbEDlwLmaZ_CRqH4fJ745Jo6tFsclKRVmPXJs6zUDwvgpNzGB3Et7qxTGfIUE9yt34hm1nrteJ5CsRO_LsfMS_2RgB30QiKmDr4Sq9aXdTCBz4_BFJkBzMEPv_FZEI-1XlZowcKhx5TA" alt="完美的日子" class="w-[48px] h-[60px] object-cover flex-shrink-0 bg-neutral-100" />
+          </article>
+
+          <!-- Item 3: Re: Stacks -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/19 01:06</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug truncate">Re: Stacks</h2>
+              <span class="text-[12px] text-secondary mt-1">歌 · Bon Iver · #夜里 #声音</span>
+            </div>
+            <img src="https://lh3.googleusercontent.com/aida/AEtjO1Vi-LhX-l8RD3zrf3It4rRe_YiL3BWt5MnmjjywiB3w_5kVgyD0MEdV50ibhvu8lkDzfOT6JhH7AEmJ-Tyw565Mpw2MlbfuJG1YtErrlaPD5WmZqsM6Xw3iL_8GvfOUOUMpubG2-I6dK3oDbsSBh3GWqupWhQqb4NSg8sXCg617wEEp0c3XDas90mE052bZcXnJ97GO6BRBPprkvvM0sfXXH1IJ_PHrCWMTss8GxWSBBjx30DAjaDi8yQ" alt="Re: Stacks" class="w-[48px] h-[60px] object-cover flex-shrink-0 bg-neutral-100" />
+          </article>
+        </div>
+      </section>
+
+      <!-- Group 2: 10/12 — 10/18 (5 穗) -->
+      <section class="w-full">
+        <!-- Group Header -->
+        <div class="flex items-baseline justify-between border-b border-black pb-1 mb-3">
+          <span class="text-[12px] text-secondary font-medium tracking-tight">10/12 — 10/18</span>
+          <span class="text-[11px] text-secondary">5 穗</span>
+        </div>
+
+        <div class="flex flex-col divide-y divide-[#F0F0F0]">
+          <!-- Item 4: 卡尔维诺 摘抄 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/18 23:15</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug">“记忆中的形象一旦被词语固定住，就给抹掉了。”</h2>
+              <span class="text-[12px] text-secondary mt-1">摘抄 · 卡尔维诺《看不见的城市》 · #书 #城市</span>
+            </div>
+          </article>
+
+          <!-- Item 5: 声控灯 想法 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/17 23:48</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug">“给楼道里每一盏声控灯起一个名字”</h2>
+              <span class="text-[12px] text-secondary mt-1">想法 · #夜里 #声音 #城市</span>
+            </div>
+          </article>
+
+          <!-- Item 6: Radio Garden 链接 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/16 12:20</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug truncate">Radio Garden · 转动地球收听各地电台</h2>
+              <span class="text-[12px] text-secondary mt-1">链接 · radio.garden · #声音</span>
+            </div>
+          </article>
+
+          <!-- Item 7: 旧书店堆到天花板的书脊 照片 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/14 18:30</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug truncate">旧书店堆到天花板的书脊</h2>
+              <span class="text-[12px] text-secondary mt-1">照片 · #书 #城市</span>
+            </div>
+            <img src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ" alt="旧书店堆到天花板的书脊" class="w-[48px] h-[60px] object-cover flex-shrink-0 bg-neutral-100" />
+          </article>
+
+          <!-- Item 8: aqua 歌 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/12 08:05</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug truncate">aqua</h2>
+              <span class="text-[12px] text-secondary mt-1">歌 · 坂本龙一 · #声音 #重复</span>
+            </div>
+            <img src="https://lh3.googleusercontent.com/aida/AEtjO1VNEkLPApRT2dQX1op0NyFcM1bZ3Wb1flttLMHNs6ZLxYDwcuq2hA5hv5m6C7Mrm0XXoFtc7YEP_ED7laokNuVr0YjdCyfGi5D8QwliBG7Yty90-4KUAiaJlKxmXe6c9j_D3LLWHjVLQI7eWSKv3KSVyODK4u98e85qmxxewgpFd8SecCh-nflYNXZ79Sfc-RDOs45VQFBNXgyd02zLaJmieCcwNLkydiFGzfyw6arSk1mhClS41HzL9PE" alt="aqua" class="w-[48px] h-[60px] object-cover flex-shrink-0 bg-neutral-100" />
+          </article>
+        </div>
+      </section>
+
+      <!-- Group 3: 10/05 — 10/11 (2 穗) -->
+      <section class="w-full">
+        <!-- Group Header -->
+        <div class="flex items-baseline justify-between border-b border-black pb-1 mb-3">
+          <span class="text-[12px] text-secondary font-medium tracking-tight">10/05 — 10/11</span>
+          <span class="text-[11px] text-secondary">2 穗</span>
+        </div>
+
+        <div class="flex flex-col divide-y divide-[#F0F0F0]">
+          <!-- Item 9: 《一一》 电影 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/09 21:30</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug truncate">《一一》</h2>
+              <span class="text-[12px] text-secondary mt-1">电影 · 2000 · 杨德昌 · #夜里 #城市</span>
+            </div>
+            <img src="https://lh3.googleusercontent.com/aida/AEtjO1VIxP_AS_m2Q0g_Ne7PJQkOCurfb6jpWH2Pprj9MF9rE2TC5uWot9QJSKNdmEDINXzXLQgu6YFk0hbb40-KG2BvUCvrHOtbxbjakFe-uV0jhUHXY5GNRGV3quQDwEtTrp1B_I1iE15ELfUiU8G-std6vy3aisMqbZZsW1xcme9aKGqvLvXAitWXdMaQUTB9mdOyEfoqI2XCCXulrwyp310CK10kRPl6AbNPDy-IJixWQ04od9zVPwsWFQ" alt="《一一》" class="w-[48px] h-[60px] object-cover flex-shrink-0 bg-neutral-100" />
+          </article>
+
+          <!-- Item 10: 外卖小票 想法 -->
+          <article class="py-3 flex items-start justify-between">
+            <div class="flex flex-col pr-3 flex-1 min-w-0">
+              <span class="text-[12px] text-secondary font-normal tracking-tight mb-1">10/05 20:12</span>
+              <h2 class="text-[16px] font-medium text-black leading-snug">“把外卖小票上的备注收集成一本诗集”</h2>
+              <span class="text-[12px] text-secondary mt-1">想法 · #书 #重复</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Minimal Footer -->
+      <footer class="pt-6 pb-2 text-center text-[11px] text-secondary">
+        © 2026 Q1f730
+      </footer>
+    </main>
+
+    <!-- Persistent Bottom Area: Quick-Capture & Nav -->
+    <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] bg-white z-50">
+      <!-- Quick-capture Line -->
+      <div class="border-t border-black px-4 py-2.5 flex items-center justify-between bg-white">
+        <span class="text-[13px] text-secondary select-none">随手拾一穗</span>
+        <button class="text-[13px] text-black font-medium tracking-wider p-0 bg-transparent border-0 cursor-pointer">拾</button>
+      </div>
+
+      <!-- Five-word Text Bottom Navigation -->
+      <nav class="border-t border-[#F0F0F0] bg-white px-4 py-3 flex justify-between items-center text-[12px] select-none">
+        <span class="text-black font-semibold underline-active cursor-pointer">穗仓</span>
+        <span class="text-secondary hover:text-black cursor-pointer">嫁接</span>
+        <span class="text-secondary hover:text-black cursor-pointer">新枝</span>
+        <span class="text-secondary hover:text-black cursor-pointer">口味</span>
+        <span class="text-secondary hover:text-black cursor-pointer">设置</span>
+      </nav>
+    </div>
+
+  </div>
+</body>
+</html>
