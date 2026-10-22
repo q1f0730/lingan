@@ -1260,6 +1260,131 @@ async function modes() {
   await c3.close();
 }
 
+// v0.19 我的套路墙：口味页加词 → 嫁接（模拟模型故意写进墙上的词）→ 新枝里没有；模型列出的套路自动上墙；划掉 / 恢复；离线同样遵守
+async function wallCount(pg) {
+  const t = await pg.locator('.wall-title').innerText({ timeout: 4000 }).catch(() => '');
+  const m = t.match(/\((\d+)\)/);
+  return m ? Number(m[1]) : -1;
+}
+// 新枝本身的文字（不含「因为这几穗」里的穗名——穗名是用户自己的，不归新枝管）
+const branchOwnText = (pg) => pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => [...e.querySelectorAll('.idea-title, .idea-body, .idea-form, .idea-bridge, .idea-unlike, .idea-exp, .idea-step, .idea-oblique')].map((x) => x.innerText).join('\n')).join('\n'));
+async function wall() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[wall] pageerror ${e.message}`));
+  const origin = new URL(base).origin;
+  await pg.goto(base);
+  await pg.evaluate((v) => localStorage.setItem('lingan.settings.v1', v), MOCK_SETTINGS(origin));
+  const log = await mockAI(pg, { delay: 100 });
+  // 记下每次第 2 步调用的 system prompt
+  const sysC = [];
+  pg.on('request', (r) => {
+    if (!r.url().includes('/mock-ai/v1/chat/completions')) return;
+    try { const sys = JSON.parse(r.postData() || '{}').messages?.[0]?.content || ''; if (sys.includes('PHASE C')) sysC.push(sys); } catch { /* */ }
+  });
+  await pg.reload();
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  await pg.click('.nav-btn:has-text("口味")');
+  await pg.waitForSelector('.wall');
+  if ((await wallCount(pg)) !== 0) errs.push(`[wall] fresh wall should be (0) got ${await wallCount(pg)}`);
+  if (!(await pg.locator('.wall-empty').count())) errs.push('[wall] empty hint missing');
+  await studio(pg, 'wall-taste');
+  // 太短的拒绝
+  await pg.fill('.wall-input', '雨');
+  await pg.click('.wall-add-btn');
+  await pg.waitForSelector('.toast:has-text("至少两个字")', { timeout: 3000 }).catch(() => errs.push('[wall] too-short word not refused'));
+  // 加一个讨厌的词：模拟模型的第一根新枝标题 / 正文 / 小实验里都有「小票」
+  await pg.fill('.wall-input', '小票');
+  await pg.press('.wall-input', 'Enter');
+  await pg.waitForSelector('.wall-row[data-key="小票"]', { timeout: 3000 }).catch(() => errs.push('[wall] added word not on wall'));
+  if ((await wallCount(pg)) !== 1) errs.push(`[wall] wall count after add expected 1 got ${await wallCount(pg)}`);
+  if (!(await pg.locator('.wall-row[data-key="小票"] .wall-src').innerText()).includes('我加的')) errs.push('[wall] user word should say 我加的');
+  const rows0 = await dbRaw(pg, 'cliches');
+  if (rows0.length !== 1 || rows0[0].source !== 'user') errs.push(`[wall] db cliches after add ${JSON.stringify(rows0)}`);
+  // 嫁接（AI 模拟）
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls button:has-text("抽几穗")');
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 20000 }).catch(() => errs.push('[wall] graft did not finish'));
+  const txt = await branchOwnText(pg).catch(() => '');
+  if (txt.includes('小票')) errs.push('[wall] branch text still contains wall word 小票');
+  if ((await pg.locator('.three .idea').count()) !== 3) errs.push('[wall] expected 3 branches');
+  if (!sysC.length || !sysC.every((x) => x.includes('FORBIDDEN — 我的套路墙') && x.includes('「小票」'))) errs.push(`[wall] FORBIDDEN wall missing from prompt (${sysC.length} calls)`);
+  if (log.phases.join('') !== 'ACC') errs.push(`[wall] expected one rewrite after hitting the wall, phases ${log.phases.join('')}`);
+  const devs = (await dbRaw(pg, 'developments')).sort((x, y) => y.createdAt - x.createdAt).slice(0, 3);
+  for (const d of devs) {
+    const all = [d.idea.title, d.idea.idea, d.idea.bridge, d.idea.form, d.idea.unlike, d.idea.experiment, d.idea.firstStep].join('\n');
+    if (all.includes('小票')) errs.push(`[wall] stored branch contains 小票: ${d.idea.title}`);
+  }
+  if (!devs.some((d) => d.idea.wall)) errs.push('[wall] no branch marked as replaced / scrubbed');
+  if (!(await pg.locator('.three .wall-badge').count())) errs.push('[wall] replaced branch should carry a 撞墙 note');
+  await pg.waitForSelector('.toast:has-text("撞了套路墙")', { timeout: 3000 }).catch(() => errs.push('[wall] wall toast missing'));
+  const go = await pg.locator('.wall-go').innerText().catch(() => '');
+  if (!go.includes('(4)')) errs.push(`[wall] result link should show 套路墙 (4) got "${go}"`);
+  await pg.screenshot({ path: `${out}/wall-graft-result.png`, fullPage: true });
+  // 模型列出的 3 个套路自动上墙
+  await pg.click('.wall-go');
+  await pg.waitForSelector('.wall');
+  if ((await wallCount(pg)) !== 4) errs.push(`[wall] wall should be (4) after graft got ${await wallCount(pg)}`);
+  const rows = await dbRaw(pg, 'cliches');
+  for (const k of ['雨夜霓虹的孤独', '遗憾的错过', '城市里的陌生人']) if (!rows.some((r) => r.key === k && r.source === 'ai' && r.listed === 1)) errs.push(`[wall] model cliche ${k} not deposited`);
+  const xp = rows.find((r) => r.key === '小票');
+  if (!xp || !(xp.blocked >= 1)) errs.push(`[wall] 小票 should be counted as blocked ${JSON.stringify(xp)}`);
+  if ((await pg.locator('.wall-table .wall-row').count()) !== 4) errs.push('[wall] wall table rows != 4');
+  await pg.screenshot({ path: `${out}/wall-taste.png`, fullPage: true });
+  // 划掉误伤的 → (3)，「划掉的 (1)」里能恢复
+  await pg.click('.wall-row[data-key="遗憾的错过"] .wall-strike');
+  await pg.waitForFunction(() => /\(3\)/.test(document.querySelector('.wall-title')?.textContent || ''), null, { timeout: 3000 }).catch(() => errs.push('[wall] strike did not drop count to 3'));
+  await pg.click('.wall-struck-toggle');
+  await pg.waitForSelector('.wall-row.struck[data-key="遗憾的错过"]', { timeout: 3000 }).catch(() => errs.push('[wall] struck row not listed'));
+  await pg.screenshot({ path: `${out}/wall-struck.png`, fullPage: true });
+  await pg.click('.wall-row.struck[data-key="遗憾的错过"] .wall-restore');
+  await pg.waitForFunction(() => /\(4\)/.test(document.querySelector('.wall-title')?.textContent || ''), null, { timeout: 3000 }).catch(() => errs.push('[wall] restore did not bring count back to 4'));
+  await pg.click('.wall-row[data-key="遗憾的错过"] .wall-strike');
+  // 第二次嫁接：划掉的不进 FORBIDDEN，墙上的进
+  sysC.length = 0;
+  log.phases.length = 0;
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls .shuffle');
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 20000 });
+  await pg.waitForTimeout(300);
+  const last = sysC[sysC.length - 1] || '';
+  if (!last.includes('「雨夜霓虹的孤独」') || last.includes('「遗憾的错过」')) errs.push('[wall] second graft FORBIDDEN should include wall and skip struck');
+  if ((await branchOwnText(pg)).includes('小票')) errs.push('[wall] second graft contains 小票');
+  await ctx.close();
+
+  // 离线：加「做成」（离线句式每根都会写「做成…」），断网无 key 嫁接 → 三根都没有
+  const c2 = await b.newContext({ viewport: { width: 1366, height: 860 } });
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[wall-offline] pageerror ${e.message}`));
+  await c2.route('**/*', (r) => (r.request().url().startsWith(origin) ? r.continue() : r.abort()));
+  await p2.goto(base);
+  await p2.click('text=先放点示例');
+  await p2.waitForSelector('.card[data-sample="1"]');
+  await c2.setOffline(true);
+  await p2.click('.nav-btn:has-text("口味")');
+  await p2.waitForSelector('.wall');
+  await p2.fill('.wall-input', '做成');
+  await p2.click('.wall-add-btn');
+  await p2.waitForSelector('.wall-row[data-key="做成"]', { timeout: 3000 }).catch(() => errs.push('[wall-offline] word not added'));
+  await p2.screenshot({ path: `${out}/wall-desktop-taste.png`, fullPage: true });
+  for (let k = 0; k < 2; k++) {
+    await p2.click('.nav-btn:has-text("嫁接")');
+    await p2.click('.controls .shuffle');
+    await p2.click('.graft-btn');
+    await p2.waitForSelector('.three .idea', { timeout: 10000 }).catch(() => errs.push('[wall-offline] offline graft failed'));
+    const t2 = await p2.locator('.three').innerText().catch(() => '');
+    if ((await branchOwnText(p2)).includes('做成')) errs.push('[wall-offline] offline branch contains 做成');
+    if (!t2.includes('离线嫁接')) errs.push('[wall-offline] expected offline graft');
+    const spr = await p2.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => e.querySelectorAll('.sprig').length));
+    if (spr.length !== 3 || spr.some((n) => n < 3)) errs.push(`[wall-offline] provenance ${spr}`);
+  }
+  await p2.screenshot({ path: `${out}/wall-desktop-offline.png` });
+  await c2.close();
+}
+
 async function legacy() {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
   const pg = await ctx.newPage();
@@ -1284,7 +1409,7 @@ async function legacy() {
       its.add({ id: 2, type: 'music', title: '旧歌', tags: [], createdAt: now - 9e7, updatedAt: now });
       its.add({ id: 3, type: 'idea', title: '旧念头', tags: [], createdAt: now - 9e7, updatedAt: now });
       const dvs = tx.objectStore('developments');
-      dvs.add({ itemIds: [1, 2], jump: 0.5, idea: { title: '早先的一根', bridge: '旧桥', idea: '旧片子和旧歌接在一起', cliches: [] }, source: 'ai', createdAt: now - 8e7 });
+      dvs.add({ itemIds: [1, 2], jump: 0.5, idea: { title: '早先的一根', bridge: '旧桥', idea: '旧片子和旧歌接在一起', cliches: ['旧套路甲', '「旧套路乙」'] }, source: 'ai', createdAt: now - 8e7 });
       dvs.add({ itemIds: [1, 2, 3], jump: 0.5, idea: { title: '三枝里的一根', bridge: '', idea: '旧念头', cliches: [], refs: [1, 3], transform: 'invert' }, source: 'offline', createdAt: now - 7e7, batch: { id: 'gold', index: 0, size: 1, tensions: [{ text: 't', refs: [1] }], seeds: [] } });
       tx.oncomplete = () => { db.close(); res(null); };
       tx.onerror = () => rej(tx.error);
@@ -1305,7 +1430,10 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 60) errs.push(`[legacy] db version expected 60 (Dexie v6) got ${ver}`);
+  if (ver !== 70) errs.push(`[legacy] db version expected 70 (Dexie v7) got ${ver}`);
+  // v0.19 旧新枝里列过的套路迁移上墙
+  const lw = (await dbRaw(pg, 'cliches')).map((c) => c.key).sort();
+  if (JSON.stringify(lw) !== JSON.stringify(['旧套路乙', '旧套路甲'].sort())) errs.push(`[legacy] wall backfill ${JSON.stringify(lw)}`);
   // v0.18 旧新枝回填嫁接次数：#1 两次（单根 + 一批），#2 两次，#3 一次
   const gc = (await dbRaw(pg, 'items')).sort((x, y) => x.id - y.id).map((x) => x.graftCount);
   if (JSON.stringify(gc) !== '[2,2,1]') errs.push(`[legacy] graftCount backfill expected [2,2,1] got ${JSON.stringify(gc)}`);
@@ -1533,7 +1661,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 60) errs.push(`[perf] db version (expected 60 = Dexie v6) ${integ.version}`);
+  if (integ.version !== 70) errs.push(`[perf] db version (expected 70 = Dexie v7) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
@@ -1627,6 +1755,8 @@ try {
   if (process.env.E2E_ONLY === 'obsidian') throw Object.assign(new Error('obsidian only'), { only: true });
   await modes();
   if (process.env.E2E_ONLY === 'modes') throw Object.assign(new Error('modes only'), { only: true });
+  await wall();
+  if (process.env.E2E_ONLY === 'wall') throw Object.assign(new Error('wall only'), { only: true });
   await legacy();
   await daily();
   if (process.env.E2E_ONLY === 'daily') throw Object.assign(new Error('daily only'), { only: true });
