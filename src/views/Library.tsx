@@ -6,8 +6,8 @@ import { PageTitle } from '../components/PageTitle';
 import { QuickBar } from '../components/QuickBar';
 import { VirtualList, VirtualMasonry } from '../components/Virtual';
 import { estimateCardHeight } from '../lib/virtual';
-import { addItem, db } from '../lib/db';
-import { SAMPLES } from '../lib/samples';
+import { DailyCard } from '../components/DailyCard';
+import { addSamples, clearSamples, db } from '../lib/db';
 import { staggerDelay } from '../lib/motion';
 import { groupByDay, throwbacks } from '../lib/memory';
 import { PHASE_LABEL, PHASE_WHISPER } from '../lib/phases';
@@ -40,7 +40,8 @@ export function Library() {
     return items.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)) && (!k || itemText(i).toLowerCase().includes(k)));
   }, [items, q, type, tag]);
 
-  const backs = useMemo(() => (items ? throwbacks(items) : []), [items]);
+  // 示例不是你拾的：不进「一周前 / 那年今天」
+  const backs = useMemo(() => (items ? throwbacks(items.filter((i) => !i.sample)) : []), [items]);
   const days = useMemo(() => (timeline ? groupByDay(filtered) : []), [timeline, filtered]);
   const now = new Date();
   // 冷启动打点：第一次把穗仓（含卡片）画出来的时刻，e2e 读它
@@ -66,9 +67,17 @@ export function Library() {
   const cellStyle = useCallback((i: number): CSSProperties => (firstPaint.current && i < STAGGER_FIRST ? ({ '--i': staggerDelay(i, 60) } as CSSProperties) : { animation: 'none' }), []);
   const todayN = items ? items.filter((i) => new Date(i.createdAt).toDateString() === now.toDateString()).length : 0;
 
+  const nSamples = items ? items.filter((i) => i.sample).length : 0;
   async function loadSamples() {
-    for (const s of SAMPLES) await addItem(s);
-    toast('放进了 10 穗示例，随时可以删');
+    const ids = await addSamples(10);
+    toast(`放进了 ${ids.length} 穗示例（标着「示例」），随时一键清掉`);
+  }
+  async function dropSamples(again = false) {
+    const r = await clearSamples();
+    if (again) {
+      await addSamples(10);
+      toast('换了一批示例');
+    } else toast(`清掉了 ${r.items} 穗示例，只留你自己的`);
   }
 
   if (!items) return <AsciiLoader />;
@@ -85,6 +94,22 @@ export function Library() {
         )}
       </p>
       <QuickBar />
+      {items.length > 0 && <DailyCard items={items} />}
+      {nSamples > 0 && (
+        <div className="paper throwback samples-bar">
+          <span className="dim">
+            穗仓里有 {nSamples} 穗示例{nSamples === items.length ? '，拾下自己的第一穗之后就可以清掉' : ''}
+          </span>
+          <div className="actions">
+            <button className="btn ghost small samples-clear" onClick={() => dropSamples()}>
+              清掉示例
+            </button>
+            <button className="btn ghost small samples-again" onClick={() => dropSamples(true)}>
+              换一批
+            </button>
+          </div>
+        </div>
+      )}
       {backs.map((b) => (
         <div key={b.label} className="paper throwback">
           <div className="kicker">{b.label}</div>
