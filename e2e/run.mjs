@@ -51,9 +51,31 @@ const MOCK_CONV = {
   ],
   cliches: ['雨夜霓虹的孤独', '遗憾的错过', '城市里的陌生人'],
 };
-async function mockAI(pg, { fail429 = 0, delay = 500 } = {}) {
+// v0.12 溯源：模拟模型从 prompt 里读出真实素材 ID（[#12 | …] 标题），refs 一律换成真实 ID；
+// evidence = 'ok' 正常引用 3 件；'recheck' 第一次不带 ID、重来一次后正常；'weak' 重来后仍有两根不带 / 编造 ID
+function withIds(obj, ids, titles, cMode) {
+  const o = JSON.parse(JSON.stringify(obj));
+  const real = (refs) => {
+    const out = refs.map((r) => ids[(r - 1) % ids.length]);
+    for (const x of ids) if (out.length < Math.min(3, ids.length) && !out.includes(x)) out.push(x);
+    return [...new Set(out)];
+  };
+  for (const t of o.tensions || []) t.refs = real(t.refs);
+  for (const t of o.seeds || []) t.refs = real(t.refs);
+  for (const t of o.replaced || []) t.refs = real(t.refs);
+  (o.branches || []).forEach((b, i) => {
+    b.refs = real(b.refs);
+    if (i === 0 && titles.length >= 2) b.idea = `取《${titles[0]}》里的停顿和${titles[1]}的手感：` + b.idea;
+    if (cMode === 'noid') delete b.refs;
+    if (cMode === 'weak' && i === 2) delete b.refs;
+    if (cMode === 'weak' && i === 3) b.refs = [ids[0], 987654];
+  });
+  return o;
+}
+async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok' } = {}) {
   const log = { calls: 0, phases: [] };
   let left = fail429;
+  let cCalls = 0;
   await pg.route('**/mock-ai/v1/chat/completions', async (route) => {
     const body = JSON.parse(route.request().postData() || '{}');
     const sys = String(body.messages?.[0]?.content || '');
@@ -62,7 +84,16 @@ async function mockAI(pg, { fail429 = 0, delay = 500 } = {}) {
     await new Promise((r) => setTimeout(r, delay));
     const a = sys.includes('PHASE A');
     log.phases.push(a ? 'A' : sys.includes('PHASE C') ? 'C' : '?');
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message: { content: '```json\n' + JSON.stringify(a ? MOCK_MAP : MOCK_CONV) + '\n```' } }] }) });
+    const user = String(body.messages?.[1]?.content || '');
+    const found = [...user.matchAll(/\[#(\d+) \|[^\]]*\] ([^\n]+)/g)];
+    const ids = [...new Set(found.map((m) => Number(m[1])))];
+    const titles = found.map((m) => m[2].trim());
+    log.ids = ids;
+    if (!a) cCalls++;
+    if (!a && sys.includes('上一次的回答里')) log.recheckPrompt = true;
+    const cMode = a ? 'ok' : evidence === 'recheck' && cCalls === 1 ? 'noid' : evidence === 'weak' ? (cCalls === 1 ? 'noid' : 'weak') : 'ok';
+    const payload = withIds(a ? MOCK_MAP : MOCK_CONV, ids, titles, cMode);
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message: { content: '```json\n' + JSON.stringify(payload) + '\n```' } }] }) });
   });
   return log;
 }
@@ -197,12 +228,18 @@ async function run(name, viewport) {
     });
     if (!rp) errs.push(`[${name}] ripple missing`);
   }
+  // v0.12 从一穗出发也会凑够 3 穗；离线新枝同样能点回 ≥3 穗
+  const offPicked = await pg.locator('.graft .pair-item').count();
+  if (offPicked !== 3) errs.push(`[${name}] graft from one item should pick 3, got ${offPicked}`);
+  await pg.waitForSelector('.three .idea .sprig', { timeout: 5000 }).catch(() => errs.push(`[${name}] offline sprigs missing`));
+  const offSpr = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ n: e.querySelectorAll('.sprig').length, ev: e.dataset.evidence })));
+  if (offSpr.some((x) => x.n < 3 || x.ev !== 'ok')) errs.push(`[${name}] offline provenance wrong ${JSON.stringify(offSpr)}`);
   await pg.click('.idea button:has-text("收藏")');
   await pg.click('text=重新抽穗');
-  await pg.click('.seg button:has-text("3")');
+  await pg.click('.seg button:has-text("4")');
   await pg.click('text=重新抽穗');
   const negs = await pg.locator('.graft .pair-item').count();
-  if (negs !== 3) errs.push(`[${name}] expected 3 picked got ${negs}`);
+  if (negs !== 4) errs.push(`[${name}] expected 4 picked got ${negs}`);
   await pg.click('.graft-btn');
   await pg.waitForSelector('.after-note');
   await brand(pg, name);
@@ -216,7 +253,7 @@ async function run(name, viewport) {
   if (nb !== 2) errs.push(`[${name}] expected 2 graft batches got ${nb}`);
   // v0.11 一次三枝 · 模拟模型：第 1 次 429 → 退避重试；2 次正式调用（A+B / C+D）；模型撞了变形也要修成三根两两不同
   await pg.evaluate((v) => localStorage.setItem('lingan.settings.v1', v), MOCK_SETTINGS(new URL(base).origin));
-  const ai = await mockAI(pg, { fail429: 1, delay: 700 });
+  const ai = await mockAI(pg, { fail429: 1, delay: 700, evidence: 'recheck' });
   await pg.reload();
   await pg.waitForSelector('.view');
   await pg.click('.nav-btn:has-text("嫁接")');
@@ -226,6 +263,8 @@ async function run(name, viewport) {
   await pg.waitForSelector('.growing .grow-line:has-text("秒后再试")', { timeout: 4000 }).catch(() => errs.push(`[${name}] retry notice missing`));
   if ((await pg.locator('.grow-steps li').count()) !== 4) errs.push(`[${name}] expected 4 grow steps`);
   await pg.waitForSelector('.growing[data-stage="defix"]', { timeout: 8000 }).catch(() => errs.push(`[${name}] stage defix never shown`));
+  // v0.12 第一次回答没带素材 ID → 界面提示重长一次
+  await pg.waitForSelector('.growing[data-recheck="1"]', { timeout: 8000 }).catch(() => errs.push(`[${name}] evidence recheck notice missing`));
   await pg.waitForSelector('.three .idea', { timeout: 15000 });
   const three = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ t: e.dataset.transform, src: e.querySelector('.idea-src')?.textContent, exp: !!e.querySelector('.idea-exp'), un: !!e.querySelector('.idea-unlike'), title: e.querySelector('.idea-title .decode')?.getAttribute('aria-label') || e.querySelector('.idea-title')?.textContent })));
   if (three.length !== 3) errs.push(`[${name}] AI graft expected 3 branches got ${three.length}`);
@@ -233,16 +272,64 @@ async function run(name, viewport) {
   if (three.some((x) => x.src !== 'AI 嫁接')) errs.push(`[${name}] AI branch source wrong ${three.map((x) => x.src)}`);
   if (three.some((x) => !x.exp || !x.un)) errs.push(`[${name}] branch missing experiment/unlike`);
   if (three.some((x) => (x.title || '').includes('撞了变形'))) errs.push(`[${name}] duplicate-transform branch not dropped`);
-  if (ai.calls !== 3 || ai.phases.join('') !== 'AC') errs.push(`[${name}] AI calls expected 3 (429+A+C) got ${ai.calls} ${ai.phases.join('')}`);
+  if (ai.calls !== 4 || ai.phases.join('') !== 'ACC') errs.push(`[${name}] AI calls expected 4 (429+A+C+C recheck) got ${ai.calls} ${ai.phases.join('')}`);
+  if (!ai.recheckPrompt) errs.push(`[${name}] recheck prompt did not tell the model what was wrong`);
+  // v0.12 溯源：每根 AI 新枝都能点回 ≥3 件自己的穗，且都在这次嫁接的素材里
+  const picked = await pg.evaluate(() => [...document.querySelectorAll('.graft .pair-item .card-title')].map((e) => e.textContent));
+  const prov = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ ev: e.dataset.evidence, ids: [...e.querySelectorAll('.sprig[data-item-id]')].map((x) => Number(x.dataset.itemId)), titles: [...e.querySelectorAll('.sprig .sprig-title')].map((x) => x.textContent), weak: !!e.querySelector('.sprigs-weak') })));
+  for (const [i, p] of prov.entries()) {
+    if (p.ev !== 'ok' || p.weak) errs.push(`[${name}] AI branch ${i} evidence ${p.ev}`);
+    if (new Set(p.ids).size < 3) errs.push(`[${name}] AI branch ${i} points back to ${p.ids.length} ears`);
+    if (p.ids.some((x) => !ai.ids.includes(x))) errs.push(`[${name}] AI branch ${i} sprig not from this graft ${p.ids} vs ${ai.ids}`);
+    if (p.titles.some((t) => !picked.some((q) => (q || '').includes(t) || t.includes((q || '').replace(/^「|」$/g, ''))))) errs.push(`[${name}] sprig titles ${p.titles} not among picked ${picked}`);
+  }
+  // 正文里提到的穗：悬停（桌面）/ 点按（手机）时对应那一穗亮起
+  await pg.waitForSelector('.three .idea .mention', { timeout: 9000 }).catch(() => errs.push(`[${name}] mention not marked in body`));
+  if (await pg.locator('.three .idea .mention').count()) {
+    const m0 = pg.locator('.three .idea .mention').first();
+    const mid = await m0.getAttribute('data-item-id');
+    if (viewport.width < 760) await m0.click();
+    else await m0.hover();
+    const lit = await pg.locator(`.three .idea:has(.mention[data-item-id="${mid}"]) .sprig.on[data-item-id="${mid}"]`).count();
+    if (lit !== 1) errs.push(`[${name}] mention did not light up its sprig (${mid})`);
+  }
+  // 点穗卡 → 直达那件穗的详情
+  const firstSprig = pg.locator('.three .idea').first().locator('.sprig[data-item-id]').first();
+  const sprigTitle = await firstSprig.locator('.sprig-title').innerText();
+  await firstSprig.click();
+  await pg.waitForSelector('.detail', { timeout: 3000 }).catch(() => errs.push(`[${name}] sprig did not open detail`));
+  const dtl = await pg.locator('.sheet').innerText().catch(() => '');
+  if (!dtl.includes(sprigTitle)) errs.push(`[${name}] detail is not ${sprigTitle}`);
+  await pg.screenshot({ path: `${out}/${name}-3c-sprig-detail.png` });
+  await pg.click('.sheet .icon-btn[aria-label="关闭"]');
   await pg.click('.view > .trail summary');
   const trail = await pg.evaluate(() => ({ t: document.querySelectorAll('.view > .trail .trail-tensions li').length, s: document.querySelectorAll('.view > .trail .trail-seeds li').length, r: document.querySelectorAll('.view > .trail .trail-seeds li.replaced').length, c: document.querySelectorAll('.view > .trail .trail-seeds li.chosen').length }));
   if (trail.t !== 4 || trail.s !== 8 || trail.r !== 3 || trail.c !== 3) errs.push(`[${name}] trail wrong ${JSON.stringify(trail)}`);
   if (!(await pg.locator('.cliches-row s').count())) errs.push(`[${name}] cliches row missing`);
   await pg.screenshot({ path: `${out}/${name}-3b-three.png`, fullPage: true });
   await brand(pg, name);
+  // v0.12 故意喂不带 / 编造 ID 的回答：重来一次仍不行 → 两根标「证据不足」，不假装正常
+  await pg.unroute('**/mock-ai/v1/chat/completions');
+  const bad = await mockAI(pg, { delay: 200, evidence: 'weak' });
+  await pg.click('text=重新抽穗');
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 15000 });
+  await pg.waitForTimeout(300);
+  const wk = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ ev: e.dataset.evidence, badge: e.querySelector('.weak-badge')?.textContent, note: e.querySelector('.sprigs-weak')?.textContent || '' })));
+  if (bad.calls !== 3 || bad.phases.join('') !== 'ACC') errs.push(`[${name}] weak run should retry exactly once, got ${bad.phases.join('')}`);
+  if (wk.filter((x) => x.ev === 'weak').length !== 2) errs.push(`[${name}] expected 2 weak branches ${JSON.stringify(wk.map((x) => x.ev))}`);
+  if (wk.filter((x) => x.ev === 'weak').some((x) => x.badge !== '证据不足' || !x.note.includes('证据不足'))) errs.push(`[${name}] weak branch not labelled 证据不足`);
+  if (wk.filter((x) => x.ev === 'ok').length !== 1) errs.push(`[${name}] expected 1 ok branch in weak run`);
+  await pg.waitForSelector('.toast:has-text("证据不足")', { timeout: 3000 }).catch(() => errs.push(`[${name}] weak toast missing`));
+  await pg.screenshot({ path: `${out}/${name}-3d-weak.png`, fullPage: true });
   await pg.click('.nav-btn:has-text("新枝")');
   await pg.waitForSelector('.hbatch');
-  if ((await pg.locator('.hbatch').count()) !== 3) errs.push(`[${name}] expected 3 batches after AI graft`);
+  if ((await pg.locator('.hbatch').count()) !== 4) errs.push(`[${name}] expected 4 batches after AI grafts`);
+  if ((await pg.locator('.hrow .hrow-weak').count()) !== 2) errs.push(`[${name}] branches page should flag 2 weak rows`);
+  // 新枝页里展开一根，同样能点回穗
+  await pg.locator('.hbatch >> nth=1 >> .hrow-head').first().click();
+  await pg.waitForFunction(() => document.querySelectorAll('.hrow.open .sprig[data-item-id]').length >= 3, null, { timeout: 4000 }).catch(async () => errs.push(`[${name}] history row sprigs < 3 (${await pg.locator('.hrow.open .sprig[data-item-id]').count()})`));
+  await pg.locator('.hrow.open .hrow-head').click();
   await pg.click('.hbatch >> nth=0 >> .hbatch-star');
   await pg.waitForSelector('.toast:has-text("三根都收藏了")', { timeout: 3000 }).catch(() => errs.push(`[${name}] star-all toast missing`));
   await pg.click('.chip:has-text("只看收藏")');
@@ -378,7 +465,7 @@ async function shots() {
   await pg.screenshot({ path: `${out}/shot-library.png` });
   await pg.click('.nav-btn:has-text("嫁接")');
   await mockAI(pg, { delay: 2600 });
-  await pg.click('text=嫁接今日两穗');
+  await pg.click('text=嫁接今日三穗');
   await pg.waitForSelector('.growing');
   await pg.waitForTimeout(2000);
   await pg.evaluate(() => { const el = document.querySelector('.growing'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 220); });
@@ -390,6 +477,11 @@ async function shots() {
   await pg.evaluate(() => { const el = document.querySelector('.three-head'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 10); });
   await pg.waitForTimeout(500);
   await pg.screenshot({ path: `${out}/shot-graft.png` });
+  // v0.12 截图：第一根新枝的「因为这几穗」，正文里点一下提到的穗让它亮起来
+  await pg.evaluate(() => { const el = document.querySelector('.three .idea .idea-body'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 90); });
+  await pg.locator('.three .idea').first().locator('.mention').first().click().catch(() => {});
+  await pg.waitForTimeout(700);
+  await pg.screenshot({ path: `${out}/shot-provenance.png` });
   await pg.click('.nav-btn:has-text("口味")');
   await pg.waitForSelector('.heat-grid');
   await pg.waitForTimeout(600);
@@ -397,7 +489,58 @@ async function shots() {
   await ctx.close();
 }
 
+// v0.12 兼容旧数据：先在同源页面用 v0.11 的库结构（Dexie version 1 = IndexedDB 10）写入旧新枝，再打开 App
+async function legacy() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[legacy] pageerror ${e.message}`));
+  await pg.goto(new URL('favicon.svg', base).href);
+  await pg.evaluate(() => new Promise((res, rej) => {
+    const r = indexedDB.open('lingan', 10);
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      const it = db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+      it.createIndex('type', 'type'); it.createIndex('createdAt', 'createdAt'); it.createIndex('updatedAt', 'updatedAt'); it.createIndex('tags', 'tags', { multiEntry: true });
+      const dv = db.createObjectStore('developments', { keyPath: 'id', autoIncrement: true });
+      dv.createIndex('createdAt', 'createdAt'); dv.createIndex('starred', 'starred');
+    };
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => {
+      const db = r.result;
+      const tx = db.transaction(['items', 'developments'], 'readwrite');
+      const now = Date.now();
+      const its = tx.objectStore('items');
+      its.add({ id: 1, type: 'film', title: '旧片子', tags: [], createdAt: now - 9e7, updatedAt: now });
+      its.add({ id: 2, type: 'music', title: '旧歌', tags: [], createdAt: now - 9e7, updatedAt: now });
+      its.add({ id: 3, type: 'idea', title: '旧念头', tags: [], createdAt: now - 9e7, updatedAt: now });
+      const dvs = tx.objectStore('developments');
+      dvs.add({ itemIds: [1, 2], jump: 0.5, idea: { title: '早先的一根', bridge: '旧桥', idea: '旧片子和旧歌接在一起', cliches: [] }, source: 'ai', createdAt: now - 8e7 });
+      dvs.add({ itemIds: [1, 2, 3], jump: 0.5, idea: { title: '三枝里的一根', bridge: '', idea: '旧念头', cliches: [], refs: [1, 3], transform: 'invert' }, source: 'offline', createdAt: now - 7e7, batch: { id: 'gold', index: 0, size: 1, tensions: [{ text: 't', refs: [1] }], seeds: [] } });
+      tx.oncomplete = () => { db.close(); res(null); };
+      tx.onerror = () => rej(tx.error);
+    };
+  }));
+  await pg.goto(base);
+  await pg.waitForSelector('.view');
+  await pg.click('.nav-btn:has-text("新枝")');
+  await pg.waitForSelector('.hrow');
+  if ((await pg.locator('.hrow').count()) !== 2) errs.push('[legacy] old branches lost');
+  for (const t of ['早先的一根', '三枝里的一根']) {
+    await pg.locator(`.hrow-head:has-text("${t}")`).click();
+    await pg.waitForSelector('.hrow.open .sprig', { timeout: 3000 }).catch(() => errs.push(`[legacy] ${t} has no sprigs`));
+    const n = await pg.locator('.hrow.open .sprig[data-item-id]').count();
+    if (n !== 2) errs.push(`[legacy] ${t} expected 2 sprigs got ${n}`);
+    if (!(await pg.locator('.hrow.open .sprigs-note:has-text("早先长的")').count())) errs.push(`[legacy] ${t} legacy note missing`);
+    if (await pg.locator('.hrow.open .sprigs-weak').count()) errs.push(`[legacy] ${t} wrongly marked 证据不足`);
+    await pg.locator('.hrow.open .hrow-head').click();
+  }
+  const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
+  if (ver !== 20) errs.push(`[legacy] db version expected 20 (Dexie v2) got ${ver}`);
+  await ctx.close();
+}
+
 try {
+  await legacy();
   // v0.5 reduced-motion：系统要求减少动效时，档位必须是 off
   const rctx = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   const rpg = await rctx.newPage();
