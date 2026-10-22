@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>拾穗 · Glean</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-on-surface": "#283044",
+            "outline-variant": "#4c4452",
+            "primary-fixed-dim": "#ddb8ff",
+            "surface-container-highest": "#2d3449",
+            "surface-variant": "#2d3449",
+            "on-surface-variant": "#cec3d3",
+            "on-background": "#dae2fd",
+            "on-error-container": "#ffdad6",
+            "primary-fixed": "#f0dbff",
+            "secondary-fixed-dim": "#54d8e8",
+            "on-primary-container": "#500989",
+            "on-tertiary-container": "#413600",
+            "on-secondary-container": "#003b42",
+            "error": "#ffb4ab",
+            "on-primary": "#490081",
+            "on-primary-fixed": "#2c0051",
+            "primary-container": "#c084fc",
+            "on-error": "#690005",
+            "background": "#0b1326",
+            "tertiary": "#dcc66e",
+            "secondary-fixed": "#91f1ff",
+            "tertiary-fixed-dim": "#dcc66e",
+            "surface-container-high": "#222a3d",
+            "tertiary-container": "#b39f4b",
+            "surface-container-low": "#131b2e",
+            "surface-bright": "#31394d",
+            "primary": "#ddb8ff",
+            "inverse-primary": "#7b41b4",
+            "outline": "#978d9d",
+            "surface-container": "#171f33",
+            "on-tertiary-fixed": "#221b00",
+            "surface": "#0b1326",
+            "secondary-container": "#02aebe",
+            "surface-tint": "#ddb8ff",
+            "on-secondary-fixed": "#001f23",
+            "surface-container-lowest": "#060e20",
+            "inverse-surface": "#dae2fd",
+            "on-primary-fixed-variant": "#62259b",
+            "on-tertiary": "#3a3000",
+            "on-secondary-fixed-variant": "#004f57",
+            "on-surface": "#dae2fd",
+            "tertiary-fixed": "#f9e287",
+            "surface-dim": "#0b1326",
+            "error-container": "#93000a",
+            "on-secondary": "#00363c",
+            "secondary": "#54d8e8",
+            "on-tertiary-fixed-variant": "#534600"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-mobile": "1rem",
+            "gutter": "1.25rem",
+            "space-xl": "2.5rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem",
+            "gutter-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "display-lg-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "title-md": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom organic scroll & glow utilities */
+    body {
+      width: 390px;
+      height: 844px;
+      margin: 0 auto;
+      overflow: hidden;
+      background-color: #0b1326;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    
+    .celestial-canvas {
+      background: radial-gradient(circle at 50% 12%, rgba(46, 16, 101, 0.45) 0%, rgba(15, 23, 42, 0) 65%),
+                  radial-gradient(circle at 85% 65%, rgba(192, 132, 252, 0.12) 0%, rgba(11, 19, 38, 0) 50%),
+                  radial-gradient(circle at 10% 80%, rgba(84, 216, 232, 0.08) 0%, rgba(11, 19, 38, 0) 50%),
+                  linear-gradient(180deg, #060e20 0%, #0b1326 50%, #101935 100%);
+    }
+
+    .glass-card {
+      background: rgba(23, 31, 51, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(192, 132, 252, 0.18);
+    }
+
+    .glass-pill {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(103, 232, 249, 0.2);
+    }
+
+    .starlight-glow {
+      box-shadow: 0 0 20px -3px rgba(192, 132, 252, 0.35);
+    }
+
+    .lunar-halo {
+      box-shadow: 0 0 28px rgba(84, 216, 232, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    }
+
+    .star-node {
+      box-shadow: 0 0 8px #67e8f9, 0 0 16px rgba(103, 232, 249, 0.6);
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 0.35; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.18); }
+    }
+    .animate-star {
+      animation: pulse-subtle 4.5s ease-in-out infinite;
+    }
+    @keyframes drift {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+    .animate-drift {
+      animation: drift 6s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col w-[390px] h-[844px] bg-background text-on-surface overflow-hidden">
+<!-- Ambient Sky Canvas with Stardust & Celestial Gradients -->
+<div class="absolute inset-0 pointer-events-none celestial-canvas z-0">
+<!-- Star speckles -->
+<div class="absolute top-20 left-16 w-[1.5px] h-[1.5px] rounded-full bg-white opacity-40 animate-star"></div>
+<div class="absolute top-36 right-14 w-1 h-1 rounded-full bg-primary opacity-60 animate-star" style="animation-delay: 1.2s;"></div>
+<div class="absolute top-72 left-8 w-[2px] h-[2px] rounded-full bg-secondary opacity-50 animate-star" style="animation-delay: 2.1s;"></div>
+<div class="absolute top-[480px] right-8 w-1 h-1 rounded-full bg-tertiary-fixed opacity-40 animate-star" style="animation-delay: 3s;"></div>
+<div class="absolute top-[620px] left-12 w-[1.5px] h-[1.5px] rounded-full bg-white opacity-50 animate-star" style="animation-delay: 0.8s;"></div>
+<div class="absolute top-96 left-32 w-1 h-1 rounded-full bg-primary-fixed-dim opacity-30 animate-star" style="animation-delay: 2.5s;"></div>
+</div>
+<!-- Shared Component: TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-40 bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-md shadow-sm shadow-surface-container-lowest/50">
+<div class="flex justify-between items-center w-full px-margin-mobile py-space-sm max-w-md mx-auto">
+<!-- Leading: Glowing Avatar + Author handle -->
+<div class="flex items-center gap-space-sm">
+<div class="relative w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-primary/30 starlight-glow">
+<span class="material-symbols-outlined text-primary text-[18px]">bedtime</span>
+<span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-secondary shadow-[0_0_6px_#54d8e8]"></span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-md font-label-md text-primary tracking-wide">拾穗 · Glean</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/70 tracking-widest font-normal">@Q1f730</span>
+</div>
+</div>
+<!-- Trailing: Search Action -->
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container/50 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</button>
+</div>
+</header>
+<!-- Constellation SVG Paths Layer (Background connects items 1 to 6) -->
+<svg class="absolute inset-0 w-[390px] h-[844px] pointer-events-none z-10">
+<defs>
+<lineargradient id="starLineGrad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#c084fc" stop-opacity="0.28"></stop>
+<stop offset="50%" stop-color="#54d8e8" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#c084fc" stop-opacity="0.2"></stop>
+</lineargradient>
+</defs>
+<!-- Constellation lines dynamically drawn between items -->
+<!-- Photo (x:270, y:230) -> Film (x:105, y:300) -->
+<path d="M 235 235 Q 165 260 115 292" fill="none" stroke="url(#starLineGrad)" stroke-dasharray="3 2.5" stroke-width="0.85"></path>
+<!-- Film (x:115, y:345) -> Song (x:270, y:380) -->
+<path d="M 120 348 Q 200 360 250 376" fill="none" stroke="url(#starLineGrad)" stroke-dasharray="3 2.5" stroke-width="0.85"></path>
+<!-- Song (x:260, y:430) -> Quote (x:130, y:475) -->
+<path d="M 260 428 Q 190 450 140 475" fill="none" stroke="url(#starLineGrad)" stroke-dasharray="3 2.5" stroke-width="0.85"></path>
+<!-- Quote (x:140, y:535) -> Idea (x:255, y:565) -->
+<path d="M 145 538 Q 200 550 250 562" fill="none" stroke="url(#starLineGrad)" stroke-dasharray="3 2.5" stroke-width="0.85"></path>
+<!-- Idea (x:255, y:610) -> Link (x:130, y:642) -->
+<path d="M 245 610 Q 185 628 125 640" fill="none" stroke="url(#starLineGrad)" stroke-dasharray="3 2.5" stroke-width="0.85"></path>
+<!-- Constellation Star Nodes -->
+<circle class="animate-star" cx="235" cy="235" fill="#67e8f9" r="2.5"></circle>
+<circle class="animate-star" cx="115" cy="292" fill="#c084fc" r="2.5"></circle>
+<circle class="animate-star" cx="250" cy="376" fill="#fde68a" r="2.5"></circle>
+<circle class="animate-star" cx="140" cy="475" fill="#67e8f9" r="2"></circle>
+<circle class="animate-star" cx="250" cy="562" fill="#c084fc" r="2.5"></circle>
+<circle class="animate-star" cx="125" cy="640" fill="#54d8e8" r="2"></circle>
+</svg>
+<!-- Main Scrollable Canvas (Glean Constellation) -->
+<main class="relative z-20 flex-1 overflow-y-auto hide-scrollbar pt-14 pb-28 px-margin-mobile">
+<!-- Sub-header quiet thought & status indicator -->
+<div class="pt-space-xs pb-space-sm flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim animate-star"></span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/80">静夜星流 · 穗藏 6 颗</span>
+</div>
+<span class="text-label-sm font-label-sm text-primary/60 font-medium">拾光织梦</span>
+</div>
+<!-- Floating Quick-Capture Pill Input Bar -->
+<div class="mb-space-lg">
+<div class="glass-pill rounded-full px-space-md py-2 flex items-center justify-between shadow-lg shadow-surface-container-lowest/80 transition-all focus-within:border-secondary/50">
+<div class="flex items-center gap-space-sm flex-1 mr-2">
+<span class="material-symbols-outlined text-primary/70 text-[18px]">grain</span>
+<input class="bg-transparent border-0 outline-none text-body-sm font-body-sm text-on-surface placeholder:text-on-surface-variant/50 w-full p-0 focus:ring-0" placeholder="随手拾一穗…" type="text"/>
+</div>
+<button class="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-primary-container flex items-center justify-center text-on-primary-container shadow-[0_0_12px_rgba(192,132,252,0.4)] active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px] font-bold">north_east</span>
+</button>
+</div>
+</div>
+<!-- Interconnected Constellation Arrangement of Exactly 6 Gleaned Items -->
+<div class="space-y-4 relative">
+<!-- ITEM 1: PHOTO (摄影) - 雨后的梧桐街 -->
+<div class="glass-card rounded-lg p-space-sm shadow-md transition-all active:scale-[0.99] border-outline-variant/20 hover:border-primary/40 relative ml-auto w-[92%]">
+<div class="relative w-full h-36 rounded-md overflow-hidden mb-2">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover filter brightness-[0.88] contrast-[1.05]" src="https://lh3.googleusercontent.com/aida/AEtjO1Xsr-NX4Mwz0JBYqZze83Z_DuRQVua-8j-7aUYBIZvDr0Dk74eApMvfQObrFplhAxmVzFCIfRl6fvDca_w-1GYR1xtMCAyWoY2-U2k68Meb8_3jH8uIQWQAf2BExSOAb76R84rLJys3c72b7Xnj724UGaLLDV4HFrtTvRUlA8_ZUzVfyTtUdIG63c3k3gzhx_jKQgY991OhmYIc8gLDrzWmG_mmuP8ePULUZwyYZn1O5oFV_nK_MaIhSVZb"/>
+<!-- Twilight Starlight Badge -->
+<div class="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-surface-container-lowest/70 backdrop-blur-md border border-primary/25 flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary text-[12px]">camera</span>
+<span class="text-label-sm font-label-sm text-secondary tracking-wider">摄影</span>
+</div>
+<span class="absolute bottom-2 right-2 text-label-sm font-label-sm text-on-surface/80 bg-surface-container-lowest/60 backdrop-blur-sm px-2 py-0.5 rounded-full">
+            今天 09:12
+          </span>
+</div>
+<div class="flex items-center justify-between px-1">
+<h3 class="text-title-md font-title-md text-on-surface">雨后的梧桐街</h3>
+<span class="material-symbols-outlined text-primary/40 text-[18px]">auto_awesome</span>
+</div>
+</div>
+<!-- ITEM 2: FILM (电影) - 燃烧女子的肖像 -->
+<div class="glass-card rounded-lg p-space-md shadow-md transition-all active:scale-[0.99] border-outline-variant/20 mr-auto w-[86%] relative bg-gradient-to-br from-surface-container/60 to-surface-container-low/40">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-1.5 mb-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container shadow-[0_0_6px_#c084fc]"></span>
+<span class="text-label-sm font-label-sm text-primary tracking-wider">电影 · 胶片微光</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">昨天 23:40</span>
+</div>
+<h3 class="text-title-md font-title-md text-on-surface mb-0.5">燃烧女子的肖像</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant/80">2019, 瑟琳·席安玛</p>
+<div class="mt-2.5 flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high/60 border border-outline-variant/30 text-label-sm font-label-sm text-on-surface-variant/70">
+            凝视与被凝视
+          </span>
+<span class="material-symbols-outlined text-tertiary-fixed text-[14px]">local_fire_department</span>
+</div>
+</div>
+<!-- ITEM 3: SONG (音乐) - 夜空中最亮的星 -->
+<div class="glass-card rounded-lg p-space-md shadow-md transition-all active:scale-[0.99] border-outline-variant/20 ml-auto w-[88%] relative overflow-hidden">
+<!-- Soft Resonance glow background effect -->
+<div class="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-secondary/10 blur-xl pointer-events-none"></div>
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary/15 flex items-center justify-center border border-secondary/30">
+<span class="material-symbols-outlined text-secondary text-[14px]">graphic_eq</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary-fixed-dim">音乐脉冲</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">昨天 21:05</span>
+</div>
+<div class="flex items-center justify-between mt-1">
+<div>
+<h3 class="text-title-md font-title-md text-on-surface">夜空中最亮的星</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant/75">逃跑计划</p>
+</div>
+<!-- Gentle wave audio resonance nodes -->
+<div class="flex items-end gap-1 h-5 px-2">
+<span class="w-0.5 h-3 bg-secondary/60 rounded-full animate-star"></span>
+<span class="w-0.5 h-5 bg-secondary rounded-full"></span>
+<span class="w-0.5 h-2 bg-secondary/40 rounded-full animate-star" style="animation-delay:0.4s;"></span>
+<span class="w-0.5 h-4 bg-secondary/70 rounded-full"></span>
+</div>
+</div>
+</div>
+<!-- ITEM 4: QUOTE (文案) - 诗歌断简 -->
+<div class="glass-card rounded-lg p-space-md shadow-md transition-all active:scale-[0.99] border-outline-variant/20 mr-auto w-[90%] relative bg-gradient-to-r from-surface-container/70 to-surface-container-lowest/50">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[15px]">format_quote</span>
+<span class="text-label-sm font-label-sm text-primary-fixed-dim">断简拾读</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">10/19</span>
+</div>
+<blockquote class="text-body-md font-body-md text-on-surface italic pl-1 leading-relaxed">
+          “我们读诗，是因为我们是人类的一员。”
+        </blockquote>
+<div class="mt-2 text-right">
+<span class="text-label-sm font-label-sm text-on-surface-variant/50">——《死亡诗社》</span>
+</div>
+</div>
+<!-- ITEM 5: IDEA (想法) - 通勤对话短诗 -->
+<div class="glass-card rounded-lg p-space-md shadow-md transition-all active:scale-[0.99] border-outline-variant/20 ml-auto w-[84%] relative bg-surface-container-high/40">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed shadow-[0_0_8px_#f9e287]"></span>
+<span class="text-label-sm font-label-sm text-tertiary">灵光闪念</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">10/18</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface leading-normal">
+          把通勤路上听到的对话写成一组短诗
+        </p>
+<div class="mt-2 flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-on-surface-variant/50">未展开草稿</span>
+<span class="material-symbols-outlined text-primary/40 text-[16px]">edit_note</span>
+</div>
+</div>
+<!-- ITEM 6: LINK (链接) - Are.na -->
+<div class="glass-card rounded-lg p-space-md shadow-md transition-all active:scale-[0.99] border-outline-variant/20 mr-auto w-[88%] relative">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[14px]">share</span>
+<span class="text-label-sm font-label-sm text-secondary">星际共鸣</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">10/16</span>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<h3 class="text-title-md font-title-md text-on-surface">Are.na · 关于收集的收集</h3>
+<p class="text-label-sm font-label-sm text-primary/70 tracking-wide mt-0.5">are.na</p>
+</div>
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center border border-outline-variant/30">
+<span class="material-symbols-outlined text-on-surface-variant text-[15px]">arrow_outward</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quiet nocturnal breathing space at list tail -->
+<div class="pt-8 pb-4 text-center">
+<span class="text-label-sm font-label-sm text-on-surface-variant/40 tracking-wider">星尘沉落，夜色渐深</span>
+</div>
+</main>
+<!-- Luminous Floating '嫁接' (Graft) CTA Button -->
+<div class="fixed bottom-[68px] right-5 z-40 animate-drift">
+<button class="flex items-center gap-2 pl-3.5 pr-4 py-2.5 rounded-full bg-gradient-to-r from-primary-container via-primary to-secondary text-inverse-on-surface font-semibold text-title-md shadow-[0_0_24px_rgba(192,132,252,0.45),0_8px_20px_rgba(6,14,32,0.8)] border border-white/20 active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined text-[20px] font-bold">join_inner</span>
+<span class="tracking-widest">嫁接</span>
+</button>
+</div>
+<!-- Shared Component: BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs pb-safe bg-surface-container-lowest/85 dark:bg-surface-container-lowest/85 backdrop-blur-xl shadow-[0_-4px_24px_rgba(11,19,38,0.7)]">
+<!-- Tab 1: 穗仓 (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary font-medium gap-0.5 relative after:content-[''] after:w-1 after:h-1 after:rounded-full after:bg-primary after:shadow-[0_0_8px_#ddb8ff] active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-label-sm font-label-sm">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 dark:text-on-surface-variant/70 hover:text-on-surface gap-0.5 transition-colors duration-200 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">grain</span>
+<span class="text-label-sm font-label-sm">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 dark:text-on-surface-variant/70 hover:text-on-surface gap-0.5 transition-colors duration-200 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">park</span>
+<span class="text-label-sm font-label-sm">新枝</span>
+</a>
+<!-- Tab 4: 口味 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 dark:text-on-surface-variant/70 hover:text-on-surface gap-0.5 transition-colors duration-200 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">palette</span>
+<span class="text-label-sm font-label-sm">口味</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 dark:text-on-surface-variant/70 hover:text-on-surface gap-0.5 transition-colors duration-200 active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-label-sm font-label-sm">设置</span>
+</a>
+</nav>
+</body></html>
