@@ -34,6 +34,10 @@ export interface Idea {
   experiment?: string;
   /** 用到的素材：嫁接时素材的序号（1 起，对应 Development.itemIds 的位置） */
   refs?: number[];
+  /** v0.12 溯源：ok = 模型引用了 ≥3 件真实素材；weak = 重来一次仍说不清（证据不足）；legacy = v0.12 之前长的 */
+  evidence?: 'ok' | 'weak' | 'legacy';
+  /** 证据不足时的原因（给人看） */
+  evidenceNote?: string;
 }
 
 /** 四步嫁接的中间产物：张力与种子（可展开看） */
@@ -71,6 +75,8 @@ export interface Development {
   starred?: boolean;
   /** v0.11 起：同一次嫁接的三根新枝共享一个 batch.id */
   batch?: GraftBatch;
+  /** v0.12：与 idea.evidence 相同，单独放一份方便建索引（Dexie version 2） */
+  evidence?: 'ok' | 'weak' | 'legacy';
   createdAt: number;
 }
 
