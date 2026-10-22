@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=1440, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 设置 · 备份与导入</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#000000',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            tile: '#F3F3F3',
+            surface: '#FFFFFF',
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      border-radius: 0px !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      margin: 0;
+      padding: 0;
+    }
+    ::placeholder {
+      color: #7E7E7E;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="w-full min-w-[1440px] bg-white text-black selection:bg-black selection:text-white pb-24">
+<!-- TOP NAV BAR (identical to d1-grid) -->
+<header class="w-full h-16 bg-white border-b border-[#F0F0F0] sticky top-0 z-50 px-10 flex items-center justify-between">
+<!-- Logo -->
+<div class="flex items-center">
+<span class="text-[20px] font-semibold tracking-tight text-black select-none">拾穗 · GLEAN</span>
+</div>
+<!-- Centered Nav items -->
+<nav class="flex items-center space-x-10 text-[12px] font-medium tracking-widest uppercase">
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">穗仓</a>
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">嫁接</a>
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">新枝</a>
+<a class="text-[#7E7E7E] hover:text-black transition-none" href="#">口味</a>
+<a class="text-black border-b border-black pb-0.5" href="#">设置</a>
+</nav>
+<!-- Quick Capture Input -->
+<div class="w-[320px]">
+<input class="w-full bg-transparent border-0 border-b border-black rounded-none text-[13px] text-black py-1 px-0 placeholder-[#7E7E7E] focus:ring-0 focus:border-black font-normal" placeholder="随手拾一穗 →" type="text"/>
+</div>
+</header>
+<!-- MAIN CONTAINER (12-column grid, 40px margins, 16px gutters) -->
+<main class="w-full max-w-[1440px] mx-auto px-10">
+<!-- Large Header Spacing (140px white space between nav and huge headline) -->
+<div class="h-[140px]"></div>
+<!-- Huge Display Headline -->
+<div class="mb-20">
+<h1 class="text-[108px] font-semibold tracking-[-0.04em] leading-[1.0] text-black select-none">设置</h1>
+</div>
+<!-- 12-Column Layout Grid -->
+<div class="grid grid-cols-12 gap-4 items-start">
+<!-- LEFT SUB-NAV (4 columns) -->
+<aside class="col-span-4 pr-12">
+<nav class="flex flex-col space-y-6">
+<a class="text-[13px] font-medium tracking-wider text-[#7E7E7E] hover:text-black transition-none" href="#">
+            通用
+          </a>
+<a class="text-[13px] font-medium tracking-wider text-[#7E7E7E] hover:text-black transition-none" href="#">
+            外观
+          </a>
+<a class="text-[13px] font-medium tracking-wider text-[#7E7E7E] hover:text-black transition-none" href="#">
+            AI 服务
+          </a>
+<a class="text-[13px] font-medium tracking-wider text-[#7E7E7E] hover:text-black transition-none" href="#">
+            速记与快捷键
+          </a>
+<div>
+<a class="text-[13px] font-medium tracking-wider text-black border-b border-black pb-1 inline-block" href="#">
+              备份与导入
+            </a>
+</div>
+<a class="text-[13px] font-medium tracking-wider text-[#7E7E7E] hover:text-black transition-none" href="#">
+            关于
+          </a>
+</nav>
+</aside>
+<!-- RIGHT CONTENT (8 columns) -->
+<section class="col-span-8 space-y-24">
+<!-- SECTION TITLE -->
+<div>
+<h2 class="text-[32px] font-semibold tracking-[-0.03em] leading-tight text-black select-none">
+            备份与导入
+          </h2>
+</div>
+<!-- GROUP 1: 导出 -->
+<div class="space-y-6">
+<div class="space-y-2">
+<span class="text-[11px] font-medium tracking-widest text-[#7E7E7E] uppercase select-none block">
+              导出
+            </span>
+<div class="w-full h-[1px] bg-black"></div>
+</div>
+<!-- Table rows with generous rhythm -->
+<div class="divide-y-0 space-y-7 pt-2">
+<!-- Row 1 -->
+<div class="flex items-baseline justify-between">
+<div class="flex items-baseline space-x-6">
+<span class="text-[14px] font-medium text-black">全部穗 · JSON + 原图</span>
+<span class="text-[12px] font-normal text-[#7E7E7E] tracking-wider">20 穗 · 48.6 MB</span>
+</div>
+<button class="text-[12px] font-medium text-black hover:opacity-60 transition-none cursor-pointer tracking-wider bg-transparent border-0 p-0">
+                导出 →
+              </button>
+</div>
+<!-- Row 2 -->
+<div class="flex items-baseline justify-between">
+<div class="flex items-baseline space-x-6">
+<span class="text-[14px] font-medium text-black">Markdown 笔记（每穗一个 .md）</span>
+</div>
+<button class="text-[12px] font-medium text-black hover:opacity-60 transition-none cursor-pointer tracking-wider bg-transparent border-0 p-0">
+                导出 →
+              </button>
+</div>
+<!-- Row 3 -->
+<div class="flex items-baseline justify-between">
+<div class="flex items-baseline space-x-6">
+<span class="text-[14px] font-medium text-black">只导出新枝</span>
+<span class="text-[12px] font-normal text-[#7E7E7E] tracking-wider">12 根</span>
+</div>
+<button class="text-[12px] font-medium text-black hover:opacity-60 transition-none cursor-pointer tracking-wider bg-transparent border-0 p-0">
+                导出 →
+              </button>
+</div>
+</div>
+</div>
+<!-- GROUP 2: 自动备份 -->
+<div class="space-y-6">
+<div class="space-y-2">
+<span class="text-[11px] font-medium tracking-widest text-[#7E7E7E] uppercase select-none block">
+              自动备份
+            </span>
+<div class="w-full h-[1px] bg-black"></div>
+</div>
+<div class="space-y-7 pt-2">
+<!-- Item 1: Folder location -->
+<div class="flex items-baseline justify-between">
+<div class="flex items-baseline space-x-8">
+<span class="text-[14px] font-medium text-black min-w-[90px]">备份到文件夹</span>
+<span class="text-[13px] font-normal text-[#7E7E7E]">D:\Glean\backup</span>
+</div>
+<button class="text-[12px] font-medium text-black hover:opacity-60 transition-none cursor-pointer tracking-wider bg-transparent border-0 p-0">
+                更改
+              </button>
+</div>
+<!-- Item 2: Frequency toggle -->
+<div class="flex items-baseline justify-between">
+<span class="text-[14px] font-medium text-black min-w-[90px]">频率</span>
+<div class="flex items-center space-x-6 text-[13px] font-medium">
+<span class="text-black border-b border-black pb-0.5 cursor-pointer">每天</span>
+<span class="text-[#7E7E7E] hover:text-black cursor-pointer transition-none">每周</span>
+<span class="text-[#7E7E7E] hover:text-black cursor-pointer transition-none">从不</span>
+</div>
+</div>
+<!-- Item 3: Last backup line -->
+<div class="pt-2">
+<span class="text-[12px] font-normal text-[#7E7E7E] tracking-wider block">
+                上次备份 · 今天 09:00 · 48.6 MB
+              </span>
+</div>
+<!-- Item 4: List of last 3 backups -->
+<div class="pt-4 space-y-4">
+<div class="flex items-baseline justify-between">
+<span class="text-[13px] font-normal text-black">2026/10/21 09:00 · 48.6 MB</span>
+<button class="text-[12px] font-medium text-[#7E7E7E] hover:text-black transition-none cursor-pointer tracking-wider bg-transparent border-0 p-0">
+                  恢复
+                </button>
+</div>
+<div class="flex items-baseline justify-between">
+<span class="text-[13px] font-normal text-black">2026/10/20 09:00 · 48.1 MB</span>
+<button class="text-[12px] font-medium text-[#7E7E7E] hover:text-black transition-none cursor-pointer tracking-wider bg-transparent border-0 p-0">
+                  恢复
+                </button>
+</div>
+<div class="flex items-baseline justify-between">
+<span class="text-[13px] font-normal text-black">2026/10/19 09:00 · 47.9 MB</span>
+<button class="text-[12px] font-medium text-[#7E7E7E] hover:text-black transition-none cursor-pointer tracking-wider bg-transparent border-0 p-0">
+                  恢复
+                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- GROUP 3: 导入 -->
+<div class="space-y-6">
+<div class="space-y-2">
+<span class="text-[11px] font-medium tracking-widest text-[#7E7E7E] uppercase select-none block">
+              导入
+            </span>
+<div class="w-full h-[1px] bg-black"></div>
+</div>
+<div class="space-y-6 pt-2">
+<!-- Dashed Drop Zone (140px tall, 1px grey border) -->
+<div class="w-full h-[140px] border border-dashed border-[#C6C6C6] flex flex-col items-center justify-center bg-white px-8">
+<p class="text-[13px] text-[#7E7E7E] tracking-wide text-center select-none font-normal">
+                把 Glean 备份 .zip、Markdown 文件夹或浏览器书签 .html 拖到这里
+              </p>
+</div>
+<!-- Button under Drop Zone -->
+<div>
+<button class="px-6 py-2.5 bg-black text-white text-[12px] font-medium tracking-widest cursor-pointer hover:bg-neutral-800 transition-none border-0 inline-block">
+                选择文件
+              </button>
+</div>
+<!-- Progress Example Row -->
+<div class="pt-6 space-y-3">
+<div class="flex items-baseline justify-between">
+<span class="text-[13px] font-medium text-black">正在导入 bookmarks.html · 132 / 300</span>
+</div>
+<!-- Thin 1px black progress line (44% filled) -->
+<div class="w-full h-[1px] bg-[#E8E8E8] relative">
+<div class="absolute left-0 top-0 h-[1px] bg-black" style="width: 44%;"></div>
+</div>
+<!-- Subtext -->
+<div>
+<span class="text-[11px] font-normal text-[#7E7E7E] tracking-wide block">
+                  重复的链接会自动跳过
+                </span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Generous Footer White Space -->
+<div class="h-32"></div>
+<!-- Page Footer -->
+<footer class="pt-8 border-t border-[#F0F0F0] flex items-center justify-between">
+<span class="text-[10px] tracking-[0.1em] text-[#7E7E7E] uppercase select-none">
+        © 2026 Q1f730
+      </span>
+</footer>
+</main>
+</body>
+</html>
