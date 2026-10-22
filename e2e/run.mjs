@@ -182,6 +182,7 @@ async function run(name, viewport) {
   await pg.evaluate(() => window.scrollTo(0, 0));
   await pg.waitForTimeout(900);
   await pg.screenshot({ path: `${out}/${name}-shot-library.png` });
+  await noOverlap(pg, name);
   // search + filter
   await pg.fill('.search input', '钢琴');
   await pg.waitForTimeout(200);
@@ -281,7 +282,8 @@ async function run(name, viewport) {
     if (p.ev !== 'ok' || p.weak) errs.push(`[${name}] AI branch ${i} evidence ${p.ev}`);
     if (new Set(p.ids).size < 3) errs.push(`[${name}] AI branch ${i} points back to ${p.ids.length} ears`);
     if (p.ids.some((x) => !ai.ids.includes(x))) errs.push(`[${name}] AI branch ${i} sprig not from this graft ${p.ids} vs ${ai.ids}`);
-    if (p.titles.some((t) => !picked.some((q) => (q || '').includes(t) || t.includes((q || '').replace(/^「|」$/g, ''))))) errs.push(`[${name}] sprig titles ${p.titles} not among picked ${picked}`);
+    // 摘抄类穗的卡片标题显示的是原文（「…」），小穗卡显示出处，没法按字面对上，这类只靠上面的 ID 校验
+    if (!picked.some((q) => (q || '').startsWith('「')) && p.titles.some((t) => !picked.some((q) => (q || '').includes(t) || t.includes((q || '').replace(/^「|」$/g, ''))))) errs.push(`[${name}] sprig titles ${p.titles} not among picked ${picked}`);
   }
   // 正文里提到的穗：悬停（桌面）/ 点按（手机）时对应那一穗亮起
   await pg.waitForSelector('.three .idea .mention', { timeout: 9000 }).catch(() => errs.push(`[${name}] mention not marked in body`));
@@ -421,6 +423,18 @@ async function run(name, viewport) {
   if (iw < 10) errs.push(`[${name}] ascii image not loaded`);
   await ctx.close();
 }
+
+// v0.13 虚拟瀑布：同一列里卡片不能叠在一起（量高度出错时会叠）
+async function noOverlap(pg, tag) {
+  await pg.waitForTimeout(500);
+  const bad = await pg.evaluate(() => {
+    const cells = [...document.querySelectorAll('.masonry .masonry-cell')].map((c) => { const r = c.getBoundingClientRect(); return { l: Math.round(r.left), t: r.top, b: r.bottom, txt: c.textContent.slice(0, 12) }; });
+    const out = [];
+    for (const a of cells) for (const c of cells) if (a !== c && a.l === c.l && a.t < c.t && a.b > c.t + 1) out.push(`${a.txt}↔${c.txt} ${Math.round(a.b - c.t)}px`);
+    return out;
+  });
+  if (bad.length) errs.push(`[${tag}] masonry cards overlap: ${bad.slice(0, 3).join('; ')}`);
+}
 // 发版截图：手机 390×844 @2x，白天配色（穗仓首页 / 图片显影中 / 嫁接结果 / 口味）
 async function shots() {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
@@ -463,6 +477,7 @@ async function shots() {
   await pg.mouse.move(360, 770, { steps: 10 });
   await pg.waitForTimeout(250);
   await pg.screenshot({ path: `${out}/shot-library.png` });
+  await noOverlap(pg, 'shots');
   await pg.click('.nav-btn:has-text("嫁接")');
   await mockAI(pg, { delay: 2600 });
   await pg.click('text=嫁接今日三穗');
@@ -535,11 +550,265 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 20) errs.push(`[legacy] db version expected 20 (Dexie v2) got ${ver}`);
+  if (ver !== 30) errs.push(`[legacy] db version expected 30 (Dexie v3) got ${ver}`);
   await ctx.close();
 }
 
+
+// v0.13 千穗不卡：灌 1000 穗（含 300 张 1280×960 照片）进 v0.12 的旧库结构 → 打开 App 迁移 + 后台补缩略图 →
+// 冷启动计时（普通 / CPU 降速 4 倍模拟中端安卓）→ 瀑布与时间线滚动测帧。数字写进 perf.json 并打印。
+const PERF = {};
+async function seedLegacy1000(pg) {
+  await pg.goto(new URL('favicon.svg', base).href);
+  return pg.evaluate(async () => {
+    // 12 张不同的「照片」：渐变 + 色块 + 噪点，JPEG 0.82，大小接近手机照片压到 1280 边后的样子
+    const variants = [];
+    for (let v = 0; v < 12; v++) {
+      const c = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas'); // 在 svg 文档里
+      c.width = v % 3 === 2 ? 960 : 1280; c.height = v % 3 === 2 ? 1280 : 960;
+      const g = c.getContext('2d');
+      const gr = g.createLinearGradient(0, 0, c.width, c.height);
+      gr.addColorStop(0, `hsl(${v * 31}, 55%, 70%)`); gr.addColorStop(1, `hsl(${v * 31 + 140}, 45%, 30%)`);
+      g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height);
+      for (let k = 0; k < 40; k++) { g.fillStyle = `hsla(${(v * 47 + k * 13) % 360}, 60%, ${30 + (k % 5) * 12}%, 0.5)`; g.beginPath(); g.arc((k * 197) % c.width, (k * 131) % c.height, 30 + (k % 7) * 25, 0, 7); g.fill(); }
+      const id = g.getImageData(0, 0, c.width, c.height);
+      let s = v * 7919 + 1;
+      for (let i = 0; i < id.data.length; i += 4) { s = (s * 1103515245 + 12345) & 0x7fffffff; const n = (s % 41) - 20; id.data[i] += n; id.data[i + 1] += n; id.data[i + 2] += n; }
+      g.putImageData(id, 0, 0);
+      variants.push(c.toDataURL('image/jpeg', 0.82));
+    }
+    const words = ['麦田', '黄昏', '旧歌', '慢镜头', '雨', '海边', '便利店', '霓虹', '胶片', '手写', '风', '街角', '老电影', '钢琴', '夏天', '夜车'];
+    const types = ['film', 'music', 'text', 'idea', 'link'];
+    const now = Date.now();
+    const rows = [];
+    for (let i = 0; i < 1000; i++) {
+      const img = i % 10 < 3; // 300 张
+      const t = img ? 'image' : types[i % 5];
+      const w1 = words[i % 16], w2 = words[(i * 7) % 16];
+      rows.push({
+        type: t,
+        title: img ? `${w1}的照片 ${i}` : `${w1}与${w2} · 第 ${i} 穗`,
+        creator: i % 3 ? `作者${i % 37}` : '',
+        content: t === 'text' || t === 'idea' ? `${w1}和${w2}之间有一种说不清的关系，像${words[(i * 3) % 16]}落在${words[(i * 5) % 16]}上。`.repeat(1 + (i % 3)) : '',
+        url: t === 'link' ? `https://example.com/a/${i}` : '',
+        why: i % 4 === 0 ? `因为${w2}让我想起${words[(i * 11) % 16]}` : '',
+        tags: [w1, w2].slice(0, 1 + (i % 2)),
+        ...(img ? { image: variants[i % 12] } : {}),
+        createdAt: now - Math.floor(i * 6.1 * 3600e3) - (i % 7) * 60e3,
+        updatedAt: now,
+      });
+    }
+    await new Promise((res, rej) => {
+      const r = indexedDB.open('lingan', 20);
+      r.onupgradeneeded = () => {
+        const db = r.result;
+        const it = db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+        it.createIndex('type', 'type'); it.createIndex('createdAt', 'createdAt'); it.createIndex('updatedAt', 'updatedAt'); it.createIndex('tags', 'tags', { multiEntry: true });
+        const dv = db.createObjectStore('developments', { keyPath: 'id', autoIncrement: true });
+        dv.createIndex('createdAt', 'createdAt'); dv.createIndex('starred', 'starred'); dv.createIndex('evidence', 'evidence');
+      };
+      r.onerror = () => rej(r.error);
+      r.onsuccess = () => {
+        const db = r.result;
+        const tx = db.transaction('items', 'readwrite');
+        for (const row of rows) tx.objectStore('items').add(row);
+        tx.oncomplete = () => { db.close(); res(null); };
+        tx.onerror = () => rej(tx.error);
+      };
+    });
+    const sizes = variants.map((v) => Math.round((v.length * 3) / 4 / 1024));
+    return { avgOrigKB: Math.round(sizes.reduce((a, b) => a + b, 0) / sizes.length), maxOrigKB: Math.max(...sizes) };
+  });
+}
+// 页面里按固定速度滚动 durMs 毫秒，记录每帧间隔
+async function measureScroll(pg, pxPerSec, durMs) {
+  return pg.evaluate(async ({ pxPerSec, durMs }) => {
+    window.scrollTo(0, 0);
+    await new Promise((r) => setTimeout(r, 400));
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const deltas = [];
+    let maxMounted = 0;
+    let maxLive = 0;
+    await new Promise((res) => {
+      const t0 = performance.now();
+      let last = t0;
+      const step = (now) => {
+        deltas.push(now - last);
+        last = now;
+        const y = Math.min(max, ((now - t0) / 1000) * pxPerSec);
+        window.scrollTo(0, y);
+        maxMounted = Math.max(maxMounted, document.querySelectorAll('.card').length);
+        maxLive = Math.max(maxLive, window.__gleanImg?.live || 0);
+        if (now - t0 < durMs && y < max) requestAnimationFrame(step);
+        else res(null);
+      };
+      requestAnimationFrame(step);
+    });
+    const d = deltas.slice(2).sort((a, b) => a - b);
+    const sum = d.reduce((a, b) => a + b, 0);
+    const pct = (p) => d[Math.min(d.length - 1, Math.floor(d.length * p))];
+    return {
+      frames: d.length,
+      scrolledPx: Math.round(window.scrollY),
+      scrollHeight: document.documentElement.scrollHeight,
+      avgFps: Math.round((1000 * d.length) / sum),
+      p50Ms: +pct(0.5).toFixed(1),
+      p95Ms: +pct(0.95).toFixed(1),
+      maxMs: +d[d.length - 1].toFixed(1),
+      jankPct: +((100 * d.filter((x) => x > 34).length) / d.length).toFixed(1), // 超过 2 帧（掉帧）
+      longPct: +((100 * d.filter((x) => x > 50).length) / d.length).toFixed(1),
+      maxMountedCards: maxMounted,
+      maxLiveObjectUrls: maxLive,
+    };
+  }, { pxPerSec, durMs });
+}
+async function coldStart(ctx, cpu) {
+  const pg = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(pg);
+  if (cpu > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpu });
+  const t = Date.now();
+  await pg.goto(base);
+  await pg.waitForFunction(() => window.__gleanReady && document.querySelectorAll('.masonry .card').length > 0, null, { timeout: 30000 });
+  const r = await pg.evaluate(() => {
+    const nav = performance.getEntriesByType('navigation')[0];
+    return { ready: Math.round(window.__gleanReady), dcl: Math.round(nav?.domContentLoadedEventEnd || 0), cards: document.querySelectorAll('.masonry .card').length, count: document.querySelector('.dateline')?.textContent?.match(/共 (\d+) 穗/)?.[1] };
+  });
+  // 首屏缩略图全部解码好的时刻
+  r.thumbs = await pg.evaluate(async () => {
+    const imgs = [...document.querySelectorAll('.masonry img.card-img')].filter((i) => i.getBoundingClientRect().top < innerHeight);
+    await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((res) => { i.onload = i.onerror = res; }))));
+    return { n: imgs.length, at: Math.round(performance.now()) };
+  });
+  r.wall = Date.now() - t;
+  if (cpu > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  await pg.close();
+  return r;
+}
+const median = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+async function perf() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await ctx.addInitScript(() => { if (!localStorage.getItem('lingan.settings.v1')) localStorage.setItem('lingan.settings.v1', JSON.stringify({ phase: 'day', autoCaption: false, autoEmbed: false })); });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[perf] pageerror ${e.message}`));
+  pg.on('console', (m) => m.type() === 'error' && errs.push(`[perf] console ${m.text()}`));
+  const seed = await seedLegacy1000(pg);
+  PERF.seed = { items: 1000, images: 300, ...seed };
+  // 第一次打开：Dexie v2 → v3 迁移（原图搬进 images 表）+ 首屏
+  const t0 = Date.now();
+  await pg.goto(base);
+  await pg.waitForFunction(() => window.__gleanReady && document.querySelectorAll('.masonry .card').length > 0, null, { timeout: 60000 });
+  PERF.firstOpenWithMigrationMs = await pg.evaluate(() => Math.round(window.__gleanReady));
+  // 后台补 300 张缩略图
+  await pg.waitForFunction(() => window.__gleanThumbs && window.__gleanThumbs.runs > 0 && !window.__gleanThumbs.running && window.__gleanThumbs.left === 0, null, { timeout: 150000 }).catch(() => errs.push('[perf] thumbnails never finished'));
+  const th = await pg.evaluate(() => ({ ...window.__gleanThumbs }));
+  PERF.thumbJob = { made: th.made, failed: th.failed, ms: th.lastMs, wallMs: Date.now() - t0 };
+  // 数据完整性：1000 穗、300 原图、300 缩略图、行里不再有内联原图
+  const integ = await pg.evaluate(() => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const db = r.result;
+      const tx = db.transaction(['items', 'images'], 'readonly');
+      const out = { version: db.version, items: 0, inline: 0, withThumb: 0, hasImage: 0, thumbBytes: [], images: 0, imageBytes: 0 };
+      tx.objectStore('items').openCursor().onsuccess = (e) => {
+        const c = e.target.result;
+        if (!c) return;
+        const v = c.value;
+        out.items++;
+        if ('image' in v) out.inline++;
+        if (v.hasImage) out.hasImage++;
+        if (v.thumb) { out.withThumb++; out.thumbBytes.push(v.thumb.size); }
+        c.continue();
+      };
+      tx.objectStore('images').openCursor().onsuccess = (e) => {
+        const c = e.target.result;
+        if (!c) return;
+        out.images++;
+        out.imageBytes += c.value.blob.size;
+        c.continue();
+      };
+      tx.oncomplete = () => {
+        db.close();
+        const tb = out.thumbBytes;
+        res({ ...out, thumbBytes: undefined, avgThumbKB: +(tb.reduce((a, b) => a + b, 0) / Math.max(1, tb.length) / 1024).toFixed(1), maxThumbKB: +(Math.max(0, ...tb) / 1024).toFixed(1), avgOrigKB: Math.round(out.imageBytes / Math.max(1, out.images) / 1024) });
+      };
+    };
+  }));
+  PERF.storage = integ;
+  if (integ.version !== 30) errs.push(`[perf] db version ${integ.version}`);
+  if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
+  if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
+  if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
+  if (integ.avgThumbKB > 30) errs.push(`[perf] thumbnails too big: avg ${integ.avgThumbKB}KB`);
+  await pg.close();
+  // 冷启动：每次新开页面（新的 JS 堆、重新读库），各 3 次取中位数
+  const normal = [];
+  const slow = [];
+  for (let i = 0; i < 3; i++) normal.push(await coldStart(ctx, 1));
+  for (let i = 0; i < 3; i++) slow.push(await coldStart(ctx, 4));
+  for (const r of [...normal, ...slow]) if (r.count !== '1000') errs.push(`[perf] cold start shows ${r.count} items`);
+  PERF.coldStartMs = { median: median(normal.map((r) => r.ready)), runs: normal.map((r) => r.ready), firstThumbsDecodedMedian: median(normal.map((r) => r.thumbs.at)), cardsOnFirstScreen: normal[0].cards };
+  PERF.coldStartCpu4xMs = { median: median(slow.map((r) => r.ready)), runs: slow.map((r) => r.ready), firstThumbsDecodedMedian: median(slow.map((r) => r.thumbs.at)) };
+  if (PERF.coldStartMs.median > 2000) errs.push(`[perf] cold start ${PERF.coldStartMs.median}ms > 2000ms`);
+  if (PERF.coldStartCpu4xMs.median > 2000) errs.push(`[perf] cold start at 4x CPU slowdown ${PERF.coldStartCpu4xMs.median}ms > 2000ms`);
+  // 滚动：穗仓瀑布（双列）与时间线
+  const sp = await ctx.newPage();
+  sp.on('pageerror', (e) => errs.push(`[perf] pageerror ${e.message}`));
+  await sp.goto(base);
+  await sp.waitForFunction(() => window.__gleanReady && document.querySelectorAll('.masonry .card').length > 0);
+  await sp.waitForTimeout(2200); // 首屏显影动画走完
+  PERF.scrollMasonry = await measureScroll(sp, 2400, 7000);
+  await sp.evaluate(() => window.scrollTo(0, 6000));
+  await sp.waitForTimeout(1500);
+  await noOverlap(sp, 'perf');
+  await sp.screenshot({ path: `${out}/perf-library-1000.png` });
+  const vm = await sp.evaluate(() => window.__gleanVirtual?.masonry);
+  PERF.scrollMasonry.virtual = vm;
+  await sp.evaluate(() => window.scrollTo(0, 0));
+  await sp.waitForTimeout(500);
+  // 滚完回顶：objectURL 已回收（挂着的卡片才有）
+  PERF.scrollMasonry.liveObjectUrlsAfter = await sp.evaluate(() => window.__gleanImg?.live);
+  PERF.scrollMasonry.objectUrlsCreated = await sp.evaluate(() => window.__gleanImg?.created);
+  await sp.click('.chip:has-text("时间线")');
+  await sp.waitForSelector('.tl-day .tl-frame');
+  await sp.waitForTimeout(800);
+  PERF.scrollTimeline = await measureScroll(sp, 2400, 6000);
+  PERF.scrollTimeline.virtual = await sp.evaluate(() => window.__gleanVirtual?.timeline);
+  // 4 倍降速下再滚一次瀑布
+  await sp.click('.chip:has-text("时间线")');
+  await sp.waitForTimeout(600);
+  const cdp = await ctx.newCDPSession(sp);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  PERF.scrollMasonryCpu4x = await measureScroll(sp, 1600, 5000);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  for (const [k, r] of [['masonry', PERF.scrollMasonry], ['timeline', PERF.scrollTimeline]]) {
+    if (r.scrolledPx < 8000) errs.push(`[perf] ${k} scrolled only ${r.scrolledPx}px`);
+    // 瀑布只挂视口附近 ~20 张；时间线按天挂（一天一整条横排），上限放宽
+    if (r.maxMountedCards > (k === 'masonry' ? 60 : 140)) errs.push(`[perf] ${k} not virtualized: ${r.maxMountedCards} cards mounted`);
+    if (r.jankPct > 10) errs.push(`[perf] ${k} dropped frames ${r.jankPct}% > 10%`);
+  }
+  if (PERF.scrollMasonry.maxLiveObjectUrls > 80) errs.push(`[perf] objectURLs not recycled: ${PERF.scrollMasonry.maxLiveObjectUrls} live`);
+  if (PERF.scrollMasonry.liveObjectUrlsAfter > 60) errs.push(`[perf] objectURLs leak: ${PERF.scrollMasonry.liveObjectUrlsAfter} live after scrolling back`);
+  // 详情读原图（1280 边），不是缩略图
+  await sp.evaluate(() => window.scrollTo(0, 0));
+  await sp.waitForTimeout(300);
+  await sp.locator('.masonry .card:has(img.card-img)').first().click();
+  await sp.waitForSelector('.detail img.detail-img');
+  const nat = await sp.locator('.detail img.detail-img').evaluate(async (i) => { if (!i.complete) await new Promise((r) => (i.onload = r)); return i.naturalWidth; });
+  if (nat < 900) errs.push(`[perf] detail should show the original, got ${nat}px wide`);
+  const cardNat = await sp.locator('.masonry img.card-img').first().evaluate((i) => i.naturalWidth);
+  if (cardNat > 400) errs.push(`[perf] card should use thumbnail, got ${cardNat}px wide`);
+  PERF.detailOriginalPx = nat;
+  PERF.cardThumbPx = cardNat;
+  await sp.screenshot({ path: `${out}/perf-detail.png` });
+  await ctx.close();
+  fs.writeFileSync(`${out}/perf.json`, JSON.stringify(PERF, null, 2));
+}
+
 try {
+  if (process.env.E2E_ONLY === 'perf') {
+    await perf();
+    throw Object.assign(new Error('perf only'), { only: true });
+  }
   await legacy();
   // v0.5 reduced-motion：系统要求减少动效时，档位必须是 off
   const rctx = await b.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
@@ -576,8 +845,15 @@ try {
   await run('desktop', { width: 1366, height: 860 });
   await run('mobile', { width: 390, height: 844 });
   await shots();
+  await perf();
 } catch (e) {
-  errs.push('FATAL ' + e.message);
+  if (Object.keys(PERF).length) console.log('PERF partial ' + JSON.stringify(PERF).slice(0, 600));
+  if (!e.only) errs.push('FATAL ' + e.message);
 }
 await b.close();
+if (PERF.scrollMasonryCpu4x && PERF.scrollTimeline) {
+  const P = PERF;
+  console.log(`PERF cold start ${P.coldStartMs.median}ms (4x CPU ${P.coldStartCpu4xMs.median}ms) · first open+migration ${P.firstOpenWithMigrationMs}ms · thumbs ${P.thumbJob.made} in ${P.thumbJob.ms}ms avg ${P.storage.avgThumbKB}KB (orig ${P.storage.avgOrigKB}KB)`);
+  console.log(`PERF scroll masonry ${P.scrollMasonry.avgFps}fps p95 ${P.scrollMasonry.p95Ms}ms jank ${P.scrollMasonry.jankPct}% mounted≤${P.scrollMasonry.maxMountedCards} · 4x ${P.scrollMasonryCpu4x.avgFps}fps jank ${P.scrollMasonryCpu4x.jankPct}% · timeline ${P.scrollTimeline.avgFps}fps jank ${P.scrollTimeline.jankPct}%`);
+}
 console.log(errs.length ? 'ERRORS:\n' + errs.join('\n') : 'ALL PASS');
