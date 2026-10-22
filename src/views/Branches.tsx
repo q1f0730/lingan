@@ -7,6 +7,7 @@ import { groupBranches } from '../lib/branches';
 import { transformName } from '../lib/graft';
 import { evidenceOf, sourceIds, splitMentions } from '../lib/provenance';
 import { nn } from '../lib/studio';
+import { FOCUS_BRANCH_KEY } from '../lib/search';
 import { useApp } from '../lib/store';
 import type { Development, Item } from '../lib/types';
 
@@ -18,7 +19,17 @@ export function Branches() {
   const items = useLiveQuery(() => db.items.toArray(), []);
   const history = useLiveQuery(() => db.developments.orderBy('createdAt').reverse().toArray(), []);
   const [starred, setStarred] = useState(false);
-  const [mode, setMode] = useState<'list' | 'manifesto'>(() => (localStorage.getItem(MODE_KEY) === 'manifesto' ? 'manifesto' : 'list'));
+  // v0.17 从搜索结果点进来：展开那一根并滚过去（宣言视图先切回列表）
+  const [focusId] = useState<number | null>(() => {
+    try {
+      const v = sessionStorage.getItem(FOCUS_BRANCH_KEY);
+      if (v) sessionStorage.removeItem(FOCUS_BRANCH_KEY);
+      return v ? Number(v) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [mode, setMode] = useState<'list' | 'manifesto'>(() => (!focusId && localStorage.getItem(MODE_KEY) === 'manifesto' ? 'manifesto' : 'list'));
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
   const groups = useMemo(() => groupBranches(history || []), [history]);
   // 宣言是黑主题：整页（含顶栏、速记栏）换成黑 token，离开时恢复
@@ -82,7 +93,7 @@ export function Branches() {
             {shown.map((g) =>
               g.devs.length === 1 && !g.batch ? (
                 <div key={g.key} className="hbatch single">
-                  <HistoryRow dev={g.devs[0]} byId={byId} index={0} />
+                  <HistoryRow dev={g.devs[0]} byId={byId} index={0} focus={g.devs[0].id === focusId} />
                 </div>
               ) : (
                 <div key={g.key} className="hbatch" data-size={g.devs.length}>
@@ -105,7 +116,7 @@ export function Branches() {
                     )}
                   </div>
                   {g.devs.map((d, i) => (
-                    <HistoryRow key={d.id} dev={d} byId={byId} index={d.batch?.index ?? i} />
+                    <HistoryRow key={d.id} dev={d} byId={byId} index={d.batch?.index ?? i} focus={d.id === focusId} />
                   ))}
                   {g.batch && <GraftTrail batch={g.batch} names={g.devs[0].itemIds.map((id) => byId.get(id)?.title || '（已删除）')} />}
                 </div>
