@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { parseJSONLoose } from '../lib/ai';
 import { LinganDB, addItem, exportAll, importAll, normalizeTags } from '../lib/db';
 import { buildPrompt, developOffline, normalizeIdea } from '../lib/develop';
-import { SAMPLES } from '../lib/samples';
+import { drawSamples } from '../lib/samples';
+import { mulberry32 as seeded } from '../lib/similarity';
+// v0.14：从约 80 条示例池里按固定种子抽，不同测试文件用不同的种子，别总是那几条
+const SAMPLES = drawSamples(10, seeded(1401)).map(({ sample: _s, ...rest }) => (void _s, rest));
 import { cosine, mulberry32, pickItems, similarity } from '../lib/similarity';
 import { computeTaste } from '../lib/taste';
 import type { Item } from '../lib/types';
@@ -83,7 +86,7 @@ describe('taste', () => {
   it('computes stats', () => {
     const t = computeTaste(items);
     expect(t.total).toBe(items.length);
-    expect(t.byType.music).toBe(3);
+    expect(t.byType.music).toBe(items.filter((i) => i.type === 'music').length);
     expect(t.last7).toHaveLength(7);
     expect(t.streakDays).toBeGreaterThanOrEqual(1);
     expect(t.decades.length).toBeGreaterThan(0);
