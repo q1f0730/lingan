@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=1440, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 每日一穗 (Daily Glean)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            page: '#FFFFFF',
+            ink: '#000000',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            tile: '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Enforce rigid Swiss typography */
+    .headline-huge {
+      font-size: 104px;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      font-weight: 600;
+    }
+    .label-caps {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+    }
+    .custom-input::placeholder {
+      color: #7E7E7E;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    .custom-input:focus {
+      outline: none;
+    }
+    /* Grid system: 12 columns, 16px gutter, 40px margins */
+    .glean-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-page text-ink flex flex-col justify-between selection:bg-black selection:text-white">
+<!-- TOP NAVIGATION (Identical to d1 desktop) -->
+<header class="w-full bg-white border-b border-transparent z-40 sticky top-0">
+<div class="px-[40px] h-[72px] flex items-center justify-between">
+<!-- Left: Brand Logo -->
+<div class="text-[20px] font-semibold tracking-tight text-ink select-none">
+        拾穗 · GLEAN
+      </div>
+<!-- Center: Nav Links -->
+<nav class="flex items-center space-x-8">
+<a class="text-[12px] font-medium tracking-[0.12em] text-ink pb-1 border-b border-black" href="#">穗仓</a>
+<a class="text-[12px] font-medium tracking-[0.12em] text-secondary hover:text-ink transition-colors pb-1" href="#">嫁接</a>
+<a class="text-[12px] font-medium tracking-[0.12em] text-secondary hover:text-ink transition-colors pb-1" href="#">新枝</a>
+<a class="text-[12px] font-medium tracking-[0.12em] text-secondary hover:text-ink transition-colors pb-1" href="#">口味</a>
+<a class="text-[12px] font-medium tracking-[0.12em] text-secondary hover:text-ink transition-colors pb-1" href="#">设置</a>
+</nav>
+<!-- Right: Quick-capture input (320px wide with 1px black underline) -->
+<div class="w-[320px]">
+<div class="relative w-full border-b border-black pb-1.5 flex items-center">
+<input class="custom-input w-full bg-transparent text-[13px] text-ink border-none p-0 focus:ring-0 font-normal" placeholder="随手拾一穗 →" type="text"/>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN EDITORIAL CONTENT -->
+<main class="w-full px-[40px] pt-[140px] pb-[80px] flex-grow">
+<!-- Large Section Header / Editorial Masthead -->
+<div class="mb-[64px]">
+<div class="label-caps text-secondary mb-4 uppercase">10月22日 星期四</div>
+<h1 class="headline-huge flex items-baseline">每日一穗</h1>
+</div>
+<!-- Split Layout: 12-column grid -->
+<div class="glean-grid items-center mb-[100px]">
+<!-- LEFT 6 COLUMNS: Full-bleed 4:5 photo of the narrow used bookstore -->
+<div class="col-span-6">
+<div class="w-full aspect-[4/5] bg-tile overflow-hidden relative">
+<img alt="旧书店堆到天花板的书脊" class="w-full h-full object-cover block grayscale contrast-[1.05]" src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ"/>
+</div>
+</div>
+<!-- Column 7: Empty spacer column in 12-column rhythm -->
+<!-- RIGHT 5 COLUMNS (Starting at column 8): Vertically centered editorial presentation -->
+<div class="col-start-8 col-span-5 flex flex-col justify-center py-6">
+<!-- Pre-label -->
+<div class="label-caps text-secondary mb-4">
+          一个月前的今天你拾了
+        </div>
+<!-- Title -->
+<h2 class="text-[64px] font-semibold leading-[1.08] tracking-[-0.03em] text-ink mb-4">
+          旧书店堆到天花板的书脊
+        </h2>
+<!-- Meta -->
+<div class="text-[14px] text-secondary font-normal mb-8 tracking-[0.02em]">
+          照片 · 2026年9月22日 · 标签 书 / 收集
+        </div>
+<!-- Old user note -->
+<blockquote class="text-[18px] leading-[1.6] text-ink font-normal mb-10 pl-0 border-none max-w-[520px]">
+          “店主说这些书他自己也找不到了，只能等它们来找人。”
+        </blockquote>
+<!-- Prompt section -->
+<div class="mb-10">
+<div class="label-caps text-secondary mb-4">
+            今天可以
+          </div>
+<ul class="space-y-3.5 list-none p-0 m-0">
+<li>
+<button class="text-[20px] font-medium text-ink hover:text-secondary transition-colors text-left block leading-snug">
+                再去一次，拍同一个角度
+              </button>
+</li>
+<li>
+<button class="text-[20px] font-medium text-ink hover:text-secondary transition-colors text-left block leading-snug">
+                和 Radio Garden 嫁接一次
+              </button>
+</li>
+<li>
+<button class="text-[20px] font-medium text-ink hover:text-secondary transition-colors text-left block leading-snug">
+                写一句它让你想起的东西
+              </button>
+</li>
+</ul>
+</div>
+<!-- Actions row -->
+<div class="flex items-center space-x-6 text-[14px] font-medium pt-2">
+<button class="text-ink hover:opacity-70 transition-opacity">
+            留着
+          </button>
+<button class="text-secondary hover:text-ink transition-colors">
+            换一穗
+          </button>
+<button class="text-faint hover:text-secondary transition-colors">
+            以后别推这穗
+          </button>
+</div>
+</div>
+</div>
+<!-- BOTTOM ROW: Past 7 days of daily 穗 as small 1:1 thumbnails with dates -->
+<div class="border-t border-black pt-8">
+<div class="flex items-baseline justify-between mb-6">
+<div class="label-caps text-secondary">
+          过去七天的每日一穗
+        </div>
+<div class="label-caps text-faint">
+          10/15 — 10/21
+        </div>
+</div>
+<!-- 7 Thumbnails Row -->
+<div class="grid grid-cols-7 gap-4">
+<!-- 10/15: 旧书店 -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-tile w-full overflow-hidden mb-2.5">
+<img alt="10/15" class="w-full h-full object-cover grayscale contrast-[1.05] group-hover:scale-[1.03] transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ"/>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-medium text-ink">10/15</span>
+<span class="text-secondary truncate ml-1">旧书店</span>
+</div>
+</div>
+<!-- 10/16: Radio Garden (Text-based tile) -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-tile w-full p-3.5 flex flex-col justify-between mb-2.5">
+<span class="text-[10px] text-secondary tracking-widest uppercase">链接</span>
+<p class="text-[12px] font-medium text-ink leading-tight line-clamp-3">Radio Garden · 转动地球收听各地电台</p>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-medium text-ink">10/16</span>
+<span class="text-secondary truncate ml-1">电台</span>
+</div>
+</div>
+<!-- 10/17: 声控灯 (Text-based tile) -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-tile w-full p-3.5 flex flex-col justify-between mb-2.5">
+<span class="text-[10px] text-secondary tracking-widest uppercase">想法</span>
+<p class="text-[12px] font-medium text-ink leading-tight line-clamp-3">“给楼道里每一盏声控灯起一个名字”</p>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-medium text-ink">10/17</span>
+<span class="text-secondary truncate ml-1">声控灯</span>
+</div>
+</div>
+<!-- 10/18: 卡尔维诺 (Quote tile) -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-tile w-full p-3.5 flex flex-col justify-between mb-2.5">
+<span class="text-[10px] text-secondary tracking-widest uppercase">摘抄</span>
+<p class="text-[12px] font-medium text-ink leading-tight line-clamp-3">“记忆中的形象一旦被词语固定住，就给抹掉了。”</p>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-medium text-ink">10/18</span>
+<span class="text-secondary truncate ml-1">看不见的城市</span>
+</div>
+</div>
+<!-- 10/19: Re: Stacks -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-tile w-full overflow-hidden mb-2.5">
+<img alt="10/19" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1VtN8VP_yx7Akt0rP-RFy_hL4k7YtEnFDmv1BZWDQeKxsmOriyFF_sWMhmw7k33iY2D2hqS-omsa_gPZZ2dMeRFqxzqxUmu9jFdKy3vyGcByh0uPUmkzFp5tLWHvUMr_2XX8gRALB9Nygadnya7LTemK5xx09PEGJJHiRIe2LxDmsa4O7B-JFP7j7ajrSVm0BjM_H8Vb0EtlEfPlaZV-T-RjKF2PGmnohoAxkmc8uarpfv_BqhT7N4ktWw"/>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-medium text-ink">10/19</span>
+<span class="text-secondary truncate ml-1">Re: Stacks</span>
+</div>
+</div>
+<!-- 10/20: 《完美的日子》 -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-tile w-full overflow-hidden mb-2.5">
+<img alt="10/20" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1WIdVZRaOLGzNs3Aq7rWGyo0BUB51eCihOTXRp-V3J9tSfvFEiNUKKqFlg23ZjSzl3kQn9mLAb9w0MnymoCXaABZG4Z5WHbzD5I463MCUSqQZvBcXbQSw1kg9YUPOawjGCAaojd6TJDFIeOJn2KWzlxEISFbaeiV87S-aDWXFoPHGUTyJ9YNJlAa5NTOGkAOySgLUR79CedjhKwlMzt7NpYGiktN-MAMwF_LheMlBQFy0dWwkJUZ54p1bA"/>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-medium text-ink">10/20</span>
+<span class="text-secondary truncate ml-1">《完美的日子》</span>
+</div>
+</div>
+<!-- 10/21: 轮渡上的雾 -->
+<div class="group cursor-pointer">
+<div class="aspect-square bg-tile w-full overflow-hidden mb-2.5">
+<img alt="10/21" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks"/>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-medium text-ink">10/21</span>
+<span class="text-secondary truncate ml-1">轮渡上的雾</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FOOTER -->
+<footer class="w-full px-[40px] py-8 border-t border-transparent flex items-center justify-between">
+<div class="text-[10px] text-secondary tracking-[0.1em] font-medium">
+      © 2026 Q1f730
+    </div>
+</footer>
+</body>
+</html>
