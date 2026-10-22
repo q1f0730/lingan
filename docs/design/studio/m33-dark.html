@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 穗仓网格视图 (Dark Theme 390px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #000000;
+      color: #FFFFFF;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .mobile-container {
+      width: 100%;
+      max-width: 390px;
+      background-color: #000000;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: none;
+      box-shadow: none;
+    }
+    .header {
+      padding: 24px 16px 20px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+    }
+    .settings-link {
+      font-size: 13px;
+      color: #8E8E8E;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .main-title-block {
+      padding: 0 16px 24px 16px;
+    }
+    .headline {
+      font-size: 56px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      line-height: 1.0;
+      color: #FFFFFF;
+    }
+    .action-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px 20px 16px;
+    }
+    .btn-graft {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border: none;
+      cursor: pointer;
+      line-height: 1.2;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .view-toggle {
+      font-size: 13px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .view-toggle .active {
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+    .view-toggle .divider {
+      color: rgba(255, 255, 255, 0.2);
+    }
+    .view-toggle .inactive {
+      color: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 0 16px 36px 16px;
+    }
+    .tile {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      position: relative;
+      overflow: hidden;
+      background-color: #1B1B1B;
+      display: flex;
+      flex-direction: column;
+    }
+    .photo-tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-tile .scrim {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 50%, transparent 100%);
+      pointer-events: none;
+    }
+    .photo-caption {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 2;
+    }
+    .photo-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #FFFFFF;
+      line-height: 1.25;
+      margin-bottom: 3px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+    .photo-meta {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 400;
+    }
+    .text-tile {
+      padding: 16px 14px 14px 14px;
+      justify-content: space-between;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .tile-text-content {
+      font-size: 18px;
+      line-height: 1.45;
+      font-weight: 500;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+    }
+    .tile-text-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 10px;
+    }
+    .tile-text-meta {
+      font-size: 12px;
+      color: #8E8E8E;
+      line-height: 1.2;
+    }
+    .link-tile-header {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+    }
+    .link-domain {
+      font-size: 13px;
+      color: #8E8E8E;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .footer-stamp {
+      padding: 0 16px 36px 16px;
+      font-size: 12px;
+      color: #8E8E8E;
+      text-align: center;
+    }
+    .quick-capture-bar {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #000000;
+    }
+    .quick-capture-placeholder {
+      font-size: 14px;
+      color: #8E8E8E;
+    }
+    .quick-capture-btn {
+      font-size: 15px;
+      font-weight: 600;
+      color: #FFFFFF;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    .bottom-nav {
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 16px 16px 28px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #000000;
+    }
+    .nav-item {
+      font-size: 12px;
+      font-weight: 500;
+      color: #8E8E8E;
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .nav-item.active {
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+    .nav-item.active::after {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 1px;
+      background-color: #FFFFFF;
+      margin-top: 3px;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Top Header -->
+    <header class="header">
+      <div class="logo">拾穗 · GLEAN</div>
+      <div class="settings-link">设置</div>
+    </header>
+
+    <!-- Headline -->
+    <div class="main-title-block">
+      <h1 class="headline">穗仓 (10)</h1>
+    </div>
+
+    <!-- Action & View Mode -->
+    <div class="action-row">
+      <button class="btn-graft">嫁接所选</button>
+      <div class="view-toggle">
+        <span class="active">网格</span>
+        <span class="divider">|</span>
+        <span class="inactive">列表</span>
+      </div>
+    </div>
+
+    <!-- 2-Column 4:5 Grid for items 1-6 -->
+    <div class="grid-container">
+      <!-- Item 1: 轮渡上的雾 (photo) -->
+      <div class="tile photo-tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" alt="轮渡上的雾">
+        <div class="scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">轮渡上的雾</div>
+          <div class="photo-meta">照片 · 10/21</div>
+        </div>
+      </div>
+
+      <!-- Item 2: 完美的日子 (photo) -->
+      <div class="tile photo-tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1WIdVZRaOLGzNs3Aq7rWGyo0BUB51eCihOTXRp-V3J9tSfvFEiNUKKqFlg23ZjSzl3kQn9mLAb9w0MnymoCXaABZG4Z5WHbzD5I463MCUSqQZvBcXbQSw1kg9YUPOawjGCAaojd6TJDFIeOJn2KWzlxEISFbaeiV87S-aDWXFoPHGUTyJ9YNJlAa5NTOGkAOySgLUR79CedjhKwlMzt7NpYGiktN-MAMwF_LheMlBQFy0dWwkJUZ54p1bA" alt="完美的日子">
+        <div class="scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">完美的日子</div>
+          <div class="photo-meta">电影 · 10/20</div>
+        </div>
+      </div>
+
+      <!-- Item 3: Re: Stacks (photo) -->
+      <div class="tile photo-tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1VtN8VP_yx7Akt0rP-RFy_hL4k7YtEnFDmv1BZWDQeKxsmOriyFF_sWMhmw7k33iY2D2hqS-omsa_gPZZ2dMeRFqxzqxUmu9jFdKy3vyGcByh0uPUmkzFp5tLWHvUMr_2XX8gRALB9Nygadnya7LTemK5xx09PEGJJHiRIe2LxDmsa4O7B-JFP7j7ajrSVm0BjM_H8Vb0EtlEfPlaZV-T-RjKF2PGmnohoAxkmc8uarpfv_BqhT7N4ktWw" alt="Re: Stacks">
+        <div class="scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">Re: Stacks</div>
+          <div class="photo-meta">歌 · 10/19</div>
+        </div>
+      </div>
+
+      <!-- Item 4: 卡尔维诺 quote (dark tile #1B1B1B) -->
+      <div class="tile text-tile">
+        <div class="tile-text-content">
+          “记忆中的形象一旦被词语固定住，就给抹掉了。”
+        </div>
+        <div class="tile-text-footer">
+          <div class="tile-text-meta">卡尔维诺《看不见的城市》</div>
+          <div class="tile-text-meta">摘抄 · 10/18</div>
+        </div>
+      </div>
+
+      <!-- Item 5: 声控灯 idea (dark tile #1B1B1B) -->
+      <div class="tile text-tile">
+        <div class="tile-text-content">
+          “给楼道里每一盏声控灯起一个名字。”
+        </div>
+        <div class="tile-text-footer">
+          <div class="tile-text-meta">想法 · 10/17</div>
+        </div>
+      </div>
+
+      <!-- Item 6: Radio Garden link (dark tile #1B1B1B) -->
+      <div class="tile text-tile">
+        <div>
+          <div class="link-tile-header">
+            Radio Garden · 转动地球收听各地电台
+          </div>
+          <div class="link-domain">
+            radio.garden
+          </div>
+        </div>
+        <div class="tile-text-footer">
+          <div class="tile-text-meta">链接 · 10/16</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="footer-stamp">
+      © 2026 Q1f730
+    </div>
+
+    <!-- Persistent Quick Capture Bar -->
+    <div class="quick-capture-bar">
+      <span class="quick-capture-placeholder">随手拾一穗</span>
+      <button class="quick-capture-btn">拾</button>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-item active">穗仓</div>
+      <div class="nav-item">嫁接</div>
+      <div class="nav-item">新枝</div>
+      <div class="nav-item">口味</div>
+      <div class="nav-item">设置</div>
+    </nav>
+  </div>
+</body>
+</html>
