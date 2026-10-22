@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { GraftGrowing } from '../components/GraftGrowing';
 import { GraftTrail, IdeaCard } from '../components/IdeaCard';
-import { db, markGrafted } from '../lib/db';
+import { db, depositCliches, markBlocked, markGrafted } from '../lib/db';
 import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
 import { drawForMode, graftCount, isMode, MIN_CROSS_TYPES, MODES, modeDef, modeName, type GraftMode } from '../lib/modes';
 import { MIN_EVIDENCE } from '../lib/provenance';
@@ -31,6 +31,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const { settings, toast, openItem, go, desktop } = useApp();
   const items = useLiveQuery(() => db.items.toArray(), []);
   const nBranches = useLiveQuery(() => db.developments.count(), []);
+  // v0.19 我的套路墙：每次嫁接都带上（写进 FORBIDDEN + 生成后本地校验）
+  const wall = useLiveQuery(() => db.cliches.toArray(), []);
   const [count, setCount] = useState<3 | 4 | 5>(3);
   const [mode, setModeState] = useState<GraftMode>(savedMode);
   /** 当前这组穗是按哪种接法抽的；从每日一穗 / 详情带进来的是 null（不按接法） */
@@ -141,16 +143,19 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     // 只有按接法抽出来的这组才带接法；从每日一穗 / 详情带来的保持原样
     const gm = sel === picked && pickedBy ? pickedBy : undefined;
     const quiet = document.documentElement.dataset.motion === 'off';
+    const wallNow = wall || (await db.cliches.toArray());
     const wait = (ms: number) => new Promise((r) => setTimeout(r, quiet ? 0 : ms));
     let run: GraftResult;
     try {
       if (aiReady(settings)) {
-        run = await graftWithAI(settings, sel, { theme: th, mode: gm, taste: localStorage.getItem(TASTE_KEY) || undefined, signal: ctrl.signal, onProgress: setProgress });
+        run = await graftWithAI(settings, sel, { theme: th, mode: gm, wall: wallNow, taste: localStorage.getItem(TASTE_KEY) || undefined, signal: ctrl.signal, onProgress: setProgress });
         if (run.partial) toast('第二步没跑完，用第一步的种子直接收拢了三根', 'err');
         else if (run.weak) toast(`有 ${run.weak} 根说不清从哪几穗长出来，标了「证据不足」`, 'err');
+        else if (run.wall?.hit) toast(wallToast(run));
       } else {
         // 离线也走四步；给麦子一点点长的时间（减少动态效果时不等）
-        run = graftOffline(sel, { theme: th, mode: gm });
+        run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow });
+        if (run.wall?.hit) toast(wallToast(run));
         await wait(700);
         if (ctrl.signal.aborted) throw new Error('已取消');
         setProgress({ stage: 'defix' });
@@ -164,7 +169,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
         return;
       }
       toast((e instanceof Error ? e.message : String(e)) + '，已改用离线嫁接', 'err');
-      run = graftOffline(sel, { theme: th, mode: gm });
+      run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow });
     }
     if (ctrl.signal.aborted) {
       setBusy(false);
@@ -188,6 +193,9 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     const ids = (await db.developments.bulkAdd(devs, { allKeys: true })) as number[];
     // v0.18 记下这几穗又被嫁接了一次（次数 +1、最后时间）
     await markGrafted(sel.map((x) => x.id!), db, now).catch(() => {});
+    // v0.19 这次模型列出的套路沉淀上墙；被本地校验拦下的给墙上记一次
+    await depositCliches(run.cliches || run.branches[0]?.cliches, db, now).catch(() => {});
+    if (run.wall?.keys.length) await markBlocked(run.wall.keys, db).catch(() => {});
     setResult({ run, ids, batch: devs[0].batch!, names: sel.map((s) => s.title) });
     setProgress(null);
     setBusy(false);
@@ -258,7 +266,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
           </div>
 
           <div className="graft-main">
-            {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} recheck={progress.recheck} onCancel={() => abortRef.current?.abort()} />}
+            {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} recheck={progress.recheck} wall={progress.wall} onCancel={() => abortRef.current?.abort()} />}
             {result && (
               <>
                 <div className="three-head">
@@ -274,12 +282,15 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                 </div>
                 {result.run.branches[0]?.cliches.length > 0 && (
                   <div className="cliches-row">
-                    <span className="label">剪掉的旧枝（三根都避开的套路）</span>
+                    <span className="label">剪掉的旧枝 · 已上套路墙</span>
                     <span className="cliche-list">
                       {result.run.branches[0].cliches.map((c, i) => (
                         <s key={i}>{c}</s>
                       ))}
                     </span>
+                    <button className="btn text faint wall-go" onClick={() => go('taste')}>
+                      套路墙{wall ? ` (${wall.filter((c) => !c.struck).length})` : ''}
+                    </button>
                   </div>
                 )}
               </>
@@ -317,6 +328,13 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       )}
     </section>
   );
+}
+
+/** v0.19 撞墙提示：怎么处理的 */
+function wallToast(run: GraftResult): string {
+  const w = run.wall!;
+  const how = [w.replaced ? `换掉 ${w.replaced} 根` : '', w.scrubbed ? `删掉撞墙的字 ${w.scrubbed} 根` : ''].filter(Boolean).join('、');
+  return `有 ${w.hit} 根撞了套路墙，${w.retried ? (how ? `重写一次后又${how}` : '已重写') : how || '已处理'}`;
 }
 
 /** 已选的穗：无线表格，细体序号 + 标题 + 类型 + 日期（+ 换一穗） */
