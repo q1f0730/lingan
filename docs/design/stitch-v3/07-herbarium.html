@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · Glean - 穗仓</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Noto Serif SC, Newsreader, Space Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&amp;family=Noto+Serif+SC:wght@300;400;500;600;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary": "#0f2118",
+            "error-container": "#ffdad6",
+            "outline": "#727974",
+            "on-tertiary-fixed": "#0d1f17",
+            "on-primary": "#ffffff",
+            "secondary": "#476556",
+            "on-background": "#191c1a",
+            "error": "#ba1a1a",
+            "surface-variant": "#e0e3de",
+            "primary-container": "#1b382b",
+            "background": "#f7faf5",
+            "tertiary-container": "#24362d",
+            "surface-dim": "#d8dbd6",
+            "surface-bright": "#f7faf5",
+            "inverse-primary": "#adcebc",
+            "tertiary-fixed-dim": "#b6ccbe",
+            "on-surface-variant": "#424844",
+            "surface-container": "#ecefea",
+            "on-tertiary-container": "#8b9f93",
+            "surface-container-low": "#f1f4ef",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#82a291",
+            "primary": "#042217",
+            "secondary-fixed-dim": "#aecebc",
+            "on-error": "#ffffff",
+            "inverse-surface": "#2d312e",
+            "secondary-fixed": "#c9ead8",
+            "on-primary-fixed": "#022015",
+            "on-error-container": "#93000a",
+            "on-secondary": "#ffffff",
+            "secondary-container": "#c9ead8",
+            "on-surface": "#191c1a",
+            "surface-container-high": "#e6e9e4",
+            "primary-fixed-dim": "#adcebc",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-highest": "#e0e3de",
+            "surface": "#f7faf5",
+            "on-tertiary-fixed-variant": "#384b41",
+            "primary-fixed": "#c9ead7",
+            "surface-tint": "#476556",
+            "on-primary-fixed-variant": "#304d3f",
+            "tertiary-fixed": "#d2e8da",
+            "on-secondary-fixed": "#032015",
+            "on-secondary-fixed-variant": "#304d3f",
+            "inverse-on-surface": "#eff2ed",
+            "on-secondary-container": "#4d6b5c",
+            "outline-variant": "#c2c8c2"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "3rem",
+            "margin-tablet": "2rem",
+            "space-lg": "1.75rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "gutter": "1.5rem",
+            "margin-mobile": "1rem",
+            "margin": "3rem",
+            "gutter-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-lg": ["Newsreader", "Noto Serif SC", "serif"],
+            "headline-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "display-lg-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-md": ["Newsreader", "Noto Serif SC", "serif"],
+            "label-sm": ["Space Mono", "monospace"],
+            "headline-sm": ["Noto Serif SC", "Noto Serif", "serif"],
+            "label-md": ["Space Mono", "monospace"],
+            "label-lg": ["Space Mono", "monospace"],
+            "body-sm": ["Newsreader", "Noto Serif SC", "serif"],
+            "headline-lg-mobile": ["Noto Serif SC", "Noto Serif", "serif"]
+          },
+          "fontSize": {
+            "display-lg": ["44px", { "lineHeight": "54px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "body-lg": ["17px", { "lineHeight": "26px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "headline-lg": ["30px", { "lineHeight": "38px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "label-sm": ["9px", { "lineHeight": "12px", "letterSpacing": "0.12em", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "label-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "400" }],
+            "label-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "400" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "0em", "fontWeight": "400" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    /* Physical linen tape simulation */
+    .linen-tape {
+      background: rgba(222, 227, 219, 0.78);
+      backdrop-filter: blur(0.5px);
+      box-shadow: 0 1px 2px rgba(23, 54, 39, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+    }
+    .linen-tape-vertical {
+      background: rgba(214, 221, 211, 0.82);
+      box-shadow: 0 1px 1.5px rgba(23, 54, 39, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    }
+    /* Subtle paper plate shadow */
+    .archival-shadow {
+      box-shadow: 1px 2px 0px 0px rgba(20, 40, 30, 0.05);
+    }
+    .specimen-well {
+      box-shadow: inset 0px 1px 2px rgba(20, 40, 30, 0.04);
+    }
+    /* Custom scrollbar suppression for tactile mobile container */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-[#EFF2ED] text-on-surface m-0 p-0 h-full flex justify-center items-start antialiased selection:bg-secondary-fixed selection:text-primary">
+<!-- Mobile Viewport Canvas: 390x844 strict boundary -->
+<main class="w-[390px] h-[844px] bg-[#EFF2ED] flex flex-col relative overflow-hidden border-x border-[#D8DCD5]">
+<!-- TOP APP BAR (Shared Components Tokenized Implementation) -->
+<header class="fixed top-0 left-0 w-[390px] z-40 flex justify-between items-center px-gutter-mobile h-14 bg-surface dark:bg-tertiary border-b border-outline-variant dark:border-outline">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="local_florist">local_florist</span>
+<h1 class="font-headline-sm text-[17px] tracking-wide text-primary font-medium">拾穗 · Glean</h1>
+<span class="text-outline-variant font-label-sm text-[10px] scale-90">|</span>
+<span class="font-label-sm text-[10px] tracking-widest text-outline uppercase">HERBARIUM</span>
+</div>
+<div class="flex items-center space-x-2">
+<!-- Archival catalog accession stamp badge -->
+<div class="flex items-center border border-outline-variant px-1.5 py-0.5 bg-surface-container-low archival-shadow">
+<span class="font-label-sm text-[9px] text-primary tracking-widest">NO. 0824</span>
+<span class="mx-1 text-outline-variant">/</span>
+<span class="font-label-md text-primary tracking-widest uppercase text-[10px] font-bold">Q1f730</span>
+</div>
+</div>
+</header>
+<!-- MAIN SCROLLABLE SPECIMEN CANVAS (穗仓) -->
+<section class="flex-1 overflow-y-auto pt-16 pb-28 px-4" style="-webkit-overflow-scrolling: touch;">
+<!-- ARCHIVAL METADATA HEADER & ACCESSION RULER -->
+<div class="mt-2 mb-3 border-b border-outline-variant pb-2 flex justify-between items-end">
+<div>
+<p class="font-label-sm text-outline text-[9px] tracking-widest uppercase">CATALOG NO. 24-B · COLLECTION DESK</p>
+<div class="flex items-baseline space-x-2 mt-0.5">
+<span class="font-headline-sm text-primary text-[19px] font-medium">穗仓 · 标本存目</span>
+<span class="font-label-sm text-secondary text-[10px] tracking-wider">6 ITEMS PINNED</span>
+</div>
+</div>
+<!-- Millimeter Archival Ruler Reference -->
+<div class="flex items-end space-x-0.5 h-3 opacity-60">
+<span class="w-[1px] h-3 bg-primary"></span>
+<span class="w-[1px] h-1.5 bg-primary"></span>
+<span class="w-[1px] h-1.5 bg-primary"></span>
+<span class="w-[1px] h-2 bg-primary"></span>
+<span class="w-[1px] h-1.5 bg-primary"></span>
+<span class="w-[1px] h-1.5 bg-primary"></span>
+<span class="w-[1px] h-3 bg-primary"></span>
+<span class="w-[1px] h-1.5 bg-primary"></span>
+<span class="w-[1px] h-1.5 bg-primary"></span>
+<span class="w-[1px] h-2.5 bg-primary"></span>
+</div>
+</div>
+<!-- QUICK-CAPTURE SPECIMEN ENTRY (Herbarium mounting slot style) -->
+<div class="relative mb-5 bg-[#E4E7E2] border border-[#D8DCD5] p-2.5 archival-shadow">
+<!-- Linen tape tab top-center -->
+<div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-12 h-3 linen-tape"></div>
+<div class="flex items-center space-x-2">
+<div class="flex-1 bg-[#EFF2ED] specimen-well border border-[#C5CBC2] px-3 py-1.5 flex items-center">
+<span class="font-body-md text-outline text-[14px] italic select-none">随手拾一穗… (片刻、吉光片羽)</span>
+</div>
+<button class="w-8 h-8 bg-primary text-surface flex items-center justify-center hover:bg-primary-container transition-colors duration-150 active:scale-95" title="采集新标本">
+<span class="material-symbols-outlined text-[17px]" data-icon="edit_note">edit_note</span>
+</button>
+</div>
+</div>
+<!-- THE 6 MOUNTED SPECIMENS (Bento / Asymmetrical Grid) -->
+<div class="space-y-4">
+<!-- ITEM 1 (PHOTO): 影像 specimen with angled linen tape -->
+<article class="relative bg-[#E4E7E2] border border-[#D8DCD5] p-3 archival-shadow">
+<!-- Translucent Linen Tape Strips angled at top corners -->
+<div class="absolute -top-1.5 -left-1.5 w-9 h-3.5 linen-tape -rotate-12 z-10"></div>
+<div class="absolute -top-1.5 -right-1.5 w-9 h-3.5 linen-tape rotate-12 z-10"></div>
+<div class="border border-[#D8DCD5] p-1.5 bg-[#EFF2ED]">
+<div class="relative w-full h-44 overflow-hidden bg-surface-dim">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover grayscale-[15%] contrast-[1.05] brightness-95" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6_0zHVj7jjkCNoaUjYaIufr3DcCvwxmwRfT5gG79lucLZ8BnsRFMgUa39S_XvsXr73osmVYRBeySITcKIAP3_VvB0EUMFsvIbZBOzwi_AHc6NzJRjkt7Up5Rf5UPVGwFAB6cDptc0lR6P7P1IXJm3WCRlbU7Y16LCKywQSxmSBWaczTZTWdnZv4nuf9mHbTWNgNW3Fx6hGthIta_nBycvDVR-L_mFfMCIOoxPZTUyrn3gXrwHsqXEIS1fow_VCz5VhZAtBCtfoYVk"/>
+<div class="absolute bottom-1 left-1 bg-[#EFF2ED]/90 backdrop-blur-sm px-1.5 py-0.5 border border-[#D8DCD5]">
+<span class="font-label-sm text-[8px] text-primary tracking-widest uppercase">PL. 104 · SYCAMORE</span>
+</div>
+</div>
+<!-- Specimen Footnote Label -->
+<div class="mt-2 flex justify-between items-end pt-1 border-t border-[#D8DCD5]">
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="bg-[#D8DCD5] text-primary font-label-sm text-[9px] px-1 py-0.2 border border-[#C5CBC2]">影像</span>
+<span class="font-headline-sm text-[15px] text-primary font-medium">雨后的梧桐街</span>
+</div>
+<p class="font-body-sm text-[12px] text-on-surface-variant mt-0.5">湿漉沥青反照傍晚的冷蓝，叶片平伏如压制标本。</p>
+</div>
+<span class="font-label-sm text-outline text-[9px] tracking-wider whitespace-nowrap">今天 09:12</span>
+</div>
+</div>
+</article>
+<!-- TWO-COLUMN ROW FOR ITEM 2 & ITEM 3 -->
+<div class="grid grid-cols-2 gap-3">
+<!-- ITEM 2 (FILM): 电影 Specimen Card -->
+<article class="relative bg-[#E4E7E2] border border-[#D8DCD5] p-2.5 archival-shadow flex flex-col justify-between">
+<!-- Center Linen Tape strip -->
+<div class="absolute -top-1 left-6 w-8 h-2.5 linen-tape-vertical z-10"></div>
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<span class="bg-[#D8DCD5] text-primary font-label-sm text-[9px] px-1 py-0.2 border border-[#C5CBC2]">电影</span>
+<span class="font-label-sm text-outline text-[8px]">昨天 23:40</span>
+</div>
+<h3 class="font-headline-sm text-[14px] text-primary font-semibold leading-tight">燃烧女子的肖像</h3>
+<p class="font-label-sm text-outline text-[9px] mt-0.5">2019 · 瑟琳·席安玛</p>
+<div class="mt-2.5 border-l-2 border-[#1B382B] pl-1.5 py-0.5 bg-[#EFF2ED]/60">
+<p class="font-body-sm text-[11px] text-primary leading-snug italic">“画画时，你在看着我，我又在看着谁？”</p>
+</div>
+</div>
+<!-- Archival watermark stamp -->
+<div class="mt-3 pt-1.5 border-t border-[#D8DCD5] flex justify-between items-center">
+<span class="font-label-sm text-[8px] text-secondary tracking-widest">FRAME.72</span>
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="filter_vintage">filter_vintage</span>
+</div>
+</article>
+<!-- ITEM 3 (SONG): 音乐 Specimen with needle soundwave -->
+<article class="relative bg-[#E4E7E2] border border-[#D8DCD5] p-2.5 archival-shadow flex flex-col justify-between">
+<div class="absolute -top-1 right-6 w-8 h-2.5 linen-tape-vertical z-10"></div>
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<span class="bg-[#D8DCD5] text-primary font-label-sm text-[9px] px-1 py-0.2 border border-[#C5CBC2]">音乐</span>
+<span class="font-label-sm text-outline text-[8px]">昨天 21:05</span>
+</div>
+<h3 class="font-headline-sm text-[14px] text-primary font-semibold leading-tight">夜空中最亮的星</h3>
+<p class="font-label-sm text-outline text-[9px] mt-0.5">逃跑计划 · 摇滚标本</p>
+<!-- Frequency botanical needle lines -->
+<div class="mt-3 flex items-center justify-between h-7 px-1 bg-[#EFF2ED] border border-[#D8DCD5]">
+<span class="w-[1.5px] h-2 bg-primary"></span>
+<span class="w-[1.5px] h-4 bg-primary"></span>
+<span class="w-[1.5px] h-5 bg-primary"></span>
+<span class="w-[1.5px] h-3 bg-secondary"></span>
+<span class="w-[1.5px] h-6 bg-primary"></span>
+<span class="w-[1.5px] h-4 bg-secondary"></span>
+<span class="w-[1.5px] h-2 bg-primary"></span>
+<span class="w-[1.5px] h-5 bg-primary"></span>
+<span class="w-[1.5px] h-3 bg-primary"></span>
+<span class="w-[1.5px] h-1.5 bg-primary"></span>
+</div>
+</div>
+<div class="mt-2.5 pt-1.5 border-t border-[#D8DCD5] flex justify-between items-center">
+<span class="font-label-sm text-[8px] text-outline">FREQ.440Hz</span>
+<span class="material-symbols-outlined text-[13px] text-primary" data-icon="graphic_eq">graphic_eq</span>
+</div>
+</article>
+</div>
+<!-- ITEM 4 (QUOTE): 文案 Specimen with serif typography -->
+<article class="relative bg-[#E4E7E2] border border-[#D8DCD5] p-3 archival-shadow">
+<div class="absolute -top-1.5 left-8 w-11 h-3 linen-tape z-10"></div>
+<div class="flex justify-between items-start mb-2">
+<span class="bg-[#D8DCD5] text-primary font-label-sm text-[9px] px-1.5 py-0.5 border border-[#C5CBC2]">文案</span>
+<div class="flex items-center space-x-2">
+<span class="font-label-sm text-[8px] text-outline tracking-wider">DEAD POETS</span>
+<span class="font-label-sm text-outline text-[9px]">10/19</span>
+</div>
+</div>
+<div class="bg-[#EFF2ED] p-2.5 border border-[#D8DCD5]">
+<p class="font-display-lg text-[15px] leading-relaxed text-primary font-medium tracking-wide">
+              “我们读诗、写诗，不是因为好玩。我们读诗，是因为我们是人类的一员。”
+            </p>
+<div class="mt-2 flex justify-end">
+<span class="font-label-sm text-[9px] text-secondary tracking-widest">— 死亡诗社 (1989) 箴言签条</span>
+</div>
+</div>
+</article>
+<!-- TWO-COLUMN ROW FOR ITEM 5 & ITEM 6 -->
+<div class="grid grid-cols-2 gap-3">
+<!-- ITEM 5 (IDEA): 想法 Specimen Scrap -->
+<article class="relative bg-[#E4E7E2] border border-[#D8DCD5] p-2.5 archival-shadow flex flex-col justify-between">
+<div class="absolute -top-1.5 right-4 w-9 h-3 linen-tape rotate-3 z-10"></div>
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<span class="bg-[#D8DCD5] text-primary font-label-sm text-[9px] px-1 py-0.2 border border-[#C5CBC2]">想法</span>
+<span class="font-label-sm text-outline text-[8px]">10/18</span>
+</div>
+<div class="bg-[#EFF2ED] p-2 border border-[#C5CBC2]">
+<p class="font-body-md text-[13px] text-primary leading-snug">
+                  把通勤路上听到的对话写成一组短诗。
+                </p>
+<div class="mt-2 pt-1 border-t border-dashed border-[#C5CBC2]">
+<span class="font-label-sm text-[8px] text-outline">#城市植物标本</span>
+</div>
+</div>
+</div>
+<div class="mt-2 flex items-center justify-between text-outline">
+<span class="font-label-sm text-[8px]">SPUR.019</span>
+<span class="material-symbols-outlined text-[13px] text-secondary" data-icon="psychology_alt">psychology_alt</span>
+</div>
+</article>
+<!-- ITEM 6 (LINK): 网页 Index Card -->
+<article class="relative bg-[#E4E7E2] border border-[#D8DCD5] p-2.5 archival-shadow flex flex-col justify-between">
+<div class="absolute -top-1.5 left-4 w-9 h-3 linen-tape -rotate-3 z-10"></div>
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<span class="bg-[#D8DCD5] text-primary font-label-sm text-[9px] px-1 py-0.2 border border-[#C5CBC2]">网页</span>
+<span class="font-label-sm text-outline text-[8px]">10/16</span>
+</div>
+<h3 class="font-headline-sm text-[13px] text-primary font-semibold leading-tight">
+                Are.na · 关于收集的收集
+              </h3>
+<div class="mt-2 bg-[#EFF2ED] p-1.5 border border-[#D8DCD5] flex items-center space-x-1">
+<span class="material-symbols-outlined text-[12px] text-secondary" data-icon="link">link</span>
+<span class="font-label-sm text-[9px] text-primary truncate">are.na/channels</span>
+</div>
+</div>
+<div class="mt-2 pt-1.5 border-t border-[#D8DCD5] flex justify-between items-center">
+<span class="font-label-sm text-[8px] text-outline">ARCHIVAL LINK</span>
+<span class="material-symbols-outlined text-[13px] text-primary" data-icon="arrow_outward">arrow_outward</span>
+</div>
+</article>
+</div>
+</div>
+<!-- BOTANICAL COLOPHON FOOTER NOTE -->
+<div class="mt-8 mb-4 text-center border-t border-outline-variant pt-3">
+<p class="font-label-sm text-[9px] text-outline tracking-widest uppercase">HERBARIUM GLEANING ARCHIVE · FOLIO 2024</p>
+<p class="font-body-sm text-[11px] text-on-surface-variant italic mt-0.5">拾之以心，蓄而生枝。</p>
+</div>
+</section>
+<!-- FLOATING GRAFTING ACTION TRIGGER (嫁接 - FAB in Botanical Seal Finish) -->
+<div class="absolute bottom-20 right-4 z-40">
+<button class="flex items-center space-x-1.5 bg-[#173627] text-[#EFF2ED] pl-3 pr-4 py-2 border border-[#14281E] archival-shadow hover:bg-[#3D5A4C] active:scale-95 transition-all duration-150" title="嫁接选中的穗">
+<span class="material-symbols-outlined text-[18px] text-[#C9EAD7]" data-icon="call_split">call_split</span>
+<span class="font-headline-sm text-[13px] tracking-widest font-medium">嫁接</span>
+</button>
+</div>
+<!-- BOTTOM NAVIGATION BAR (Shared Components Tokenized Implementation) -->
+<nav class="fixed bottom-0 left-0 w-[390px] z-50 flex justify-around items-center h-16 px-gutter-mobile bg-surface dark:bg-tertiary pb-safe border-t border-outline-variant dark:border-outline">
+<!-- Tab 1: 穗仓 (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed font-bold relative py-1 px-3" href="#granary">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2" data-weight="fill" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-[9px] mt-0.5">穗仓</span>
+<!-- Botanical active dot indicator -->
+<span class="absolute bottom-0 w-1 h-1 bg-primary rounded-full"></span>
+</a>
+<!-- Tab 2: 嫁接 -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary transition-colors duration-150 py-1 px-3" href="#graft">
+<span class="material-symbols-outlined text-[20px]" data-icon="call_split">call_split</span>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-[9px] mt-0.5">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary transition-colors duration-150 py-1 px-3" href="#branches">
+<span class="material-symbols-outlined text-[20px]" data-icon="psychology_alt">psychology_alt</span>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-[9px] mt-0.5">新枝</span>
+</a>
+<!-- Tab 4: 口味 -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary transition-colors duration-150 py-1 px-3" href="#palettes">
+<span class="material-symbols-outlined text-[20px]" data-icon="filter_vintage">filter_vintage</span>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-[9px] mt-0.5">口味</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant hover:text-primary transition-colors duration-150 py-1 px-3" href="#settings">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm uppercase tracking-widest text-[9px] mt-0.5">设置</span>
+</a>
+</nav>
+</main>
+<!-- Interactive specimen selection micro-interaction -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('article');
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          card.classList.toggle('ring-1');
+          card.classList.toggle('ring-primary');
+        });
+      });
+    });
+  </script>
+</body></html>
