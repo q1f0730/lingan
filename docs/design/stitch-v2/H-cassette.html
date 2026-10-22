@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>灵感暗房 · 88.5 MHz</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&amp;family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary": "#ffce99",
+            "on-tertiary": "#690005",
+            "surface-container": "#1e1f24",
+            "on-secondary": "#343022",
+            "surface-container-high": "#292a2e",
+            "inverse-primary": "#875200",
+            "error-container": "#93000a",
+            "on-background": "#e3e2e7",
+            "on-tertiary-fixed-variant": "#93000a",
+            "on-primary-fixed": "#2b1700",
+            "on-secondary-container": "#bbb5a1",
+            "on-surface-variant": "#d8c3af",
+            "tertiary": "#ffcac3",
+            "on-primary": "#482a00",
+            "surface-container-low": "#1a1b1f",
+            "secondary-container": "#4b4737",
+            "surface-tint": "#ffb865",
+            "inverse-on-surface": "#2f3035",
+            "on-surface": "#e3e2e7",
+            "surface-dim": "#121317",
+            "tertiary-fixed-dim": "#ffb4ab",
+            "on-tertiary-container": "#9a000b",
+            "on-primary-container": "#6c4100",
+            "tertiary-container": "#ffa297",
+            "on-primary-fixed-variant": "#673d00",
+            "primary-fixed": "#ffddba",
+            "tertiary-fixed": "#ffdad6",
+            "surface": "#121317",
+            "surface-bright": "#38393d",
+            "outline": "#a08d7b",
+            "secondary-fixed": "#e9e2cd",
+            "on-secondary-fixed": "#1e1c0f",
+            "on-tertiary-fixed": "#410002",
+            "background": "#121317",
+            "surface-variant": "#343439",
+            "surface-container-highest": "#343439",
+            "secondary": "#cdc6b2",
+            "on-error": "#690005",
+            "error": "#ffb4ab",
+            "outline-variant": "#534435",
+            "on-secondary-fixed-variant": "#4b4737",
+            "inverse-surface": "#e3e2e7",
+            "primary-fixed-dim": "#ffb865",
+            "secondary-fixed-dim": "#cdc6b2",
+            "on-error-container": "#ffdad6",
+            "surface-container-lowest": "#0d0e12",
+            "primary-container": "#ffa834"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2.5rem",
+            "space-lg": "1.5rem",
+            "space-2xl": "4rem",
+            "margin-desktop": "2.5rem",
+            "margin-tablet": "1.75rem",
+            "gutter-desktop": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "label-md": ["Space Mono", "monospace"],
+            "headline-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "display-frequency-mobile": ["Space Mono", "monospace"],
+            "display-frequency": ["Space Mono", "monospace"],
+            "headline-lg-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-xl-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-sm": ["Space Mono", "monospace"],
+            "label-sm": ["Space Mono", "monospace"],
+            "title-sm": ["Space Mono", "monospace"],
+            "body-md": ["Space Mono", "monospace"],
+            "headline-xl": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-md": ["Noto Serif SC", "Noto Serif", "serif"]
+          },
+          "fontSize": {
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "display-frequency-mobile": ["38px", { "lineHeight": "40px", "letterSpacing": "0.02em", "fontWeight": "700" }],
+            "display-frequency": ["52px", { "lineHeight": "52px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "30px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "headline-xl-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "400" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "700" }],
+            "title-sm": ["15px", { "lineHeight": "22px", "letterSpacing": "0.06em", "fontWeight": "700" }],
+            "body-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Scanlines effect for VFD smoked glass */
+    .vfd-scanlines {
+      background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0px, rgba(0, 0, 0, 0.28) 1px, transparent 1px, transparent 3px);
+    }
+    /* Brushed chassis metal simulation */
+    .brushed-metal {
+      background: linear-gradient(180deg, #181a20 0%, #111216 100%);
+    }
+    /* Custom scrollbar suppression */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#050608] text-on-surface flex justify-center items-center min-h-screen p-0 sm:p-4 selection:bg-primary-container selection:text-on-primary-container">
+<!-- iPhone Canvas Frame (Exactly 390x844) -->
+<div class="relative w-[390px] h-[844px] overflow-hidden bg-surface-container-lowest border border-outline-variant/30 sm:rounded-[44px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] flex flex-col justify-between">
+<!-- Top System Status Fill -->
+<div class="h-10 w-full flex-shrink-0 flex items-end justify-between px-6 pb-1 bg-surface-container-lowest z-40">
+<span class="text-label-sm font-label-sm text-outline tracking-tight">02:47 AM</span>
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-2.5 h-2 bg-outline/60 rounded-xs"></span>
+<span class="inline-block w-2 h-2.5 bg-outline/60 rounded-xs"></span>
+<span class="inline-block w-4 h-2 border border-outline/70 rounded-xs relative"><span class="absolute left-0.5 top-0.5 bottom-0.5 right-1 bg-primary"></span></span>
+</div>
+</div>
+<!-- 1. TOP APP BAR (Shared Component Exact Implementation) -->
+<header class="bg-surface-container-lowest flex justify-between items-center w-full px-4 py-2 border-b border-outline-variant/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),0_4px_12px_rgba(0,0,0,0.85)] z-30 flex-shrink-0">
+<div class="flex items-center space-x-2">
+<button class="text-primary hover:text-primary-fixed hover:bg-surface-container-high/40 transition-colors duration-150 active:translate-y-px transition-transform duration-75 flex items-center justify-center p-1 rounded">
+<span class="material-symbols-outlined text-[20px]" data-icon="radio">radio</span>
+</button>
+<span class="text-title-sm font-title-sm text-primary uppercase font-bold tracking-widest drop-shadow-[0_0_8px_rgba(255,206,153,0.6)]">灵感暗房 · 88.5 MHz</span>
+</div>
+<div class="flex items-center space-x-1">
+<span class="text-label-sm font-label-sm text-outline/80 mr-1.5">Q1f730</span>
+<button class="text-outline hover:text-primary-fixed hover:bg-surface-container-high/40 transition-colors duration-150 active:translate-y-px transition-transform duration-75 p-1 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+</div>
+</header>
+<!-- MAIN SCROLLABLE RACK DECK CONTENT -->
+<main class="flex-1 overflow-y-auto px-3 pt-2.5 pb-20 space-y-3.5 relative bg-gradient-to-b from-[#0d0e12] via-[#090a0d] to-[#07080a]">
+<!-- MODULE 1: VFD TUNER & VU METER BAY -->
+<section class="brushed-metal border border-outline-variant/40 rounded-lg p-2.5 relative shadow-[0_4px_14px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.07)]">
+<!-- Chassis Micro-screws -->
+<span class="absolute top-1.5 left-1.5 w-1 h-1 rounded-full bg-outline-variant/60 shadow-[inset_0_0.5px_0.5px_rgba(0,0,0,0.9)]"></span>
+<span class="absolute top-1.5 right-1.5 w-1 h-1 rounded-full bg-outline-variant/60 shadow-[inset_0_0.5px_0.5px_rgba(0,0,0,0.9)]"></span>
+<span class="absolute bottom-1.5 left-1.5 w-1 h-1 rounded-full bg-outline-variant/60 shadow-[inset_0_0.5px_0.5px_rgba(0,0,0,0.9)]"></span>
+<span class="absolute bottom-1.5 right-1.5 w-1 h-1 rounded-full bg-outline-variant/60 shadow-[inset_0_0.5px_0.5px_rgba(0,0,0,0.9)]"></span>
+<!-- Smoked Glass VFD Screen Cavity -->
+<div class="bg-[#07080a] border border-outline-variant/60 rounded p-2.5 relative overflow-hidden shadow-[inset_0_3px_10px_rgba(0,0,0,0.95)]">
+<div class="absolute inset-0 vfd-scanlines opacity-50 pointer-events-none"></div>
+<!-- Top Row: Tally Indicators & Frequency Counter -->
+<div class="relative z-10 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-primary-container/20 border border-primary/40 text-primary text-label-sm font-label-sm drop-shadow-[0_0_6px_rgba(255,206,153,0.7)]">
+                FM STEREO
+              </span>
+<span class="inline-flex items-center space-x-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#4EFA94] animate-pulse shadow-[0_0_8px_#4EFA94]"></span>
+<span class="text-[#4EFA94] text-label-sm font-label-sm">ST LOCKED</span>
+</span>
+</div>
+<div class="text-right">
+<span class="text-outline text-label-sm font-label-sm block">TAPE COUNTER</span>
+<span class="text-primary font-display-frequency-mobile text-xl tracking-widest drop-shadow-[0_0_6px_rgba(255,168,52,0.8)] leading-none font-bold">06/45</span>
+</div>
+</div>
+<!-- Middle Row: Big Frequency Display & VU Segment Bars -->
+<div class="relative z-10 flex items-baseline justify-between mt-1 mb-2">
+<div class="flex items-baseline space-x-1">
+<span class="font-display-frequency-mobile text-display-frequency-mobile text-primary font-bold tracking-tight drop-shadow-[0_0_12px_rgba(255,168,52,0.75)]">88.5</span>
+<span class="font-label-sm text-label-sm text-primary/80 uppercase">MHz</span>
+</div>
+<!-- Signal Level Segment Ladder -->
+<div class="flex flex-col items-end space-y-1">
+<span class="text-outline text-[9px] font-label-sm">RF LEVEL [VU]</span>
+<div class="flex space-x-1">
+<span class="w-1.5 h-3 bg-primary rounded-xs shadow-[0_0_4px_#ffce99]"></span>
+<span class="w-1.5 h-3 bg-primary rounded-xs shadow-[0_0_4px_#ffce99]"></span>
+<span class="w-1.5 h-3 bg-primary rounded-xs shadow-[0_0_4px_#ffce99]"></span>
+<span class="w-1.5 h-3 bg-primary rounded-xs shadow-[0_0_4px_#ffce99]"></span>
+<span class="w-1.5 h-3 bg-primary rounded-xs shadow-[0_0_4px_#ffce99]"></span>
+<span class="w-1.5 h-3 bg-primary rounded-xs shadow-[0_0_4px_#ffce99]"></span>
+<span class="w-1.5 h-3 bg-error rounded-xs shadow-[0_0_4px_#ff2a2a] animate-pulse"></span>
+</div>
+</div>
+</div>
+<!-- Bottom: Frequency Scale Ruler & Red Hairline Tuning Needle -->
+<div class="relative z-10 pt-1.5 border-t border-outline-variant/40">
+<div class="relative h-6 w-full flex items-center justify-between text-outline font-label-sm text-[9px] px-1 select-none">
+<!-- Scale graduations -->
+<span>88</span>
+<span class="text-outline/40">|</span>
+<span>92</span>
+<span class="text-outline/40">|</span>
+<span>96</span>
+<span class="text-outline/40">|</span>
+<span>100</span>
+<span class="text-outline/40">|</span>
+<span>104</span>
+<span class="text-outline/40">|</span>
+<span>108</span>
+<!-- Red Lit Tuning Needle anchored precisely at 88.5 MHz (~10% position) -->
+<div class="absolute left-[8%] top-0 bottom-0 flex flex-col items-center">
+<span class="w-0.5 h-full bg-[#FF2B2B] shadow-[0_0_8px_#FF2B2B]"></span>
+<div class="w-1.5 h-1 bg-[#FF2B2B] shadow-[0_0_6px_#FF2B2B]"></div>
+</div>
+</div>
+<!-- Frequency Ruler Subticks Bar -->
+<div class="w-full h-1 bg-surface-container-high/60 rounded-full overflow-hidden flex items-center px-0.5">
+<div class="w-[8.5%] h-full bg-primary/40"></div>
+<div class="w-1.5 h-full bg-[#FF2B2B]"></div>
+</div>
+</div>
+</div>
+<!-- Milled Tuning Knob & Dolby Switch Trough -->
+<div class="mt-2 pt-1 flex items-center justify-between px-1">
+<div class="flex items-center space-x-2">
+<!-- Machined knurled dial representation -->
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-[#16181C] to-[#2E313A] border border-outline-variant/80 shadow-[0_2px_4px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] flex items-center justify-center relative cursor-pointer active:scale-95 transition-transform">
+<span class="w-1 h-3 bg-primary rounded-full absolute -top-0.5 shadow-[0_0_4px_#ffce99]"></span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#111215] border border-outline-variant/60"></span>
+</div>
+<div class="flex flex-col">
+<span class="text-primary font-label-sm text-[10px] leading-tight">TUNING / 调谐</span>
+<span class="text-outline font-body-sm text-[9px]">MANUAL FREQ LOCK</span>
+</div>
+</div>
+<!-- Chrome Dolby Toggle Switch -->
+<div class="flex items-center space-x-2">
+<span class="text-secondary font-label-sm text-[9px] uppercase">DOLBY-C NR</span>
+<div class="w-9 h-4 bg-surface-container-lowest border border-outline-variant rounded-full p-0.5 flex items-center justify-end shadow-inner cursor-pointer">
+<div class="w-3 h-3 rounded-full bg-gradient-to-b from-[#e3e2e7] to-[#7f7a73] shadow-md border border-white/40"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- MODULE 2: QUICK CAPTURE '● REC 记一笔…' (Heavy Tactile Switch Slot) -->
+<section class="brushed-metal border border-outline-variant/40 rounded-lg p-2 shadow-[0_4px_12px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.06)] relative">
+<div class="bg-[#08090B] border border-outline-variant/70 rounded p-2 flex items-center justify-between shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)]">
+<!-- Tactile Carmine REC Trigger Key -->
+<button class="flex-1 flex items-center space-x-2.5 py-1.5 px-3 rounded bg-gradient-to-b from-[#5c1313] to-[#3a0a0a] border border-[#ff4d4d]/40 shadow-[0_3px_8px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,160,160,0.3)] active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] transition-all group">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF2B2B] opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-[#FF2B2B] shadow-[0_0_8px_#FF2B2B]"></span>
+</span>
+<div class="flex flex-col text-left">
+<span class="text-primary-fixed font-title-sm text-[13px] leading-tight font-bold group-hover:text-primary transition-colors flex items-center space-x-1">
+<span>● REC</span>
+<span class="text-on-surface font-headline-lg-mobile text-[13px]">记一笔…</span>
+</span>
+<span class="text-tertiary-fixed-dim/80 font-label-sm text-[9px]">TAP TO RECORD INSPIRATION</span>
+</div>
+</button>
+<!-- Input Level Peak Meter Bar -->
+<div class="ml-3 pl-3 border-l border-outline-variant/40 flex flex-col items-center">
+<span class="text-outline font-label-sm text-[8px] uppercase tracking-wider mb-1">INPUT PEAK</span>
+<div class="flex space-x-0.5">
+<span class="w-1 h-3.5 bg-primary/80 rounded-xs"></span>
+<span class="w-1 h-3.5 bg-primary/80 rounded-xs"></span>
+<span class="w-1 h-3.5 bg-primary/60 rounded-xs"></span>
+<span class="w-1 h-3.5 bg-outline-variant/60 rounded-xs"></span>
+<span class="w-1 h-3.5 bg-[#FF2B2B] rounded-xs shadow-[0_0_4px_#ff2b2b]"></span>
+</div>
+</div>
+</div>
+</section>
+<!-- MODULE 3: COLLISION '显影' ACTION (Tape Splice Dual Reeler) -->
+<section class="bg-gradient-to-r from-surface-container-low to-surface-container-high border border-primary/30 rounded-lg p-2.5 relative shadow-[0_4px_16px_rgba(0,0,0,0.7)] overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-20 h-20 rounded-full border border-primary/10 pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded-full bg-[#0d0e12] border border-primary/60 flex items-center justify-center text-primary shadow-[0_0_10px_rgba(255,168,52,0.35)]">
+<span class="material-symbols-outlined text-[18px] animate-spin" data-icon="slow_motion_video" style="animation-duration: 9s;">slow_motion_video</span>
+</div>
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="text-primary font-headline-lg-mobile text-[13px] font-bold">选 2 盘磁带进行灵感显影</span>
+<span class="text-label-sm font-label-sm bg-primary-container text-on-primary-container px-1 py-0.2 rounded text-[8px] font-bold">DUAL COLLIDE</span>
+</div>
+<p class="text-secondary font-body-sm text-[10px] opacity-80 mt-0.5">两相磁带碰撞 · 在暗处淬炼全新叙事火花</p>
+</div>
+</div>
+<button class="bg-surface-container-lowest border border-primary/70 text-primary hover:bg-primary/20 px-2.5 py-1.5 rounded flex items-center space-x-1 shadow-[0_2px_8px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,206,153,0.3)] active:scale-95 transition-all">
+<span class="font-label-sm text-[11px] font-bold">▲ 显影</span>
+</button>
+</div>
+</section>
+<!-- MODULE 4: THE CASSETTE SHELF (Archival J-Card Collection) -->
+<section class="space-y-2.5">
+<!-- Shelf Header Bar -->
+<div class="flex items-center justify-between px-1">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[16px]" data-icon="graphic_eq">graphic_eq</span>
+<h2 class="text-primary font-title-sm text-[13px] font-bold tracking-wider uppercase">磁带架 · CASSETTE ARCHIVE</h2>
+<span class="text-outline font-label-sm text-[10px] bg-surface-container-high px-1.5 py-0.5 rounded">6 TRACKS</span>
+</div>
+<span class="text-outline font-label-sm text-[10px]">SORT: CHRONO</span>
+</div>
+<!-- STACK OF 6 DIVERSE CASSETTE TAPE UNITS -->
+<div class="space-y-2.5">
+<!-- ITEM 1: [PHOTO] Gothic cathedral in rain -->
+<article class="bg-[#121419] border border-outline-variant/40 rounded-lg p-2.5 shadow-[0_4px_10px_rgba(0,0,0,0.7)] hover:border-primary/50 transition-colors relative group">
+<div class="flex items-start space-x-2.5">
+<!-- Clear smoked cassette shell with photo contact slip & tape spool -->
+<div class="w-16 h-16 rounded bg-[#08090B] border border-outline-variant/70 relative overflow-hidden flex-shrink-0 flex flex-col justify-between p-1 shadow-inner">
+<!-- Spools representation -->
+<div class="flex justify-between items-center px-1">
+<div class="w-3.5 h-3.5 rounded-full border border-outline/80 flex items-center justify-center">
+<span class="w-1 h-1 bg-primary rounded-full"></span>
+</div>
+<div class="w-3.5 h-3.5 rounded-full border border-outline/80 flex items-center justify-center">
+<span class="w-1 h-1 bg-primary rounded-full"></span>
+</div>
+</div>
+<!-- Mini Photographic Contact Slip Insert -->
+<div class="h-6 w-full rounded bg-[#1f232b] overflow-hidden relative">
+<img class="w-full h-full object-cover grayscale contrast-125 opacity-70" data-alt="Dark dramatic architectural photograph of the Cologne Gothic cathedral spires piercing through heavy stormy night rain, shrouded in deep obsidian shadows and glistening wet stone textures in a moody filmic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG_NMsb8lBoc0ZQE6_FdGmi0ptNSfxsYubh5caGMfcEA2B65YgXHaNNFhzopDpiLaV0k664kJ2E5MN2zuteL9Rqqsn6XSG9fF64rbek9Lh9ocYih8R94_2uxF6_dSgmfY9AODSlYhnpqkePEqle680wCFs2OyI8A2dHewd9zIjnYjShNQ-NnwkNSm72GW8qAURFuOVCiUTSHfHi_3lFjvdF_IBGepC_szApZ6gNtydOiIBUUV8xG-9nY6LfQJ0T-ymy6-pgieba3o"/>
+</div>
+<span class="text-outline text-[8px] font-label-sm text-center">TYPE I</span>
+</div>
+<!-- J-Card Cream Paper Insert -->
+<div class="flex-1 bg-[#E6DEC8] text-[#1A1815] rounded p-2 shadow-sm relative">
+<div class="flex justify-between items-baseline border-b border-[#D3CBB3] pb-1 mb-1">
+<span class="font-label-sm text-[9px] font-bold tracking-wider text-[#673d00] bg-[#ffddba]/60 px-1 rounded-xs">[PHOTO · CH-A]</span>
+<span class="font-label-sm text-[9px] text-[#4b4737]">今天 22:18 · 001</span>
+</div>
+<h3 class="font-headline-lg-mobile text-[13px] font-bold text-[#1A1815] leading-snug">雨天科隆大教堂尖顶阴影</h3>
+<p class="font-body-sm text-[10px] text-[#343022] mt-0.5 line-clamp-1">沉重的黑色飞券在暴雨中若隐若现，冷灰反光浸透胶片感光颗粒。</p>
+</div>
+</div>
+</article>
+<!-- ITEM 2: [FILM] 《花样年华》(2000) 王家卫 -->
+<article class="bg-[#121419] border border-outline-variant/40 rounded-lg p-2.5 shadow-[0_4px_10px_rgba(0,0,0,0.7)] hover:border-primary/50 transition-colors relative">
+<div class="flex items-start space-x-2.5">
+<!-- 35mm film reel cassette shell -->
+<div class="w-16 h-16 rounded bg-[#1a0f0f] border border-[#ff4d4d]/30 relative overflow-hidden flex-shrink-0 flex flex-col justify-between p-1 shadow-inner">
+<div class="flex justify-between items-center px-1">
+<span class="text-[8px] font-label-sm text-[#FF2B2B]">35MM</span>
+<span class="w-2 h-2 rounded-full bg-[#FF2B2B] shadow-[0_0_4px_#ff2b2b]"></span>
+</div>
+<div class="text-center font-label-sm text-[9px] text-[#ffb4ab] font-bold tracking-tighter">
+                  EXP 25
+                </div>
+<div class="w-full h-1 bg-[#4A0E0E] rounded-full"></div>
+</div>
+<!-- J-Card Insert: Scarlet accented vintage card -->
+<div class="flex-1 bg-[#F0EAD6] text-[#1A1815] rounded p-2 shadow-sm border-l-2 border-[#9a000b]">
+<div class="flex justify-between items-baseline border-b border-[#D3CBB3] pb-1 mb-1">
+<span class="font-label-sm text-[9px] font-bold tracking-wider text-[#9a000b]">[FILM · EXP 25]</span>
+<span class="font-label-sm text-[9px] text-[#4b4737]">今天 19:42 · 002</span>
+</div>
+<h3 class="font-headline-lg-mobile text-[13px] font-bold text-[#1A1815] leading-snug">《花样年华》(2000) 王家卫</h3>
+<p class="font-body-sm text-[10px] text-[#343022] mt-0.5">狭窄昏黄楼梯间的红暖调、旗袍褶皱与纳京高《Quizás, Quizás, Quizás》大提琴。</p>
+</div>
+</div>
+</article>
+<!-- ITEM 3: [SONG] Subterranean Homesick Alien — Radiohead -->
+<article class="bg-[#121419] border border-outline-variant/40 rounded-lg p-2.5 shadow-[0_4px_10px_rgba(0,0,0,0.7)] hover:border-primary/50 transition-colors relative">
+<div class="flex items-start space-x-2.5">
+<!-- Chrome metal Type II High-Bias shell -->
+<div class="w-16 h-16 rounded bg-gradient-to-br from-[#2a2d36] to-[#121317] border border-outline/50 relative overflow-hidden flex-shrink-0 flex flex-col justify-between p-1.5 shadow-inner">
+<div class="flex justify-between text-[7px] font-label-sm text-primary">
+<span>CrO2</span>
+<span>70μs</span>
+</div>
+<!-- Simulated frequency peak waveform -->
+<div class="flex items-end justify-between h-4 px-1 space-x-0.5">
+<span class="w-1 h-1.5 bg-primary/70"></span>
+<span class="w-1 h-3.5 bg-primary"></span>
+<span class="w-1 h-2 bg-primary/90"></span>
+<span class="w-1 h-4 bg-primary"></span>
+<span class="w-1 h-1 bg-primary/60"></span>
+</div>
+<span class="text-outline text-[7px] font-label-sm text-center">TYPE II CHROME</span>
+</div>
+<!-- J-Card Insert: Technical Audio Label -->
+<div class="flex-1 bg-[#E6DEC8] text-[#1A1815] rounded p-2 shadow-sm">
+<div class="flex justify-between items-baseline border-b border-[#D3CBB3] pb-1 mb-1">
+<span class="font-label-sm text-[9px] font-bold tracking-wider text-[#6c4100]">[AUDIO · 33⅓]</span>
+<span class="font-label-sm text-[9px] text-[#4b4737]">昨天 23:05 · 003</span>
+</div>
+<h3 class="font-title-sm text-[12px] font-bold text-[#1A1815] leading-snug">Subterranean Homesick Alien</h3>
+<p class="font-body-sm text-[10px] text-[#343022] mt-0.5">电颤琴与太空混响吉他交织，深夜驾车穿越冷雨隧道时记录的声场共振。</p>
+</div>
+</div>
+</article>
+<!-- ITEM 4: [QUOTE] 罗兰·巴特《明室》 -->
+<article class="bg-[#121419] border border-outline-variant/40 rounded-lg p-2.5 shadow-[0_4px_10px_rgba(0,0,0,0.7)] hover:border-primary/50 transition-colors relative">
+<div class="flex items-start space-x-2.5">
+<!-- Typewriter tape cartridge icon box -->
+<div class="w-16 h-16 rounded bg-[#0d0e12] border border-outline-variant/70 relative overflow-hidden flex-shrink-0 flex flex-col justify-center items-center p-1 text-center">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="notes">notes</span>
+<span class="text-[8px] font-label-sm text-outline mt-1">CARBON</span>
+<span class="text-[7px] font-label-sm text-outline-variant">RIBBON</span>
+</div>
+<!-- J-Card Insert: Weathered paper with typewriter quote -->
+<div class="flex-1 bg-[#F0EAD6] text-[#1A1815] rounded p-2 shadow-sm">
+<div class="flex justify-between items-baseline border-b border-[#D3CBB3] pb-1 mb-1">
+<span class="font-label-sm text-[9px] font-bold tracking-wider text-[#343022]">[TXT · MONO]</span>
+<span class="font-label-sm text-[9px] text-[#4b4737]">10/22 · 004</span>
+</div>
+<blockquote class="font-headline-lg-mobile text-[12px] italic text-[#1A1815] leading-relaxed border-l-2 border-[#1A1815] pl-2 my-0.5">
+                  “我们在暗处洗印回忆，直到它在红光下显影清晰。”
+                </blockquote>
+<p class="font-label-sm text-[9px] text-[#4b4737] text-right mt-1">— 罗兰·巴特《明室》</p>
+</div>
+</div>
+</article>
+<!-- ITEM 5: [IDEA] 雨夜霓虹招牌与湿沥青反光 -->
+<article class="bg-[#121419] border border-outline-variant/40 rounded-lg p-2.5 shadow-[0_4px_10px_rgba(0,0,0,0.7)] hover:border-primary/50 transition-colors relative">
+<div class="flex items-start space-x-2.5">
+<!-- Amber Fluorescent Tape Sticker Well -->
+<div class="w-16 h-16 rounded bg-[#16140e] border border-primary/40 relative overflow-hidden flex-shrink-0 flex flex-col justify-between p-1.5 shadow-inner">
+<span class="text-[8px] font-label-sm text-primary font-bold">DRAFT</span>
+<div class="w-full py-0.5 bg-primary/20 text-center rounded-xs">
+<span class="text-primary text-[8px] font-label-sm">STORYBD</span>
+</div>
+<span class="text-[7px] font-label-sm text-outline">SCENE-09</span>
+</div>
+<!-- J-Card Insert: Note with pencil-like feeling -->
+<div class="flex-1 bg-[#E6DEC8] text-[#1A1815] rounded p-2 shadow-sm">
+<div class="flex justify-between items-baseline border-b border-[#D3CBB3] pb-1 mb-1">
+<span class="font-label-sm text-[9px] font-bold tracking-wider text-[#673d00]">[IDEA · DRAFT]</span>
+<span class="font-label-sm text-[9px] text-[#4b4737]">10/19 · 005</span>
+</div>
+<h3 class="font-headline-lg-mobile text-[13px] font-bold text-[#1A1815] leading-snug">雨夜霓虹招牌与湿沥青反光的短片分镜构想</h3>
+<p class="font-body-sm text-[10px] text-[#343022] mt-0.5">特写：摩托车排气管的水雾蒸腾，后视镜里晃动的绿荧光“24H 冲印”霓虹灯管。</p>
+</div>
+</div>
+</article>
+<!-- ITEM 6: [LINK] UbuWeb Sound Archive -->
+<article class="bg-[#121419] border border-outline-variant/40 rounded-lg p-2.5 shadow-[0_4px_10px_rgba(0,0,0,0.7)] hover:border-primary/50 transition-colors relative">
+<div class="flex items-start space-x-2.5">
+<!-- Magnetic Barcode Tape Casing -->
+<div class="w-16 h-16 rounded bg-[#0b0d10] border border-outline-variant/70 relative overflow-hidden flex-shrink-0 flex flex-col justify-between p-1 shadow-inner">
+<span class="text-[8px] font-label-sm text-outline">URL TAPE</span>
+<!-- Barcode Graphic Simulation -->
+<div class="flex h-5 w-full items-center justify-center space-x-0.5 px-0.5 bg-black/60 py-0.5">
+<span class="w-0.5 h-full bg-white/70"></span>
+<span class="w-1 h-full bg-white/70"></span>
+<span class="w-0.5 h-full bg-white/70"></span>
+<span class="w-1.5 h-full bg-white/70"></span>
+<span class="w-0.5 h-full bg-white/70"></span>
+<span class="w-1 h-full bg-white/70"></span>
+<span class="w-0.5 h-full bg-white/70"></span>
+</div>
+<span class="text-[7px] font-label-sm text-outline text-center">LINK EXT</span>
+</div>
+<!-- J-Card Insert: Archival Web Card -->
+<div class="flex-1 bg-[#E6DEC8] text-[#1A1815] rounded p-2 shadow-sm">
+<div class="flex justify-between items-baseline border-b border-[#D3CBB3] pb-1 mb-1">
+<span class="font-label-sm text-[9px] font-bold tracking-wider text-[#4b4737]">[LINK · EXT]</span>
+<span class="font-label-sm text-[9px] text-[#4b4737]">10/18 · 006</span>
+</div>
+<h3 class="font-title-sm text-[12px] font-bold text-[#1A1815] leading-snug">ubuweb.com/sound/ambient_archives</h3>
+<p class="font-body-sm text-[10px] text-[#343022] mt-0.5">声音实验档案库：收录1960年代前卫磁带回声（Tape Echo Loop）与白噪音田野录音。</p>
+</div>
+</div>
+</article>
+</div>
+</section>
+<!-- Bottom Rack Chassis Spacer to avoid navigation overlap -->
+<div class="h-6"></div>
+</main>
+<!-- 5. BOTTOM NAVIGATION BAR (Cassette Deck Transport Controls - Shared Component Execution) -->
+<!-- Destination Count: 5 | Labels: ["灵感库", "显影", "记一笔", "画像", "设置"] -->
+<!-- Active Destination: "灵感库" (Library Home Screen) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 pt-2 pb-5 border-t border-outline-variant/40 bg-surface-container-lowest shadow-[0_-4px_16px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.06)]">
+<!-- Nav 1: 灵感库 (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold drop-shadow-[0_0_6px_rgba(255,206,153,0.5)] hover:text-primary-fixed hover:bg-surface-container/50 transition-colors duration-150 active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] transition-all duration-75 px-2 py-1 rounded" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="graphic_eq">graphic_eq</span>
+<span class="text-label-sm font-label-sm mt-0.5">灵感库</span>
+</a>
+<!-- Nav 2: 显影 -->
+<a class="flex flex-col items-center justify-center text-secondary opacity-70 hover:text-primary-fixed hover:bg-surface-container/50 transition-colors duration-150 active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] transition-all duration-75 px-2 py-1 rounded" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="slow_motion_video">slow_motion_video</span>
+<span class="text-label-sm font-label-sm mt-0.5">显影</span>
+</a>
+<!-- Nav 3: 记一笔 (Physical Rec Bead Focus) -->
+<a class="flex flex-col items-center justify-center text-secondary opacity-70 hover:text-primary-fixed hover:bg-surface-container/50 transition-colors duration-150 active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] transition-all duration-75 px-2 py-1 rounded" href="#">
+<div class="relative">
+<span class="material-symbols-outlined text-[22px] text-[#FF2B2B]" data-icon="fiber_manual_record">fiber_manual_record</span>
+</div>
+<span class="text-label-sm font-label-sm mt-0.5">记一笔</span>
+</a>
+<!-- Nav 4: 画像 -->
+<a class="flex flex-col items-center justify-center text-secondary opacity-70 hover:text-primary-fixed hover:bg-surface-container/50 transition-colors duration-150 active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] transition-all duration-75 px-2 py-1 rounded" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="person_book">person_book</span>
+<span class="text-label-sm font-label-sm mt-0.5">画像</span>
+</a>
+<!-- Nav 5: 设置 -->
+<a class="flex flex-col items-center justify-center text-secondary opacity-70 hover:text-primary-fixed hover:bg-surface-container/50 transition-colors duration-150 active:translate-y-0.5 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] transition-all duration-75 px-2 py-1 rounded" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="tune">tune</span>
+<span class="text-label-sm font-label-sm mt-0.5">设置</span>
+</a>
+</nav>
+<!-- Bottom Home Indicator Bar -->
+<div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-outline/40 rounded-full z-50 pointer-events-none"></div>
+</div>
+</body></html>
