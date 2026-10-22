@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&amp;family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-container": "#d83824",
+            "outline-variant": "#e4beb7",
+            "inverse-on-surface": "#f0f1f1",
+            "primary-fixed-dim": "#ffb4a7",
+            "tertiary": "#5d5c57",
+            "on-primary-fixed": "#400100",
+            "inverse-surface": "#2f3131",
+            "secondary-fixed": "#e5e2e1",
+            "secondary-container": "#e5e2e1",
+            "on-primary": "#ffffff",
+            "on-secondary-container": "#656464",
+            "on-tertiary-container": "#fdffde",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#474743",
+            "on-secondary": "#ffffff",
+            "primary": "#b51d0d",
+            "primary-fixed": "#ffdad4",
+            "surface-container-high": "#e8e8e8",
+            "tertiary-container": "#767470",
+            "tertiary-fixed": "#e5e2dc",
+            "surface-dim": "#dadada",
+            "on-tertiary": "#ffffff",
+            "surface-container-low": "#f3f3f4",
+            "surface-tint": "#b81f10",
+            "on-secondary-fixed": "#1c1b1b",
+            "background": "#ffffff",
+            "secondary": "#5f5e5e",
+            "on-error": "#ffffff",
+            "inverse-primary": "#ffb4a7",
+            "on-surface": "#0d0d0d",
+            "on-primary-container": "#fffbff",
+            "surface-container-highest": "#e2e2e2",
+            "error": "#ba1a1a",
+            "on-tertiary-fixed": "#1c1c18",
+            "tertiary-fixed-dim": "#c9c6c1",
+            "surface-bright": "#ffffff",
+            "on-surface-variant": "#5b403c",
+            "outline": "#8f706a",
+            "on-secondary-fixed-variant": "#474646",
+            "surface-container": "#eeeeee",
+            "on-error-container": "#93000a",
+            "secondary-fixed-dim": "#c9c6c5",
+            "surface": "#ffffff",
+            "on-primary-fixed-variant": "#920700",
+            "surface-variant": "#f0f0f0",
+            "surface-container-lowest": "#ffffff",
+            "on-background": "#0d0d0d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "gutter-desktop": "2.5rem",
+            "margin": "1.25rem",
+            "space-xl": "3.5rem",
+            "gutter": "1.5rem",
+            "margin-desktop": "4.5rem",
+            "margin-tablet": "2.5rem",
+            "space-lg": "2rem",
+            "space-md": "1rem",
+            "space-2xl": "6rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "numeral-hero": ["Bodoni Moda", "serif"],
+            "display-cover-mobile": ["Bodoni Moda", "serif"],
+            "headline-md": ["Bodoni Moda", "serif"],
+            "body-default": ["Hanken Grotesk", "sans-serif"],
+            "label-caps": ["Hanken Grotesk", "sans-serif"],
+            "headline-sm": ["Hanken Grotesk", "sans-serif"],
+            "display-cover": ["Bodoni Moda", "serif"],
+            "headline-lg": ["Bodoni Moda", "serif"],
+            "body-lead": ["Hanken Grotesk", "sans-serif"],
+            "headline-xl": ["Bodoni Moda", "serif"],
+            "folio-meta": ["Hanken Grotesk", "sans-serif"],
+            "cover-line": ["Bodoni Moda", "serif"],
+            "headline-xl-mobile": ["Bodoni Moda", "serif"]
+          },
+          "fontSize": {
+            "numeral-hero": ["120px", { "lineHeight": "100px", "letterSpacing": "-0.05em", "fontWeight": "900" }],
+            "display-cover-mobile": ["52px", { "lineHeight": "50px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "headline-md": ["28px", { "lineHeight": "34px", "letterSpacing": "0", "fontWeight": "600" }],
+            "body-default": ["15px", { "lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400" }],
+            "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.14em", "fontWeight": "700" }],
+            "headline-sm": ["20px", { "lineHeight": "26px", "letterSpacing": "0.01em", "fontWeight": "700" }],
+            "display-cover": ["112px", { "lineHeight": "96px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+            "headline-lg": ["40px", { "lineHeight": "44px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lead": ["18px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "headline-xl": ["64px", { "lineHeight": "68px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "folio-meta": ["10px", { "lineHeight": "12px", "letterSpacing": "0.2em", "fontWeight": "600" }],
+            "cover-line": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-xl-mobile": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      width: 390px;
+      height: 844px;
+      margin: 0 auto;
+      overflow: hidden;
+      background-color: #ffffff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col justify-between bg-surface text-on-surface select-none">
+<!-- TOP SHELL: Shared TopAppBar Component & Sub-Masthead Folio -->
+<header class="flex-shrink-0 z-40 bg-surface">
+<!-- Top Status / Running Editorial Folio -->
+<div class="px-margin pt-3 pb-1 flex justify-between items-center text-folio-meta font-folio-meta text-on-surface tracking-widest border-b border-on-surface/10">
+<span class="tracking-widest">ISSUE · 穗仓</span>
+<span class="bg-on-surface text-surface px-1.5 py-0.5 tracking-wider font-semibold">Q1f730</span>
+<span class="tracking-widest">EDITION · 06</span>
+</div>
+<!-- TopAppBar from JSON specifications -->
+<div class="flex justify-between items-center w-full px-margin py-space-sm bg-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[22px] text-on-surface cursor-pointer">menu</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface uppercase">拾穗 · GLEAN</h1>
+</div>
+<!-- Top Action '嫁接' mapped from JSON trailing_action_text -->
+<button class="bg-[#E8432E] text-white px-3 py-1 font-label-caps text-label-caps font-bold tracking-widest uppercase hover:bg-black transition-colors duration-150">
+        嫁接
+      </button>
+</div>
+<!-- Quick-Capture Ingest Strip -->
+<div class="px-margin pb-2.5 pt-1">
+<div class="relative flex items-center border-b-[1.5px] border-on-surface pb-1">
+<input class="w-full bg-transparent border-0 p-0 text-body-lead font-body-lead text-on-surface placeholder:text-on-surface/35 focus:ring-0 focus:outline-none tracking-tight" placeholder="随手拾一穗…" type="text"/>
+<button class="text-on-surface hover:text-[#E8432E] transition-colors p-1 flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</header>
+<!-- MAIN EDITORIAL CANVAS (Scrollable 6 Collected Items) -->
+<main class="flex-1 overflow-y-auto no-scrollbar px-margin pb-20 pt-1 space-y-7">
+<!-- ITEM 1: Cover Visual Feature (Photo) -->
+<article class="relative group pt-1">
+<div class="relative w-full aspect-[4/3] overflow-hidden bg-black">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UbVJfn8Nrd_xcfFL5vl-qYkYmDLBqv-cDjRhB21nGelhuXdOf0v-pmoh3zEJefh0NvKJvGLe_PQG2mfcVJeCwUTEeYXNCqk8DZH8UIuVCY6QZ38UlEIeupGFjUBi4yI82uh4iROgq25OO05OYqPTQp-bAXOmf2uN7zawvGwNhMNccK6oSLx11EFgkRbmeNJKTjgVqve5NrfBUQGTb6zWK36jCepKR0GCm3KjLRhcRjLGIe3EEp037VJI4"/>
+<!-- Giant Magazine Stamp Numeral -->
+<span class="absolute top-1 right-2 font-numeral-hero text-[58px] leading-none text-white/90 drop-shadow-sm pointer-events-none select-none">01</span>
+<!-- Editorial Red Tag -->
+<div class="absolute bottom-0 left-0 bg-[#E8432E] text-white px-3 py-1 font-label-caps text-label-caps font-bold tracking-wider">
+          影像 · 封面
+        </div>
+</div>
+<div class="mt-2.5 flex justify-between items-baseline border-b border-on-surface/15 pb-2">
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold tracking-tight text-on-surface">雨后的梧桐街</h2>
+<p class="font-folio-meta text-folio-meta text-secondary tracking-widest mt-0.5">PARISIAN AVENUE · WET ASPHALT REFLECTIONS</p>
+</div>
+<span class="font-folio-meta text-folio-meta text-on-surface-variant font-bold tracking-widest shrink-0">今天 09:12</span>
+</div>
+</article>
+<!-- ITEM 2: Cinema Headline Story (Film) -->
+<article class="relative border-l-2 border-on-surface pl-3.5 py-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-caps text-[10px] font-bold tracking-widest text-[#E8432E] uppercase">02 / 电影档案</span>
+<span class="font-folio-meta text-folio-meta text-secondary tracking-widest">昨天 23:40</span>
+</div>
+<h3 class="font-headline-lg text-[32px] leading-[36px] font-bold text-on-surface tracking-tight">
+        燃烧女子的肖像
+      </h3>
+<p class="font-body-default text-body-default text-secondary mt-1 font-serif italic">
+        2019, 瑟琳·席安玛
+      </p>
+<div class="mt-2 pt-2 border-t border-on-surface/10 flex items-center justify-between">
+<span class="font-folio-meta text-folio-meta text-on-surface tracking-widest">PORTRAIT DE LA JEUNE FILLE EN FEU</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface">arrow_outward</span>
+</div>
+</article>
+<!-- ITEM 3: Track & Waveform Stylized (Song) -->
+<article class="bg-surface-container-high/40 p-3.5 border-t border-b border-on-surface/15">
+<div class="flex justify-between items-baseline mb-2">
+<span class="font-label-caps text-[10px] font-bold tracking-widest text-on-surface uppercase">03 / 声音音轨</span>
+<span class="font-folio-meta text-folio-meta text-secondary tracking-widest">昨天 21:05</span>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="min-w-0">
+<div class="font-headline-sm text-[18px] leading-tight font-bold text-on-surface truncate">夜空中最亮的星</div>
+<div class="font-body-default text-[13px] text-secondary mt-0.5">逃跑计划</div>
+</div>
+<!-- Typographic Soundwave Pattern -->
+<div class="flex items-end gap-1 h-6 shrink-0 pr-1">
+<div class="w-1 bg-[#E8432E] h-4"></div>
+<div class="w-1 bg-on-surface h-6"></div>
+<div class="w-1 bg-on-surface h-3"></div>
+<div class="w-1 bg-on-surface h-5"></div>
+<div class="w-1 bg-[#E8432E] h-2"></div>
+<div class="w-1 bg-on-surface h-6"></div>
+<div class="w-1 bg-on-surface h-4"></div>
+</div>
+</div>
+</article>
+<!-- ITEM 4: High-Impact Editorial Pull-Quote (Quote) -->
+<article class="relative py-2 px-1">
+<div class="flex justify-between items-center mb-2">
+<span class="bg-on-surface text-white px-2 py-0.5 font-label-caps text-[9px] font-bold tracking-widest">
+          04 / 文案
+        </span>
+<span class="font-folio-meta text-folio-meta text-secondary tracking-widest">10/19</span>
+</div>
+<div class="relative border-l-[4px] border-[#E8432E] pl-4 py-1">
+<blockquote class="font-cover-line text-[23px] leading-[32px] font-bold text-on-surface tracking-tight">
+          “我们读诗，是因为我们是人类的一员。”
+        </blockquote>
+</div>
+</article>
+<!-- ITEM 5: Intimate Thought Note (Idea) -->
+<article class="relative p-3.5 bg-surface border border-on-surface/20">
+<div class="flex justify-between items-center mb-1.5">
+<span class="font-label-caps text-[10px] font-bold text-[#E8432E] tracking-widest uppercase">
+          05 / 想法
+        </span>
+<span class="font-folio-meta text-folio-meta text-secondary tracking-widest">10/18</span>
+</div>
+<p class="font-body-lead text-[17px] leading-[26px] font-normal text-on-surface tracking-tight">
+        把通勤路上听到的对话写成一组短诗
+      </p>
+<div class="mt-2 pt-2 border-t border-dashed border-on-surface/20 flex items-center justify-between text-folio-meta font-folio-meta text-secondary">
+<span>POETIC FRAGMENT · NOTE</span>
+<span class="material-symbols-outlined text-[14px]">edit_note</span>
+</div>
+</article>
+<!-- ITEM 6: Footnote / External Catalog Index Reference (Link) -->
+<article class="border-t border-b border-on-surface py-3">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-caps text-[10px] font-bold tracking-widest text-on-surface uppercase">06 / 索引文献</span>
+<span class="font-folio-meta text-folio-meta text-secondary tracking-widest">10/16</span>
+</div>
+<div class="flex justify-between items-baseline gap-2">
+<div class="min-w-0">
+<div class="font-headline-sm text-[16px] font-bold text-on-surface hover:text-[#E8432E] transition-colors truncate">
+            Are.na · 关于收集的收集
+          </div>
+<span class="font-folio-meta text-folio-meta text-[#E8432E] tracking-widest underline underline-offset-4 decoration-1">
+            are.na
+          </span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-on-surface shrink-0">link</span>
+</div>
+</article>
+<!-- Editorial Pauses & Terminal Folio -->
+<div class="pt-2 pb-6 text-center">
+<div class="w-12 h-[2px] bg-[#E8432E] mx-auto mb-2"></div>
+<p class="font-folio-meta text-[9px] tracking-[0.25em] text-secondary uppercase">END OF CURRENT BINDING · GLEAN ARCHIVE</p>
+</div>
+</main>
+<!-- FLOATING CALLOUT: Prominent '嫁接' Quick Action Floating Pill Badge -->
+<div class="absolute bottom-[66px] right-margin z-50">
+<button class="flex items-center gap-1.5 bg-[#E8432E] text-white px-4 py-2.5 shadow-xl hover:bg-black transition-all active:scale-95 border border-white/20">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">call_split</span>
+<span class="font-label-caps text-label-caps font-bold tracking-widest">嫁接</span>
+</button>
+</div>
+<!-- BOTTOM NAVIGATION BAR (Shared Components JSON execution) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin py-space-sm bg-surface">
+<!-- Tab 1: 穗仓 (ACTIVE - strict match) -->
+<button class="flex flex-col items-center justify-center text-primary font-bold gap-space-xs active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">穗仓</span>
+</button>
+<!-- Tab 2: 嫁接 -->
+<button class="flex flex-col items-center justify-center text-secondary gap-space-xs hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]">call_split</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">嫁接</span>
+</button>
+<!-- Tab 3: 新枝 -->
+<button class="flex flex-col items-center justify-center text-secondary gap-space-xs hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]">spa</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">新枝</span>
+</button>
+<!-- Tab 4: 口味 -->
+<button class="flex flex-col items-center justify-center text-secondary gap-space-xs hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">口味</span>
+</button>
+<!-- Tab 5: 设置 -->
+<button class="flex flex-col items-center justify-center text-secondary gap-space-xs hover:text-primary transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">设置</span>
+</button>
+</nav>
+</body></html>
