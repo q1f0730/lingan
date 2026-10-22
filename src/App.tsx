@@ -7,7 +7,7 @@ import { Field } from './components/Field';
 import { IcGear, IcGraft, IcPlus, IcSheaf, IcSprout, IcTaste } from './components/Icons';
 import { Sheet } from './components/Sheet';
 import { formatWhen, fromLocalInput, toLocalInput } from './lib/quick';
-import { addItem, db, deleteItem, updateItem } from './lib/db';
+import { addItem, db, deleteItem, touchItems, updateItem } from './lib/db';
 import { getOriginalDataUrl } from './lib/imagestore';
 import { useOriginalSrc } from './lib/useImage';
 import { enrichItem } from './lib/enrich';
@@ -96,7 +96,11 @@ export default function App() {
   }, []);
 
   const openCapture = useCallback(() => setCapture({ draft: emptyDraft() }), []);
-  const openItem = useCallback((it: Item) => setDetail(it), []);
+  const openItem = useCallback((it: Item) => {
+    setDetail(it);
+    // v0.14 打开即「碰过」：每日一穗按它找很久没碰的旧穗
+    if (it.id != null) void touchItems([it.id]).catch(() => {});
+  }, []);
   const developFrom = useCallback((ids: number[]) => {
     setPreset(ids);
     setView('develop');
@@ -215,7 +219,7 @@ export default function App() {
           {capture && <CaptureForm initial={capture.draft} onSave={onSave} onCancel={() => setCapture(null)} saving={saving} />}
         </Sheet>
 
-        <Sheet open={!!detail && !capture} onClose={() => setDetail(null)} title={detail ? `${TYPE_LABEL[detail.type]} · ${formatWhen(detail.createdAt)}` : ''}>
+        <Sheet open={!!detail && !capture} onClose={() => setDetail(null)} title={detail ? `${detail.sample ? '示例 · ' : ''}${TYPE_LABEL[detail.type]} · ${formatWhen(detail.createdAt)}` : ''}>
           {detail && (
             <Detail
               it={detail}
