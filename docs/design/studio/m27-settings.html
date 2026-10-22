@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>拾穗 · GLEAN — 设置 (390px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      border-radius: 0 !important;
+    }
+
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      width: 390px;
+      margin: 0 auto;
+      min-height: 100vh;
+      position: relative;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Layout Container */
+    .app-container {
+      width: 100%;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      padding-bottom: 120px; /* Space for fixed bottom bar and nav */
+    }
+
+    /* Top Logo Bar */
+    .top-bar {
+      padding-top: 18px;
+      padding-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #000000;
+    }
+
+    /* Display Headline */
+    .headline-wrap {
+      margin-bottom: 32px;
+    }
+
+    .display-headline {
+      font-size: 56px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      line-height: 1.0;
+      color: #000000;
+    }
+
+    /* Settings Group */
+    .settings-group {
+      margin-bottom: 32px;
+    }
+
+    .group-header {
+      display: flex;
+      align-items: baseline;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #000000;
+      margin-bottom: 14px;
+    }
+
+    .group-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7E7E7E;
+    }
+
+    /* Settings Rows */
+    .settings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      line-height: 1.3;
+    }
+
+    .row-label {
+      font-size: 16px;
+      font-weight: 400;
+      color: #000000;
+      letter-spacing: -0.01em;
+    }
+
+    .row-value {
+      font-size: 13px;
+      font-weight: 400;
+      color: #7E7E7E;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      letter-spacing: -0.01em;
+    }
+
+    .row-value .arrow {
+      color: #7E7E7E;
+      font-family: 'Inter', sans-serif;
+      margin-left: 2px;
+    }
+
+    /* Inline text toggle for Appearance */
+    .theme-toggle {
+      font-size: 13px;
+      color: #7E7E7E;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .theme-option {
+      cursor: pointer;
+      color: #7E7E7E;
+    }
+
+    .theme-option.active {
+      color: #000000;
+      font-weight: 500;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 1px;
+    }
+
+    .theme-divider {
+      color: #C6C6C6;
+      font-size: 11px;
+    }
+
+    /* Footer */
+    .site-footer {
+      margin-top: 24px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      color: #7E7E7E;
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    /* Fixed Bottom Container */
+    .bottom-dock {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 390px;
+      background-color: #FFFFFF;
+      z-index: 100;
+      border-top: 1px solid #000000;
+    }
+
+    /* Quick capture bar */
+    .quick-capture-line {
+      height: 44px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #FFFFFF;
+      border-bottom: 1px solid #F0F0F0;
+    }
+
+    .quick-input {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      color: #000000;
+      font-family: inherit;
+      width: 80%;
+      letter-spacing: -0.01em;
+    }
+
+    .quick-input::placeholder {
+      color: #7E7E7E;
+    }
+
+    .btn-collect {
+      background: #000000;
+      color: #FFFFFF;
+      border: none;
+      padding: 5px 11px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    /* Five words navigation */
+    .text-nav {
+      height: 48px;
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #FFFFFF;
+    }
+
+    .nav-item {
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      color: #7E7E7E;
+      text-decoration: none;
+      padding: 4px 0;
+      cursor: pointer;
+      font-weight: 400;
+    }
+
+    .nav-item.active {
+      color: #000000;
+      font-weight: 600;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 2px;
+    }
+  </style>
+<style id="glean-fix">.btn-collect{background:transparent!important;color:#000!important;padding-left:0!important;padding-right:0!important} /* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Top Logo -->
+    <header class="top-bar">
+      <div class="logo">拾穗 · GLEAN</div>
+    </header>
+
+    <!-- Headline -->
+    <div class="headline-wrap">
+      <h1 class="display-headline">设置</h1>
+    </div>
+
+    <!-- Group: AI -->
+    <section class="settings-group">
+      <div class="group-header">
+        <span class="group-label">AI</span>
+      </div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <span class="row-label">AI 服务</span>
+          <span class="row-value">智谱<span class="arrow">→</span></span>
+        </div>
+        <div class="settings-row">
+          <span class="row-label">默认接法</span>
+          <span class="row-value">远距<span class="arrow">→</span></span>
+        </div>
+        <div class="settings-row">
+          <span class="row-label">每次留几根</span>
+          <span class="row-value">3<span class="arrow">→</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Group: 收集 -->
+    <section class="settings-group">
+      <div class="group-header">
+        <span class="group-label">收集</span>
+      </div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <span class="row-label">剪贴板检测</span>
+          <span class="row-value">打开<span class="arrow">→</span></span>
+        </div>
+        <div class="settings-row">
+          <span class="row-label">每日一穗</span>
+          <span class="row-value">早上 8:00<span class="arrow">→</span></span>
+        </div>
+        <div class="settings-row">
+          <span class="row-label">示例穗</span>
+          <span class="row-value">已清掉<span class="arrow">→</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Group: 外观 -->
+    <section class="settings-group">
+      <div class="group-header">
+        <span class="group-label">外观</span>
+      </div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <span class="row-label">主题</span>
+          <div class="theme-toggle">
+            <span class="theme-option active">跟随系统</span>
+            <span class="theme-divider">|</span>
+            <span class="theme-option">白</span>
+            <span class="theme-divider">|</span>
+            <span class="theme-option">黑</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="row-label">动效</span>
+          <span class="row-value">减弱<span class="arrow">→</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Group: 数据 -->
+    <section class="settings-group">
+      <div class="group-header">
+        <span class="group-label">数据</span>
+      </div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <span class="row-label">备份与导入</span>
+          <span class="row-value">上次 10/20<span class="arrow">→</span></span>
+        </div>
+        <div class="settings-row">
+          <span class="row-label">本机数据</span>
+          <span class="row-value">10 穗 · 5 新枝 · 6 张图<span class="arrow">→</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Group: 关于 -->
+    <section class="settings-group">
+      <div class="group-header">
+        <span class="group-label">关于</span>
+      </div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <span class="row-label">署名</span>
+          <span class="row-value">Q1f730<span class="arrow">→</span></span>
+        </div>
+        <div class="settings-row">
+          <span class="row-label">隐私</span>
+          <span class="row-value">素材只存在本机<span class="arrow">→</span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      © 2026 Q1f730
+    </footer>
+  </div>
+
+  <!-- Persistent Bottom Dock -->
+  <div class="bottom-dock">
+    <!-- Quick Capture Line -->
+    <div class="quick-capture-line">
+      <input type="text" class="quick-input" placeholder="随手拾一穗" aria-label="随手拾一穗">
+      <button class="btn-collect" type="button">拾</button>
+    </div>
+
+    <!-- Text Nav -->
+    <nav class="text-nav">
+      <span class="nav-item">穗仓</span>
+      <span class="nav-item">嫁接</span>
+      <span class="nav-item">新枝</span>
+      <span class="nav-item">口味</span>
+      <span class="nav-item active">设置</span>
+    </nav>
+  </div>
+
+</body>
+</html>
