@@ -364,8 +364,10 @@ async function run(name, viewport) {
     if (p.ev !== 'ok' || p.weak) errs.push(`[${name}] AI branch ${i} evidence ${p.ev}`);
     if (new Set(p.ids).size < 3) errs.push(`[${name}] AI branch ${i} points back to ${p.ids.length} ears`);
     if (p.ids.some((x) => !ai.ids.includes(x))) errs.push(`[${name}] AI branch ${i} sprig not from this graft ${p.ids} vs ${ai.ids}`);
-    // 摘抄类穗的卡片标题显示的是原文（「…」），小穗卡显示出处，没法按字面对上，这类只靠上面的 ID 校验
-    if (!picked.some((q) => (q || '').startsWith('「')) && p.titles.some((t) => !picked.some((q) => (q || '').includes(t) || t.includes((q || '').replace(/^「|」$/g, ''))))) errs.push(`[${name}] sprig titles ${p.titles} not among picked ${picked}`);
+    // 摘抄类穗的卡片标题显示的是原文，小穗卡显示出处，没法按字面对上，这类只靠上面的 ID 校验
+    // v0.16 摘抄卡显示原文时用弯引号 “…”（以前是「…」），同样跳过；电影标题带书名号，比对时去掉
+    const bare = (q) => (q || '').replace(/^[「“《]|[」”》]$/g, '');
+    if (!picked.some((q) => /^[「“]/.test(q || '')) && p.titles.some((t) => !picked.some((q) => bare(q).includes(t) || t.includes(bare(q))))) errs.push(`[${name}] sprig titles ${p.titles} not among picked ${picked}`);
   }
   // 正文里提到的穗：悬停（桌面）/ 点按（手机）时对应那一穗亮起
   await pg.waitForSelector('.three .idea .mention', { timeout: 9000 }).catch(() => errs.push(`[${name}] mention not marked in body`));
