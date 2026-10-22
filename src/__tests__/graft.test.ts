@@ -40,9 +40,9 @@ const CONV = {
     { n: 6, text: '换上来的新种子丙', refs: [1, 2] },
   ],
   branches: [
-    { seed: 1, title: '一', idea: '第一根的正文', form: '海报', refs: [1, 2], unlike: '甲', experiment: '实验一' },
-    { seed: 5, title: '二', idea: '第二根的正文', form: '歌', refs: [2, 3], unlike: '乙', experiment: '实验二' },
-    { seed: 8, title: '三', idea: '第三根的正文', form: '短片', refs: [1, 3], unlike: '丙', experiment: '实验三' },
+    { seed: 1, title: '一', idea: '第一根的正文', form: '海报', refs: [1, 2, 3], unlike: '甲', experiment: '实验一' },
+    { seed: 5, title: '二', idea: '第二根的正文', form: '歌', refs: [2, 3, 1], unlike: '乙', experiment: '实验二' },
+    { seed: 8, title: '三', idea: '第三根的正文', form: '短片', refs: ['#1', '#3', '#2'], unlike: '丙', experiment: '实验三' },
   ],
   cliches: ['雨夜', '错过'],
 };
@@ -90,7 +90,7 @@ describe('prompts', () => {
     expect(p.system).toContain('PHASE B');
     expect(p.system).not.toContain('PHASE C');
     for (const t of TRANSFORMS) expect(p.system).toContain(t.name);
-    expect(p.user).toContain('[S1 |');
+    expect(p.user).toContain('[#1 |');
     expect(p.user).toContain('ob');
   });
   it('converge prompt carries seeds and tensions', () => {
@@ -130,7 +130,7 @@ describe('normalizeMap / applyDefix / normalizeConverge', () => {
     expect(new Set(m.seeds.map((s) => s.transform)).size).toBe(4);
     expect(m.seeds[0].refs).toEqual([1, 2]);
     expect(m.seeds.find((s) => s.text === 's2')!.refs).toEqual([2, 3]);
-    expect(m.seeds.find((s) => s.text === 's4')!.refs.length).toBe(3);
+    expect(m.seeds.find((s) => s.text === 's4')!.refs).toEqual([]); // v0.12：说不出依据就留空，不再替模型编
   });
   it('throws on too few seeds or garbage', () => {
     expect(() => normalizeMap({ seeds: [{ t: 'invert', text: 'x' }] }, 3)).toThrow();
