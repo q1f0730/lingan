@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { chat } from '../lib/ai';
 import { db } from '../lib/db';
 import { HeatmapPanel } from '../components/Heatmap';
+import { ClicheWall } from '../components/ClicheWall';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { aiReady } from '../lib/settings';
 import { useApp } from '../lib/store';
@@ -121,6 +122,8 @@ export function Taste() {
             </div>
           </section>
         )}
+
+        <ClicheWall />
 
         <section className="taste-sec">
           <div className="table two-col">
