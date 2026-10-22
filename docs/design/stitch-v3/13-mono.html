@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · Glean</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-fixed": "#e2e2e2",
+            "inverse-primary": "#5d5f5f",
+            "error": "#ffb4ab",
+            "surface-bright": "#393939",
+            "tertiary": "#ffffff",
+            "on-tertiary-fixed": "#1a1c1c",
+            "on-error": "#690005",
+            "surface-variant": "#353535",
+            "on-error-container": "#ffdad6",
+            "inverse-surface": "#e2e2e2",
+            "surface-tint": "#c6c6c7",
+            "on-secondary-fixed-variant": "#474747",
+            "outline-variant": "#444748",
+            "surface-container-highest": "#353535",
+            "surface-container-lowest": "#0e0e0e",
+            "secondary-container": "#494949",
+            "on-surface-variant": "#c4c7c8",
+            "outline": "#8e9192",
+            "on-tertiary-fixed-variant": "#454747",
+            "surface-container-low": "#1b1b1b",
+            "primary": "#ffffff",
+            "tertiary-container": "#e2e2e2",
+            "inverse-on-surface": "#303030",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#c6c6c7",
+            "background": "#131313",
+            "on-tertiary": "#2f3131",
+            "secondary-fixed": "#e4e2e2",
+            "secondary": "#c8c6c6",
+            "on-secondary": "#303030",
+            "on-primary-fixed": "#1a1c1c",
+            "on-secondary-container": "#b9b8b8",
+            "primary-container": "#e2e2e2",
+            "surface-container": "#1f1f1f",
+            "surface-container-high": "#2a2a2a",
+            "on-background": "#e2e2e2",
+            "on-primary": "#2f3131",
+            "secondary-fixed-dim": "#c8c6c6",
+            "on-secondary-fixed": "#1b1c1c",
+            "tertiary-fixed": "#e2e2e2",
+            "primary-fixed-dim": "#c6c6c7",
+            "on-surface": "#e2e2e2",
+            "on-tertiary-container": "#636565",
+            "on-primary-fixed-variant": "#454747",
+            "surface-dim": "#131313",
+            "on-primary-container": "#636565",
+            "surface": "#131313"
+          },
+          borderRadius: {
+            DEFAULT: "0px",
+            lg: "0px",
+            xl: "0px",
+            full: "0px"
+          },
+          spacing: {
+            "space-lg": "1.5rem",
+            "gutter-mobile": "0.75rem",
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "space-2xl": "4rem",
+            "margin": "2rem",
+            "space-xs": "0.25rem",
+            "margin-mobile": "1rem"
+          },
+          fontFamily: {
+            "body-lg": ["Space Grotesk", "sans-serif"],
+            "headline-lg-mobile": ["Space Grotesk", "sans-serif"],
+            "headline-md": ["Space Grotesk", "sans-serif"],
+            "label-mono": ["Space Grotesk", "monospace"],
+            "data-dense": ["Space Grotesk", "monospace"],
+            "headline-lg": ["Space Grotesk", "sans-serif"],
+            "display-hero": ["Space Grotesk", "sans-serif"],
+            "display-hero-mobile": ["Space Grotesk", "sans-serif"],
+            "headline-sm": ["Space Grotesk", "sans-serif"],
+            "body-md": ["Space Grotesk", "sans-serif"]
+          },
+          fontSize: {
+            "body-lg": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "400" }],
+            "headline-lg-mobile": ["32px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-md": ["28px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "label-mono": ["12px", { lineHeight: "16px", letterSpacing: "0.08em", fontWeight: "700" }],
+            "data-dense": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+            "headline-lg": ["56px", { lineHeight: "60px", letterSpacing: "-0.03em", fontWeight: "700" }],
+            "display-hero": ["96px", { lineHeight: "96px", letterSpacing: "-0.04em", fontWeight: "700" }],
+            "display-hero-mobile": ["48px", { lineHeight: "48px", letterSpacing: "-0.03em", fontWeight: "700" }],
+            "headline-sm": ["20px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-md": ["14px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #000000;
+      color: #ffffff;
+      width: 390px;
+      height: 844px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      margin: 0 auto;
+      position: relative;
+      border: 1px solid #1f1f1f;
+      -webkit-font-smoothing: antialiased;
+    }
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+    }
+    .monochrome-filter {
+      filter: grayscale(100%) contrast(160%) brightness(90%);
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-[#000000] text-primary flex flex-col justify-between select-none">
+<!-- TOP APP BAR -->
+<header class="flex flex-col w-full px-margin-mobile pt-space-md pb-space-sm border-b-2 border-primary bg-[#000000] sticky top-0 z-40">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-space-xs">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="grain">grain</span>
+<h1 class="text-headline-sm font-headline-sm font-bold uppercase tracking-wider text-primary">
+          拾穗 · Glean
+        </h1>
+</div>
+<div class="flex items-center space-x-space-sm">
+<span class="text-data-dense font-data-dense text-secondary tracking-widest border border-primary px-space-xs py-[1px]">
+          Q1f730
+        </span>
+<button class="bg-primary text-[#000000] text-label-mono font-label-mono px-space-sm py-[3px] font-bold tracking-wider hover:bg-[#000000] hover:text-primary border border-primary transition-colors duration-100 linear">
+          [ 嫁接 ]
+        </button>
+</div>
+</div>
+</header>
+<!-- MAIN SCROLLABLE CONTENT CANVAS -->
+<main class="flex-1 flex flex-col w-full pb-28">
+<!-- QUICK-CAPTURE INPUT (ALWAYS VISIBLE) -->
+<section class="px-margin-mobile pt-space-md pb-space-sm">
+<div class="border-2 border-primary bg-[#000000] p-space-sm flex items-center justify-between">
+<div class="flex items-center space-x-space-sm w-full">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="add">add</span>
+<input class="bg-transparent border-0 text-primary placeholder:text-secondary text-body-md font-body-md focus:ring-0 focus:outline-none p-0 w-full" placeholder="随手拾一穗…" type="text"/>
+</div>
+<span class="text-label-mono font-label-mono text-primary font-bold px-space-xs tracking-widest border-l border-primary pl-space-sm">
+          ENTR
+        </span>
+</div>
+</section>
+<!-- SECTION DIVIDER LEDGER -->
+<div class="w-full border-t border-primary px-margin-mobile py-space-xs flex justify-between items-center text-data-dense font-data-dense text-secondary">
+<span>INDEX / ARCHIVE / 06 ENTRIES</span>
+<span>FILTER: ALL</span>
+</div>
+<!-- ITEM 1: PHOTO [摄影] -->
+<article class="border-t-2 border-primary hover:bg-primary group transition-colors duration-100 linear">
+<div class="p-margin-mobile flex flex-col space-y-space-sm">
+<div class="flex items-center justify-between text-label-mono font-label-mono">
+<span class="bg-primary text-[#000000] group-hover:bg-[#000000] group-hover:text-primary px-space-xs py-[1px] tracking-wider font-bold">
+            01 / 摄影
+          </span>
+<span class="text-data-dense font-data-dense text-secondary group-hover:text-[#000000]">
+            今天 09:12
+          </span>
+</div>
+<!-- MONOCHROME IMAGE CONTAINER -->
+<div class="border border-primary overflow-hidden relative w-full h-[140px] bg-[#000000]">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover monochrome-filter group-hover:scale-105 transition-transform duration-200" src="https://lh3.googleusercontent.com/aida/AEtjO1X8lQcZVcsRWdVa8ZuKfpLEi3mIrXv_BL_jOyKZb40A1jGBRHsLxPqQF_AF6xFC88VpDaAYrbsDnApZQMbEh3D_bTTJEqICOuBrrOZXBGiY5_SFu7nckhIxTt4hbqXRK1eA0kVn27n9sq8ZvP_KcSM-A4hH89uxBeRVwuONVfap1VWPcoR6dySrrbVm1pHYBW2HupdkJqKQ1OVpEZsiKL-M1eV7Rco5PB9WRfqrsZGZ_GH07eIj4z-5gJE"/>
+<div class="absolute bottom-0 left-0 bg-[#000000] text-primary px-space-xs py-[2px] text-data-dense font-data-dense border-t border-r border-primary">
+            1264x848 · ISO 400
+          </div>
+</div>
+<div class="flex justify-between items-baseline pt-space-xs">
+<h3 class="text-headline-sm font-headline-sm text-primary group-hover:text-[#000000] font-bold">
+            雨后的梧桐街
+          </h3>
+<span class="material-symbols-outlined text-primary group-hover:text-[#000000] text-sm" data-icon="north_east">north_east</span>
+</div>
+</div>
+</article>
+<!-- ITEM 2: FILM [电影] - MONUMENTAL HERO DISPLAY -->
+<article class="border-t-2 border-primary bg-[#000000] hover:bg-primary group transition-colors duration-100 linear">
+<div class="p-margin-mobile flex flex-col space-y-space-xs">
+<div class="flex items-center justify-between text-label-mono font-label-mono">
+<span class="border border-primary text-primary group-hover:border-[#000000] group-hover:text-[#000000] px-space-xs py-[1px] tracking-wider">
+            02 / 电影
+          </span>
+<span class="text-data-dense font-data-dense text-secondary group-hover:text-[#000000]">
+            昨天 23:40
+          </span>
+</div>
+<!-- RADICAL MONUMENTAL TYPOGRAPHY -->
+<div class="py-space-md">
+<h2 class="text-headline-lg-mobile font-headline-lg-mobile font-bold tracking-tighter text-primary group-hover:text-[#000000] leading-none break-all">
+            燃烧女子的肖像
+          </h2>
+<p class="text-body-md font-body-md text-secondary group-hover:text-[#000000] mt-space-sm tracking-wide">
+            (2019, 瑟琳·席安玛)
+          </p>
+</div>
+<div class="flex items-center justify-between pt-space-xs border-t border-primary/40 group-hover:border-[#000000]/40 text-data-dense font-data-dense">
+<span class="text-secondary group-hover:text-[#000000]">35MM · CÉLINE SCIAMMA · PORTRAIT DE LA JEUNE FILLE</span>
+<span class="material-symbols-outlined text-primary group-hover:text-[#000000] text-sm" data-icon="check_box_outline_blank">check_box_outline_blank</span>
+</div>
+</div>
+</article>
+<!-- ITEM 3: SONG [音乐] -->
+<article class="border-t-2 border-primary hover:bg-primary group transition-colors duration-100 linear">
+<div class="px-margin-mobile py-space-md flex items-center justify-between">
+<div class="flex flex-col space-y-space-xs flex-1 pr-space-md">
+<div class="flex items-center space-x-space-sm text-data-dense font-data-dense">
+<span class="border border-primary text-primary group-hover:border-[#000000] group-hover:text-[#000000] px-space-xs py-[1px]">
+              03 / 音乐
+            </span>
+<span class="text-secondary group-hover:text-[#000000]">昨天 21:05</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm font-bold text-primary group-hover:text-[#000000] tracking-tight">
+            夜空中最亮的星
+          </h3>
+<p class="text-body-md font-body-md text-secondary group-hover:text-[#000000]">
+            — 逃跑计划
+          </p>
+</div>
+<div class="border border-primary group-hover:border-[#000000] p-space-xs flex items-center justify-center">
+<span class="material-symbols-outlined text-primary group-hover:text-[#000000] text-xl" data-icon="play_arrow">play_arrow</span>
+</div>
+</div>
+</article>
+<!-- ITEM 4: QUOTE [文案] -->
+<article class="border-t-2 border-primary hover:bg-primary group transition-colors duration-100 linear">
+<div class="px-margin-mobile py-space-md flex flex-col space-y-space-xs">
+<div class="flex items-center justify-between text-data-dense font-data-dense">
+<div class="flex items-center space-x-space-xs">
+<span class="border border-primary text-primary group-hover:border-[#000000] group-hover:text-[#000000] px-space-xs py-[1px]">
+              04 / 文案
+            </span>
+</div>
+<span class="text-secondary group-hover:text-[#000000]">10/19</span>
+</div>
+<blockquote class="text-body-lg font-body-lg font-bold text-primary group-hover:text-[#000000] leading-snug pt-space-xs">
+          “我们读诗，是因为我们是人类的一员。”
+        </blockquote>
+</div>
+</article>
+<!-- ITEM 5: IDEA [想法] -->
+<article class="border-t-2 border-primary hover:bg-primary group transition-colors duration-100 linear">
+<div class="px-margin-mobile py-space-md flex flex-col space-y-space-xs">
+<div class="flex items-center justify-between text-data-dense font-data-dense">
+<span class="border border-primary text-primary group-hover:border-[#000000] group-hover:text-[#000000] px-space-xs py-[1px]">
+            05 / 想法
+          </span>
+<span class="text-secondary group-hover:text-[#000000]">10/18</span>
+</div>
+<p class="text-body-md font-body-md text-primary group-hover:text-[#000000] pt-space-xs">
+          把通勤路上听到的对话写成一组短诗
+        </p>
+</div>
+</article>
+<!-- ITEM 6: LINK [链接] -->
+<article class="border-t-2 border-b-2 border-primary hover:bg-primary group transition-colors duration-100 linear">
+<div class="px-margin-mobile py-space-md flex items-center justify-between">
+<div class="flex flex-col space-y-space-xs">
+<div class="flex items-center space-x-space-sm text-data-dense font-data-dense">
+<span class="border border-primary text-primary group-hover:border-[#000000] group-hover:text-[#000000] px-space-xs py-[1px]">
+              06 / 链接
+            </span>
+<span class="text-secondary group-hover:text-[#000000]">10/16</span>
+</div>
+<h3 class="text-body-lg font-body-lg font-bold text-primary group-hover:text-[#000000]">
+            Are.na · 关于收集的收集
+          </h3>
+<span class="text-data-dense font-data-dense text-secondary group-hover:text-[#000000] underline tracking-wider">
+            are.na
+          </span>
+</div>
+<span class="material-symbols-outlined text-primary group-hover:text-[#000000] text-sm" data-icon="link">link</span>
+</div>
+</article>
+<!-- INVERTED STARK SOLID WHITE GRAFTING CTA BAR -->
+<div class="p-margin-mobile my-space-md">
+<button class="w-full bg-primary hover:bg-[#000000] text-[#000000] hover:text-primary border-2 border-primary py-space-md flex items-center justify-center space-x-space-sm font-bold tracking-widest text-headline-sm font-headline-sm transition-colors duration-100 linear">
+<span class="material-symbols-outlined text-2xl font-bold" data-icon="call_split">call_split</span>
+<span>嫁接</span>
+</button>
+<div class="flex justify-between items-center mt-space-xs text-data-dense font-data-dense text-secondary px-space-xs">
+<span>READY FOR GRAFTING</span>
+<span>SELECT TO SYNTHESIZE</span>
+</div>
+</div>
+</main>
+<!-- BOTTOM NAVIGATION BAR (DOCKED FULL WIDTH) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs bg-[#000000] border-t-2 border-primary">
+<!-- TAB 1: 穗仓 (ACTIVE) -->
+<button class="flex flex-col items-center justify-center bg-primary text-[#000000] py-space-xs px-space-sm rounded-none border border-primary">
+<span class="material-symbols-outlined text-base" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-label-mono font-label-mono text-[10px] tracking-tight mt-[2px] font-bold">穗仓</span>
+</button>
+<!-- TAB 2: 嫁接 -->
+<button class="flex flex-col items-center justify-center text-primary py-space-xs px-space-sm rounded-none hover:bg-primary hover:text-[#000000] duration-100 transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="call_split">call_split</span>
+<span class="text-label-mono font-label-mono text-[10px] tracking-tight mt-[2px]">嫁接</span>
+</button>
+<!-- TAB 3: 新枝 -->
+<button class="flex flex-col items-center justify-center text-primary py-space-xs px-space-sm rounded-none hover:bg-primary hover:text-[#000000] duration-100 transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="psychology">psychology</span>
+<span class="text-label-mono font-label-mono text-[10px] tracking-tight mt-[2px]">新枝</span>
+</button>
+<!-- TAB 4: 口味 -->
+<button class="flex flex-col items-center justify-center text-primary py-space-xs px-space-sm rounded-none hover:bg-primary hover:text-[#000000] duration-100 transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="tune">tune</span>
+<span class="text-label-mono font-label-mono text-[10px] tracking-tight mt-[2px]">口味</span>
+</button>
+<!-- TAB 5: 设置 -->
+<button class="flex flex-col items-center justify-center text-primary py-space-xs px-space-sm rounded-none hover:bg-primary hover:text-[#000000] duration-100 transition-colors">
+<span class="material-symbols-outlined text-base" data-icon="settings">settings</span>
+<span class="text-label-mono font-label-mono text-[10px] tracking-tight mt-[2px]">设置</span>
+</button>
+</nav>
+</body></html>
