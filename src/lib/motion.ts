@@ -34,7 +34,8 @@ export function staggerDelay(index: number, step = 45, max = 12): number {
   return Math.min(Math.floor(index), max) * step;
 }
 
-const GLYPHS = '▒░▓█▌▐#%@*+=-:.01';
+// 拾穗版：用麦田里的轻笔画，不用块状乱码，安静一点
+const GLYPHS = ".,·:'`~-";
 
 /** 文字解码：progress 0..1，已“解出”的字符保持原样，其余是乱码（空白与标点保留，长度不变） */
 export function decodeFrame(text: string, progress: number, seed = 1): string {
