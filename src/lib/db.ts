@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { migrateDevelopment } from './provenance';
 import type { Development, Item } from './types';
 
 export class LinganDB extends Dexie {
@@ -10,6 +11,17 @@ export class LinganDB extends Dexie {
       items: '++id, type, createdAt, updatedAt, *tags',
       developments: '++id, createdAt, starred',
     });
+    // v0.12 新枝溯源：给旧新枝补上 refs 与 evidence 标记（不删不改正文）
+    this.version(2)
+      .stores({ developments: '++id, createdAt, starred, evidence' })
+      .upgrade((tx) =>
+        tx
+          .table('developments')
+          .toCollection()
+          .modify((d: Development) => {
+            migrateDevelopment(d);
+          }),
+      );
   }
 }
 
@@ -71,7 +83,10 @@ export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: 
       if (!dv || !dv.idea) continue;
       const { id: _id, ...rest } = dv;
       void _id;
-      await d.developments.add({ ...rest, itemIds: (rest.itemIds || []).map((x) => map.get(x) ?? -1).filter((x) => x > 0) });
+      // 素材 id 换成新 id；找不到的保留为 -1 占位，这样 refs（位置）仍然对得上
+      const nd: Development = { ...rest, itemIds: (rest.itemIds || []).map((x) => map.get(x) ?? -1) };
+      migrateDevelopment(nd);
+      await d.developments.add(nd);
       m++;
     }
   });
