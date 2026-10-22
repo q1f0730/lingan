@@ -1,3 +1,5 @@
+import { itemHasImage } from '../lib/imagestore';
+import { useThumbSrc } from '../lib/useImage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useRef, useState } from 'react';
 import { DecodeText, TypeReveal } from './Motion';
@@ -290,7 +292,7 @@ export function SourceSprigs({
                 }}
               >
                 <span className="sprig-thumb" aria-hidden>
-                  {it.image ? <img src={it.image} alt="" loading="lazy" decoding="async" /> : <span className="sprig-glyph">{glyphOf(it)}</span>}
+                  {itemHasImage(it) ? <SprigThumb it={it} /> : <span className="sprig-glyph">{glyphOf(it)}</span>}
                 </span>
                 <span className="sprig-text">
                   <span className="sprig-title">{it.title}</span>
@@ -311,4 +313,10 @@ export function SourceSprigs({
 function glyphOf(it: Item): string {
   const t = (it.type === 'text' && it.content ? it.content : it.title).replace(/^[《「“"『\s]+/, '');
   return Array.from(t)[0] || '穗';
+}
+
+/** 小穗卡缩略图：读缩略图，卸载回收 objectURL */
+function SprigThumb({ it }: { it: Item }) {
+  const src = useThumbSrc(it);
+  return src ? <img src={src} alt="" decoding="async" /> : null;
 }
