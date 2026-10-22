@@ -8,7 +8,18 @@ export interface Item {
   year?: string;
   content?: string;
   url?: string;
-  image?: string; // data URL (compressed)
+  /** 草稿 / 备份 / v0.12 及以前的旧行里才有：原图 data URL。v0.13 起入库后原图搬进 images 表，行里不再留 */
+  image?: string;
+  /** v0.13 列表用的小缩略图（JPEG Blob，约 20KB） */
+  thumb?: Blob;
+  thumbW?: number;
+  thumbH?: number;
+  /** 有原图（在 images 表） */
+  hasImage?: 1;
+  /** 缩略图待生成（后台补） */
+  thumbTodo?: 1;
+  /** 原图解不开，放弃生成缩略图（列表退回读原图） */
+  thumbFail?: 1;
   why?: string;
   tags: string[];
   caption?: string; // AI image caption
@@ -90,3 +101,9 @@ export const TYPE_LABEL: Record<ItemType, string> = {
 };
 
 export const TYPE_ORDER: ItemType[] = ['music', 'film', 'image', 'text', 'link', 'idea'];
+
+/** v0.13 原图单独一张表：列表永远不读它 */
+export interface StoredImage {
+  itemId: number;
+  blob: Blob;
+}
