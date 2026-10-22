@@ -1,0 +1,115 @@
+{
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 942,
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 6122,
+    "wallMs": 7391
+  },
+  "storage": {
+    "version": 40,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102219137,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "coldStartMs": {
+    "median": 186,
+    "runs": [
+      186,
+      192,
+      182
+    ],
+    "firstThumbsDecodedMedian": 211,
+    "cardsOnFirstScreen": 10
+  },
+  "coldStartCpu4xMs": {
+    "median": 541,
+    "runs": [
+      553,
+      523,
+      541
+    ],
+    "firstThumbsDecodedMedian": 615
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16804,
+    "scrollHeight": 115081,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 8,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 3,
+    "objectUrlsCreated": 59
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14433,
+    "scrollHeight": 67056,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 26,
+    "virtual": {
+      "total": 37,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14422,
+    "scrollHeight": 45126,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 59,
+    "maxLiveObjectUrls": 0,
+    "virtual": {
+      "total": 1000,
+      "mounted": 59
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 300,
+    "scrolledPx": 8022,
+    "scrollHeight": 115081,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 8
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400
+}
