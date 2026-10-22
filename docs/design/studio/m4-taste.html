@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-white" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN - 口味</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: "#FFFFFF",
+            primary: "#000000",
+            secondary: "#7E7E7E",
+            faint: "#C6C6C6",
+            subtle: "#F3F3F3",
+            line: "#E5E5E5"
+          },
+          fontFamily: {
+            sans: ["Inter", "Noto Sans SC", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      border-radius: 0px !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #FFFFFF;
+      color: #000000;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+    }
+  </style>
+</head>
+<body class="bg-white text-black min-h-screen flex justify-center selection:bg-black selection:text-white">
+<!-- 390px Mobile Canvas Container -->
+<div class="w-full max-w-[390px] min-h-screen bg-white flex flex-col relative pb-32">
+<!-- TopAppBar Header -->
+<header class="w-full pt-5 px-[10px] pb-0 bg-white z-30">
+<div class="flex justify-between items-center w-full h-8">
+<h1 class="text-[20px] font-semibold tracking-tight text-black leading-none">
+          拾穗 · GLEAN
+        </h1>
+<button class="text-[11px] font-medium tracking-[0.12em] text-[#7E7E7E] hover:text-black transition-none uppercase">
+          设置
+        </button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="px-[10px] flex-grow pt-[30px]">
+<!-- Huge Headline -->
+<section class="mb-6">
+<h2 class="text-[56px] leading-[1.0] font-semibold tracking-[-0.04em] text-black">
+          口味
+        </h2>
+</section>
+<!-- Manifesto-like Paragraph -->
+<section class="mb-8">
+<p class="text-[24px] font-semibold text-black leading-[34px] tracking-[-0.02em]">
+          你在收集安静的东西：清晨、窗、没人注意的日常，以及能被重复的小仪式。
+        </p>
+</section>
+<!-- Tight No-line Table: Taste Tendencies -->
+<section class="mb-9">
+<!-- Table Header with 1px hairline rule under -->
+<div class="border-b border-black pb-1.5 flex justify-between items-baseline text-[10px] tracking-[0.12em] text-[#7E7E7E] uppercase font-medium">
+<div class="w-[30%]">倾向</div>
+<div class="w-[42%] pl-1">来自这些穗</div>
+<div class="w-[28%] text-right">调校</div>
+</div>
+<!-- Table Rows -->
+<div class="divide-y divide-[#F0F0F0]">
+<!-- Row 1: 清晨与雾 -->
+<div class="py-3.5 flex justify-between items-start">
+<div class="w-[30%] pr-1">
+<span class="text-[13px] font-medium text-black leading-tight block">清晨与雾</span>
+</div>
+<div class="w-[42%] px-1">
+<span class="text-[12px] text-[#7E7E7E] leading-[17px] block">轮渡上的雾 / 完美的日子</span>
+</div>
+<div class="w-[28%] text-right flex flex-col items-end gap-1 text-[10px] text-[#7E7E7E] tracking-wider leading-none">
+<button class="hover:text-black transition-none">多一点</button>
+<button class="hover:text-black transition-none">少一点</button>
+<button class="text-[#C6C6C6] hover:text-black transition-none">这不是我</button>
+</div>
+</div>
+<!-- Row 2: 窗与夜 -->
+<div class="py-3.5 flex justify-between items-start">
+<div class="w-[30%] pr-1">
+<span class="text-[13px] font-medium text-black leading-tight block">窗与夜</span>
+</div>
+<div class="w-[42%] px-1">
+<span class="text-[12px] text-[#7E7E7E] leading-[17px] block">《一一》 / Re: Stacks</span>
+</div>
+<div class="w-[28%] text-right flex flex-col items-end gap-1 text-[10px] text-[#7E7E7E] tracking-wider leading-none">
+<button class="hover:text-black transition-none">多一点</button>
+<button class="hover:text-black transition-none">少一点</button>
+<button class="text-[#C6C6C6] hover:text-black transition-none">这不是我</button>
+</div>
+</div>
+<!-- Row 3: 日常里的诗 -->
+<div class="py-3.5 flex justify-between items-start">
+<div class="w-[30%] pr-1">
+<span class="text-[13px] font-medium text-black leading-tight block">日常里的诗</span>
+</div>
+<div class="w-[42%] px-1">
+<span class="text-[12px] text-[#7E7E7E] leading-[17px] block">外卖小票上的备注 / 声控灯起名</span>
+</div>
+<div class="w-[28%] text-right flex flex-col items-end gap-1 text-[10px] text-[#7E7E7E] tracking-wider leading-none">
+<button class="hover:text-black transition-none">多一点</button>
+<button class="hover:text-black transition-none">少一点</button>
+<button class="text-[#C6C6C6] hover:text-black transition-none">这不是我</button>
+</div>
+</div>
+<!-- Row 4: 收集本身 -->
+<div class="py-3.5 flex justify-between items-start">
+<div class="w-[30%] pr-1">
+<span class="text-[13px] font-medium text-black leading-tight block">收集本身</span>
+</div>
+<div class="w-[42%] px-1">
+<span class="text-[12px] text-[#7E7E7E] leading-[17px] block">旧书店的书脊 / Radio Garden</span>
+</div>
+<div class="w-[28%] text-right flex flex-col items-end gap-1 text-[10px] text-[#7E7E7E] tracking-wider leading-none">
+<button class="hover:text-black transition-none">多一点</button>
+<button class="hover:text-black transition-none">少一点</button>
+<button class="text-[#C6C6C6] hover:text-black transition-none">这不是我</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: 最近冷下来的 -->
+<section class="mb-12">
+<h3 class="text-[10px] font-medium tracking-[0.12em] text-[#7E7E7E] uppercase pb-1.5 border-b border-[#E5E5E5] mb-0">
+          最近冷下来的
+        </h3>
+<div class="py-3.5 flex justify-between items-baseline">
+<span class="text-[13px] font-medium text-black">摇滚现场</span>
+<span class="text-[11px] text-[#7E7E7E] tracking-tight">9 月之后没有新穗</span>
+</div>
+</section>
+<!-- Editorial Archival Footer Notice -->
+<div class="pt-6 pb-6 text-center">
+<p class="text-[10px] tracking-widest text-[#7E7E7E] uppercase">
+          © 2026 Q1f730
+        </p>
+</div>
+</main>
+<!-- Sticky Pinned Bottom Section: Quick-Capture Bar + BottomNavBar -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto z-50 bg-white">
+<!-- Quick-Capture Bar (1px black hairline above, borderless input) -->
+<div class="w-full border-t border-black px-[10px] py-2.5 bg-white flex items-center justify-between">
+<input class="text-[13px] text-black placeholder:text-[#7E7E7E] bg-transparent border-0 outline-none p-0 focus:ring-0 w-full font-normal" placeholder="随手拾一穗" type="text"/>
+<button class="text-[13px] font-semibold text-black hover:opacity-70 px-2 py-0.5 transition-none shrink-0">
+          拾
+        </button>
+</div>
+<!-- BottomNavBar Component (Five Items: 穗仓 / 嫁接 / 新枝 / 口味 (active) / 设置) -->
+<nav class="w-full border-t border-[#E5E5E5] bg-white px-[10px] pt-2 pb-3.5">
+<div class="flex justify-between items-center w-full">
+<!-- Tab 1: 穗仓 (Inactive) -->
+<button class="flex flex-col items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="material-symbols-outlined text-[19px] leading-none mb-0.5">inventory_2</span>
+<span class="text-[11px] font-normal tracking-wider">穗仓</span>
+</button>
+<!-- Tab 2: 嫁接 (Inactive) -->
+<button class="flex flex-col items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="material-symbols-outlined text-[19px] leading-none mb-0.5">alt_route</span>
+<span class="text-[11px] font-normal tracking-wider">嫁接</span>
+</button>
+<!-- Tab 3: 新枝 (Inactive) -->
+<button class="flex flex-col items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="material-symbols-outlined text-[19px] leading-none mb-0.5">eco</span>
+<span class="text-[11px] font-normal tracking-wider">新枝</span>
+</button>
+<!-- Tab 4: 口味 (Active: text-black & border-b border-black) -->
+<button class="flex flex-col items-center justify-center text-black border-b border-black pb-0.5">
+<span class="material-symbols-outlined text-[19px] leading-none mb-0.5">tune</span>
+<span class="text-[11px] font-semibold tracking-wider">口味</span>
+</button>
+<!-- Tab 5: 设置 (Inactive) -->
+<button class="flex flex-col items-center justify-center text-[#7E7E7E] hover:text-black transition-none">
+<span class="material-symbols-outlined text-[19px] leading-none mb-0.5">settings</span>
+<span class="text-[11px] font-normal tracking-wider">设置</span>
+</button>
+</div>
+</nav>
+</div>
+</div>
+</body>
+</html>
