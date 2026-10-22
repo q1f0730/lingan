@@ -7,6 +7,7 @@ import { ItemCard } from '../components/ItemCard';
 import { PageTitle } from '../components/PageTitle';
 import { db } from '../lib/db';
 import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
+import { MIN_EVIDENCE } from '../lib/provenance';
 import { aiReady } from '../lib/settings';
 import { daySeed, mulberry32, pickItems } from '../lib/similarity';
 import { useApp } from '../lib/store';
@@ -14,12 +15,12 @@ import type { Development, GraftBatch, Item } from '../lib/types';
 
 const TASTE_KEY = 'lingan.taste.ai';
 
-/** 嫁接：把两三穗相距很远的东西接在一起，长出一根新枝 */
+/** 嫁接：把几穗相距很远的东西接在一起，一次长三根新枝。v0.12 起至少 3 穗，好让每根新枝都能点回 3 穗。 */
 export function Develop({ preset, clearPreset }: { preset: number[] | null; clearPreset: () => void }) {
   const { settings, toast, openItem, go } = useApp();
   const items = useLiveQuery(() => db.items.toArray(), []);
   const nBranches = useLiveQuery(() => db.developments.count(), []);
-  const [count, setCount] = useState<2 | 3 | 4>(2);
+  const [count, setCount] = useState<3 | 4 | 5>(3);
   const [jump, setJump] = useState(0.8);
   const [theme, setTheme] = useState('');
   const [picked, setPicked] = useState<Item[] | null>(null);
@@ -31,10 +32,10 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
 
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
 
-  // 今日两穗：一整天都是同一对
+  // 今日三穗：一整天都是同一组
   const daily = useMemo(() => {
-    if (!items || items.length < 2) return null;
-    return pickItems(items, 2, 0.9, mulberry32(daySeed()));
+    if (!items || items.length < MIN_EVIDENCE) return null;
+    return pickItems(items, MIN_EVIDENCE, 0.9, mulberry32(daySeed()));
   }, [items]);
 
   useEffect(() => {
@@ -42,12 +43,14 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       const sel = preset.map((id) => byId.get(id)).filter(Boolean) as Item[];
       if (sel.length) {
         let full = sel;
-        if (sel.length < 2) {
+        if (sel.length < MIN_EVIDENCE) {
+          // 从一穗出发：再抽几穗凑够 3 穗（尽量远一点）
           const rest = items.filter((i) => !sel.includes(i));
-          const extra = pickItems([sel[0], ...rest], 2, jump).filter((x) => x !== sel[0]);
-          full = [sel[0], ...(extra.length ? [extra[0]] : [])];
+          const extra = pickItems([...sel, ...rest], MIN_EVIDENCE, jump).filter((x) => !sel.includes(x));
+          full = [...sel, ...extra.slice(0, MIN_EVIDENCE - sel.length)];
+          if (full.length < MIN_EVIDENCE) full = [...full, ...rest.filter((x) => !full.includes(x)).slice(0, MIN_EVIDENCE - full.length)];
         }
-        setCount(full.length >= 4 ? 4 : full.length >= 3 ? 3 : 2);
+        setCount(full.length >= 5 ? 5 : full.length >= 4 ? 4 : 3);
         setPicked(full);
         setResult(null);
       }
@@ -66,7 +69,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   if (!items) return <AsciiLoader />;
 
   function shuffle() {
-    if (!items || items.length < 2) return;
+    if (!items || items.length < MIN_EVIDENCE) return;
     setPicked(pickItems(items, count, jump));
     setResult(null);
   }
@@ -84,7 +87,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   }
 
   async function develop(sel: Item[]) {
-    if (sel.length < 2 || busy) return;
+    if (sel.length < Math.min(MIN_EVIDENCE, items?.length ?? 0) || sel.length < 2 || busy) return;
     setBusy(true);
     setResult(null);
     setProgress({ stage: 'map' });
@@ -98,6 +101,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       if (aiReady(settings)) {
         run = await graftWithAI(settings, sel, { theme: th, taste: localStorage.getItem(TASTE_KEY) || undefined, signal: ctrl.signal, onProgress: setProgress });
         if (run.partial) toast('第二步没跑完，用第一步的种子直接收拢了三根', 'err');
+        else if (run.weak) toast(`有 ${run.weak} 根说不清从哪几穗长出来，标了「证据不足」`, 'err');
       } else {
         // 离线也走四步；给麦子一点点长的时间（减少动态效果时不等）
         run = graftOffline(sel, { theme: th });
@@ -130,6 +134,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       jump,
       idea,
       source: run.source,
+      evidence: idea.evidence || 'ok',
       batch: index === 0 ? { id: bid, index, size, tensions: run.tensions, seeds: run.seeds, pattern: run.pattern, calls: run.calls } : { id: bid, index, size },
       createdAt: now + index,
     }));
@@ -145,10 +150,10 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     <section className="view">
       <PageTitle title="嫁接" whisper="Graft two far-apart things, see what grows" />
 
-      {items.length < 2 ? (
+      {items.length < MIN_EVIDENCE ? (
         <div className="paper empty">
           <h2>穗还不够</h2>
-          <p>至少要拾 2 穗，才能嫁接。</p>
+          <p>至少要拾 {MIN_EVIDENCE} 穗，才能嫁接：每根新枝都要能说出它是从哪 {MIN_EVIDENCE} 穗长出来的。</p>
           <button className="btn primary" onClick={() => go('library')}>
             去拾穗
           </button>
@@ -157,7 +162,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
         <>
           {!shown && daily && (
             <div className="paper daily">
-              <div className="kicker">今日两穗 · {new Date().getMonth() + 1}月{new Date().getDate()}日</div>
+              <div className="kicker">今日三穗 · {new Date().getMonth() + 1}月{new Date().getDate()}日</div>
               <div className="pair">
                 {daily.map((it, i) => [
                   i > 0 && (
@@ -179,7 +184,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                   }}
                   disabled={busy}
                 >
-                  嫁接今日两穗
+                  嫁接今日三穗
                 </button>
               </div>
             </div>
@@ -189,8 +194,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
             <div className="ctrl">
               <span className="label">几穗</span>
               <div className="seg">
-                {[2, 3, 4].map((n) => (
-                  <button key={n} className={count === n ? 'on' : ''} onClick={() => setCount(n as 2 | 3 | 4)} disabled={items.length < n}>
+                {[3, 4, 5].map((n) => (
+                  <button key={n} className={count === n ? 'on' : ''} onClick={() => setCount(n as 3 | 4 | 5)} disabled={items.length < n}>
                     {n}
                   </button>
                 ))}
@@ -238,7 +243,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                     setBurst(Date.now());
                     develop(shown);
                   }}
-                  disabled={busy || shown.length < 2}
+                  disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}
                 >
                   {busy ? '正在嫁接…' : '嫁接 · 长三根'}
                 </button>
@@ -255,12 +260,12 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
             </div>
           )}
 
-          {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} onCancel={() => abortRef.current?.abort()} />}
+          {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} recheck={progress.recheck} onCancel={() => abortRef.current?.abort()} />}
           {result && (
             <>
               <div className="three-head">
                 <span className="kicker">一次三枝 · {result.run.source === 'ai' ? 'AI 嫁接' : '离线嫁接'}</span>
-                <span className="three-sub">三根新枝，变形法各不相同。挑一根，今天就动手。</span>
+                <span className="three-sub">三根新枝，变形法各不相同，每根都能点回它的穗。挑一根，今天就动手。</span>
               </div>
               <div className="three">
                 {result.run.branches.map((b, i) => (
