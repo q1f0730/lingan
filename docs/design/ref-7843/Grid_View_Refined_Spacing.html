@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>STUDIO - Portfolio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2f3131",
+                        "surface-tint": "#5e5e5e",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "secondary-container": "#e1dfdf",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "secondary": "#5e5e5e",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary-fixed": "#1b1b1b",
+                        "outline-variant": "#cfc4c5",
+                        "surface-dim": "#dadada",
+                        "inverse-on-surface": "#f0f1f1",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "inverse-primary": "#c6c6c6",
+                        "tertiary-container": "#1a1c1c",
+                        "primary": "#000000",
+                        "secondary-fixed": "#e4e2e2",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-tertiary-container": "#838484",
+                        "tertiary-fixed": "#e2e2e2",
+                        "on-primary-container": "#848484",
+                        "on-primary-fixed-variant": "#474747",
+                        "surface": "#ffffff",
+                        "surface-container-high": "#e8e8e8",
+                        "outline": "#7e7576",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#4c4546",
+                        "primary-container": "#1b1b1b",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#464747",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#e2e2e2",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#626263",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f9f9f9",
+                        "surface-variant": "#e2e2e2",
+                        "surface-container-low": "#f3f3f4",
+                        "on-surface": "#000000",
+                        "background": "#ffffff",
+                        "on-background": "#000000",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "edge-margin": "40px",
+                        "section-gap": "120px",
+                        "element-gap": "12px",
+                        "gutter": "16px",
+                        "container-max": "1800px"
+                    },
+                    "fontFamily": {
+                        "display-xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "600" }],
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+                        "headline-md": ["16px", { "lineHeight": "1.4", "letterSpacing": "0", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+                        "label-caps": ["14px", { "lineHeight": "1", "letterSpacing": "0", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="w-full top-0 z-50 bg-surface flex justify-between items-center pb-6 transition-colors duration-150 max-w-container-max mx-auto px-[10px] pt-[10px] mb-[160px]">
+<div class="font-semibold tracking-tight text-on-surface text-[20px]">
+            STUDIO
+        </div>
+<div class="hidden md:flex items-center absolute left-1/2 -translate-x-1/2 gap-6">
+<a class="font-label-caps text-label-caps text-on-surface transition-opacity duration-150 text-[12px]" href="#">WORK</a>
+<a class="font-label-caps text-label-caps text-on-surface hover:opacity-70 transition-opacity duration-150 text-[12px]" href="#">ABOUT</a>
+<a class="font-label-caps text-label-caps text-on-surface hover:opacity-70 transition-opacity duration-150 text-[12px]" href="#">NEWS</a>
+<a class="font-label-caps text-label-caps text-on-surface hover:opacity-70 transition-opacity duration-150 text-[12px]" href="#">CAREERS</a>
+</div>
+<a class="text-on-surface font-label-caps text-label-caps hover:opacity-70 transition-opacity duration-150 flex items-center gap-1 text-[12px]" href="#">
+            GET IN TOUCH <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow max-w-container-max mx-auto w-full pt-[10px] pb-[10px] px-[10px]">
+<!-- Section Header & Toggle -->
+<div class="flex justify-between items-end mb-[10px]">
+<h1 class="font-display-xl text-display-xl text-on-surface">All Projects (12)</h1>
+<div class="flex items-center gap-4">
+<button class="font-label-caps text-label-caps text-on-surface hover:opacity-70 transition-opacity duration-150">GRID</button>
+<span class="text-on-surface-variant font-label-caps text-label-caps">|</span>
+<button class="font-label-caps text-label-caps text-on-surface hover:opacity-70 transition-opacity duration-150">LIST VIEW</button>
+</div>
+</div>
+<!-- Grid View -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[10px]">
+<!-- Project Card 1 -->
+<div class="group cursor-pointer flex flex-col relative aspect-[4/5] overflow-hidden">
+<img alt="Minimalist interior design featuring clean lines and natural light" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Minimalist architectural interior with natural light, concrete floors, and modern furniture in a neutral palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBAjz4xVbUqSuch89zBdNYs13jvmSBARf3QqO8pInB8tJS9upiR1bjofMwUh71-fekGp13RHlv47qCGlYEVPVZvSPxfCzSVIlQTAGi3Gxo2ltDEG9u86ArgpSGgExTDjk3jXXiJ9bqoZ3iSUyReVzG9lHETVn1aeYoSK2dcJFyxZ8PJjXiIkscgH_-JsRbRXNiiWqQUjM1rB2gt5LuJUeHAqe4WePhZDsWXqfmtwpnsbTn2oOuJ2qPEKpN8JquKITLAEmqzUNbE2eA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-6 left-6 z-10 text-white">
+<h3 class="font-headline-md text-headline-md text-white">Casa Blanc</h3>
+<p class="font-body-sm text-body-sm text-white/80 mt-1">Residential Architecture - 2023</p>
+</div>
+</div>
+<!-- Project Card 2 -->
+<div class="group cursor-pointer flex flex-col relative aspect-[4/5] overflow-hidden">
+<img alt="Modern kitchen with marble countertops and dark wood cabinetry" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="High-end modern kitchen featuring dark wood cabinetry, a large marble island, and minimalist lighting fixtures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMuqWfXcijpE6s4vDIzNn-TzHUG2HseffKtgKj8mlrLYJLWWIi2lbTH41h7Z8DuCYPkOpZTiUik7fdpv8fPVlOwgQJC8YaR10PJqd66wm17YFTmUdGSqP5uYdwHj-wEjkdHp8FWMyYlimHC9VKtciMaXkq9AjUyCVtSceFde4LwarYt631zBJXWJvCflrCM7U53AIlvw0MqrNLYuVMvSBqhROCXwenuUQ8pFVMKvEAKHbSLUm_6lF00aF3ZJvT-M0fZJBYjFyHHOI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-6 left-6 z-10 text-white">
+<h3 class="font-headline-md text-headline-md text-white">The Onyx Residence</h3>
+<p class="font-body-sm text-body-sm text-white/80 mt-1">Interior Design - 2023</p>
+</div>
+</div>
+<!-- Project Card 3 -->
+<div class="group cursor-pointer flex flex-col relative aspect-[4/5] overflow-hidden">
+<img alt="Minimalist living room with curated art and furniture" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Minimalist living room space with a neutral sofa, abstract artwork, and soft diffused lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTpRs9z_Zp9B2leEHaBAa4vmhEGqghOxiMy5lGnREgv4Y1o4hVonIGsz-FssqwSqzqoyanmxwh3ipE7QlGR5vCBI0irm9Hv6--BpBpTPLsG4dG4pBdk201jQEcR7BvpkstCNKl0m2Ljqo_CUfIASNJhv3ZUIv_6c7PissyHEzAchVrqYGNsmK7SXOtZRvLpwAWF95Fotb8vcu1zkcOvYDq3CDC_upbOoBZDI49IIsELmP6SPumD-idR0b2HhBVyf4B8McZtODBddg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-6 left-6 z-10 text-white">
+<h3 class="font-headline-md text-headline-md text-white">Gallery House</h3>
+<p class="font-body-sm text-body-sm text-white/80 mt-1">Renovation - 2022</p>
+</div>
+</div>
+<!-- Project Card 4 -->
+<div class="group cursor-pointer flex flex-col relative aspect-[4/5] overflow-hidden">
+<img alt="Exterior shot of a modern architectural home at dusk" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Modern architectural home exterior at dusk, featuring large glass windows and concrete facade" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCY7-JLpoGGOmiGkRLjAlIUzBJNrJXWxMLPKt8IBtjhQq4qDEQI6x3vdF3qhXFiCmiEZAbZyFaCRNO0Jzhy6Y7VI44kcHivZ_rXFYnelAmjiZlt6NG9kR72cH-UhYex9ljXg6dsPtOf5Vsm0J45L6dNQG32KqtGWUlU4MY8qNqxkZtcoBStNeoR6mjpp0N4O8bF4uE3kksH8Y8RSEnrLtoUNBXSX1YKoPMzTyyyHH6T9sGK_IY6CkCgT1q1VqSMLswa28AFxGOBY_g"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-6 left-6 z-10 text-white">
+<h3 class="font-headline-md text-headline-md text-white">Villa Nova</h3>
+<p class="font-body-sm text-body-sm text-white/80 mt-1">Residential Architecture - 2022</p>
+</div>
+</div>
+<!-- Project Card 5 -->
+<div class="group cursor-pointer flex flex-col relative aspect-[4/5] overflow-hidden">
+<img alt="Elegant dining room setup with minimalist table and chairs" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Elegant minimalist dining room with a long wooden table, sculptural chairs, and a striking pendant light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCAzVBqhWBYzgHoTgwd428x19r-TQVFPlymKJwYS-IXPLGrsOqIMHZZw1BQUwwdg8pjEI8VCbhb7qkamxmZndEHHzikojdoPxUCWILdgyfqBg9Pxpbqp8_hnm3xwDLDkX86WbsTdqGp9Y-it9yTLLSfFApAbDFMwnBcBzXjrBDUXuMLBNoAjJz2tumA4nGNSDJGW2xljd8Vy7z_XcYVfAau4yPPXDVdE1mwZsaMz7_N5X5m1yHloRNU1fSwHhsJyl5FPj2g5NquUU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-6 left-6 z-10 text-white">
+<h3 class="font-headline-md text-headline-md text-white">Nordic Echo</h3>
+<p class="font-body-sm text-body-sm text-white/80 mt-1">Interior Design - 2021</p>
+</div>
+</div>
+<!-- Project Card 6 -->
+<div class="group cursor-pointer flex flex-col relative aspect-[4/5] overflow-hidden">
+<img alt="Minimalist bathroom design with freestanding tub" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Luxury minimalist bathroom featuring a freestanding white tub, stone walls, and large window overlooking nature" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGrFSBgHvlxYB32rbTgE-Hojm1vlJsiQF81w4vbdWslnBmpFqyJ98wH5nYVIIj8Abz0C94tIa5EKFkZnSXPYlJFGUScif53QNgc09-hQAVOYf07LZAq6niWVHzaEYPMotLrO6wrAWuxm4Ds0RVHZd6ZY79EramUU79XS6Q8KxPb9hYQPTOxyd82HuJ0rb5iCp2AW9jAj_tJfvE3Z9C5x1sLXcNop5-Umipl_rndjGXvbA3pBH4EA09tWM4GAHmD-b1BQebY1i4u6A"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-100 transition-opacity duration-300"></div>
+<div class="absolute bottom-6 left-6 z-10 text-white">
+<h3 class="font-headline-md text-headline-md text-white">The Retreat</h3>
+<p class="font-body-sm text-body-sm text-white/80 mt-1">Hospitality Design - 2021</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface flex justify-between items-center w-full px-4 md:px-edge-margin py-8 max-w-container-max mx-auto">
+<div class="text-sm text-on-surface-variant">
+            © 2024 STUDIO
+        </div>
+</footer>
+</body></html>
