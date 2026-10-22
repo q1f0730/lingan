@@ -11,7 +11,7 @@ const STEPS = [
 ];
 
 /** 嫁接时：三根麦子慢慢长高，四步依次亮起。减少动态效果时只给一帧静图。 */
-export function GraftGrowing({ stage, retry, onCancel }: { stage: GraftStage; retry?: RetryInfo | null; onCancel?: () => void }) {
+export function GraftGrowing({ stage, retry, recheck, onCancel }: { stage: GraftStage; retry?: RetryInfo | null; recheck?: boolean; onCancel?: () => void }) {
   const still = prefersReducedMotion() || document.documentElement.dataset.motion === 'off';
   const t0 = useRef({ stage, at: performance.now() });
   const [tick, setTick] = useState(0);
@@ -29,14 +29,16 @@ export function GraftGrowing({ stage, retry, onCancel }: { stage: GraftStage; re
   const doneUpTo = stage === 'map' ? -1 : stage === 'defix' ? 1 : 3;
   const line = retry
     ? `${retry.reason}，${Math.max(1, Math.ceil(retry.waitMs / 1000))} 秒后再试一次`
-    : stage === 'map'
+    : recheck
+      ? '有一根说不清从哪几穗长出来，让它重长一次'
+      : stage === 'map'
       ? '这几穗正在互相认识'
       : stage === 'defix'
         ? '三根麦子在抽穗'
         : '长好了';
 
   return (
-    <div className="paper growing" role="status" aria-live="polite" data-stage={stage} data-still={still ? '1' : '0'}>
+    <div className="paper growing" role="status" aria-live="polite" data-stage={stage} data-still={still ? '1' : '0'} data-recheck={recheck ? '1' : undefined}>
       <pre className="grow-wheat" aria-hidden>
         {growFrame(p, tick, still)}
       </pre>
