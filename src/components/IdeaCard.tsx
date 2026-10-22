@@ -2,18 +2,17 @@ import { itemHasImage } from '../lib/imagestore';
 import { useThumbSrc } from '../lib/useImage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useRef, useState } from 'react';
-import { DecodeText, TypeReveal } from './Motion';
 import { db } from '../lib/db';
 import { useApp } from '../lib/store';
 import { transformName } from '../lib/graft';
 import { evidenceOf, MIN_EVIDENCE, sourceIds, splitMentions, type Evidence } from '../lib/provenance';
 import { TYPE_LABEL, type Development, type GraftBatch, type Idea, type Item } from '../lib/types';
+import { nn } from '../lib/studio';
 
-const cleanTitle = (t: string) => `《${t.replace(/^《|》$/g, '')}》`;
 
-/** 一根新枝（嫁接的结果） */
-export function IdeaCard({ idea, source, devId, animate, index, hideCliches }: { idea: Idea; source: 'ai' | 'offline'; devId?: number; animate?: boolean; index?: number; hideCliches?: boolean }) {
-  const { toast, openItem } = useApp();
+/** 一根新枝（m3 / m25 / d4）：细体序号 → 标题 → 一句话 → 因为这几穗 → 文字动作「留下 / 再接一次 / 不要」 */
+export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onAgain }: { idea: Idea; source: 'ai' | 'offline'; devId?: number; animate?: boolean; index?: number; hideCliches?: boolean; onAgain?: () => void }) {
+  const { toast, openItem, confirm } = useApp();
   const dev = useLiveQuery(() => (devId ? db.developments.get(devId) : undefined), [devId]);
   const ids = useMemo(() => (dev ? sourceIds(dev, idea) : []), [dev, idea]);
   const srcItems = useLiveQuery(async () => (ids.length ? await db.items.bulkGet(ids) : []), [ids.join(',')]);
@@ -62,68 +61,85 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches }: {
       toast('复制失败，请长按选择文字', 'err');
     }
   }
+  async function drop() {
+    if (!devId) return;
+    const ok = await confirm({ title: `不要「${idea.title.replace(/^《|》$/g, '')}」？`, body: '这根新枝会从新枝里删掉，它的来源穗不受影响。', ok: '不要了', cancel: '留着', danger: true });
+    if (!ok) return;
+    await db.developments.delete(devId);
+    toast('已删掉这根新枝');
+  }
   return (
-    <article className={`paper idea${evidence === 'weak' ? ' idea-weak' : ''}`} data-transform={idea.transform || undefined} data-evidence={evidence}>
+    <article
+      className={`idea${evidence === 'weak' ? ' idea-weak' : ''}${animate ? ' fade' : ''}`}
+      style={animate && typeof index === 'number' ? ({ '--d': `${index * 40}ms` } as React.CSSProperties) : undefined}
+      data-transform={idea.transform || undefined}
+      data-evidence={evidence}
+    >
       <div className="idea-meta">
-        <span className="kicker">
-          {typeof index === 'number' ? `第 ${index + 1} 根` : '新枝'}
-          {dev && typeof index !== 'number' ? ` · ${new Date(dev.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''}
-        </span>
-        <span className="idea-src">
+        <span className="numeral">{typeof index === 'number' ? nn(index) : '—'}</span>
+        <span className="idea-tags label">
           {evidence === 'weak' && <span className="weak-badge">证据不足</span>}
-          {source === 'ai' ? 'AI 嫁接' : '离线嫁接'}
+          {idea.transform && <span className="idea-transform">{transformName(idea.transform)}</span>}
+          <span className="idea-src">{source === 'ai' ? 'AI 嫁接' : '离线嫁接'}</span>
+          {dev && typeof index !== 'number' ? <span className="dim"> · {new Date(dev.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span> : null}
         </span>
       </div>
-      {idea.transform && <div className="idea-transform">变形 · {transformName(idea.transform)}</div>}
-      <h2 className="idea-title">{animate ? <DecodeText text={cleanTitle(idea.title)} ms={1100} /> : cleanTitle(idea.title)}</h2>
-      {idea.form && <div className="idea-form">形式 · {idea.form}</div>}
+      <h2 className="idea-title">{idea.title.replace(/^《|》$/g, '')}</h2>
+      <p className="idea-body">{marked ?? idea.idea}</p>
+      {idea.form && <div className="idea-form meta-text">形式 · {idea.form}</div>}
       {idea.bridge && (
         <div className="idea-bridge">
-          <div className="label">嫁接点</div>
-          {idea.bridge}
+          <span className="label">嫁接点</span>
+          <span>{idea.bridge}</span>
         </div>
       )}
-      <div className="label">长出来的</div>
-      {animate ? <TypeReveal className="idea-body" text={idea.idea} done={marked} /> : <p className="idea-body">{marked ?? idea.idea}</p>}
       {idea.unlike && (
         <p className="idea-unlike">
-          <span className="label-inline">和另外两根不同</span>
-          {idea.unlike}
+          <span className="label">和另外两根不同</span>
+          <span>{idea.unlike}</span>
         </p>
       )}
       {idea.experiment ? (
         <div className="idea-exp">
-          <div className="label">20 分钟小实验</div>
-          {idea.experiment}
+          <span className="label">20 分钟小实验</span>
+          <span>{idea.experiment}</span>
         </div>
       ) : (
         idea.firstStep && (
           <p className="idea-step">
-            <span className="label-inline">第一步</span> {idea.firstStep}
+            <span className="label">第一步</span> <span>{idea.firstStep}</span>
           </p>
         )
       )}
-      {idea.oblique && <p className="idea-oblique">斜策略：{idea.oblique}</p>}
+      {idea.oblique && <p className="idea-oblique meta-text">斜策略：{idea.oblique}</p>}
       {dev && <SourceSprigs ids={ids} items={srcItems} evidence={evidence} note={idea.evidenceNote} hl={hl} setHl={setHl} onOpen={openItem} />}
       {!hideCliches && idea.cliches.length > 0 && (
         <div className="cliches">
-          <div className="label">剪掉的旧枝（套路）</div>
-          <ul>
+          <span className="label">剪掉的旧枝（套路）</span>
+          <span className="cliche-list">
             {idea.cliches.map((c, i) => (
-              <li key={i}>
-                <s>{c}</s>
-              </li>
+              <s key={i}>{c}</s>
             ))}
-          </ul>
+          </span>
         </div>
       )}
-      <div className="actions">
-        <button className="btn ghost small" onClick={copy}>
+      <div className="actions text-actions idea-acts">
+        {devId && (
+          <button className="btn text strong idea-keep" onClick={() => db.developments.update(devId, { starred: !dev?.starred })} aria-pressed={!!dev?.starred}>
+            {dev?.starred ? '已留下' : '留下'}
+          </button>
+        )}
+        {onAgain && (
+          <button className="btn text idea-again" onClick={onAgain}>
+            再接一次
+          </button>
+        )}
+        <button className="btn text idea-copy" onClick={copy}>
           复制
         </button>
         {devId && (
-          <button className="btn ghost small" onClick={() => db.developments.update(devId, { starred: !dev?.starred })}>
-            {dev?.starred ? '★ 已收藏' : '☆ 收藏'}
+          <button className="btn text faint idea-drop" onClick={drop}>
+            不要
           </button>
         )}
       </div>
@@ -131,36 +147,26 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches }: {
   );
 }
 
-export function HistoryRow({ dev, byId }: { dev: Development; byId: Map<number, Item> }) {
+export function HistoryRow({ dev, byId, index }: { dev: Development; byId: Map<number, Item>; index?: number }) {
   const [open, setOpen] = useState(false);
-  const { toast } = useApp();
+  const { developFrom } = useApp();
   const names = dev.itemIds.map((id) => byId.get(id)?.title || '（已删除）');
+  const i = index ?? dev.batch?.index ?? 0;
   return (
-    <div className={`paper hrow${open ? ' open' : ''}`}>
+    <div className={`hrow${open ? ' open' : ''}`}>
       <button className="hrow-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className="hrow-when">{new Date(dev.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+        <span className="numeral small">{nn(i)}</span>
         <span className="hrow-title">
-          {dev.starred ? '★ ' : ''}
-          {dev.idea.title}
-          {dev.idea.transform && <span className="hrow-t">{transformName(dev.idea.transform)}</span>}
+          {dev.idea.title.replace(/^《|》$/g, '')}
+          {dev.starred ? <span className="hrow-kept label">已留下</span> : null}
           {evidenceOf(dev, dev.idea) === 'weak' && <span className="hrow-weak">证据不足</span>}
         </span>
-        <span className="hrow-src">{names.join(' × ')}</span>
+        <span className="hrow-src">{names.join(' / ')}</span>
+        <span className="hrow-when num">{new Date(dev.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit' })}</span>
       </button>
       {open && (
         <div className="hrow-body">
-          <IdeaCard idea={dev.idea} source={dev.source} devId={dev.id} />
-          <button
-            className="btn ghost small danger"
-            onClick={async () => {
-              if (confirm('删除这根新枝？')) {
-                await db.developments.delete(dev.id!);
-                toast('已删除');
-              }
-            }}
-          >
-            删除这根新枝
-          </button>
+          <IdeaCard idea={dev.idea} source={dev.source} devId={dev.id} index={i} onAgain={() => developFrom(dev.itemIds.filter((x) => x > 0))} />
         </div>
       )}
     </div>
@@ -172,8 +178,8 @@ export function GraftTrail({ batch, names }: { batch: GraftBatch; names: string[
   if (!batch.tensions?.length && !batch.seeds?.length) return null;
   const nm = (refs: number[]) => refs.map((r) => names[r - 1]).filter(Boolean).join(' · ');
   return (
-    <details className="paper trail">
-      <summary>看看它们是怎么长出来的：{batch.tensions?.length || 0} 个张力 · {batch.seeds?.length || 0} 粒种子</summary>
+    <details className="trail">
+      <summary>看看它们是怎么长出来的 · {batch.tensions?.length || 0} 个张力 / {batch.seeds?.length || 0} 粒种子</summary>
       {!!batch.tensions?.length && (
         <>
           <div className="label">张力</div>
@@ -232,7 +238,6 @@ export function SourceSprigs({
     <section className={`sprigs${evidence === 'weak' ? ' weak' : ''}`} aria-label="因为这几穗">
       <div className="sprigs-head">
         <span className="label">因为这几穗</span>
-        <span className="sprigs-whisper">where this one grew from</span>
       </div>
       {evidence === 'weak' && (
         <p className="sprigs-weak" role="note">
@@ -247,9 +252,7 @@ export function SourceSprigs({
             if (!it) {
               return (
                 <div key={id} className="sprig gone" data-item-id={id}>
-                  <span className="sprig-thumb" aria-hidden>
-                    ·
-                  </span>
+                  <span className="sprig-thumb" aria-hidden />
                   <span className="sprig-text">
                     <span className="sprig-title">这穗已经不在穗仓了</span>
                   </span>
@@ -260,7 +263,7 @@ export function SourceSprigs({
               <button
                 key={id}
                 type="button"
-                className={`sprig sprig-${it.type}${hl === id ? ' on' : ''}`}
+                className={`sprig sprig-${it.type}${itemHasImage(it) ? ' has-img' : ''}${hl === id ? ' on' : ''}`}
                 data-item-id={id}
                 title={`回到「${it.title}」`}
                 onPointerEnter={(e) => e.pointerType === 'mouse' && setHl(id)}
@@ -291,9 +294,11 @@ export function SourceSprigs({
                   onOpen(it);
                 }}
               >
-                <span className="sprig-thumb" aria-hidden>
-                  {itemHasImage(it) ? <SprigThumb it={it} /> : <span className="sprig-glyph">{glyphOf(it)}</span>}
-                </span>
+                {itemHasImage(it) && (
+                  <span className="sprig-thumb" aria-hidden>
+                    <SprigThumb it={it} />
+                  </span>
+                )}
                 <span className="sprig-text">
                   <span className="sprig-title">{it.title}</span>
                   <span className="sprig-sub">
@@ -308,11 +313,6 @@ export function SourceSprigs({
       )}
     </section>
   );
-}
-
-function glyphOf(it: Item): string {
-  const t = (it.type === 'text' && it.content ? it.content : it.title).replace(/^[《「“"『\s]+/, '');
-  return Array.from(t)[0] || '穗';
 }
 
 /** 小穗卡缩略图：读缩略图，卸载回收 objectURL */
