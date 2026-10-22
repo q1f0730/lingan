@@ -185,7 +185,7 @@ describe('Dexie v1 → v2 migration keeps old branches', () => {
     v1.close();
     const d = new LinganDB(name);
     const devs = await d.developments.orderBy('createdAt').toArray();
-    expect(d.verno).toBe(2);
+    expect(d.verno).toBeGreaterThanOrEqual(2); // v0.13 起是 3
     expect(devs).toHaveLength(2);
     expect(devs[0].idea.idea).toBe('旧正文');
     expect(devs[0].idea.refs).toEqual([1, 2]);
