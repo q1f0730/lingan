@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — AI 服务</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+        },
+        colors: {
+          primary: '#000000',
+          secondary: '#7E7E7E',
+          faint: '#C6C6C6',
+          canvas: '#FFFFFF',
+          hairline: '#000000',
+          divider: '#E5E5E5'
+        }
+      }
+    }
+  }
+</script>
+<style>
+  * {
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  .display-title {
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1.0;
+  }
+  input, button {
+    outline: none;
+  }
+</style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-white text-black flex justify-center min-h-screen">
+  <!-- Mobile Container: strictly 390px wide -->
+  <div class="w-[390px] min-h-screen bg-white flex flex-col justify-between relative px-[16px] pb-[16px]">
+    
+    <!-- Top Content Area -->
+    <div class="w-full flex flex-col">
+      
+      <!-- Top Bar: 返回 (left), AI 服务 (center) -->
+      <div class="h-[48px] flex items-center justify-between border-b border-transparent">
+        <button class="text-[14px] text-black tracking-tight active:opacity-60 cursor-pointer">返回</button>
+        <span class="text-[12px] text-secondary tracking-widest uppercase">AI 服务</span>
+        <span class="w-[28px]"></span> <!-- placeholder to balance flex -->
+      </div>
+
+      <!-- Huge Display Headline -->
+      <div class="pt-[32px] pb-[12px]">
+        <h1 class="display-title">AI 服务</h1>
+      </div>
+
+      <!-- Subtitle note -->
+      <p class="text-[15px] leading-[1.4] text-secondary pb-[28px]">
+        key 只存在这台手机上，不会上传到 Glean。
+      </p>
+
+      <!-- Provider Choice Section -->
+      <div class="w-full mb-[24px]">
+        <div class="text-[11px] uppercase tracking-wider text-secondary pb-[6px]">服务</div>
+        <div class="w-full h-[1px] bg-black mb-[14px]"></div>
+
+        <!-- Providers List: no lines, 10px square badges -->
+        <div class="flex flex-col space-y-[12px]">
+          <!-- 智谱 (selected) -->
+          <div class="flex items-center space-x-[10px] cursor-pointer">
+            <span class="w-[10px] h-[10px] bg-black inline-block flex-shrink-0"></span>
+            <span class="text-[15px] font-medium text-black">智谱</span>
+          </div>
+
+          <!-- 硅基流动 -->
+          <div class="flex items-center space-x-[10px] cursor-pointer text-secondary">
+            <span class="w-[10px] h-[10px] border border-faint inline-block flex-shrink-0"></span>
+            <span class="text-[15px] text-secondary">硅基流动</span>
+          </div>
+
+          <!-- Gemini -->
+          <div class="flex items-center space-x-[10px] cursor-pointer text-secondary">
+            <span class="w-[10px] h-[10px] border border-faint inline-block flex-shrink-0"></span>
+            <span class="text-[15px] text-secondary">Gemini</span>
+          </div>
+
+          <!-- 自定义 -->
+          <div class="flex items-center space-x-[10px] cursor-pointer text-secondary">
+            <span class="w-[10px] h-[10px] border border-faint inline-block flex-shrink-0"></span>
+            <span class="text-[15px] text-secondary">自定义</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Config Form for 智谱 -->
+      <div class="w-full space-y-[18px] mb-[20px]">
+        
+        <!-- API key input -->
+        <div class="w-full">
+          <div class="text-[11px] text-secondary pb-[4px]">API key</div>
+          <div class="flex items-center justify-between border-b border-black pb-[6px]">
+            <span class="text-[14px] font-mono tracking-wider text-black">••••••••••••••••••••a9f2</span>
+            <button class="text-[12px] text-secondary cursor-pointer hover:text-black">显示</button>
+          </div>
+        </div>
+
+        <!-- 模型 input -->
+        <div class="w-full">
+          <div class="text-[11px] text-secondary pb-[4px]">模型</div>
+          <div class="flex items-center justify-between border-b border-black pb-[6px]">
+            <span class="text-[14px] font-mono text-black">glm-4-flash</span>
+            <button class="text-[12px] text-secondary cursor-pointer hover:text-black">换</button>
+          </div>
+        </div>
+
+        <!-- 接口地址 (read-only) -->
+        <div class="w-full">
+          <div class="text-[11px] text-secondary pb-[4px]">接口地址</div>
+          <div class="flex items-center justify-between border-b border-divider pb-[6px]">
+            <span class="text-[14px] font-mono text-secondary">open.bigmodel.cn</span>
+            <span class="text-[11px] text-faint">只读</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div class="flex items-center space-x-[20px] pt-[4px] pb-[8px]">
+        <button class="text-[14px] text-black underline underline-offset-4 cursor-pointer font-medium">测试连接</button>
+        <button class="text-[14px] text-secondary cursor-pointer hover:text-black">清除 key</button>
+      </div>
+
+      <!-- Result Line -->
+      <div class="text-[12px] text-black font-mono pt-[2px] pb-[28px]">
+        连接正常 · 10/22 12:20
+      </div>
+
+      <!-- Custom Spec Helper Section -->
+      <div class="w-full pt-[4px] border-t border-divider">
+        <div class="text-[11px] text-secondary pt-[16px] pb-[8px]">自定义时需要</div>
+        <div class="space-y-[4px]">
+          <div class="text-[13px] text-secondary">接口地址（兼容 OpenAI）</div>
+          <div class="text-[13px] text-secondary">模型名</div>
+          <div class="text-[13px] text-secondary">API key</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Persistent Controls & Navigation -->
+    <div class="w-full mt-[40px]">
+      
+      <!-- Quick-capture line (pinned above bottom nav with 1px black rule) -->
+      <div class="w-full border-t border-black pt-[10px] pb-[12px] flex items-center justify-between">
+        <span class="text-[13px] text-secondary">随手拾一穗</span>
+        <button class="text-[14px] font-semibold text-black px-[4px] cursor-pointer">拾</button>
+      </div>
+
+      <!-- Bottom 5-word text nav with '设置' active -->
+      <div class="w-full flex items-center justify-between py-[10px]">
+        <span class="text-[12px] text-secondary cursor-pointer">穗仓</span>
+        <span class="text-[12px] text-secondary cursor-pointer">嫁接</span>
+        <span class="text-[12px] text-secondary cursor-pointer">新枝</span>
+        <span class="text-[12px] text-secondary cursor-pointer">口味</span>
+        <span class="text-[12px] text-black underline underline-offset-4 font-semibold cursor-pointer">设置</span>
+      </div>
+
+      <!-- Minimal Editorial Copyright Footer -->
+      <div class="w-full text-center pt-[10px] pb-[6px]">
+        <span class="text-[11px] text-secondary font-mono">© 2026 Q1f730</span>
+      </div>
+
+    </div>
+
+  </div>
+</body>
+</html>
