@@ -2,7 +2,9 @@ import { useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
 import { clearAll, exportAll, importAll } from '../lib/db';
 import { embedAllMissing } from '../lib/enrich';
-import { readFileText, saveTextFile } from '../lib/files';
+import { androidFiles, deliverZip, readFileText, saveTextFile, type ZipTarget } from '../lib/files';
+import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
+import { db } from '../lib/db';
 import { PRESETS, embedConfig, type Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
 import { PageTitle } from '../components/PageTitle';
@@ -17,6 +19,9 @@ export function SettingsView() {
   const [embedding, setEmbedding] = useState<string>('');
   const [showKey, setShowKey] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [withSamples, setWithSamples] = useState(false);
+  const [vaulting, setVaulting] = useState(false);
+  const onAndroid = !!androidFiles();
   const dirty = JSON.stringify(s) !== JSON.stringify(settings);
   const preset = PRESETS.find((p) => p.id === s.preset) || PRESETS[PRESETS.length - 1];
 
@@ -67,6 +72,25 @@ export function SettingsView() {
       if (where) toast(`已导出 ${b.items.length} 穗`);
     } catch (e) {
       toast('导出失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    }
+  }
+
+  async function doObsidian(target: ZipTarget) {
+    if (vaulting) return;
+    setVaulting(true);
+    try {
+      const now = Date.now();
+      const { zip, stats } = await exportObsidianZip(db, { includeSamples: withSamples, now });
+      if (!stats.items && !stats.branches) {
+        toast(stats.skippedSamples ? '只有示例穗：勾上「包含示例穗」再导出' : '穗仓是空的，没有可导出的', 'err');
+        return;
+      }
+      const where = await deliverZip(vaultZipName(now), zip, target);
+      if (where) toast(`已导出 ${stats.items} 穗、${stats.branches} 根新枝${target === 'downloads' ? `（${where}）` : ''}`);
+    } catch (e) {
+      toast('导出失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    } finally {
+      setVaulting(false);
     }
   }
 
@@ -236,6 +260,30 @@ export function SettingsView() {
           <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => { doImport(e.target.files?.[0]); e.target.value = ''; }} />
         </div>
         <p className="hint">手机和电脑之间可以用「导出 → 导入」搬运。</p>
+      </div>
+
+      <div className="paper panel obsidian-panel">
+        <div className="label">搬去 Obsidian</div>
+        <p className="hint">导出成 Markdown + 图片的 ZIP。解压后在 Obsidian 里「打开文件夹作为仓库」：每穗一篇笔记（按类型分文件夹），图片在 attachments/，新枝用双链指回它的来源穗，从「拾穗索引」开始逛。</p>
+        <label className="check">
+          <input className="obsidian-samples" type="checkbox" checked={withSamples} onChange={(e) => setWithSamples(e.target.checked)} /> 包含示例穗
+        </label>
+        <div className="actions left">
+          {onAndroid ? (
+            <>
+              <button className="btn ghost obsidian-share" onClick={() => doObsidian('share')} disabled={vaulting}>
+                {vaulting ? '打包中…' : '分享 ZIP…'}
+              </button>
+              <button className="btn ghost obsidian-downloads" onClick={() => doObsidian('downloads')} disabled={vaulting}>
+                存到「下载」
+              </button>
+            </>
+          ) : (
+            <button className="btn ghost obsidian-export" onClick={() => doObsidian('save')} disabled={vaulting}>
+              {vaulting ? '打包中…' : '导出为 Markdown'}
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="colophon">
