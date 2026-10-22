@@ -1,7 +1,7 @@
 import { itemHasImage } from '../lib/imagestore';
 import { useThumbSrc } from '../lib/useImage';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { db } from '../lib/db';
 import { useApp } from '../lib/store';
 import { transformName } from '../lib/graft';
@@ -147,13 +147,17 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
   );
 }
 
-export function HistoryRow({ dev, byId, index }: { dev: Development; byId: Map<number, Item>; index?: number }) {
-  const [open, setOpen] = useState(false);
+export function HistoryRow({ dev, byId, index, focus }: { dev: Development; byId: Map<number, Item>; index?: number; focus?: boolean }) {
+  const [open, setOpen] = useState(!!focus);
+  const rowRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (focus) rowRef.current?.scrollIntoView({ block: 'start' });
+  }, [focus]);
   const { developFrom } = useApp();
   const names = dev.itemIds.map((id) => byId.get(id)?.title || '（已删除）');
   const i = index ?? dev.batch?.index ?? 0;
   return (
-    <div className={`hrow${open ? ' open' : ''}`}>
+    <div ref={rowRef} className={`hrow${open ? ' open' : ''}${focus ? ' focus' : ''}`} data-dev-id={dev.id}>
       <button className="hrow-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span className="numeral small">{nn(i)}</span>
         <span className="hrow-title">
