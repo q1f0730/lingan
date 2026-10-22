@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 桌面端穗仓网格视图 (Dark Theme 1440px)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    border-radius: 0 !important;
+  }
+  body {
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* TOP NAV */
+  header.nav-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: #000000;
+    height: 72px;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand-logo {
+    font-size: 20px;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+  nav.center-nav {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  .nav-item {
+    font-size: 13px;
+    font-weight: 500;
+    color: #8E8E8E;
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    padding-bottom: 4px;
+    transition: color 0.15s ease;
+  }
+  .nav-item:hover {
+    color: #FFFFFF;
+  }
+  .nav-item.active {
+    color: #FFFFFF;
+    border-bottom: 1px solid #FFFFFF;
+  }
+  .quick-capture-box {
+    width: 320px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #FFFFFF;
+    padding-bottom: 6px;
+  }
+  .quick-capture-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    color: #FFFFFF;
+    width: 100%;
+    letter-spacing: 0.02em;
+  }
+  .quick-capture-input::placeholder {
+    color: #8E8E8E;
+  }
+  .quick-capture-arrow {
+    font-size: 13px;
+    color: #8E8E8E;
+    user-select: none;
+    margin-left: 6px;
+  }
+
+  /* MAIN WRAPPER */
+  main.main-content {
+    padding: 0 40px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  /* HEADLINE ROW */
+  .headline-section {
+    margin-top: 140px;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .main-headline {
+    font-size: 108px;
+    font-weight: 600;
+    line-height: 1.0;
+    letter-spacing: -0.04em;
+    color: #FFFFFF;
+  }
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding-bottom: 12px;
+  }
+  .view-toggle .active {
+    color: #FFFFFF;
+    text-decoration: none;
+  }
+  .view-toggle .divider {
+    color: rgba(255, 255, 255, 0.2);
+  }
+  .view-toggle .inactive {
+    color: #8E8E8E;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  .view-toggle .inactive:hover {
+    color: #FFFFFF;
+  }
+
+  /* 3-COLUMN GRID */
+  .grain-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 140px;
+  }
+
+  /* 4:5 TILE */
+  .tile {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    background-color: #1B1B1B;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* PHOTO TILE */
+  .tile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .photo-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.85) 100%);
+    pointer-events: none;
+  }
+  .photo-caption {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    right: 24px;
+    z-index: 2;
+    color: #FFFFFF;
+  }
+  .photo-title {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: #FFFFFF;
+  }
+  .photo-meta {
+    font-size: 12px;
+    font-weight: 400;
+    color: #8E8E8E;
+    letter-spacing: 0.02em;
+  }
+
+  /* TEXT TILE */
+  .tile-text {
+    padding: 36px 32px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
+  .tile-body-quote {
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.48;
+    color: #FFFFFF;
+    letter-spacing: -0.015em;
+  }
+  .tile-body-thought {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.45;
+    color: #FFFFFF;
+    letter-spacing: -0.015em;
+  }
+  .tile-body-link-title {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #FFFFFF;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+  }
+  .tile-body-link-url {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8E8E8E;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    word-break: break-all;
+  }
+  .tile-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .tile-source {
+    font-size: 12px;
+    font-weight: 400;
+    color: #8E8E8E;
+    letter-spacing: 0.02em;
+  }
+  .tile-meta-line {
+    font-size: 12px;
+    font-weight: 400;
+    color: #8E8E8E;
+    letter-spacing: 0.02em;
+  }
+
+  /* FOOTER */
+  footer.page-footer {
+    padding: 0 40px 60px;
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: flex-start;
+  }
+  .footer-copyright {
+    font-size: 10px;
+    color: #8E8E8E;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+</style>
+</head>
+<body>
+
+  <!-- TOP NAV -->
+  <header class="nav-header">
+    <a href="#" class="brand-logo">拾穗 · GLEAN</a>
+    <nav class="center-nav">
+      <a href="#" class="nav-item active">穗仓</a>
+      <a href="#" class="nav-item">嫁接</a>
+      <a href="#" class="nav-item">新枝</a>
+      <a href="#" class="nav-item">口味</a>
+      <a href="#" class="nav-item">设置</a>
+    </nav>
+    <div class="quick-capture-box">
+      <input type="text" class="quick-capture-input" placeholder="随手拾一穗 →" readonly/>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <!-- HEADLINE SECTION -->
+    <div class="headline-section">
+      <h1 class="main-headline">穗仓 (20)</h1>
+      <div class="view-toggle">
+        <span class="active">网格</span>
+        <span class="divider">|</span>
+        <a href="#" class="inactive">列表</a>
+      </div>
+    </div>
+
+    <!-- 3-COLUMN FULL-BLEED GRID -->
+    <div class="grain-grid">
+      <!-- ROW 1, COL 1: 轮渡上的雾 -->
+      <div class="tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" alt="轮渡上的雾" class="tile-photo"/>
+        <div class="photo-scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">轮渡上的雾</div>
+          <div class="photo-meta">照片 · 10/21</div>
+        </div>
+      </div>
+
+      <!-- ROW 1, COL 2: 《完美的日子》 -->
+      <div class="tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1VwRjAApBlw0cvYV3mNMlQzujVjYPgk5WXPj28qCa_Ru-cY-MzE_uAnqQYpqHML3FRqlygqu2YpLhZGoUdNrNY48FBokjg6of-mFxlEynN8YFHbEDlwLmaZ_CRqH4fJ745Jo6tFsclKRVmPXJs6zUDwvgpNzGB3Et7qxTGfIUE9yt34hm1nrteJ5CsRO_LsfMS_2RgB30QiKmDr4Sq9aXdTCBz4_BFJkBzMEPv_FZEI-1XlZowcKhx5TA" alt="《完美的日子》" class="tile-photo"/>
+        <div class="photo-scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">《完美的日子》</div>
+          <div class="photo-meta">电影 · 10/20</div>
+        </div>
+      </div>
+
+      <!-- ROW 1, COL 3: Re: Stacks -->
+      <div class="tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1Vi-LhX-l8RD3zrf3It4rRe_YiL3BWt5MnmjjywiB3w_5kVgyD0MEdV50ibhvu8lkDzfOT6JhH7AEmJ-Tyw565Mpw2MlbfuJG1YtErrlaPD5WmZqsM6Xw3iL_8GvfOUOUMpubG2-I6dK3oDbsSBh3GWqupWhQqb4NSg8sXCg617wEEp0c3XDas90mE052bZcXnJ97GO6BRBPprkvvM0sfXXH1IJ_PHrCWMTss8GxWSBBjx30DAjaDi8yQ" alt="Re: Stacks" class="tile-photo"/>
+        <div class="photo-scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">Re: Stacks</div>
+          <div class="photo-meta">歌 · 10/19</div>
+        </div>
+      </div>
+
+      <!-- ROW 2, COL 1: 摘抄 卡尔维诺 -->
+      <div class="tile">
+        <div class="tile-text">
+          <div class="tile-body-quote">
+            “记忆中的形象一旦被词语固定住，就给抹掉了。”
+          </div>
+          <div class="tile-footer">
+            <div class="tile-source">卡尔维诺《看不见的城市》</div>
+            <div class="tile-meta-line">摘抄 · 10/18</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2, COL 2: 想法 声控灯 -->
+      <div class="tile">
+        <div class="tile-text">
+          <div class="tile-body-thought">
+            “给楼道里每一盏声控灯起一个名字。”
+          </div>
+          <div class="tile-footer">
+            <div class="tile-meta-line">想法 · 10/17</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2, COL 3: 链接 Radio Garden -->
+      <div class="tile">
+        <div class="tile-text">
+          <div>
+            <div class="tile-body-link-title">Radio Garden · 转动地球收听各地电台</div>
+            <div class="tile-body-link-url">radio.garden</div>
+          </div>
+          <div class="tile-footer">
+            <div class="tile-meta-line">链接 · 10/16</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3, COL 1: 旧书店堆到天花板的书脊 -->
+      <div class="tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ" alt="旧书店堆到天花板的书脊" class="tile-photo"/>
+        <div class="photo-scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">旧书店堆到天花板的书脊</div>
+          <div class="photo-meta">照片 · 10/14</div>
+        </div>
+      </div>
+
+      <!-- ROW 3, COL 2: aqua -->
+      <div class="tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1VNEkLPApRT2dQX1op0NyFcM1bZ3Wb1flttLMHNs6ZLxYDwcuq2hA5hv5m6C7Mrm0XXoFtc7YEP_ED7laokNuVr0YjdCyfGi5D8QwliBG7Yty90-4KUAiaJlKxmXe6c9j_D3LLWHjVLQI7eWSKv3KSVyODK4u98e85qmxxewgpFd8SecCh-nflYNXZ79Sfc-RDOs45VQFBNXgyd02zLaJmieCcwNLkydiFGzfyw6arSk1mhClS41HzL9PE" alt="aqua" class="tile-photo"/>
+        <div class="photo-scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">aqua</div>
+          <div class="photo-meta">歌 · 10/12</div>
+        </div>
+      </div>
+
+      <!-- ROW 3, COL 3: 《一一》 -->
+      <div class="tile">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1VIxP_AS_m2Q0g_Ne7PJQkOCurfb6jpWH2Pprj9MF9rE2TC5uWot9QJSKNdmEDINXzXLQgu6YFk0hbb40-KG2BvUCvrHOtbxbjakFe-uV0jhUHXY5GNRGV3quQDwEtTrp1B_I1iE15ELfUiU8G-std6vy3aisMqbZZsW1xcme9aKGqvLvXAitWXdMaQUTB9mdOyEfoqI2XCCXulrwyp310CK10kRPl6AbNPDy-IJixWQ04od9zVPwsWFQ" alt="《一一》" class="tile-photo"/>
+        <div class="photo-scrim"></div>
+        <div class="photo-caption">
+          <div class="photo-title">《一一》</div>
+          <div class="photo-meta">电影 · 10/09</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="page-footer">
+    <div class="footer-copyright">© 2026 Q1f730</div>
+  </footer>
+
+</body>
+</html>
