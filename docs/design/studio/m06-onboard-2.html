@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 新手引导 (02 / 03) AI 只用你的素材</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            pureBlack: '#000000',
+            pureWhite: '#FFFFFF',
+            secondaryGrey: '#7E7E7E',
+            faintGrey: '#C6C6C6',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .headline-tight {
+      font-size: 52px;
+      line-height: 1.05;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+    }
+    .numeral-thin {
+      font-family: 'Inter', sans-serif;
+      font-size: 40px;
+      line-height: 1;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: #000000;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-white min-h-screen flex justify-center">
+  <div class="w-[390px] min-h-screen bg-white px-4 pt-4 pb-8 flex flex-col justify-between select-none relative">
+    
+    <!-- Top Action Row -->
+    <div>
+      <div class="flex items-center justify-between h-9 text-[13px] tracking-wide">
+        <button type="button" class="text-black bg-transparent border-0 p-0 m-0 cursor-pointer hover:opacity-70 transition-opacity font-normal">返回</button>
+        <button type="button" class="text-[#7E7E7E] bg-transparent border-0 p-0 m-0 cursor-pointer hover:text-black transition-colors font-normal">跳过</button>
+      </div>
+
+      <!-- Step Counter -->
+      <div class="mt-6 text-[12px] text-[#7E7E7E] tracking-wider font-normal">
+        02 / 03
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="headline-tight mt-3 text-black">
+        <div>AI 只用</div>
+        <div>你的素材</div>
+      </h1>
+
+      <!-- Numbered List Items -->
+      <div class="mt-8 space-y-6">
+        <!-- Item 01 -->
+        <div class="flex items-start">
+          <div class="w-[58px] shrink-0 numeral-thin pt-0.5">
+            01
+          </div>
+          <div class="flex-1 pt-1">
+            <div class="text-[16px] font-semibold text-black leading-snug tracking-tight">
+              只读你拾的穗
+            </div>
+            <div class="text-[13px] text-[#7E7E7E] mt-1 leading-relaxed font-normal">
+              不联网找灵感，不拿别人的收藏凑数。
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 02 -->
+        <div class="flex items-start">
+          <div class="w-[58px] shrink-0 numeral-thin pt-0.5">
+            02
+          </div>
+          <div class="flex-1 pt-1">
+            <div class="text-[16px] font-semibold text-black leading-snug tracking-tight">
+              每根新枝都写明出处
+            </div>
+            <div class="text-[13px] text-[#7E7E7E] mt-1 leading-relaxed font-normal">
+              下面会列出「因为这几穗」，点一下回到原穗。
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 03 -->
+        <div class="flex items-start">
+          <div class="w-[58px] shrink-0 numeral-thin pt-0.5">
+            03
+          </div>
+          <div class="flex-1 pt-1">
+            <div class="text-[16px] font-semibold text-black leading-snug tracking-tight">
+              证据不够就直说
+            </div>
+            <div class="text-[13px] text-[#7E7E7E] mt-1 leading-relaxed font-normal">
+              只有一两穗撑着的想法，会标「证据不足」。
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 04 -->
+        <div class="flex items-start">
+          <div class="w-[58px] shrink-0 numeral-thin pt-0.5">
+            04
+          </div>
+          <div class="flex-1 pt-1">
+            <div class="text-[16px] font-semibold text-black leading-snug tracking-tight">
+              素材留在本机
+            </div>
+            <div class="text-[13px] text-[#7E7E7E] mt-1 leading-relaxed font-normal">
+              只有嫁接那一刻，选中的几穗会发给你选的 AI 服务。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Action & Indicator Section -->
+    <div class="mt-10 pt-4">
+      <!-- Full-width square black button -->
+      <button type="button" class="w-full h-12 bg-black text-white text-[15px] font-medium tracking-wide flex items-center justify-center cursor-pointer hover:bg-neutral-800 transition-colors border-0">
+        知道了
+      </button>
+
+      <!-- Three-line progress indicator (step 2 active) -->
+      <div class="flex items-center justify-center gap-2 mt-6">
+        <span class="w-6 h-[2px] bg-[#E5E5E5] block"></span>
+        <span class="w-6 h-[2px] bg-black block"></span>
+        <span class="w-6 h-[2px] bg-[#E5E5E5] block"></span>
+      </div>
+
+      <!-- Minimal clean footer -->
+      <div class="text-center text-[11px] text-[#7E7E7E] mt-6 tracking-wider font-normal">
+        © 2026 Q1f730
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
