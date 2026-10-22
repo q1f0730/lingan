@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=1440" name="viewport"/>
+<title>拾穗 · GLEAN — 穗仓搜索「窗 (5)」</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      width: 1440px;
+      min-height: 100vh;
+      margin: 0 auto;
+      position: relative;
+    }
+    /* Blinking search cursor */
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .cursor-blink {
+      display: inline-block;
+      width: 2px;
+      height: 84px;
+      background-color: #000000;
+      vertical-align: baseline;
+      margin-left: 2px;
+      margin-right: 8px;
+      animation: blink 1.06s infinite;
+      transform: translateY(6px);
+    }
+    /* Solid black inverse highlight */
+    .highlight-char {
+      background-color: #000000;
+      color: #FFFFFF;
+      padding: 1px 3px;
+      font-weight: 500;
+      display: inline-block;
+      line-height: 1.15;
+    }
+  </style>
+</head>
+<body class="bg-white text-black min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+<!-- TOP NAV BAR (Sticky, identical to d1) -->
+<header class="sticky top-0 z-50 bg-white w-full border-b border-transparent">
+<div class="h-[72px] px-[40px] flex items-center justify-between">
+<!-- Logo Left -->
+<a class="text-[20px] font-semibold tracking-tight text-black leading-none hover:opacity-80 transition-none" href="#">
+        拾穗 · GLEAN
+      </a>
+<!-- Centered Tiny Nav -->
+<nav class="flex items-center space-x-[36px]">
+<a class="text-[12px] font-medium tracking-[0.08em] text-black border-b border-black pb-[2px]" href="#">穗仓</a>
+<a class="text-[12px] font-medium tracking-[0.08em] text-[#7E7E7E] hover:text-black transition-none pb-[2px]" href="#">嫁接</a>
+<a class="text-[12px] font-medium tracking-[0.08em] text-[#7E7E7E] hover:text-black transition-none pb-[2px]" href="#">新枝</a>
+<a class="text-[12px] font-medium tracking-[0.08em] text-[#7E7E7E] hover:text-black transition-none pb-[2px]" href="#">口味</a>
+<a class="text-[12px] font-medium tracking-[0.08em] text-[#7E7E7E] hover:text-black transition-none pb-[2px]" href="#">设置</a>
+</nav>
+<!-- Right 320px Quick-Capture Input -->
+<div class="w-[320px] flex items-center border-b border-black pb-[6px]">
+<input class="w-full bg-transparent text-[12px] tracking-[0.04em] text-black placeholder-[#7E7E7E] outline-none border-none font-normal" placeholder="随手拾一穗 →" type="text"/>
+</div>
+</div>
+</header>
+<!-- MAIN CONTENT AREA -->
+<main class="w-full px-[40px] flex-1">
+<!-- 140px whitespace between nav and huge search headline -->
+<div class="h-[140px]"></div>
+<!-- HUGE 96px SEARCH INPUT LINE -->
+<section class="w-full">
+<div class="flex items-baseline justify-start select-none">
+<span class="text-[96px] font-semibold tracking-[-0.04em] text-black leading-none">窗</span>
+<span class="cursor-blink"></span>
+<span class="text-[96px] font-semibold tracking-[-0.04em] text-[#7E7E7E] leading-none ml-[2px]">(5)</span>
+</div>
+<!-- 1px black underline spanning full width under the query -->
+<div class="w-full h-[1px] bg-black mt-[18px]"></div>
+</section>
+<!-- ROW OF TINY TEXT FILTERS -->
+<section class="w-full mt-[20px] flex items-center space-x-[24px] text-[12px] tracking-[0.08em]"><span class="text-black font-medium border-b border-black pb-[1px] cursor-pointer">全部 (5)</span>
+<span class="text-[#7E7E7E] hover:text-black transition-none cursor-pointer">歌 (2)</span>
+<span class="text-[#7E7E7E] hover:text-black transition-none cursor-pointer">电影 (1)</span>
+<span class="text-[#7E7E7E] hover:text-black transition-none cursor-pointer">照片 (1)</span>
+<span class="text-[#7E7E7E] hover:text-black transition-none cursor-pointer">想法 (1)</span></section>
+<!-- SEARCH RESULTS SECTION: TABLE + RIGHT HOVER PREVIEW -->
+<section class="w-full mt-[48px] flex items-start gap-[40px]">
+<!-- RESULTS TABLE (No-line table, left flexible column spanning grid) -->
+<div class="flex-1 min-w-0">
+<table class="w-full border-collapse text-left">
+<thead>
+<tr class="border-b border-black text-[12px] font-medium text-[#7E7E7E] tracking-[0.06em]">
+<th class="pb-[12px] font-medium w-[240px]">穗</th>
+<th class="pb-[12px] font-medium w-[90px]">类型</th>
+<th class="pb-[12px] font-medium">命中</th>
+<th class="pb-[12px] font-medium w-[80px] text-right">日期</th>
+</tr>
+</thead>
+<tbody class="text-[13px] tracking-[0.02em]">
+<!-- Row 1: Re: Stacks -->
+<tr class="group cursor-pointer hover:bg-[#F3F3F3] transition-none">
+<td class="py-[16px] text-black font-medium pr-[16px] truncate">
+                Re: Stacks
+              </td>
+<td class="py-[16px] text-[#7E7E7E]">歌</td>
+<td class="py-[16px] text-black truncate pr-[20px]">
+                标签「冬天 · 夜」备注「雪夜木屋亮着的<span class="highlight-char">窗</span>」
+              </td>
+<td class="py-[16px] text-[#7E7E7E] text-right font-normal">10/19</td>
+</tr>
+<!-- Row 2: 《一一》 (Currently active/hovered row previewed on right) -->
+<tr class="group cursor-pointer bg-[#F3F3F3] transition-none">
+<td class="py-[16px] text-black font-medium pr-[16px] truncate">
+                《一一》
+              </td>
+<td class="py-[16px] text-[#7E7E7E]">电影</td>
+<td class="py-[16px] text-black truncate pr-[20px]">
+                备注「台北公寓夜里的<span class="highlight-char">窗</span>」
+              </td>
+<td class="py-[16px] text-[#7E7E7E] text-right font-normal">10/09</td>
+</tr>
+<!-- Row 3: aqua -->
+<tr class="group cursor-pointer hover:bg-[#F3F3F3] transition-none">
+<td class="py-[16px] text-black font-medium pr-[16px] truncate">
+                aqua
+              </td>
+<td class="py-[16px] text-[#7E7E7E]">歌</td>
+<td class="py-[16px] text-black truncate pr-[20px]">
+                备注「<span class="highlight-char">窗</span>边的钢琴」
+              </td>
+<td class="py-[16px] text-[#7E7E7E] text-right font-normal">10/12</td>
+</tr>
+<!-- Row 4: 凌晨四点的便利店 -->
+<tr class="group cursor-pointer hover:bg-[#F3F3F3] transition-none">
+<td class="py-[16px] text-black font-medium pr-[16px] truncate">
+                凌晨四点的便利店
+              </td>
+<td class="py-[16px] text-[#7E7E7E]">照片</td>
+<td class="py-[16px] text-black truncate pr-[20px]">
+                备注「玻璃<span class="highlight-char">窗</span>里只有店员一个人」
+              </td>
+<td class="py-[16px] text-[#7E7E7E] text-right font-normal">10/03</td>
+</tr>
+<!-- Row 5: 下雨天公交车窗上的水痕 -->
+<tr class="group cursor-pointer hover:bg-[#F3F3F3] transition-none">
+<td class="py-[16px] text-black font-medium pr-[16px] truncate">
+                下雨天公交车<span class="highlight-char">窗</span>上的水痕
+              </td>
+<td class="py-[16px] text-[#7E7E7E]">想法</td>
+<td class="py-[16px] text-black truncate pr-[20px]">
+                标题
+              </td>
+<td class="py-[16px] text-[#7E7E7E] text-right font-normal">10/22</td>
+</tr>
+</tbody>
+</table>
+<!-- BELOW TABLE PROMPT -->
+<div class="mt-[36px] text-[12px] tracking-[0.04em] text-[#7E7E7E]">
+          没找到？试试 <span class="text-black cursor-pointer hover:underline">「夜」</span><span class="text-black cursor-pointer hover:underline ml-[8px]">「玻璃」</span>
+</div>
+</div>
+<!-- RIGHT SIDE: 240x320 PHOTO PREVIEW OF HOVERED ROW (Taipei apartment window at night) -->
+<aside class="w-[240px] flex-shrink-0 pt-[2px]">
+<div class="w-[240px] h-[320px] bg-[#F3F3F3] overflow-hidden relative border border-transparent">
+<img alt="《一一》台北公寓夜里的窗" class="w-full h-full object-cover object-center grayscale contrast-[1.05]" src="https://lh3.googleusercontent.com/aida/AEtjO1XzHCC6csJsMXI2GeZdGlJL2V2iOecOOd1DiVPnrEq7SI8eytrvwNgF6RT2z8SRxQGD91wr_DtsiyW8U3o_6MpfbhtkN6G-bbqVH9UrCCpVT_JVmkjKlw01ZOsfXYecYJ_3OuOYZPJHvfiAqbbH08u6P3gs6ug8QSCj4dJb_u7R9Nl3x7w8zqr06V6Eop3XAPnwpZfFI3ZtAxwb-iOguPVubgo15Py3fL0v1ZnDF2skjcc-rd2F-kwfJ_4"/>
+</div>
+<div class="mt-[10px] flex items-baseline justify-between text-[11px] text-[#7E7E7E] tracking-[0.04em]">
+<span class="text-black font-medium">《一一》</span>
+<span>电影 · 10/09</span>
+</div>
+</aside>
+</section>
+</main>
+<!-- FOOTER -->
+<footer class="w-full px-[40px] py-[36px] mt-[80px]">
+<div class="text-[10px] tracking-[0.1em] text-[#7E7E7E] font-normal uppercase">
+      © 2026 Q1F730
+    </div>
+</footer>
+</body>
+</html>
