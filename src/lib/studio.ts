@@ -1,6 +1,7 @@
 // v0.16 Studio 视觉用到的纯函数（可单测）：书名号、短日期、按周分组、月历、搜索高亮、标签计数。
 import { dayKey } from './heatmap';
 import { itemText } from './similarity';
+import { parseQuery, splitByTerms } from './search';
 import type { Development, Item } from './types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -105,23 +106,10 @@ export function activeMonths(items: Array<Pick<Item, 'createdAt'>>): Array<[numb
   return [...s].map((k) => k.split('-').map(Number) as [number, number]).sort((a, b) => b[0] - a[0] || b[1] - a[1]);
 }
 
-/** 把文字按关键词切开，命中段 hit=true（搜索结果里黑底白字） */
+/** 把文字按关键词切开，命中段 hit=true（搜索结果里黑底白字）。v0.17 起与秒搜同一套规则：中文连续命中、英文按词首前缀，多个词各自高亮 */
 export function splitHits(text: string, q: string): Array<{ t: string; hit: boolean }> {
-  const k = q.trim();
-  if (!k || !text) return [{ t: text, hit: false }];
-  const out: Array<{ t: string; hit: boolean }> = [];
-  const low = text.toLowerCase();
-  const kl = k.toLowerCase();
-  let i = 0;
-  for (;;) {
-    const j = low.indexOf(kl, i);
-    if (j < 0) break;
-    if (j > i) out.push({ t: text.slice(i, j), hit: false });
-    out.push({ t: text.slice(j, j + k.length), hit: true });
-    i = j + k.length;
-  }
-  if (i < text.length) out.push({ t: text.slice(i), hit: false });
-  return out;
+  if (!text) return [{ t: text, hit: false }];
+  return splitByTerms(text, parseQuery(q));
 }
 
 /** 搜新枝：标题、正文、嫁接点里有关键词 */
