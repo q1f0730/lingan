@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN - 编辑穗</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface": "#f9f9f9",
+            "on-primary-fixed-variant": "#474747",
+            "surface-tint": "#5e5e5e",
+            "outline": "#7e7576",
+            "on-error": "#ffffff",
+            "primary-fixed-dim": "#c6c6c6",
+            "on-surface-variant": "#4c4546",
+            "surface-container": "#eeeeee",
+            "on-primary": "#ffffff",
+            "secondary": "#5e5e5e",
+            "primary-container": "#1b1b1b",
+            "background": "#f9f9f9",
+            "on-surface": "#1a1c1c",
+            "inverse-primary": "#c6c6c6",
+            "tertiary": "#000000",
+            "on-background": "#1a1c1c",
+            "surface-container-high": "#e8e8e8",
+            "on-secondary-container": "#646464",
+            "surface-dim": "#dadada",
+            "secondary-container": "#e3e2e2",
+            "primary": "#000000",
+            "surface-variant": "#e2e2e2",
+            "error": "#ba1a1a",
+            "tertiary-container": "#1a1c1c",
+            "primary-fixed": "#e2e2e2",
+            "outline-variant": "#cfc4c5",
+            "secondary-fixed": "#e3e2e2",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed": "#1a1c1c",
+            "surface-container-low": "#f3f3f3",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#e2e2e2",
+            "on-primary-container": "#848484",
+            "on-tertiary-container": "#838484",
+            "on-tertiary-fixed-variant": "#464747",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "on-secondary-fixed-variant": "#464747",
+            "error-container": "#ffdad6",
+            "inverse-surface": "#2f3131",
+            "secondary-fixed-dim": "#c7c6c6",
+            "surface-bright": "#f9f9f9",
+            "on-primary-fixed": "#1b1b1b",
+            "on-secondary-fixed": "#1b1c1c",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed": "#e3e2e2",
+            "inverse-on-surface": "#f1f1f1"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "4px",
+            "space-lg": "20px",
+            "margin": "10px",
+            "space-xl": "30px",
+            "space-sm": "8px",
+            "gutter": "10px",
+            "space-md": "10px"
+          },
+          "fontFamily": {
+            "display-hero-zh": [
+              "Noto Sans"
+            ],
+            "body-sm": [
+              "Inter"
+            ],
+            "headline-sm": [
+              "Inter"
+            ],
+            "body-lg": [
+              "Inter"
+            ],
+            "display-hero": [
+              "Inter"
+            ],
+            "label-mono-caps": [
+              "Inter"
+            ],
+            "label-micro": [
+              "Inter"
+            ],
+            "headline-lg": [
+              "Inter"
+            ]
+          },
+          "fontSize": {
+            "display-hero-zh": [
+              "48px",
+              {
+                "lineHeight": "52px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "700"
+              }
+            ],
+            "body-sm": [
+              "13px",
+              {
+                "lineHeight": "18px",
+                "letterSpacing": "0em",
+                "fontWeight": "400"
+              }
+            ],
+            "headline-sm": [
+              "20px",
+              {
+                "lineHeight": "24px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "600"
+              }
+            ],
+            "body-lg": [
+              "15px",
+              {
+                "lineHeight": "22px",
+                "letterSpacing": "-0.01em",
+                "fontWeight": "400"
+              }
+            ],
+            "display-hero": [
+              "56px",
+              {
+                "lineHeight": "56px",
+                "letterSpacing": "-0.04em",
+                "fontWeight": "700"
+              }
+            ],
+            "label-mono-caps": [
+              "11px",
+              {
+                "lineHeight": "14px",
+                "letterSpacing": "0.12em",
+                "fontWeight": "500"
+              }
+            ],
+            "label-micro": [
+              "10px",
+              {
+                "lineHeight": "12px",
+                "letterSpacing": "0.08em",
+                "fontWeight": "500"
+              }
+            ],
+            "headline-lg": [
+              "32px",
+              {
+                "lineHeight": "36px",
+                "letterSpacing": "-0.03em",
+                "fontWeight": "600"
+              }
+            ]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .cursor-blink {
+      animation: blink 1s infinite steps(1);
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-surface-container-lowest text-primary antialiased min-h-screen flex justify-center selection:bg-primary selection:text-surface-container-lowest">
+<!-- Mobile Viewport Canvas 390px -->
+<div class="w-[390px] min-h-screen bg-surface-container-lowest relative flex flex-col">
+<!-- TopAppBar Component (from Shared Components JSON specifications) -->
+<header class="fixed top-0 left-1/2 -translate-x-1/2 w-[390px] z-50 flex justify-between items-center px-4 h-12 bg-surface-container-lowest border-b border-surface-container-highest">
+<button class="text-[12px] font-medium text-primary cursor-pointer active:opacity-60 transition-opacity p-0 bg-transparent border-0 tracking-wider" type="button">
+        取消
+      </button>
+<h1 class="text-label-mono-caps font-label-mono-caps tracking-widest text-primary uppercase select-none">
+        编辑穗
+      </h1>
+<button class="text-label-mono-caps font-label-mono-caps text-primary cursor-pointer active:opacity-60 underline underline-offset-4 decoration-1 p-0 bg-transparent border-0" type="button">
+        保存
+      </button>
+</header>
+<!-- Main Editorial Content Canvas -->
+<main class="w-full pt-12 flex-1 flex flex-col">
+<!-- PHOTO SECTION -->
+<section class="w-full relative aspect-[4/5] bg-surface-container-low overflow-hidden">
+<img alt="旧书店堆到天花板的书脊" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ"/>
+<!-- Overlay Badging / Button -->
+<div class="absolute bottom-3 left-3 z-10">
+<button class="px-2 py-1 text-label-micro font-label-mono-caps tracking-wider bg-primary text-surface-container-lowest cursor-pointer active:opacity-80 border-0 flex items-center justify-center" type="button">
+            换一张
+          </button>
+</div>
+</section>
+<!-- FORM FIELDS -->
+<section class="px-4 pt-6 pb-2 space-y-6">
+<!-- 1. 类型 FIELD -->
+<div class="flex flex-col">
+<label class="text-label-mono-caps font-label-mono-caps text-secondary tracking-wider mb-2 select-none">
+            类型
+          </label>
+<div class="flex items-center gap-5 pb-2.5 border-b border-surface-container-highest">
+<span class="text-[13px] font-semibold text-primary border-b border-primary pb-0.5 cursor-pointer">
+              照片
+            </span>
+<span class="text-[13px] text-secondary cursor-pointer hover:text-primary transition-opacity">
+              歌
+            </span>
+<span class="text-[13px] text-secondary cursor-pointer hover:text-primary transition-opacity">
+              电影
+            </span>
+<span class="text-[13px] text-secondary cursor-pointer hover:text-primary transition-opacity">
+              摘抄
+            </span>
+<span class="text-[13px] text-secondary cursor-pointer hover:text-primary transition-opacity">
+              想法
+            </span>
+<span class="text-[13px] text-secondary cursor-pointer hover:text-primary transition-opacity">
+              链接
+            </span>
+</div>
+</div>
+<!-- 2. 标题 FIELD (FOCUSED STATE) -->
+<div class="flex flex-col">
+<label class="text-label-mono-caps font-label-mono-caps text-secondary tracking-wider mb-1.5 select-none">
+            标题
+          </label>
+<div class="flex items-center pb-2 border-b-2 border-primary">
+<span class="text-[16px] font-semibold text-primary tracking-tight">
+              旧书店堆到天花板的书脊
+            </span>
+<span class="inline-block w-[1.5px] h-[18px] bg-primary ml-0.5 cursor-blink"></span>
+</div>
+</div>
+<!-- 3. 来源 FIELD -->
+<div class="flex flex-col">
+<label class="text-label-mono-caps font-label-mono-caps text-secondary tracking-wider mb-1.5 select-none">
+            来源
+          </label>
+<div class="pb-2 border-b border-surface-container-highest">
+<span class="text-[14px] text-primary font-normal">
+              自己拍
+            </span>
+</div>
+</div>
+<!-- 4. 拾于 FIELD -->
+<div class="flex flex-col">
+<label class="text-label-mono-caps font-label-mono-caps text-secondary tracking-wider mb-1.5 select-none">
+            拾于
+          </label>
+<div class="pb-2 border-b border-surface-container-highest">
+<span class="text-[13px] text-primary tracking-wide">
+              2026/10/14 18:30
+            </span>
+</div>
+</div>
+<!-- 5. 标签 FIELD -->
+<div class="flex flex-col">
+<label class="text-label-mono-caps font-label-mono-caps text-secondary tracking-wider mb-1.5 select-none">
+            标签
+          </label>
+<div class="flex items-center pb-2 border-b border-surface-container-highest">
+<span class="text-[13px] font-medium text-primary mr-3">
+              #书
+            </span>
+<span class="text-[13px] font-medium text-primary mr-3">
+              #城市
+            </span>
+<span class="text-[12px] text-secondary hover:text-primary cursor-pointer tracking-wider">
+              + 加标签
+            </span>
+</div>
+</div>
+<!-- 6. 为什么收 FIELD (Multi-line) -->
+<div class="flex flex-col">
+<label class="text-label-mono-caps font-label-mono-caps text-secondary tracking-wider mb-1.5 select-none">
+            为什么收
+          </label>
+<div class="pb-3 border-b border-surface-container-highest">
+<p class="text-body-sm font-body-sm text-primary leading-relaxed">
+              梯子靠在书墙上，没人知道最上面一排是什么。
+            </p>
+</div>
+</div>
+</section>
+<!-- DANGER ACTION -->
+<section class="mt-12 mb-8 text-center px-4">
+<button class="text-body-sm font-body-sm text-secondary hover:text-primary tracking-wider transition-none cursor-pointer border-0 bg-transparent p-0" type="button">
+          删除这一穗
+        </button>
+</section>
+<!-- FOOTER -->
+<footer class="mt-auto text-center pb-8 pt-4">
+<p class="text-label-mono-caps font-label-mono-caps text-primary-fixed-dim tracking-widest uppercase">
+          © 2026 Q1f730
+        </p>
+</footer>
+</main>
+</div>
+</body></html>
