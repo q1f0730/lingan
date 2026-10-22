@@ -96,7 +96,7 @@ describe('Dexie v2 → v3 migration: originals move to their own table, nothing 
     const rows = await makeV2(name, 120, 3);
     const d = new LinganDB(name);
     await d.open();
-    expect(d.verno).toBe(3);
+    expect(d.verno).toBe(4); // v0.14 起是 4（每日一穗 + 示例），v3 的迁移仍会跑
     expect(await d.items.count()).toBe(120);
     expect(await d.images.count()).toBe(40);
     expect(await d.developments.count()).toBe(1);
