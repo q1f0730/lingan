@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 嫁接中 (390px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            borderGrey: '#E5E5E5',
+            mutedGrey: '#7E7E7E',
+            faintGrey: '#C6C6C6',
+            lightBg: '#F9F9F9',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0px !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .headline-huge {
+      font-size: 56px;
+      line-height: 1.0;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+    }
+    .step-num {
+      font-size: 40px;
+      line-height: 1.0;
+      font-weight: 300;
+      letter-spacing: -0.03em;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-white flex justify-center min-h-screen">
+
+  <!-- Mobile Container: 390px fixed width -->
+  <main class="w-[390px] min-h-screen bg-white flex flex-col justify-between border-x border-[#F0F0F0] relative">
+    
+    <!-- Top & Main Content Scroll Area -->
+    <div class="px-4 pt-4 pb-12">
+      
+      <!-- Top Bar: Logo left, Cancel right -->
+      <header class="flex justify-between items-center h-8 mb-7">
+        <h1 class="text-[20px] font-semibold tracking-tight text-black m-0">拾穗 · GLEAN</h1>
+        <a href="#" class="text-[12px] text-[#7E7E7E] hover:text-black transition-none tracking-normal">取消</a>
+      </header>
+
+      <!-- Huge Headline & Submeta -->
+      <section class="mb-8">
+        <h2 class="headline-huge text-black mb-3">嫁接中</h2>
+        <p class="text-[12px] text-[#7E7E7E] tracking-normal m-0 font-normal">
+          Q1f730 的 3 穗 · 远距 · 智谱
+        </p>
+      </section>
+
+      <!-- Selected 3 穗 (Row of three equal small tiles, 10px gaps) -->
+      <!-- Width: (390 - 32 - 20) / 3 = 112.66px each, height 136px (roughly 4:5 ratio) -->
+      <section class="grid grid-cols-3 gap-[10px] mb-10">
+        
+        <!-- Tile 1: 轮渡上的雾 (photo) -->
+        <article class="relative w-full h-[136px] bg-black overflow-hidden flex flex-col justify-end">
+          <img 
+            src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" 
+            alt="轮渡上的雾" 
+            class="absolute inset-0 w-full h-full object-cover grayscale brightness-95"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
+          <div class="relative z-10 p-2">
+            <h3 class="text-[12px] font-semibold text-white leading-tight mb-0.5 truncate">轮渡上的雾</h3>
+            <p class="text-[10px] text-white/80 leading-none">照片 · 10/21</p>
+          </div>
+        </article>
+
+        <!-- Tile 2: 给楼道里每一盏声控灯起一个名字 (light grey text tile) -->
+        <article class="relative w-full h-[136px] bg-[#F5F5F5] p-2 flex flex-col justify-between overflow-hidden">
+          <p class="text-[11px] leading-[1.35] text-black font-normal line-clamp-4">
+            “给楼道里每一盏声控灯起一个名字。”
+          </p>
+          <div class="pt-1">
+            <p class="text-[10px] text-[#7E7E7E] leading-none">想法 · 10/17</p>
+          </div>
+        </article>
+
+        <!-- Tile 3: aqua (photo of piano by window) -->
+        <article class="relative w-full h-[136px] bg-black overflow-hidden flex flex-col justify-end">
+          <img 
+            src="https://lh3.googleusercontent.com/aida/AEtjO1VNEkLPApRT2dQX1op0NyFcM1bZ3Wb1flttLMHNs6ZLxYDwcuq2hA5hv5m6C7Mrm0XXoFtc7YEP_ED7laokNuVr0YjdCyfGi5D8QwliBG7Yty90-4KUAiaJlKxmXe6c9j_D3LLWHjVLQI7eWSKv3KSVyODK4u98e85qmxxewgpFd8SecCh-nflYNXZ79Sfc-RDOs45VQFBNXgyd02zLaJmieCcwNLkydiFGzfyw6arSk1mhClS41HzL9PE" 
+            alt="aqua" 
+            class="absolute inset-0 w-full h-full object-cover grayscale brightness-95"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
+          <div class="relative z-10 p-2">
+            <h3 class="text-[12px] font-semibold text-white leading-tight mb-0.5 truncate">aqua</h3>
+            <p class="text-[10px] text-white/80 leading-none">歌 · 10/12</p>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- Four Stacked Step Rows with lots of white space -->
+      <section class="space-y-7 mb-10">
+        
+        <!-- Step 01: Done -->
+        <div class="flex items-start gap-4">
+          <span class="step-num text-black w-[48px] shrink-0">01</span>
+          <div class="flex-1 pt-0.5">
+            <div class="flex items-baseline justify-between mb-1.5">
+              <h4 class="text-[24px] font-medium text-black leading-none m-0 tracking-tight">找张力</h4>
+              <span class="text-[11px] text-[#7E7E7E] tracking-normal font-normal">完成</span>
+            </div>
+            <p class="text-[13px] text-[#7E7E7E] leading-relaxed m-0 font-normal">
+              这三穗哪里互相拉扯
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 02: In progress (current) -->
+        <div class="flex items-start gap-4">
+          <span class="step-num text-black w-[48px] shrink-0 font-normal">02</span>
+          <div class="flex-1 pt-0.5">
+            <div class="flex items-baseline justify-between mb-1.5">
+              <h4 class="text-[24px] font-medium text-black leading-none m-0 tracking-tight">撒种子</h4>
+              <span class="text-[11px] text-black font-medium tracking-normal border-b border-black pb-0.5 leading-none">进行中</span>
+            </div>
+            <p class="text-[13px] text-black leading-relaxed m-0 font-normal">
+              每对之间先长出几个粗糙的念头
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 03: Pending -->
+        <div class="flex items-start gap-4 opacity-100">
+          <span class="step-num text-[#C6C6C6] w-[48px] shrink-0">03</span>
+          <div class="flex-1 pt-0.5">
+            <div class="flex items-baseline justify-between mb-1.5">
+              <h4 class="text-[24px] font-normal text-[#C6C6C6] leading-none m-0 tracking-tight">换掉相像的</h4>
+            </div>
+            <p class="text-[13px] text-[#C6C6C6] leading-relaxed m-0 font-normal">
+              太像的只留一个
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 04: Pending -->
+        <div class="flex items-start gap-4 opacity-100">
+          <span class="step-num text-[#C6C6C6] w-[48px] shrink-0">04</span>
+          <div class="flex-1 pt-0.5">
+            <div class="flex items-baseline justify-between mb-1.5">
+              <h4 class="text-[24px] font-normal text-[#C6C6C6] leading-none m-0 tracking-tight">留三根</h4>
+            </div>
+            <p class="text-[13px] text-[#C6C6C6] leading-relaxed m-0 font-normal">
+              最后只给你三根新枝
+            </p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Reassuring Hint Message -->
+      <div class="mt-6 mb-8">
+        <p class="text-[12px] text-[#7E7E7E] leading-normal m-0 tracking-normal">
+          可以先离开，好了会在新枝里等你。
+        </p>
+      </div>
+
+      <!-- Footer Author & Year -->
+      <footer class="pt-2">
+        <p class="text-[10px] text-[#C6C6C6] tracking-wider font-mono m-0">
+          © 2026 Q1F730
+        </p>
+      </footer>
+
+    </div>
+
+    <!-- Bottom Fixed Section: Quick Capture + Text Navigation -->
+    <div class="w-full bg-white mt-auto">
+      
+      <!-- Quick Capture: 1px black hairline above, placeholder + tiny black button '拾' -->
+      <div class="border-t border-black px-4 py-2.5 flex items-center justify-between">
+        <input 
+          type="text" 
+          placeholder="随手拾一穗" 
+          class="w-full bg-transparent text-[13px] text-black placeholder-[#7E7E7E] outline-none border-none p-0 focus:ring-0"
+          readonly
+        />
+        <button class="shrink-0 text-[13px] font-semibold text-black hover:opacity-70 transition-none ml-2 p-0 bg-transparent border-none">
+          拾
+        </button>
+      </div>
+
+      <!-- Five-word Text Navigation: 穗仓 / 嫁接 / 新枝 / 口味 / 设置 (嫁接 active) -->
+      <nav class="border-t border-[#F0F0F0] px-4 py-3 flex justify-between items-center text-[12px] tracking-normal">
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">穗仓</a>
+        <a href="#" class="text-black font-semibold border-b border-black pb-0.5">嫁接</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">新枝</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">口味</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">设置</a>
+      </nav>
+
+    </div>
+
+  </main>
+
+</body>
+</html>
