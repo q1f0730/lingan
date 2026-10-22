@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>灵感暗房 · CONSTELLATION</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&amp;family=Noto+Serif+SC:wght@300;400;600;700&amp;family=Source+Sans+3:wght@300;400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-low": "#f8f3ea",
+            "error-container": "#ffdad6",
+            "surface-dim": "#ded9d1",
+            "on-primary-fixed-variant": "#8f1200",
+            "tertiary-fixed-dim": "#ccc5c1",
+            "tertiary-container": "#706b67",
+            "on-background": "#1d1c16",
+            "on-tertiary": "#ffffff",
+            "primary-fixed-dim": "#ffb4a5",
+            "secondary-fixed-dim": "#cbc5c2",
+            "on-tertiary-fixed-variant": "#4a4643",
+            "tertiary-fixed": "#e8e1dc",
+            "primary-container": "#c8361d",
+            "on-secondary": "#ffffff",
+            "primary-fixed": "#ffdad3",
+            "on-error": "#ffffff",
+            "tertiary": "#57534f",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#e8e1dd",
+            "error": "#ba1a1a",
+            "primary": "#a51c05",
+            "on-tertiary-container": "#f4ede8",
+            "inverse-primary": "#ffb4a5",
+            "surface": "#fef9f0",
+            "on-tertiary-fixed": "#1e1b18",
+            "on-secondary-fixed": "#1d1b19",
+            "surface-container-highest": "#e7e2d9",
+            "on-primary-fixed": "#3f0400",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#1d1c16",
+            "surface-container-high": "#ece8df",
+            "surface-container": "#f2ede4",
+            "secondary": "#615e5b",
+            "outline": "#8e706a",
+            "inverse-on-surface": "#f5f0e7",
+            "secondary-container": "#e8e1dd",
+            "on-surface-variant": "#5a413b",
+            "on-secondary-fixed-variant": "#494643",
+            "surface-tint": "#b42810",
+            "on-secondary-container": "#676461",
+            "on-primary-container": "#ffeae6",
+            "background": "#fef9f0",
+            "outline-variant": "#e3beb7",
+            "surface-variant": "#e7e2d9",
+            "surface-bright": "#fef9f0",
+            "inverse-surface": "#32302a",
+            "on-error-container": "#93000a"
+          },
+          fontFamily: {
+            "body-md": ["\"Source Sans 3\"", "sans-serif"],
+            "label-editorial": ["\"Noto Serif SC\"", "serif"],
+            "label-code-sm": ["\"JetBrains Mono\"", "monospace"],
+            "headline-lg": ["\"Noto Serif SC\"", "serif"],
+            "body-sm": ["\"Source Sans 3\"", "sans-serif"],
+            "headline-xl-mobile": ["\"Noto Serif SC\"", "serif"],
+            "headline-sm": ["\"Noto Serif SC\"", "serif"],
+            "headline-xl": ["\"Noto Serif SC\"", "serif"],
+            "label-code-lg": ["\"JetBrains Mono\"", "monospace"],
+            "body-lg": ["\"Source Sans 3\"", "sans-serif"],
+            "headline-lg-mobile": ["\"Noto Serif SC\"", "serif"]
+          },
+          fontSize: {
+            "body-md": ["14px", { lineHeight: "22px", fontWeight: "400" }],
+            "label-editorial": ["11px", { lineHeight: "14px", letterSpacing: "0.15em", fontWeight: "600" }],
+            "label-code-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "500" }],
+            "headline-lg": ["26px", { lineHeight: "36px", fontWeight: "600" }],
+            "body-sm": ["12px", { lineHeight: "18px", fontWeight: "400" }],
+            "headline-xl-mobile": ["28px", { lineHeight: "38px", letterSpacing: "-0.01em", fontWeight: "700" }],
+            "headline-sm": ["18px", { lineHeight: "26px", fontWeight: "600" }],
+            "headline-xl": ["36px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "label-code-lg": ["13px", { lineHeight: "18px", letterSpacing: "0.04em", fontWeight: "500" }],
+            "body-lg": ["16px", { lineHeight: "26px", fontWeight: "400" }],
+            "headline-lg-mobile": ["22px", { lineHeight: "30px", fontWeight: "600" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    /* Darkroom ink cosmos custom styles */
+    body {
+      background-color: #0c0b0a;
+      color: #e8e1dc;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .ink-cosmos-bg {
+      background-color: #0b0a09;
+      background-image: 
+        radial-gradient(ellipse at 25% 15%, rgba(200, 54, 29, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 80% 60%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 40% 85%, rgba(200, 54, 29, 0.05) 0%, transparent 40%);
+    }
+
+    /* Latent chemical ASCII stardust overlay */
+    .ascii-star-field {
+      background-image: radial-gradient(rgba(244, 239, 230, 0.12) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Laser tension red thread pulse */
+    @keyframes redPulse {
+      0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 2px rgba(200, 54, 29, 0.9)); }
+      50% { opacity: 0.35; filter: drop-shadow(0 0 1px rgba(200, 54, 29, 0.4)); }
+    }
+    .tension-thread {
+      animation: redPulse 4s ease-in-out infinite;
+    }
+
+    /* Custom scroll suppression */
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-full flex justify-center items-center bg-[#050505] p-0 select-none">
+<!-- iPhone Mobile Container (390 x 844) -->
+<div class="relative w-[390px] h-[844px] ink-cosmos-bg text-[#e8e1dc] overflow-hidden flex flex-col shadow-2xl border border-[#23201d]">
+<!-- Star & Latent Grain Field Matrix -->
+<div class="absolute inset-0 ascii-star-field opacity-60 pointer-events-none"></div>
+<!-- Drifting Latent ASCII Constellation Marks -->
+<div class="absolute inset-0 pointer-events-none font-label-code-sm text-label-code-sm text-[#4a4643] opacity-40 select-none">
+<span class="absolute top-16 left-6 text-[9px]">+ 35°12'N</span>
+<span class="absolute top-28 right-8 text-[9px]">· · · . . ∴</span>
+<span class="absolute top-72 left-4 text-[9px]">№ 84/360</span>
+<span class="absolute top-[410px] right-5 text-[9px]">[λ=650nm]</span>
+<span class="absolute bottom-40 left-10 text-[9px]">EXP.LATENT</span>
+<span class="absolute top-1/2 left-1/2 -translate-x-1/2 text-[10px] opacity-20">┼</span>
+</div>
+<!-- Collision Red Thread Vector Overlay (Linking Photo A at top-left to Sound C at mid-right) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient id="threadGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#C8361D" stop-opacity="0.9"></stop>
+<stop offset="50%" stop-color="#ff6b52" stop-opacity="1"></stop>
+<stop offset="100%" stop-color="#C8361D" stop-opacity="0.9"></stop>
+</lineargradient>
+</defs>
+<!-- Tension Line between Photo A (x:150, y:235) to Spark Junction (x:205, y:342) to Audio C (x:235, y:450) -->
+<path class="tension-thread" d="M 148 245 Q 170 295 205 342 T 240 450" fill="none" stroke="url(#threadGradient)" stroke-dasharray="3, 2" stroke-width="1.25"></path>
+<!-- Spark Ring Node -->
+<circle class="animate-ping opacity-75" cx="205" cy="342" fill="#C8361D" r="3.5"></circle>
+<circle cx="205" cy="342" fill="#ffeae6" r="2.5"></circle>
+<!-- Registration Hairline Crosshair at Collision -->
+<line opacity="0.8" stroke="#C8361D" stroke-width="0.75" x1="197" x2="213" y1="342" y2="342"></line>
+<line opacity="0.8" stroke="#C8361D" stroke-width="0.75" x1="205" x2="205" y1="334" y2="350"></line>
+</svg>
+<!-- Top Status Bar & App Header (Shared Anchor Alignment) -->
+<header class="relative z-30 pt-3 px-4 pb-2 bg-[#0b0a09]/80 backdrop-blur-md flex justify-between items-center border-b border-[#23201d]/60">
+<div class="flex items-center space-x-2.5">
+<div class="w-1.5 h-1.5 bg-primary-container rounded-full animate-pulse shadow-[0_0_6px_#C8361D]"></div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-[15px] font-bold tracking-widest text-[#f4ede8]">灵感暗房</span>
+<div class="flex items-center space-x-1.5 text-[9px] font-label-code-sm text-secondary tracking-wider -mt-0.5">
+<span class="text-primary-container font-semibold">● 潜影浸润中</span>
+<span class="opacity-40">|</span>
+<span>ROLL #04</span>
+</div>
+</div>
+</div>
+<!-- Action: Trigger Collision / Constellation Mode -->
+<button class="flex items-center space-x-1.5 px-2.5 py-1 bg-[#1a1715] hover:bg-[#25221f] active:opacity-80 border border-[#3b3530] transition-colors">
+<span class="material-symbols-outlined text-[13px] text-primary-container" data-icon="lens_blur">lens_blur</span>
+<span class="font-label-code-sm text-[10px] text-[#e8e1dc] tracking-wider uppercase">显影对撞</span>
+</button>
+</header>
+<!-- Constellation Space Canvas (Scrollable 2D/3D Depth Floating System) -->
+<main class="relative flex-1 overflow-y-auto overflow-x-hidden pt-4 pb-28 px-4">
+<!-- ================= 1. Item A: Photo Fragment (Gothic Cathedral in Rain) ================= -->
+<div class="relative z-20 w-[184px] p-2 bg-[#171513] border border-[#38332e] shadow-lg -rotate-1 hover:rotate-0 transition-transform duration-300 ml-1 mt-1">
+<!-- Film Edge Code / Index Band -->
+<div class="flex justify-between items-center font-label-code-sm text-[9px] text-[#9a9187] pb-1.5 mb-1.5 border-b border-[#2a2622]">
+<span class="text-primary-container font-medium tracking-tight">PHOTO · № 024</span>
+<span>今天 22:18</span>
+</div>
+<!-- Emulsion Photo Frame -->
+<div class="relative w-full aspect-[4/5] bg-[#000] border border-[#2b2723] overflow-hidden group">
+<img class="w-full h-full object-cover filter contrast-125 brightness-90 grayscale group-hover:scale-105 transition-transform duration-700" data-alt="A moody black and white silver gelatin photograph of a towering Gothic cathedral spire cutting into a heavy torrential rainstorm at twilight. Monochromatic high-contrast lighting reveals intricate stone gargoyles and streaming rainwater reflecting cold slivers of dim ambient light. Fine analog film grain, sharp architectural shadows, and deep archival darkroom blacks set against luminous wet surfaces create a contemplative, austere atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeVHHz8brK7B83zg0gvfDk1Jl4KAyZTnlZvM4t-mnpduErDnrepivmq_XQEIwRbW0-AnVrE4Dq50qe0gpbEdYSczQwMBHyWyLt4U5M2Z1W6nA2HFWvjpMs5vpFsKOuxjZsIyICIxkH5P_62X0hJ-qIzYFqyx2iBzUkRHlsiZCzRmg5-W_pTLJsrgXGYCjGgZemTZnISK071Mmf9WU5i18DkfPtCXtHh5JpmjHWJipvIijvosv_Rt12Y0WGaLEcoAaE_VGOOo-Wk8k"/>
+<div class="absolute bottom-1 right-1.5 px-1 bg-[#100f0e]/80 text-[8px] font-label-code-sm text-[#ccc5c1]">
+            Q1f730
+          </div>
+</div>
+<!-- Caption -->
+<p class="font-label-editorial text-[10px] text-[#b8b0a5] mt-2 line-clamp-1 tracking-wider leading-relaxed">
+          科隆雨夜 · 巨石尖拱与水汽的肃穆沉音
+        </p>
+</div>
+<!-- ================= 2. Item B: Film Negative Fragment (In The Mood For Love) ================= -->
+<!-- Positioned top-right, tilted +1.5deg -->
+<div class="absolute top-7 right-3 z-15 w-[164px] bg-[#141210] border border-[#2f2a26] p-2 rotate-[1.5deg] hover:rotate-0 transition-transform duration-300">
+<!-- Film Sprocket Margin Top -->
+<div class="flex justify-between items-center py-0.5 px-1 bg-[#0a0908] text-[8px] font-label-code-sm text-[#706b67] border-b border-[#24211e]">
+<span>KODAK 5219</span>
+<span class="text-primary-container font-bold">25B</span>
+</div>
+<!-- Cinematic 2.39:1 Negative Simulation Plate -->
+<div class="my-1.5 bg-[#080706] p-1 border border-[#201d1a]">
+<div class="w-full aspect-[2.39/1] bg-[#1c1815] relative overflow-hidden flex items-center justify-center border border-[#332e29]">
+<img class="w-full h-full object-cover filter brightness-95 saturate-125" data-alt="A cinematic widescreen 2.39:1 negative film still from Wong Kar-wai style cinematography. A solitary figure draped in a tailored cheongsam stands in a damp, dimly lit Hong Kong alleyway under dripping rain and rich crimson incandescent streetlamps. Heavy golden haze, velvety green-black shadows, saturated analog film grain, and deliberate optical motion blur evoking profound nocturnal romantic melancholy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzF6qOJ004BsF-_-gGUiBPxgKvVj6PGM8xMkYRFtssqBJV1hJuxaxyTtgghGWSgYtzX5vVHQ2U7lhDVF-EZBJclfarNzyQa5zamEVS4vbzpDhI5nHjmi5Gxy_xdcQ0Ig6YMw5G_UWNPT13goXKKU4pfhd32kmmDO5elYLjQLDGGQdQ3VWpkGF6bBkjFhTegHzoL7i5A7b2bBcznKd7YqlNzEPUjjoNKV029V17cpd46liABM2RrBCRCJNKz9YrJIlH6jyA1G3mkQY"/>
+<div class="absolute inset-0 bg-primary-container/10 mix-blend-color-dodge pointer-events-none"></div>
+</div>
+</div>
+<div class="flex justify-between items-end mt-1 text-[9px]">
+<div>
+<div class="font-headline-sm text-[11px] text-[#f5f0e7] font-semibold">《花样年华》</div>
+<div class="font-label-editorial text-[#8f887f] text-[8.5px]">王家卫 / 杜可风</div>
+</div>
+<span class="font-label-code-sm text-[8px] text-[#676461]">10/24 19:40</span>
+</div>
+</div>
+<!-- ================= Collision Spark Card (THE RED COLLISION THREAD JUNCTION) ================= -->
+<!-- Situated centrally at the collision crossing point -->
+<div class="relative z-30 my-5 mx-auto max-w-[310px] bg-[#191513]/95 border border-primary-container/70 p-3 backdrop-blur-md shadow-[0_0_15px_rgba(200,54,29,0.2)]">
+<div class="flex items-center justify-between pb-1.5 border-b border-[#362622]">
+<div class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 bg-primary-container rounded-full animate-ping"></span>
+<span class="font-label-code-sm text-[10px] text-primary-container tracking-wider font-semibold">显影对撞火花 · № 08</span>
+</div>
+<span class="font-label-code-sm text-[8.5px] text-[#8e706a] uppercase">TENSION: 0.94</span>
+</div>
+<p class="font-label-editorial text-[12px] text-[#f4ede8] mt-2.5 leading-relaxed tracking-wide">
+          「孤绝巨构在雨夜失重中解离的声音谱系」
+        </p>
+<p class="font-body-sm text-[10.5px] text-[#a89f95] mt-1 leading-normal italic">
+          哥特冷雨沉降于地表，与射电望远镜扫描到的外星低频杂音产生意外共振。
+        </p>
+<!-- Pulsing Micro Action Pill -->
+<div class="mt-3 pt-2 border-t border-[#2d221f] flex justify-end">
+<button class="inline-flex items-center space-x-1 px-3 py-1 bg-primary-container hover:bg-[#a51c05] text-[#ffeae6] border border-[#141210] font-label-code-sm text-[10px] tracking-wider transition-all shadow-sm">
+<span>[ 开启显影对撞 · COLLIDE ]</span>
+<span class="material-symbols-outlined text-[11px]" data-icon="north_east">north_east</span>
+</button>
+</div>
+</div>
+<!-- ================= 3. Item C: Vinyl & Sound Fragment (Radiohead) ================= -->
+<!-- Positioned middle-right -->
+<div class="relative z-20 ml-auto w-[190px] bg-[#161412] border border-[#332e29] p-2.5 rotate-[1deg] hover:rotate-0 transition-transform duration-300 mt-1 mr-1">
+<div class="flex justify-between items-center font-label-code-sm text-[8.5px] text-[#857d74] pb-1 border-b border-[#24211e]">
+<span class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-[10px] text-primary-container" data-icon="album">album</span>
+<span>33⅓ RPM</span>
+</span>
+<span>10/22 01:15</span>
+</div>
+<!-- Vinyl Grooves & Waveform Abstract Representation -->
+<div class="my-2 p-2 bg-[#0c0b0a] border border-[#23201d] flex items-center space-x-2">
+<!-- Stylized Grooves Disk -->
+<div class="w-9 h-9 rounded-full border border-[#443e38] flex items-center justify-center bg-radial from-[#1e1b19] to-[#080706] flex-shrink-0 animate-[spin_12s_linear_infinite]">
+<div class="w-3 h-3 rounded-full bg-primary-container/80 border border-[#000]"></div>
+</div>
+<!-- Waveform Hairlines -->
+<div class="flex-1 flex items-end justify-between h-7 px-1 gap-[2px]">
+<span class="w-0.5 bg-[#4a4643] h-3"></span>
+<span class="w-0.5 bg-[#706b67] h-5"></span>
+<span class="w-0.5 bg-primary-container h-6"></span>
+<span class="w-0.5 bg-[#8e706a] h-4"></span>
+<span class="w-0.5 bg-[#57534f] h-6"></span>
+<span class="w-0.5 bg-[#ccc5c1] h-3"></span>
+<span class="w-0.5 bg-[#4a4643] h-2"></span>
+</div>
+</div>
+<div class="font-label-editorial text-[11px] text-[#ece8df] font-medium leading-snug">
+          Subterranean Homesick Alien
+        </div>
+<div class="font-label-code-sm text-[9px] text-[#8a8277] mt-0.5">
+          Radiohead · OK Computer
+        </div>
+</div>
+<!-- ================= 4. Item D: Quote Fragment (Roland Barthes) ================= -->
+<!-- Luminous Textured Paper Sliver positioned middle-left -->
+<div class="relative z-15 w-[210px] -mt-10 mb-4 bg-[#e8e1d5] text-[#141210] p-3 -rotate-[1.5deg] border border-[#141210] shadow-md hover:rotate-0 transition-transform duration-300">
+<!-- Optical Registration Crosshair Mark -->
+<div class="absolute top-1 left-1 font-label-code-sm text-[8px] text-[#706b67] leading-none">┌</div>
+<div class="absolute top-1 right-1 font-label-code-sm text-[8px] text-[#706b67] leading-none">┐</div>
+<div class="flex justify-between items-center text-[8.5px] font-label-code-sm text-[#5a413b] pb-1 border-b border-[#c5bdaf]/70">
+<span class="tracking-widest uppercase">FRAGMENT · 089</span>
+<span>10/19 14:02</span>
+</div>
+<p class="font-headline-sm text-[12.5px] text-[#141210] my-2 leading-[20px] font-medium tracking-wide">
+          “我们在暗处洗印回忆，直到它在红光下显影清晰。”
+        </p>
+<div class="text-right font-label-editorial text-[9.5px] text-[#57534f] tracking-wider">
+          — 罗兰·巴特《明室》
+        </div>
+</div>
+<!-- ================= 5. Item E: Idea Fragment (Neon Rain Storyboard) ================= -->
+<!-- Monospaced/handwritten notebook tear -->
+<div class="relative z-20 w-[196px] ml-4 bg-[#1b1816] border border-[#3b3530] p-2.5 rotate-[0.8deg] mb-3">
+<!-- Perforated top tear indication -->
+<div class="w-full flex justify-between space-x-1 pb-1 mb-1.5 border-b border-dashed border-[#443e38]">
+<span class="font-label-code-sm text-[8px] text-primary-container">NOTEBOOK TEAR</span>
+<span class="font-label-code-sm text-[8px] text-[#706b67]">10/18 23:50</span>
+</div>
+<p class="font-label-code-lg text-[11px] text-[#dcd5cb] leading-relaxed">
+          “雨夜霓虹招牌与湿沥青反光的短片分镜构想”
+        </p>
+<!-- Field Sketch Coordinate Tags -->
+<div class="flex flex-wrap gap-1 mt-2 font-label-code-sm text-[8.5px]">
+<span class="px-1 py-0.5 bg-[#25221f] text-[#a89f95] border border-[#38332e]">#镜头分镜</span>
+<span class="px-1 py-0.5 bg-[#25221f] text-[#a89f95] border border-[#38332e]">#低保真色温</span>
+</div>
+</div>
+<!-- ================= 6. Item F: Link Capsule (Monoskop Archive) ================= -->
+<!-- Positioned bottom-right -->
+<div class="relative z-15 ml-auto w-[215px] -mt-8 bg-[#12110f] border border-[#38332e] px-2.5 py-2 -rotate-[1deg] hover:border-primary-container transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-1.5 overflow-hidden">
+<span class="material-symbols-outlined text-[13px] text-primary-container" data-icon="link">link</span>
+<span class="font-label-code-sm text-[9.5px] text-[#ded9d1] truncate tracking-tight">
+              monoskop.org/Avant-garde_Cinema
+            </span>
+</div>
+<span class="font-label-code-sm text-[8px] text-[#615e5b] pl-1">10/15</span>
+</div>
+<div class="text-[8.5px] font-label-editorial text-[#706b67] mt-1 flex justify-between items-center">
+<span>WEB ARCHIVE INDEX</span>
+<span class="text-primary-container">[ RECALL ]</span>
+</div>
+</div>
+</main>
+<!-- Bottom Luminous Quick-Capture Hairline Bar (Floating above Dock) -->
+<div class="absolute bottom-16 left-0 w-full px-4 z-40">
+<div class="relative w-full bg-[#161412]/90 backdrop-blur-md border border-[#3a342f] py-2 px-3 flex items-center justify-between shadow-2xl">
+<div class="flex items-center space-x-2 flex-1 mr-2">
+<span class="material-symbols-outlined text-[15px] text-[#8e706a]" data-icon="edit_note">edit_note</span>
+<input class="w-full bg-transparent border-0 p-0 text-[12px] font-label-editorial text-[#f4ede8] placeholder-[#706b67] focus:ring-0 focus:outline-none" placeholder="记一笔… (此刻戳到你的是什么？)" readonly="" type="text"/>
+</div>
+<!-- Shutter Micro Red Trigger Button -->
+<button class="w-5 h-5 rounded-full border border-primary-container flex items-center justify-center p-0.5 hover:scale-105 active:scale-95 transition-transform">
+<div class="w-full h-full bg-primary-container rounded-full shadow-[0_0_5px_#C8361D]"></div>
+</button>
+</div>
+</div>
+<!-- Bottom Navigation Bar (Unified with Shared Component & Strict Identity Logic) -->
+<!-- Destination count: 5 from JSON ("灵感库", "显影", "记录", "画像", "设置"), Active Tab: "灵感库" -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 max-w-md mx-auto bg-[#0e0c0b] border-t border-[#23201d]">
+<!-- 1. 灵感库 (Active Destination) -->
+<a class="flex flex-col items-center justify-center text-primary-container border-b-2 border-primary-container pb-1 pt-1 transition-transform active:scale-95 duration-100" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="auto_stories" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="text-label-code-sm font-label-code-sm text-[10px] mt-0.5 font-bold">灵感库</span>
+</a>
+<!-- 2. 显影 -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors duration-150 pt-1 active:scale-95 duration-100" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="tune">tune</span>
+<span class="text-label-code-sm font-label-code-sm text-[10px] mt-0.5">显影</span>
+</a>
+<!-- 3. 记录 -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors duration-150 pt-1 active:scale-95 duration-100" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="add_box">add_box</span>
+<span class="text-label-code-sm font-label-code-sm text-[10px] mt-0.5">记录</span>
+</a>
+<!-- 4. 画像 -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors duration-150 pt-1 active:scale-95 duration-100" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="person_pin">person_pin</span>
+<span class="text-label-code-sm font-label-code-sm text-[10px] mt-0.5">画像</span>
+</a>
+<!-- 5. 设置 -->
+<a class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors duration-150 pt-1 active:scale-95 duration-100" href="#">
+<span class="material-symbols-outlined text-[19px]" data-icon="settings">settings</span>
+<span class="text-label-code-sm font-label-code-sm text-[10px] mt-0.5">设置</span>
+</a>
+</nav>
+</div>
+</body></html>
