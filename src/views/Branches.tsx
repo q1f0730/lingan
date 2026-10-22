@@ -1,79 +1,220 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo, useState } from 'react';
-import { AsciiLoader } from '../components/AsciiDevelop';
+import { useEffect, useMemo, useState } from 'react';
+import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { GraftTrail, HistoryRow } from '../components/IdeaCard';
-import { PageTitle } from '../components/PageTitle';
 import { db } from '../lib/db';
 import { groupBranches } from '../lib/branches';
+import { transformName } from '../lib/graft';
+import { evidenceOf, sourceIds, splitMentions } from '../lib/provenance';
+import { nn } from '../lib/studio';
 import { useApp } from '../lib/store';
+import type { Development, Item } from '../lib/types';
 
-/** 新枝：每一次嫁接长出来的东西；v0.11 起一次三枝按「同一次嫁接」收成一捆 */
+const MODE_KEY = 'glean.branchview';
+
+/** 新枝（m26 / d13）：每一次嫁接按批次成捆；「宣言」是黑主题大字视图（d2 Manifesto），一次看一根 */
 export function Branches() {
   const { go, toast } = useApp();
   const items = useLiveQuery(() => db.items.toArray(), []);
   const history = useLiveQuery(() => db.developments.orderBy('createdAt').reverse().toArray(), []);
   const [starred, setStarred] = useState(false);
+  const [mode, setMode] = useState<'list' | 'manifesto'>(() => (localStorage.getItem(MODE_KEY) === 'manifesto' ? 'manifesto' : 'list'));
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
   const groups = useMemo(() => groupBranches(history || []), [history]);
-  if (!history || !items) return <AsciiLoader text="去田里看看" />;
+  // 宣言是黑主题：整页（含顶栏、速记栏）换成黑 token，离开时恢复
+  const hasAny = !!history?.length;
+  useEffect(() => {
+    if (mode !== 'manifesto' || !hasAny) return;
+    const el = document.querySelector('.app');
+    el?.setAttribute('data-theme', 'dark');
+    return () => el?.removeAttribute('data-theme');
+  }, [mode, hasAny]);
+  if (!history || !items) return <Loading />;
   const nStar = history.filter((h) => h.starred).length;
   const shown = starred ? groups.map((g) => ({ ...g, devs: g.devs.filter((d) => d.starred) })).filter((g) => g.devs.length) : groups;
+  const pick = (m: 'list' | 'manifesto') => {
+    setMode(m);
+    localStorage.setItem(MODE_KEY, m);
+  };
   return (
-    <section className="view">
-      <PageTitle title="新枝" whisper="What grew from what you gathered" />
+    <section className="view branches">
+      <DisplayTitle
+        title="新枝"
+        count={history.length}
+        sub={history.length ? `${groups.length} 次嫁接${nStar ? ` · 留下 ${nStar} 根` : ''}` : undefined}
+        aside={
+          history.length ? (
+            <div className="view-switch" role="tablist" aria-label="视图">
+              <button role="tab" aria-selected={mode === 'list'} className={mode === 'list' ? 'on' : ''} onClick={() => pick('list')}>
+                列表
+              </button>
+              <span className="sep" aria-hidden>
+                |
+              </span>
+              <button role="tab" aria-selected={mode === 'manifesto'} className={`manifesto-toggle${mode === 'manifesto' ? ' on' : ''}`} onClick={() => pick('manifesto')}>
+                宣言
+              </button>
+            </div>
+          ) : null
+        }
+      />
       {history.length === 0 ? (
-        <div className="paper empty">
-          <h2>还没有新枝</h2>
-          <p>把几穗相距很远的东西嫁接在一起，一次长出三根，都会留在这里。</p>
+        <div className="empty">
+          <h2 className="lead">还没有新枝</h2>
+          <p className="meta-text">把几穗相距很远的东西嫁接在一起，一次长出三根，都会留在这里。</p>
           <button className="btn primary" onClick={() => go('develop')}>
             去嫁接
           </button>
         </div>
+      ) : mode === 'manifesto' ? (
+        <Manifesto groups={groups} byId={byId} />
       ) : (
         <>
-          <div className="paper filters row">
-            <span className="dim">
-              {history.length} 根新枝 · {groups.length} 次嫁接{nStar ? ` · 收藏 ${nStar}` : ''}
-            </span>
+          <div className="filters chips filter-row">
+            <button className={`chip${!starred ? ' on' : ''}`} onClick={() => setStarred(false)}>
+              全部 <span className="n">({history.length})</span>
+            </button>
             <button className={`chip${starred ? ' on' : ''}`} onClick={() => setStarred((x) => !x)} aria-pressed={starred}>
-              ★ 只看收藏
+              只看留下的 <span className="n">({nStar})</span>
             </button>
           </div>
           <div className="history">
             {shown.map((g) =>
               g.devs.length === 1 && !g.batch ? (
-                <HistoryRow key={g.key} dev={g.devs[0]} byId={byId} />
+                <div key={g.key} className="hbatch single">
+                  <HistoryRow dev={g.devs[0]} byId={byId} index={0} />
+                </div>
               ) : (
                 <div key={g.key} className="hbatch" data-size={g.devs.length}>
                   <div className="hbatch-head">
-                    <span className="kicker">
-                      一次三枝 · {new Date(g.devs[0].createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    <span className="label">
+                      {new Date(g.devs[0].createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })} · {g.devs.length} 根
                     </span>
-                    <span className="hbatch-src">{g.devs[0].itemIds.map((id) => byId.get(id)?.title || '（已删除）').join(' × ')}</span>
+                    <span className="hbatch-src meta-text">{g.devs[0].itemIds.map((id) => byId.get(id)?.title || '（已删除）').join(' / ')}</span>
                     {!starred && (
                       <button
-                        className="btn ghost small hbatch-star"
+                        className="btn text hbatch-star"
                         onClick={async () => {
                           const all = g.devs.every((d) => d.starred);
                           await db.developments.bulkUpdate(g.devs.map((d) => ({ key: d.id!, changes: { starred: !all } })));
-                          toast(all ? '已取消收藏这三根' : '三根都收藏了');
+                          toast(all ? '这一捆都不留了' : '三根都留下了');
                         }}
                       >
-                        {g.devs.every((d) => d.starred) ? '★ 三根都已收藏' : '☆ 三根都收藏'}
+                        {g.devs.every((d) => d.starred) ? '三根都已留下' : '三根都留下'}
                       </button>
                     )}
                   </div>
-                  {g.devs.map((d) => (
-                    <HistoryRow key={d.id} dev={d} byId={byId} />
+                  {g.devs.map((d, i) => (
+                    <HistoryRow key={d.id} dev={d} byId={byId} index={d.batch?.index ?? i} />
                   ))}
                   {g.batch && <GraftTrail batch={g.batch} names={g.devs[0].itemIds.map((id) => byId.get(id)?.title || '（已删除）')} />}
                 </div>
               ),
             )}
-            {shown.length === 0 && <div className="paper empty small">还没有收藏的新枝。</div>}
+            {shown.length === 0 && <div className="empty small meta-text">还没有留下的新枝。</div>}
           </div>
         </>
       )}
     </section>
   );
+}
+
+/** 宣言：黑底、居中、最大宽 1000px；新枝 01 / 03 → 大字（提到的穗用细体）→ 因为这几穗 → 动作；底部页码 */
+function Manifesto({ groups, byId }: { groups: ReturnType<typeof groupBranches>; byId: Map<number, Item> }) {
+  const { developFrom, toast, openItem, confirm } = useApp();
+  const [gi, setGi] = useState(0);
+  const [bi, setBi] = useState(0);
+  const g = groups[Math.min(gi, groups.length - 1)];
+  const dev: Development | undefined = g?.devs[Math.min(bi, g.devs.length - 1)];
+  useEffect(() => setBi(0), [gi]);
+  if (!g || !dev) return null;
+  const ids = sourceIds(dev, dev.idea);
+  const srcs = ids.map((id) => byId.get(id)).filter(Boolean) as Item[];
+  const line = manifestoLine(dev.idea.idea);
+  const segs = splitMentions(line, srcs);
+  const weak = evidenceOf(dev, dev.idea) === 'weak';
+  return (
+    <div className="manifesto" data-theme="dark">
+      <div className="mf-inner">
+        <div className="label mf-k">
+          新枝 {nn(dev.batch?.index ?? bi)} / {String(g.devs.length).padStart(2, '0')} · {dev.idea.title.replace(/^《|》$/g, '')}
+          {dev.idea.transform ? ` · ${transformName(dev.idea.transform)}` : ''}
+          {weak ? ' · 证据不足' : ''}
+        </div>
+        <p className="mf-text">
+          {segs.map((s, i) =>
+            s.id ? (
+              <span key={i} className="mf-em">
+                {s.text}
+              </span>
+            ) : (
+              <span key={i}>{s.text}</span>
+            ),
+          )}
+        </p>
+        <div className="mf-src">
+          <span className="label">因为这几穗</span>
+          <span>
+            {srcs.length ? (
+              srcs.map((it, i) => (
+                <span key={it.id}>
+                  {i > 0 && ' / '}
+                  <button className="linklike" onClick={() => openItem(it)}>
+                    {it.title}
+                  </button>
+                </span>
+              ))
+            ) : (
+              <span className="dim">说不清从哪几穗长出来</span>
+            )}
+          </span>
+        </div>
+        <div className="actions text-actions">
+          <button className="btn text strong" onClick={() => db.developments.update(dev.id!, { starred: !dev.starred })}>
+            {dev.starred ? '已留下' : '留下'}
+          </button>
+          <button className="btn text" onClick={() => developFrom(dev.itemIds.filter((x) => x > 0))}>
+            再接一次
+          </button>
+          <button
+            className="btn text faint"
+            onClick={async () => {
+              if (await confirm({ title: '不要这根新枝？', ok: '不要了', cancel: '留着', danger: true })) {
+                await db.developments.delete(dev.id!);
+                toast('已删掉这根新枝');
+              }
+            }}
+          >
+            不要
+          </button>
+        </div>
+      </div>
+      <footer className="mf-foot">
+        <span className="label">© 2026 Q1f730</span>
+        <span className="mf-batch">
+          <button className="btn text" disabled={gi >= groups.length - 1} onClick={() => setGi(gi + 1)}>
+            ← 上一捆
+          </button>
+          <span className="mf-pages">
+            {g.devs.map((d, i) => (
+              <button key={d.id} className={i === bi ? 'on' : ''} onClick={() => setBi(i)} aria-label={`第 ${i + 1} 根`}>
+                {nn(i)}
+              </button>
+            ))}
+          </span>
+          <button className="btn text" disabled={gi <= 0} onClick={() => setGi(gi - 1)}>
+            下一捆 →
+          </button>
+        </span>
+      </footer>
+    </div>
+  );
+}
+
+/** 宣言只放一句：取第一句（到第一个句号 / 问号 / 叹号），太长就截断 */
+export function manifestoLine(t: string, max = 64): string {
+  const s = (t || '').trim();
+  const m = s.match(/^[^。！？!?]*[。！？!?]/);
+  const first = m ? m[0] : s;
+  return first.length > max ? first.slice(0, max - 1) + '…' : first;
 }
