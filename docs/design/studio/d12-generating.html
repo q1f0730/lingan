@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=1440, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 嫁接中 (4)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Sans+SC:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      font-family: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .headline-huge {
+      font-size: 112px;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      font-weight: 600;
+    }
+    .headline-count {
+      font-size: 112px;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      font-weight: 300;
+    }
+    .numeral-huge {
+      font-size: 64px;
+      line-height: 1.0;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+    }
+  </style>
+</head>
+<body class="bg-white text-black min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+<!-- TOP NAV BAR (Sticky, identical to d1 desktop) -->
+<header class="sticky top-0 z-50 bg-white border-b border-transparent">
+<div class="w-full px-[40px] h-[72px] flex items-center justify-between">
+<!-- Left: Brand Logo -->
+<div class="text-[20px] font-semibold tracking-tight text-black select-none">
+        拾穗 · GLEAN
+      </div>
+<!-- Center: Text Navigation -->
+<nav class="flex items-center space-x-[36px] text-[12px] font-medium tracking-[0.08em]">
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">穗仓</a>
+<a class="text-black border-b border-black pb-[2px]" href="#">嫁接</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">新枝</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">口味</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">设置</a>
+</nav>
+<!-- Right: Quick-capture input (320px wide, 1px underline) -->
+<div class="w-[320px] relative">
+<input class="w-full bg-transparent border-b border-black rounded-none pb-1 text-[13px] text-black placeholder-[#7E7E7E] focus:outline-none focus:border-black font-normal" placeholder="随手拾一穗 →" type="text"/>
+</div>
+</div>
+</header>
+<!-- MAIN WRAPPER (140px white space between nav and huge headline) -->
+<main class="w-full px-[40px] pt-[140px] pb-[100px] flex-grow">
+<!-- PAGE TITLE SECTION -->
+<div class="mb-[80px]">
+<h1 class="flex items-baseline tracking-[-0.04em]">
+<span class="headline-huge">嫁接中</span>
+<span class="headline-count ml-4">(4)</span>
+</h1>
+</div>
+<!-- 12-COLUMN TRUE DESKTOP GRID (Gutter 16px) -->
+<div class="grid grid-cols-12 gap-[16px] items-start">
+<!-- LEFT 3 COLUMNS: SELECTED 4 穗 -->
+<section class="col-span-3 pr-4">
+<!-- Tiny label -->
+<div class="text-[12px] font-medium tracking-[0.08em] text-[#7E7E7E] uppercase mb-[24px]">
+          选中的穗
+        </div>
+<!-- 4 Small Stacked Items -->
+<div class="space-y-[28px]">
+<!-- Item 1: 凌晨四点的便利店 (Photo) -->
+<div class="flex items-start space-x-[16px]">
+<div class="w-[120px] h-[120px] flex-shrink-0 bg-[#F3F3F3] overflow-hidden">
+<img alt="凌晨四点的便利店" class="w-full h-full object-cover grayscale contrast-105" src="https://lh3.googleusercontent.com/aida/AEtjO1Ujc58Kd3tmvLG_j_dwXSDedhzAbAAyw3VeFfe04RwrX94ZPkRh5rjG4_E1KJzwG05Rvta9HmCJlbmDkv3ockZqkWVOPDArg7ho_oxgMYQP7rjeCUW56S_HHuP_JMfBtYTGj-6u6H6oCk7ZdM_Cev0qCYSTbHQzXyNd-88ijf1RpWFH4wu9thnz0k4oE9ajkBK_4u8zGY5zGLA_qM9-KS6-X_WYD_YbJ8J4yOYlTBU0QkjEvyTLGY-USA"/>
+</div>
+<div class="pt-1 flex flex-col justify-start">
+<span class="text-[11px] text-[#7E7E7E] tracking-wider mb-1">照片</span>
+<h3 class="text-[14px] font-medium text-black leading-snug">凌晨四点的便利店</h3>
+</div>
+</div>
+<!-- Item 2: 把外卖小票上的备注收集成一本诗集 (Text tile) -->
+<div class="flex items-start space-x-[16px]">
+<div class="w-[120px] h-[120px] flex-shrink-0 bg-[#F3F3F3] p-3 flex flex-col justify-between">
+<span class="text-[10px] text-[#7E7E7E] tracking-wider">想法</span>
+<p class="text-[11px] text-black leading-relaxed line-clamp-3">
+                “把外卖小票上的备注收集成一本诗集。”
+              </p>
+<span class="text-[9px] text-[#7E7E7E]">10/05</span>
+</div>
+<div class="pt-1 flex flex-col justify-start">
+<span class="text-[11px] text-[#7E7E7E] tracking-wider mb-1">想法</span>
+<h3 class="text-[14px] font-medium text-black leading-snug">把外卖小票上的备注收集成一本诗集</h3>
+</div>
+</div>
+<!-- Item 3: Avril 14th (Photo) -->
+<div class="flex items-start space-x-[16px]">
+<div class="w-[120px] h-[120px] flex-shrink-0 bg-[#F3F3F3] overflow-hidden">
+<img alt="Avril 14th" class="w-full h-full object-cover grayscale contrast-105" src="https://lh3.googleusercontent.com/aida/AEtjO1WN0ylFqkm7jsSvUoJj9JM71JOKd8goswqJQ0vIlLTcRjjZTxU1z-AKqFy6IIeqywSJUBgWsHve2zE5dcisODtZqR7k0ZL0d_VHxqU8tepRymK3Xl0Rtwin1Sf2sGwXvzysmFAC37n0feg_ywFXzv31mDTE18yw6pzFwNU1gL4O6u3JB48Ihm4pHas3erP-swYil4tvGf2GcCs9rzx0qUVfq0i2SyfDd8dPP0HqxfehjhRakVbpdeNznLg"/>
+</div>
+<div class="pt-1 flex flex-col justify-start">
+<span class="text-[11px] text-[#7E7E7E] tracking-wider mb-1">歌</span>
+<h3 class="text-[14px] font-medium text-black leading-snug">Avril 14th</h3>
+</div>
+</div>
+<!-- Item 4: 收集图书馆借阅卡上陌生人的名字 (Text tile) -->
+<div class="flex items-start space-x-[16px]">
+<div class="w-[120px] h-[120px] flex-shrink-0 bg-[#F3F3F3] p-3 flex flex-col justify-between">
+<span class="text-[10px] text-[#7E7E7E] tracking-wider">想法</span>
+<p class="text-[11px] text-black leading-relaxed line-clamp-3">
+                “收集图书馆借阅卡上陌生人的名字。”
+              </p>
+<span class="text-[9px] text-[#7E7E7E]">09/08</span>
+</div>
+<div class="pt-1 flex flex-col justify-start">
+<span class="text-[11px] text-[#7E7E7E] tracking-wider mb-1">想法</span>
+<h3 class="text-[14px] font-medium text-black leading-snug">收集图书馆借阅卡上陌生人的名字</h3>
+</div>
+</div>
+</div>
+</section>
+<!-- EMPTY COLUMN 4 (Spacer in 12-col grid) -->
+<div class="col-span-1"></div>
+<!-- RIGHT 8 COLUMNS: FOUR-STEP PROGRESS (Starting at Column 5) -->
+<section class="col-span-8">
+<div class="">
+<!-- STEP 01: 读穗 (Done) -->
+<div class="py-[36px] flex items-baseline justify-between">
+<div class="flex items-baseline space-x-[32px]">
+<span class="numeral-huge text-black select-none">01</span>
+<div>
+<h2 class="text-[32px] font-normal text-black tracking-tight leading-snug">
+                  读穗 <span class="font-light text-[#7E7E7E] text-[24px] ml-2">— 读出每一穗里的意象、动作和情绪</span>
+</h2>
+</div>
+</div>
+<div class="text-[12px] text-[#7E7E7E] font-medium tracking-wide flex-shrink-0 pl-6">
+              完成 · 1.2 秒
+            </div>
+</div>
+<!-- STEP 02: 找远处 (Done) -->
+<div class="py-[36px] flex items-baseline justify-between">
+<div class="flex items-baseline space-x-[32px]">
+<span class="numeral-huge text-black select-none">02</span>
+<div>
+<h2 class="text-[32px] font-normal text-black tracking-tight leading-snug">
+                  找远处 <span class="font-light text-[#7E7E7E] text-[24px] ml-2">— 在不相干的穗之间找能接上的地方</span>
+</h2>
+</div>
+</div>
+<div class="text-[12px] text-[#7E7E7E] font-medium tracking-wide flex-shrink-0 pl-6">
+              完成 · 3.4 秒
+            </div>
+</div>
+<!-- STEP 03: 嫁接 (CURRENT ACTIVE) -->
+<div class="py-[36px]">
+<div class="flex items-baseline justify-between mb-[20px]">
+<div class="flex items-baseline space-x-[32px]">
+<span class="numeral-huge text-black select-none font-normal">03</span>
+<div>
+<h2 class="text-[32px] font-medium text-black tracking-tight leading-snug">
+                    嫁接 <span class="font-normal text-black text-[24px] ml-2">— 正在长出三根新枝</span>
+</h2>
+</div>
+</div>
+</div>
+<!-- Progress line: 1px black rule filled 60% -->
+<div class="ml-[76px] mr-[40px] mt-[8px]">
+<div class="w-full h-[1px] bg-[#E5E5E5] relative">
+<div class="absolute left-0 top-0 h-[1px] bg-black w-[60%]"></div>
+</div>
+<div class="mt-[14px] text-[13px] text-black tracking-normal">
+                已长出 1 / 3：夜班歌单
+              </div>
+</div>
+</div>
+<!-- STEP 04: 修剪 (Pending) -->
+<div class="py-[36px] flex items-baseline justify-between">
+<div class="flex items-baseline space-x-[32px]">
+<span class="numeral-huge text-[#C6C6C6] select-none">04</span>
+<div>
+<h2 class="text-[32px] font-light text-[#C6C6C6] tracking-tight leading-snug">
+                  修剪 <span class="font-light text-[#C6C6C6] text-[24px] ml-2">— 去掉太像的、太空的</span>
+</h2>
+</div>
+</div>
+<div class="text-[12px] text-[#C6C6C6] font-medium tracking-wide flex-shrink-0 pl-6">
+              等待中
+            </div>
+</div>
+</div>
+<!-- BOTTOM STATUS & CANCEL ACTION (Under the list) -->
+<div class="mt-[56px] pt-[24px] flex items-center justify-between text-[13px]">
+<div class="text-[#7E7E7E]">
+            大约还要 10 秒 · 你可以离开，好了会在「新枝」里等你
+          </div>
+<button class="text-[#7E7E7E] hover:text-black transition-colors font-medium border-b border-transparent hover:border-black pb-[1px] rounded-none">
+            取消嫁接
+          </button>
+</div>
+</section>
+</div>
+</main>
+<!-- FOOTER -->
+<footer class="w-full px-[40px] py-[32px] border-t border-transparent text-[10px] text-[#7E7E7E] tracking-[0.1em] select-none">
+<div>© 2026 Q1f730</div>
+</footer>
+</body>
+</html>
