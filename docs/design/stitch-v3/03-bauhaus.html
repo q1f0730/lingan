@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · Glean</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#ffdad6",
+            "on-error-container": "#93000a",
+            "on-secondary-fixed": "#001452",
+            "surface-dim": "#dadad9",
+            "surface-container": "#eeeeed",
+            "on-error": "#ffffff",
+            "surface-container-highest": "#e2e2e1",
+            "surface-bright": "#f9f9f8",
+            "on-surface": "#1a1c1c",
+            "surface-variant": "#e2e2e1",
+            "tertiary-container": "#cea700",
+            "surface-tint": "#b91b1b",
+            "outline": "#8f6f6c",
+            "secondary-container": "#476ae9",
+            "tertiary-fixed-dim": "#eec200",
+            "inverse-surface": "#2f3130",
+            "outline-variant": "#e4beb9",
+            "secondary": "#2850ce",
+            "on-secondary-fixed-variant": "#0038b7",
+            "primary-container": "#da352e",
+            "on-tertiary-fixed-variant": "#574500",
+            "on-secondary": "#ffffff",
+            "error-container": "#ffdad6",
+            "on-tertiary-fixed": "#231b00",
+            "surface-container-high": "#e8e8e7",
+            "on-tertiary": "#ffffff",
+            "on-secondary-container": "#fffbff",
+            "on-background": "#1a1c1c",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-container": "#fffbff",
+            "tertiary": "#735c00",
+            "tertiary-fixed": "#ffe083",
+            "inverse-primary": "#ffb4ab",
+            "on-primary-fixed-variant": "#93000a",
+            "surface": "#f9f9f8",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#dde1ff",
+            "primary-fixed-dim": "#ffb4ab",
+            "error": "#ba1a1a",
+            "background": "#f9f9f8",
+            "on-primary-fixed": "#410002",
+            "primary": "#b61819",
+            "surface-container-low": "#f4f4f2",
+            "on-tertiary-container": "#4e3e00",
+            "secondary-fixed-dim": "#b7c4ff",
+            "on-surface-variant": "#5b403d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "1rem",
+            "space-xs": "0.25rem",
+            "gutter-lg": "1.5rem",
+            "space-xl": "2.5rem",
+            "margin-tablet": "2rem",
+            "margin-desktop": "3rem",
+            "gutter": "1rem",
+            "gutter-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "body-md": ["Space Grotesk"],
+            "label-uppercase-sm": ["Space Grotesk"],
+            "headline-sm": ["Space Grotesk"],
+            "title-md": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "body-sm": ["Space Grotesk"],
+            "label-uppercase-lg": ["Space Grotesk"],
+            "body-lg": ["Space Grotesk"],
+            "vertical-mark": ["Space Grotesk"],
+            "headline-md": ["Space Grotesk"],
+            "display-hero": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "body-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400"}],
+            "label-uppercase-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.15em", "fontWeight": "700"}],
+            "headline-sm": ["18px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600"}],
+            "title-md": ["16px", {"lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "600"}],
+            "headline-lg": ["36px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "headline-lg-mobile": ["28px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "body-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+            "label-uppercase-lg": ["13px", {"lineHeight": "16px", "letterSpacing": "0.12em", "fontWeight": "700"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+            "vertical-mark": ["11px", {"lineHeight": "12px", "letterSpacing": "0.2em", "fontWeight": "700"}],
+            "headline-md": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "display-hero": ["48px", {"lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Bauhaus Constructivist hard shadow token */
+    .bauhaus-shadow {
+      box-shadow: 3px 3px 0px #1a1c1c;
+    }
+    .bauhaus-shadow-lg {
+      box-shadow: 4px 4px 0px #1a1c1c;
+    }
+    .bauhaus-shadow-red {
+      box-shadow: 4px 4px 0px #1a1c1c;
+    }
+    /* Hide scrollbars for crisp exhibition feel */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body class="bg-surface-container font-body-md text-on-surface antialiased overflow-x-hidden selection:bg-primary selection:text-on-primary">
+<!-- Viewport Lock: exactly mobile single frame 390x844 layout container -->
+<div class="relative w-full max-w-[390px] mx-auto min-h-[844px] bg-surface-container-low flex flex-col pb-[84px]">
+<!-- SHARED COMPONENT: TopAppBar (from JSON specs) -->
+<header class="fixed top-0 left-0 right-0 max-w-[390px] mx-auto z-50 flex items-center justify-between px-space-md py-space-sm bg-surface dark:bg-inverse-surface border-b-2 border-on-surface">
+<div class="flex items-center gap-space-xs">
+<button aria-label="Leading Action" class="w-8 h-8 flex items-center justify-center border-2 border-on-surface bg-surface text-on-surface active:translate-x-0.5 active:translate-y-0.5 transition-transform">
+<span class="material-symbols-outlined text-[20px]" data-icon="change_history">change_history</span>
+</button>
+<div class="flex flex-col ml-1">
+<span class="text-title-md font-title-md font-bold tracking-tight text-on-surface uppercase">拾穗 · Glean</span>
+<span class="text-[9px] font-label-uppercase-sm tracking-widest text-on-surface-variant font-mono uppercase -mt-1">BAUHAUS ARCHIV // Q1f730</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<div class="hidden sm:flex text-label-uppercase-sm font-label-uppercase-sm border border-on-surface px-1 bg-tertiary-fixed text-on-tertiary-fixed">
+          COLL.06
+        </div>
+<button aria-label="Grain Matrix" class="w-8 h-8 flex items-center justify-center border-2 border-on-surface bg-primary text-on-primary active:translate-x-0.5 active:translate-y-0.5 transition-transform shadow-[2px_2px_0px_#1a1c1c]">
+<span class="material-symbols-outlined text-[20px]" data-icon="grain">grain</span>
+</button>
+</div>
+</header>
+<!-- MAIN SCROLLABLE CANVAS -->
+<main class="flex-1 mt-[54px] px-space-md pt-space-md flex flex-col gap-space-md">
+<!-- QUICK-CAPTURE INPUT: Pure Constructivist Modular Field -->
+<section class="w-full">
+<div class="relative flex items-center bg-surface-container-lowest border-2 border-on-surface bauhaus-shadow">
+<div class="bg-primary text-on-primary px-2.5 py-3.5 flex items-center justify-center border-r-2 border-on-surface">
+<span class="material-symbols-outlined text-title-md" data-icon="edit_square">edit_square</span>
+</div>
+<input class="w-full bg-transparent px-3 py-2 text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none border-0 ring-0 focus:ring-0" placeholder="随手拾一穗…" type="text"/>
+<button class="px-3 py-3.5 bg-surface text-on-surface font-label-uppercase-sm border-l-2 border-on-surface hover:bg-on-surface hover:text-surface transition-colors flex items-center gap-1 active:translate-x-0.5 active:translate-y-0.5">
+<span class="material-symbols-outlined text-title-md font-bold" data-icon="add">add</span>
+<span class="text-label-uppercase-sm font-label-uppercase-sm hidden xs:inline">投入</span>
+</button>
+</div>
+<!-- Constructivist Sub-ruler -->
+<div class="flex items-center justify-between mt-1 px-0.5">
+<span class="text-[9px] font-label-uppercase-sm text-on-surface uppercase tracking-widest">RAUM // INTAKE DOCK</span>
+<span class="text-[9px] font-label-uppercase-sm text-primary font-bold uppercase tracking-widest">● LIVE STREAM</span>
+</div>
+</section>
+<!-- SECTION TITLE: Exhibition Header -->
+<div class="flex items-baseline justify-between border-b-2 border-on-surface pb-1 mt-1">
+<div class="flex items-center gap-2">
+<div class="w-3.5 h-3.5 bg-primary border border-on-surface"></div>
+<h1 class="text-headline-sm font-headline-sm text-on-surface tracking-tight">穗仓 · 灵感矩阵</h1>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-label-uppercase-sm font-label-uppercase-sm bg-on-surface text-surface px-1.5 py-0.5">INDEX 01-06</span>
+</div>
+</div>
+<!-- ASYMMETRIC BENTO GRID: 6 SPECIFIC ITEMS (穗) -->
+<div class="flex flex-col gap-space-md">
+<!-- 1. PHOTO ITEM: 雨后的梧桐街 -->
+<article class="relative bg-surface-container-lowest border-2 border-on-surface bauhaus-shadow p-2.5 overflow-hidden group">
+<!-- Graphic Top Accent Bar -->
+<div class="flex items-center justify-between border-b-2 border-on-surface pb-1.5 mb-2">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.2 bg-primary text-on-primary text-label-uppercase-sm font-label-uppercase-sm uppercase">FOTO // 01</span>
+<span class="text-title-md font-title-md font-bold tracking-tight text-on-surface">雨后的梧桐街</span>
+</div>
+<time class="text-body-sm font-body-sm font-bold text-on-surface-variant font-mono">今天 09:12</time>
+</div>
+<!-- Constructivist Framing with the requested image -->
+<div class="relative border-2 border-on-surface overflow-hidden aspect-[16/10] bg-on-surface">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1X8lQcZVcsRWdVa8ZuKfpLEi3mIrXv_BL_jOyKZb40A1jGBRHsLxPqQF_AF6xFC88VpDaAYrbsDnApZQMbEh3D_bTTJEqICOuBrrOZXBGiY5_SFu7nckhIxTt4hbqXRK1eA0kVn27n9sq8ZvP_KcSM-A4hH89uxBeRVwuONVfap1VWPcoR6dySrrbVm1pHYBW2HupdkJqKQ1OVpEZsiKL-M1eV7Rco5PB9WRfqrsZGZ_GH07eIj4z-5gJE"/>
+<!-- Geometric Corner Mark -->
+<div class="absolute top-0 right-0 w-0 h-0 border-t-[28px] border-t-primary border-l-[28px] border-l-transparent"></div>
+<div class="absolute bottom-2 left-2 bg-on-surface/90 text-surface px-2 py-0.5 text-label-uppercase-sm font-label-uppercase-sm border border-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-tertiary-fixed" data-icon="lens_blur">lens_blur</span>
+<span>WET ASPHALT · COLD LIGHT</span>
+</div>
+</div>
+<!-- Footnote strip -->
+<div class="flex justify-between items-center mt-2 pt-1 border-t border-on-surface/20 text-body-sm font-body-sm">
+<span class="text-on-surface-variant">城市漫步采集 #梧桐树 #雨夜反光</span>
+<span class="text-label-uppercase-sm font-bold border border-on-surface px-1 bg-surface-container">RAW</span>
+</div>
+</article>
+<!-- 2-COL ROW: FILM & SONG ITEMS -->
+<div class="grid grid-cols-2 gap-space-md">
+<!-- 2. FILM ITEM: 燃烧女子的肖像 (Cobalt Blue Monolith) -->
+<article class="bg-secondary text-on-secondary border-2 border-on-surface bauhaus-shadow p-3 flex flex-col justify-between relative overflow-hidden">
+<!-- Diagonal Bauhaus Vector Corner -->
+<div class="absolute -right-6 -bottom-6 w-16 h-16 bg-primary border-2 border-on-surface rotate-45 pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between border-b border-on-secondary/40 pb-1 mb-2">
+<span class="text-label-uppercase-sm font-label-uppercase-sm bg-surface text-on-surface px-1 py-0.2">FILM</span>
+<span class="material-symbols-outlined text-sm" data-icon="movie">movie</span>
+</div>
+<h2 class="text-title-md font-title-md font-bold text-on-secondary leading-snug">
+                燃烧女子的肖像
+              </h2>
+<p class="text-[11px] font-body-sm text-on-secondary/80 mt-1">2019 · 瑟琳·席安玛</p>
+</div>
+<div class="mt-4 pt-2 border-t border-on-secondary/30 flex justify-between items-end">
+<div class="flex flex-col">
+<span class="text-[8px] font-label-uppercase-sm tracking-widest text-tertiary-fixed">CINEMA MATRIX</span>
+<time class="text-body-sm font-body-sm font-mono text-surface">昨天 23:40</time>
+</div>
+<div class="w-4 h-4 rounded-full bg-tertiary-fixed border border-on-surface"></div>
+</div>
+</article>
+<!-- 3. SONG ITEM: 夜空中最亮的星 (Geometric Vinyl Disk) -->
+<article class="bg-surface-container-lowest border-2 border-on-surface bauhaus-shadow p-3 flex flex-col justify-between relative">
+<div>
+<div class="flex items-center justify-between border-b-2 border-on-surface pb-1 mb-2">
+<span class="text-label-uppercase-sm font-label-uppercase-sm bg-tertiary-fixed text-on-tertiary-fixed border border-on-surface px-1">KLANG</span>
+<time class="text-body-sm font-body-sm font-mono text-on-surface-variant">昨天 21:05</time>
+</div>
+<!-- Graphic Bauhaus Vinyl Center -->
+<div class="flex justify-center my-1.5">
+<div class="relative w-16 h-16 rounded-full bg-on-surface border-2 border-on-surface flex items-center justify-center">
+<!-- Vinyl Grooves -->
+<div class="absolute inset-1.5 rounded-full border border-surface/30"></div>
+<div class="absolute inset-3 rounded-full border border-surface/20"></div>
+<!-- Center Label -->
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center border border-on-surface">
+<div class="w-1.5 h-1.5 rounded-full bg-surface"></div>
+</div>
+</div>
+</div>
+<h2 class="text-title-md font-title-md font-bold text-on-surface leading-tight text-center">
+                夜空中最亮的星
+              </h2>
+<p class="text-[11px] font-body-sm text-center text-on-surface-variant font-medium">逃跑计划</p>
+</div>
+<div class="mt-2 pt-1.5 border-t border-on-surface/20 flex justify-between items-center text-[10px] font-mono">
+<span class="text-primary font-bold">AUDIO // TRACK</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface" data-icon="graphic_eq">graphic_eq</span>
+</div>
+</article>
+</div>
+<!-- 4. QUOTE ITEM: 我们读诗，是因为我们是人类的一员。 -->
+<article class="bg-surface-container-lowest border-2 border-on-surface bauhaus-shadow flex overflow-hidden">
+<!-- Stark Vertical Cadmium Red Bar with Vertical Type -->
+<div class="w-8 bg-primary text-on-primary flex flex-col items-center justify-between py-2 border-r-2 border-on-surface">
+<span class="text-label-uppercase-sm font-label-uppercase-sm [writing-mode:vertical-rl] tracking-widest uppercase">ZITAT</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="format_quote">format_quote</span>
+<span class="text-[9px] font-mono font-bold">文案</span>
+</div>
+<div class="flex-1 p-3 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-[10px] font-label-uppercase-sm font-bold tracking-widest text-on-surface-variant uppercase">[MOD-04 // QUOTE]</span>
+<time class="text-body-sm font-body-sm font-mono text-on-surface-variant font-bold">10/19</time>
+</div>
+<blockquote class="text-title-md font-title-md font-bold text-on-surface leading-relaxed pl-1 border-l-2 border-tertiary-fixed-dim">
+                “我们读诗，是因为我们是人类的一员。”
+              </blockquote>
+</div>
+<div class="mt-3 pt-1 border-t border-on-surface/15 flex items-center justify-between text-body-sm text-on-surface-variant">
+<span class="text-[11px] font-mono">《死亡诗社》· 罗宾·威廉姆斯</span>
+<span class="w-2 h-2 bg-on-surface"></span>
+</div>
+</div>
+</article>
+<!-- 2-COL ROW: IDEA & LINK ITEMS -->
+<div class="grid grid-cols-2 gap-space-md">
+<!-- 5. IDEA ITEM: 把通勤路上听到的对话写成短诗 (Yellow Bauhaus Triangle Block) -->
+<article class="bg-surface-container-lowest border-2 border-on-surface bauhaus-shadow p-3 flex flex-col justify-between relative">
+<!-- Decorative Yellow Strip Top -->
+<div class="h-2 -mx-3 -mt-3 mb-2 bg-tertiary-fixed border-b-2 border-on-surface flex items-center justify-end px-1"></div>
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-label-uppercase-sm font-label-uppercase-sm bg-on-surface text-surface px-1 font-bold">想法</span>
+<time class="text-body-sm font-body-sm font-mono text-on-surface-variant">10/18</time>
+</div>
+<!-- Constructivist Bauhaus Triangle Emblem -->
+<div class="my-1.5 flex items-center gap-1.5">
+<div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[18px] border-b-primary"></div>
+<span class="text-label-uppercase-sm font-label-uppercase-sm text-primary font-bold">IDEE // NEW</span>
+</div>
+<p class="text-body-md font-title-md font-bold text-on-surface leading-snug">
+                把通勤路上听到的对话写成一组短诗
+              </p>
+</div>
+<div class="mt-3 pt-1.5 border-t border-on-surface/20 flex items-center justify-between text-[10px] font-mono">
+<span class="text-on-surface-variant">草稿本 · 未嫁接</span>
+<div class="w-3 h-3 bg-secondary"></div>
+</div>
+</article>
+<!-- 6. LINK ITEM: Are.na · 关于收集的收集 -->
+<article class="bg-surface-container-lowest border-2 border-on-surface bauhaus-shadow p-3 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between border-b-2 border-on-surface pb-1 mb-2">
+<span class="text-label-uppercase-sm font-label-uppercase-sm bg-surface-container-high text-on-surface border border-on-surface px-1 font-bold">LINK</span>
+<time class="text-body-sm font-body-sm font-mono text-on-surface-variant">10/16</time>
+</div>
+<div class="flex items-center gap-1 text-secondary font-mono text-[11px] font-bold mb-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="link">link</span>
+<span>are.na</span>
+</div>
+<h2 class="text-title-md font-title-md font-bold text-on-surface leading-tight">
+                Are.na · 关于收集的收集
+              </h2>
+</div>
+<div class="mt-3 pt-2 border-t border-on-surface/20">
+<div class="bg-surface-container border border-on-surface px-1.5 py-1 flex items-center justify-between">
+<span class="text-[9px] font-mono text-on-surface-variant uppercase">CHANNELS</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface" data-icon="north_east">north_east</span>
+</div>
+</div>
+</article>
+</div>
+</div>
+<!-- SYSTEM METADATA BADGE -->
+<div class="my-2 p-2 bg-surface-container border-2 border-dashed border-on-surface/40 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></div>
+<span class="text-[10px] font-label-uppercase-sm tracking-widest text-on-surface">GRAFT ENGINE READY // 6 穗已归仓</span>
+</div>
+<span class="text-[10px] font-mono text-on-surface-variant font-bold">MODE: DESSAU</span>
+</div>
+</main>
+<!-- PROMINENT ENTRY BUTTON: 嫁接 (Lg Bold Red Circle Floating Trigger) -->
+<!-- Requirement: large bold red circle (#E02828 / #DE3831), stark white text '嫁接', clean geometric icon -->
+<div class="fixed bottom-[74px] right-4 z-40">
+<button aria-label="嫁接灵感" class="w-[72px] h-[72px] rounded-full bg-primary border-[3px] border-on-surface flex flex-col items-center justify-center text-on-primary bauhaus-shadow-red active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1a1c1c] transition-all cursor-pointer group">
+<span class="material-symbols-outlined text-[24px] group-hover:rotate-45 transition-transform" data-icon="call_split">call_split</span>
+<span class="text-title-md font-title-md font-bold tracking-wider -mt-0.5">嫁接</span>
+</button>
+</div>
+<!-- SHARED COMPONENT: BottomNavBar (from JSON specs) -->
+<!-- Destination count: 5; Labels: ["穗仓", "嫁接", "新枝", "口味", "设置"]; Active: 穗仓 -->
+<nav class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto w-full z-50 flex justify-around items-center px-space-xs py-space-xs bg-surface-container-low dark:bg-inverse-surface border-t-2 border-on-surface">
+<!-- 1. 穗仓 (ACTIVE ITEM according to rules) -->
+<a aria-current="page" class="flex flex-col items-center justify-center bg-primary text-on-primary border border-on-surface dark:border-surface px-space-sm py-space-xs rounded-none shadow-[2px_2px_0px_#1a1c1c] active:translate-x-0.5 active:translate-y-0.5" href="#warehouse">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2" data-weight="fill" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-label-uppercase-sm font-label-uppercase-sm mt-0.5 font-bold">穗仓</span>
+</a>
+<!-- 2. 嫁接 -->
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-inverse-on-surface px-space-sm py-space-xs rounded-none hover:bg-surface-variant transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#graft">
+<span class="material-symbols-outlined text-[20px]" data-icon="call_split">call_split</span>
+<span class="text-label-uppercase-sm font-label-uppercase-sm mt-0.5">嫁接</span>
+</a>
+<!-- 3. 新枝 -->
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-inverse-on-surface px-space-sm py-space-xs rounded-none hover:bg-surface-variant transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#sprouts">
+<span class="material-symbols-outlined text-[20px]" data-icon="add_circle">add_circle</span>
+<span class="text-label-uppercase-sm font-label-uppercase-sm mt-0.5">新枝</span>
+</a>
+<!-- 4. 口味 -->
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-inverse-on-surface px-space-sm py-space-xs rounded-none hover:bg-surface-variant transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#taste">
+<span class="material-symbols-outlined text-[20px]" data-icon="category">category</span>
+<span class="text-label-uppercase-sm font-label-uppercase-sm mt-0.5">口味</span>
+</a>
+<!-- 5. 设置 -->
+<a class="flex flex-col items-center justify-center text-on-surface dark:text-inverse-on-surface px-space-sm py-space-xs rounded-none hover:bg-surface-variant transition-colors active:translate-x-0.5 active:translate-y-0.5" href="#settings">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-label-uppercase-sm font-label-uppercase-sm mt-0.5">设置</span>
+</a>
+</nav>
+</div>
+</body></html>
