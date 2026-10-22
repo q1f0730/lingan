@@ -119,6 +119,8 @@ async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok' } = {}) {
     const ids = [...new Set(found.map((m) => Number(m[1])))];
     const titles = found.map((m) => m[2].trim());
     log.ids = ids;
+    const mm = user.match(/这次的接法：([^（\n]+)（/);
+    (log.modes ||= []).push(mm ? mm[1] : '');
     if (!a) cCalls++;
     if (!a && sys.includes('上一次的回答里')) log.recheckPrompt = true;
     const cMode = a ? 'ok' : evidence === 'recheck' && cCalls === 1 ? 'noid' : evidence === 'weak' ? (cCalls === 1 ? 'noid' : 'weak') : 'ok';
@@ -446,9 +448,9 @@ async function run(name, viewport) {
   if (offSpr.some((x) => x.n < 3 || x.ev !== 'ok')) errs.push(`[${name}] offline provenance wrong ${JSON.stringify(offSpr)}`);
   await pg.click('.idea .idea-keep');
   await pg.waitForSelector('.idea .idea-keep:has-text("已留下")');
-  await pg.click('text=重新抽穗');
+  await pg.click('.controls .shuffle');
   await pg.click('.seg button:has-text("4")');
-  await pg.click('text=重新抽穗');
+  await pg.click('.controls .shuffle');
   const negs = await pg.locator('.graft .pair-item').count();
   if (negs !== 4) errs.push(`[${name}] expected 4 picked got ${negs}`);
   await pg.click('.graft-btn');
@@ -485,6 +487,9 @@ async function run(name, viewport) {
   if (three.some((x) => (x.title || '').includes('撞了变形'))) errs.push(`[${name}] duplicate-transform branch not dropped`);
   if (ai.calls !== 4 || ai.phases.join('') !== 'ACC') errs.push(`[${name}] AI calls expected 4 (429+A+C+C recheck) got ${ai.calls} ${ai.phases.join('')}`);
   if (!ai.recheckPrompt) errs.push(`[${name}] recheck prompt did not tell the model what was wrong`);
+  // v0.18 抽几穗按当前接法（默认远距）抽，两步调用都把接法写进 prompt
+  if (!ai.modes || ai.modes.length < 3 || ai.modes.some((x) => x !== '远距')) errs.push(`[${name}] AI prompt should carry 接法 远距 got ${JSON.stringify(ai.modes)}`);
+  if ((await pg.locator('.three-mode').innerText().catch(() => '')).indexOf('远距') < 0) errs.push(`[${name}] result head should say 远距`);
   // v0.12 溯源：每根 AI 新枝都能点回 ≥3 件自己的穗，且都在这次嫁接的素材里
   const picked = await pg.evaluate(() => [...document.querySelectorAll('.graft .pair-item .card-title')].map((e) => e.textContent));
   const prov = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ ev: e.dataset.evidence, ids: [...e.querySelectorAll('.sprig[data-item-id]')].map((x) => Number(x.dataset.itemId)), titles: [...e.querySelectorAll('.sprig .sprig-title')].map((x) => x.textContent), weak: !!e.querySelector('.sprigs-weak') })));
@@ -525,7 +530,7 @@ async function run(name, viewport) {
   // v0.12 故意喂不带 / 编造 ID 的回答：重来一次仍不行 → 两根标「证据不足」，不假装正常
   await pg.unroute('**/mock-ai/v1/chat/completions');
   const bad = await mockAI(pg, { delay: 200, evidence: 'weak' });
-  await pg.click('text=重新抽穗');
+  await pg.click('.controls .shuffle');
   await pg.click('.graft-btn');
   await pg.waitForSelector('.three .idea', { timeout: 15000 });
   await pg.waitForTimeout(300);
@@ -1141,6 +1146,120 @@ async function obsidian() {
 }
 
 // v0.12 兼容旧数据：先在同源页面用 v0.11 的库结构（Dexie version 1 = IndexedDB 10）写入旧新枝，再打开 App
+// v0.18 五种嫁接：断网 + 没 key，五种接法各跑一次离线嫁接；核对每种抽样规则、接法写进新枝、嫁接次数 +1；
+// 「被冷落」抽到的都是全库最低档；「跨媒介」每组至少 3 种类型（库里够时），不够时有提示
+const MODE_NAMES = { near: '相近', far: '远距', neglected: '被冷落', cross: '跨媒介', anti: '反氛围' };
+async function modes() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[modes] pageerror ${e.message}`));
+  pg.on('console', (m) => m.type() === 'error' && !/ERR_INTERNET_DISCONNECTED|net::ERR_FAILED/.test(m.text()) && errs.push(`[modes] console ${m.text()}`));
+  const origin = new URL(base).origin;
+  await ctx.route('**/*', (r) => (r.request().url().startsWith(origin) ? r.continue() : r.abort()));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  for (const t of ['凌晨四点安静的雾', '夏天热闹的夜市人群', '外婆的旧收音机']) {
+    await pg.fill('.quick-input', t);
+    await pg.press('.quick-input', 'Enter');
+    await pg.waitForSelector(`.card:has-text("${t}")`);
+  }
+  await ctx.setOffline(true);
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.waitForSelector('.modes .mode');
+  const labels = await pg.locator('.modes .mode .mode-name').allInnerTexts();
+  if (labels.join('/') !== '相近/远距/被冷落/跨媒介/反氛围') errs.push(`[modes] mode labels ${labels.join('/')}`);
+  if (await pg.locator('.modes svg, .modes img').count()) errs.push('[modes] mode switch should be text only');
+  await studio(pg, 'modes');
+  for (const m of ['near', 'far', 'cross', 'anti', 'neglected', 'neglected']) {
+    const before = await dbRaw(pg, 'items');
+    await pg.click(`.modes .mode[data-mode="${m}"]`);
+    await pg.waitForSelector('.graft .pair-item');
+    const on = await pg.evaluate(() => [...document.querySelectorAll('.modes .mode.on')].map((e) => e.dataset.mode + ':' + e.getAttribute('aria-checked')));
+    if (on.join() !== `${m}:true`) errs.push(`[modes] ${m} not selected ${on}`);
+    const rule = await pg.locator('.modes .mode-rule').innerText();
+    if (!rule.includes('怎么抽')) errs.push(`[modes] ${m} rule line missing`);
+    const ids = await pg.evaluate(() => [...document.querySelectorAll('.graft .pair-item')].map((e) => Number(e.dataset.itemId)));
+    const byId = new Map(before.map((x) => [x.id, x]));
+    const picks = ids.map((id) => byId.get(id));
+    const cnt = (x) => x.graftCount || 0;
+    if (ids.length !== 3 || picks.some((x) => !x)) errs.push(`[modes] ${m} expected 3 picks got ${ids}`);
+    if (m === 'neglected') {
+      const sorted = before.map(cnt).sort((x, y) => x - y);
+      const th = sorted[ids.length - 1];
+      if (picks.some((x) => cnt(x) > th)) errs.push(`[modes] neglected picked above lowest tier ${picks.map(cnt)} th ${th}`);
+      const below = before.filter((x) => cnt(x) < th).map((x) => x.id);
+      if (below.some((id) => !ids.includes(id))) errs.push(`[modes] neglected skipped a lower-count item ${below} vs ${ids}`);
+      if (!(await pg.locator('.graft .pick-count').count())) errs.push('[modes] neglected should show 接过 n 次');
+    }
+    if (m === 'cross') {
+      const libTypes = new Set(before.map((x) => x.type)).size;
+      const t = new Set(picks.map((x) => x.type)).size;
+      if (libTypes >= 3 && t < 3) errs.push(`[modes] cross picked only ${t} types (lib ${libTypes})`);
+      if (libTypes >= 3 && (await pg.locator('.modes .mode-warn').count())) errs.push('[modes] cross warned though library has enough types');
+    }
+    if ((await pg.locator('.graft-btn').innerText()).indexOf(MODE_NAMES[m]) < 0) errs.push(`[modes] graft button should name ${MODE_NAMES[m]}`);
+    if (m === 'anti' || m === 'neglected') await pg.screenshot({ path: `${out}/modes-${m}-select.png`, fullPage: true });
+    await pg.click('.graft-btn');
+    await pg.waitForSelector('.three .idea', { timeout: 10000 }).catch(() => errs.push(`[modes] ${m} offline graft failed`));
+    if ((await pg.locator('.three .idea').count()) !== 3) errs.push(`[modes] ${m} expected 3 branches`);
+    const head = await pg.locator('.three-head .label').innerText();
+    if (!head.includes(MODE_NAMES[m]) || !head.includes('离线嫁接')) errs.push(`[modes] ${m} result head ${head}`);
+    const spr = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ n: e.querySelectorAll('.sprig').length, ev: e.dataset.evidence })));
+    if (spr.some((x) => x.n < 3 || x.ev !== 'ok')) errs.push(`[modes] ${m} provenance ${JSON.stringify(spr)}`);
+    const devs = (await dbRaw(pg, 'developments')).sort((x, y) => y.createdAt - x.createdAt).slice(0, 3);
+    if (devs.some((d) => d.mode !== m || JSON.stringify(d.itemIds) !== JSON.stringify(ids))) errs.push(`[modes] ${m} developments not tagged ${JSON.stringify(devs.map((d) => d.mode))}`);
+    if (devs.some((d) => !d.idea.idea.includes(`接法「${MODE_NAMES[m]}」`))) errs.push(`[modes] ${m} offline branch text lacks 接法`);
+    const after = new Map((await dbRaw(pg, 'items')).map((x) => [x.id, x]));
+    for (const p of picks) {
+      const a = after.get(p.id);
+      if (!a || cnt(a) !== cnt(p) + 1 || !a.graftedAt) errs.push(`[modes] ${m} graftCount not bumped for ${p.id}: ${cnt(p)} -> ${a && cnt(a)}`);
+    }
+    const others = [...after.values()].filter((x) => !ids.includes(x.id) && cnt(x) !== cnt(byId.get(x.id) || {}));
+    if (others.length) errs.push(`[modes] ${m} bumped items that were not grafted`);
+    if (m === 'cross' || m === 'neglected') await pg.screenshot({ path: `${out}/modes-${m}-result.png`, fullPage: true });
+  }
+  // 详情能看到嫁接次数
+  const top = (await dbRaw(pg, 'items')).sort((x, y) => (y.graftCount || 0) - (x.graftCount || 0))[0];
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.click(cardSel(top.id)).catch(() => {});
+  const kv = await pg.locator('.kv-graft dd').innerText({ timeout: 3000 }).catch(() => '');
+  if (!kv.includes(`${top.graftCount} 次`)) errs.push(`[modes] detail graft count ${kv} expected ${top.graftCount}`);
+  await ctx.close();
+  // 库里只有一种类型：选「跨媒介」给出提示
+  const c2 = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[modes-cross] pageerror ${e.message}`));
+  await p2.goto(base);
+  await p2.waitForSelector('.quick-input');
+  for (const t of ['第一个念头', '第二个念头', '第三个念头']) {
+    await p2.fill('.quick-input', t);
+    await p2.press('.quick-input', 'Enter');
+    await p2.waitForSelector(`.card:has-text("${t}")`);
+  }
+  await p2.click('.nav-btn:has-text("嫁接")');
+  await p2.click('.modes .mode[data-mode="cross"]');
+  const warn = await p2.locator('.modes .mode-warn').innerText({ timeout: 3000 }).catch(() => '');
+  if (!/只有 \d 种类型，跨媒介至少要 3 种/.test(warn)) errs.push(`[modes-cross] expected not-enough-types hint got "${warn}"`);
+  await p2.screenshot({ path: `${out}/modes-cross-warn.png`, fullPage: true });
+  await c2.close();
+  // 桌面：接法横排
+  const c3 = await b.newContext({ viewport: { width: 1366, height: 860 } });
+  const p3 = await c3.newPage();
+  await p3.goto(base);
+  await p3.click('text=先放点示例');
+  await p3.waitForSelector('.card[data-sample="1"]');
+  await p3.click('.nav-btn:has-text("嫁接")');
+  await p3.click('.modes .mode[data-mode="cross"]');
+  await p3.waitForSelector('.graft .pair-item');
+  await p3.screenshot({ path: `${out}/modes-desktop-select.png` });
+  await p3.click('.graft-btn');
+  await p3.waitForSelector('.three .idea', { timeout: 10000 }).catch(() => errs.push('[modes-desktop] graft failed'));
+  await p3.screenshot({ path: `${out}/modes-desktop-result.png` });
+  await c3.close();
+}
+
 async function legacy() {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
   const pg = await ctx.newPage();
@@ -1186,7 +1305,10 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 50) errs.push(`[legacy] db version expected 50 (Dexie v5) got ${ver}`);
+  if (ver !== 60) errs.push(`[legacy] db version expected 60 (Dexie v6) got ${ver}`);
+  // v0.18 旧新枝回填嫁接次数：#1 两次（单根 + 一批），#2 两次，#3 一次
+  const gc = (await dbRaw(pg, 'items')).sort((x, y) => x.id - y.id).map((x) => x.graftCount);
+  if (JSON.stringify(gc) !== '[2,2,1]') errs.push(`[legacy] graftCount backfill expected [2,2,1] got ${JSON.stringify(gc)}`);
   // v0.17 旧库升级后：后台补好索引，旧穗和旧新枝都搜得到
   await pg.waitForFunction(() => window.__gleanSearch?.ready && window.__gleanSearch.indexed === 5, null, { timeout: 8000 }).catch(async () => errs.push(`[legacy] index not built ${JSON.stringify(await pg.evaluate(() => window.__gleanSearch))}`));
   await pg.click('.nav-btn:has-text("穗仓")');
@@ -1411,7 +1533,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 50) errs.push(`[perf] db version (expected 50 = Dexie v5) ${integ.version}`);
+  if (integ.version !== 60) errs.push(`[perf] db version (expected 60 = Dexie v6) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
@@ -1503,6 +1625,8 @@ try {
   if (process.env.E2E_ONLY === 'onboarding') throw Object.assign(new Error('onboarding only'), { only: true });
   await obsidian();
   if (process.env.E2E_ONLY === 'obsidian') throw Object.assign(new Error('obsidian only'), { only: true });
+  await modes();
+  if (process.env.E2E_ONLY === 'modes') throw Object.assign(new Error('modes only'), { only: true });
   await legacy();
   await daily();
   if (process.env.E2E_ONLY === 'daily') throw Object.assign(new Error('daily only'), { only: true });
