@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>拾穗 · GLEAN — 新手引导 (03 / 03) 选一个 AI 服务 (390px)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+        },
+        colors: {
+          'glean-black': '#000000',
+          'glean-grey': '#7E7E7E',
+          'glean-lightgrey': '#C6C6C6',
+          'glean-border': '#E5E5E5',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  * {
+    box-sizing: border-box;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  body {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .display-headline {
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1.0;
+  }
+</style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-white text-black flex justify-center min-h-screen">
+  <!-- Mobile Frame 390px -->
+  <div class="w-[390px] min-h-[844px] bg-white flex flex-col justify-between px-4 pt-6 pb-8 select-none">
+    
+    <!-- Top Content Section -->
+    <div class="flex flex-col">
+      <!-- Top Action Bar -->
+      <div class="h-8 flex items-center mb-6">
+        <button class="text-[13px] text-black font-normal tracking-wide hover:opacity-60 transition-opacity p-0 bg-transparent border-0 cursor-pointer">
+          返回
+        </button>
+      </div>
+
+      <!-- Step Counter -->
+      <div class="text-[11px] font-medium tracking-widest text-[#7E7E7E] mb-3">
+        03 / 03
+      </div>
+
+      <!-- Huge Headline -->
+      <h1 class="display-headline text-black mb-4">
+        选一个<br>AI 服务
+      </h1>
+
+      <!-- Subtitle Description -->
+      <p class="text-[15px] leading-relaxed text-[#7E7E7E] mb-8 font-normal">
+        嫁接时用。key 只存在这台手机上，随时能在设置里换。
+      </p>
+
+      <!-- Services Section Header with single 1px black rule -->
+      <div class="pt-2">
+        <div class="text-[11px] font-medium text-[#7E7E7E] tracking-wider mb-2">
+          服务
+        </div>
+        <div class="w-full h-[1px] bg-black mb-5"></div>
+      </div>
+
+      <!-- Tight Radio-style List (No lines between rows) -->
+      <div class="flex flex-col space-y-5">
+        
+        <!-- Row 1: 智谱 (Selected) -->
+        <div class="flex flex-col">
+          <div class="flex items-start cursor-pointer">
+            <!-- Selected custom square: 10px filled black square -->
+            <div class="w-[10px] h-[10px] bg-black mt-[5px] mr-3 shrink-0"></div>
+            <div class="flex flex-col">
+              <span class="text-[16px] font-semibold text-black leading-tight">智谱</span>
+              <span class="text-[12px] text-[#7E7E7E] mt-1 leading-normal">国内直连，填 API key 即可</span>
+            </div>
+          </div>
+
+          <!-- Inline Input for Selected Row: 1px black underline only -->
+          <div class="mt-4 pl-[22px]">
+            <div class="text-[11px] font-medium text-[#7E7E7E] uppercase tracking-wider mb-1">
+              API key
+            </div>
+            <div class="relative w-full">
+              <input 
+                type="text" 
+                placeholder="粘贴你的 key" 
+                class="w-full bg-transparent text-[14px] text-black pb-1.5 pt-0.5 border-0 border-b border-black outline-none placeholder-[#C6C6C6] focus:border-black font-sans"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: 硅基流动 -->
+        <div class="flex items-start cursor-pointer">
+          <!-- Unselected custom square: 10px empty square with 1px grey line -->
+          <div class="w-[10px] h-[10px] border border-[#7E7E7E] mt-[5px] mr-3 shrink-0 bg-transparent"></div>
+          <div class="flex flex-col">
+            <span class="text-[16px] font-normal text-black leading-tight">硅基流动</span>
+            <span class="text-[12px] text-[#7E7E7E] mt-1 leading-normal">国内直连，可选多种开源模型</span>
+          </div>
+        </div>
+
+        <!-- Row 3: Gemini -->
+        <div class="flex items-start cursor-pointer">
+          <!-- Unselected custom square: 10px empty square with 1px grey line -->
+          <div class="w-[10px] h-[10px] border border-[#7E7E7E] mt-[5px] mr-3 shrink-0 bg-transparent"></div>
+          <div class="flex flex-col">
+            <span class="text-[16px] font-normal text-black leading-tight">Gemini</span>
+            <span class="text-[12px] text-[#7E7E7E] mt-1 leading-normal">需要能访问 Google</span>
+          </div>
+        </div>
+
+        <!-- Row 4: 自定义（兼容 OpenAI 接口） -->
+        <div class="flex items-start cursor-pointer">
+          <!-- Unselected custom square: 10px empty square with 1px grey line -->
+          <div class="w-[10px] h-[10px] border border-[#7E7E7E] mt-[5px] mr-3 shrink-0 bg-transparent"></div>
+          <div class="flex flex-col">
+            <span class="text-[16px] font-normal text-black leading-tight">自定义（兼容 OpenAI 接口）</span>
+            <span class="text-[12px] text-[#7E7E7E] mt-1 leading-normal">填地址、模型名和 key</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Skip AI Text Link -->
+      <div class="mt-7">
+        <button class="text-[13px] text-[#7E7E7E] hover:text-black transition-colors bg-transparent border-0 p-0 cursor-pointer font-normal">
+          先不用 AI，只收集
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Bottom Actions & Indicator Section -->
+    <div class="flex flex-col w-full mt-12">
+      <!-- Full-width black square button -->
+      <button class="w-full h-12 bg-black text-white text-[15px] font-medium tracking-wider flex items-center justify-center cursor-pointer hover:bg-neutral-900 active:opacity-80 transition-colors border-0">
+        进入穗仓
+      </button>
+
+      <!-- Three-line Progress Indicator (third line black, others grey) -->
+      <div class="flex justify-center items-center gap-1.5 mt-6 mb-4">
+        <div class="w-5 h-[1.5px] bg-[#E5E5E5]"></div>
+        <div class="w-5 h-[1.5px] bg-[#E5E5E5]"></div>
+        <div class="w-5 h-[1.5px] bg-black"></div>
+      </div>
+
+      <!-- Clean Minimal Footer -->
+      <div class="text-center text-[11px] text-[#7E7E7E] font-normal tracking-wider">
+        © 2026 Q1f730
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
