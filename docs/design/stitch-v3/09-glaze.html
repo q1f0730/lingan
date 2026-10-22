@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>拾穗 · Glean</title>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Noto Serif SC & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Noto+Serif+SC:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Noto Serif SC"', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            celadon: {
+              DEFAULT: '#8BA89C',
+              light: '#B8D4C8',
+              surface: '#EBF1EE',
+            },
+            ru: {
+              DEFAULT: '#8CA8B8',
+              light: '#B5D2DF',
+              subtle: '#E2ECF1',
+            },
+            jun: {
+              DEFAULT: '#9A6F8F',
+              light: '#C28FA9',
+              wash: '#F5ECF2',
+            },
+            tenmoku: {
+              DEFAULT: '#302622',
+              soft: '#463934',
+              surface: '#221B18',
+            },
+            porcelain: '#F5F7F6',
+            stone: '#E8EDEB',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-glaze-effects">
+    /* Ceramic Glaze Depth and Gloss Reflections */
+    .glaze-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.2) 100%);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 
+        inset 0 1px 1.5px rgba(255, 255, 255, 0.95),
+        inset 0 -1.5px 2px rgba(100, 120, 115, 0.08),
+        0 4px 16px -2px rgba(48, 38, 34, 0.07),
+        0 1px 3px rgba(48, 38, 34, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    
+    .glaze-card:active {
+      transform: scale(0.985);
+    }
+
+    /* Celadon delicate crackle line accent */
+    .crackle-pattern {
+      background-image: 
+        radial-gradient(ellipse at 80% 10%, rgba(255,255,255,0.85) 0%, transparent 50%),
+        linear-gradient(115deg, transparent 48%, rgba(139, 168, 156, 0.12) 49%, rgba(139, 168, 156, 0.12) 50%, transparent 51%);
+    }
+
+    /* Ceramic pill subtle reflection */
+    .glaze-pill {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(245, 247, 246, 0.75) 100%);
+      box-shadow: 
+        inset 0 1.5px 1px rgba(255, 255, 255, 1),
+        inset 0 -1px 2px rgba(138, 168, 156, 0.15),
+        0 3px 12px rgba(34, 27, 24, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+    }
+
+    /* Tenmoku glaze deep luster */
+    .glaze-tenmoku {
+      background: linear-gradient(145deg, #3d312c 0%, #251c19 100%);
+      box-shadow: 
+        inset 0 1px 1px rgba(255, 255, 255, 0.22),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+        0 8px 20px -3px rgba(32, 24, 20, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Jun kiln soft gradient hue */
+    .glaze-jun {
+      background: linear-gradient(135deg, rgba(245, 236, 242, 0.9) 0%, rgba(234, 218, 228, 0.65) 100%);
+      border: 1px solid rgba(194, 143, 169, 0.3);
+      box-shadow: 
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.9),
+        0 4px 14px rgba(154, 111, 143, 0.08);
+    }
+
+    /* Ru ware sky-blue soft tone */
+    .glaze-ru {
+      background: linear-gradient(140deg, rgba(235, 244, 248, 0.9) 0%, rgba(213, 232, 241, 0.6) 100%);
+      border: 1px solid rgba(140, 168, 184, 0.35);
+      box-shadow: 
+        inset 0 1.5px 2px rgba(255, 255, 255, 0.95),
+        0 4px 14px rgba(140, 168, 184, 0.1);
+    }
+
+    /* Custom scrollbar hiding for clean app layout */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#DFE5E2] font-sans text-tenmoku antialiased selection:bg-celadon-light selection:text-tenmoku m-0 p-0 overflow-hidden flex items-center justify-center min-h-screen">
+<!-- BEGIN: MobileDeviceCanvas -->
+<!-- Strict 390x844 iPhone Canvas edge-to-edge container -->
+<div class="relative w-[390px] h-[844px] bg-[#E9EFEF] overflow-hidden flex flex-col justify-between select-none shadow-2xl" data-purpose="iphone-screen-viewport" style="background: radial-gradient(120% 90% at 20% 0%, #FAFDFC 0%, #E3E9E7 55%, #DAE2E0 100%);">
+<!-- Subtle Ceramic Surface Texture Sheen -->
+<div class="absolute inset-0 pointer-events-none opacity-40 mix-blend-overlay crackle-pattern"></div>
+<!-- BEGIN: TopBar -->
+<header class="relative z-20 pt-3 px-6 pb-2.5 flex-shrink-0" data-purpose="top-navigation-header">
+<!-- iOS Status Bar -->
+<div class="flex justify-between items-center text-xs tracking-tight text-tenmoku/80 font-medium mb-3">
+<span class="tracking-normal text-[13px] font-semibold pl-1 font-sans">9:41</span>
+<div class="flex items-center space-x-1.5 pr-1">
+<!-- Cellular signal -->
+<svg class="w-3.5 h-3 fill-current opacity-80" viewbox="0 0 16 12">
+<rect height="4" rx="0.5" width="2.5" x="0" y="8"></rect>
+<rect height="6.5" rx="0.5" width="2.5" x="4" y="5.5"></rect>
+<rect height="9" rx="0.5" width="2.5" x="8" y="3"></rect>
+<rect height="11.5" rx="0.5" width="2.5" x="12" y="0.5"></rect>
+</svg>
+<!-- Wifi -->
+<svg class="w-3.5 h-3 fill-current opacity-80" viewbox="0 0 16 12">
+<path d="M8 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-4.2-3.1a6 6 0 0 1 8.4 0 .8.8 0 0 0 1.1-1.1 7.6 7.6 0 0 0-10.6 0 .8.8 0 0 0 1.1 1.1zm-2.8-2.8a10 10 0 0 1 14 0 .8.8 0 1 0 1.1-1.1 11.6 11.6 0 0 0-16.2 0 .8.8 0 0 0 1.1 1.1z"></path>
+</svg>
+<!-- Battery -->
+<div class="w-5 h-2.5 border border-tenmoku/70 rounded-[3px] p-[1px] flex items-center">
+<div class="h-full w-3 bg-tenmoku/85 rounded-[1px]"></div>
+</div>
+</div>
+</div>
+<!-- App Title & Identity Bar -->
+<div class="flex items-center justify-between pt-0.5">
+<div class="flex items-center space-x-2">
+<h1 class="font-serif text-[21px] font-medium tracking-wider text-tenmoku flex items-center gap-1.5">
+            拾穗
+            <span class="text-[14px] font-sans font-light tracking-wide text-tenmoku/45">· Glean</span>
+</h1>
+<!-- Active Repository Pill Badge -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-serif bg-celadon/20 text-[#476357] border border-celadon/30 tracking-tight font-medium">
+            穗仓
+          </span>
+</div>
+<!-- Author Handle with subtle celadon state dot -->
+<div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-white/50 backdrop-blur-md border border-white/70 shadow-sm" data-purpose="user-identity">
+<span class="w-1.5 h-1.5 rounded-full bg-[#5E947F] animate-pulse"></span>
+<span class="text-[12px] font-sans font-medium text-tenmoku/70 tracking-tight">Q1f730</span>
+</div>
+</div>
+</header>
+<!-- END: TopBar -->
+<!-- BEGIN: QuickCaptureInput -->
+<div class="relative z-20 px-5 pt-1.5 pb-2.5 flex-shrink-0" data-purpose="quick-capture">
+<div class="glaze-pill w-full h-11 rounded-2xl px-3.5 flex items-center justify-between text-tenmoku/60 cursor-pointer shadow-sm">
+<div class="flex items-center space-x-2.5 flex-grow">
+<!-- Ceramic pen / stylus tip icon -->
+<svg class="w-4 h-4 text-celadon flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="font-serif text-[13.5px] text-tenmoku/45 tracking-wider">随手拾一穗…</span>
+</div>
+<!-- Subtle capture modalities (voice, camera, link) -->
+<div class="flex items-center space-x-2 text-tenmoku/40">
+<button aria-label="Audio record" class="p-1 hover:text-celadon transition-colors" title="语音拾穗">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+<path d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<span class="w-[1px] h-3 bg-tenmoku/15"></span>
+<button aria-label="Capture image" class="p-1 hover:text-celadon transition-colors" title="图像拾取">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24">
+<path d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+<!-- END: QuickCaptureInput -->
+<!-- BEGIN: CollectedGleaningsStream -->
+<!-- Scrollable container for exactly 6 collected items -->
+<main class="relative z-10 flex-1 overflow-y-auto px-5 pt-1 pb-24 no-scrollbar space-y-3.5" data-purpose="gleanings-feed">
+<!-- ITEM 1: PHOTO ITEM (Ru sky-blue glazed tile framing) -->
+<article class="glaze-ru rounded-3xl p-3 relative overflow-hidden transition-all group" data-purpose="photo-item">
+<!-- Corner Glaze Highlight -->
+<div class="absolute -right-6 -top-6 w-20 h-20 rounded-full bg-white/40 blur-xl pointer-events-none"></div>
+<div class="relative w-full h-[142px] rounded-2xl overflow-hidden shadow-inner">
+<img alt="A real photograph of a rain-wet city asphalt street at dusk lined with London plane trees (梧桐), soft glowing evening streetlights reflecting on wet pavement puddles, cool muted blue-grey twilight tones with warm golden lamp reflections, cinematic poetic urban atmosphere, realistic photography, no text" class="w-full h-full object-cover transform group-hover:scale-102 transition-transform duration-500 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC-Jg47Ebu737QrIUq0a0x1gP_lK24paZ-f63m4V0ZXoSRq5509Ekp6rRljWRaaH20tU01k0TdHMvdkhX7IMgSXAwjePcZBx9FDUBVpkqb3WR5gtYml1zkhyAmn6YjJJy6WrdyDfvKQEchuDfFVZSEw5id7_shy1iPfm4APIRLbwTMrDcCP_xtnu9exOYlrsLF9E2Hv50tT1Dk1eBQ59TkI_3JOAFbRGm8jdthkbZ-GqAJwvSSY4VozmzvlVBakTxeAlO62H0xmc6m"/>
+<!-- Water film sheen gradient -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"></div>
+<span class="absolute bottom-2.5 left-3 text-[11px] font-sans font-medium text-white/85 tracking-widest uppercase bg-black/25 px-2 py-0.5 rounded-full backdrop-blur-sm">
+            PHOTOGRAPH
+          </span>
+</div>
+<div class="mt-2.5 px-1.5 flex items-center justify-between">
+<div class="flex items-baseline space-x-2">
+<h2 class="font-serif text-[15px] text-tenmoku tracking-wide font-medium">雨后的梧桐街</h2>
+<span class="text-[11px] font-serif text-[#648494] tracking-normal">冷青与暖灯</span>
+</div>
+<time class="text-[11.5px] font-sans text-tenmoku/45 font-normal tracking-tight">今天 09:12</time>
+</div>
+</article>
+<!-- ITEM 2: FILM ITEM (Jun kiln rose-purple glaze tile) -->
+<article class="glaze-jun rounded-3xl p-3.5 relative overflow-hidden" data-purpose="film-item">
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-2">
+<span class="w-6 h-6 rounded-full bg-jun/20 border border-jun/30 flex items-center justify-center text-jun text-[11px]">
+<svg class="w-3.5 h-3.5 text-jun" fill="currentColor" viewbox="0 0 20 20">
+<path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v2h2V6H4zm4 0v2h4V6H8zm6 0v2h2V6h-2zm2 4v2h-2v-2h2zm-4 0v2H8v-2h4zm-6 0v2H4v-2h2zm-2 4v2h2v-2H4zm4 0v2h4v-2H8zm6 0v2h2v-2h-2z"></path>
+</svg>
+</span>
+<span class="text-[11px] font-sans uppercase tracking-wider text-jun font-medium">FILM NOTE</span>
+</div>
+<time class="text-[11.5px] font-sans text-tenmoku/45">昨天 23:40</time>
+</div>
+<div class="mt-2.5 px-0.5">
+<div class="flex items-baseline justify-between">
+<h2 class="font-serif text-[16px] text-tenmoku font-medium tracking-wide">燃烧女子的肖像</h2>
+<span class="font-sans text-[12px] text-jun/80 font-normal">2019 · 瑟琳·席安玛</span>
+</div>
+<p class="mt-1 font-serif text-[13px] text-jun tracking-wider italic opacity-90">
+            «火焰与海风»
+          </p>
+</div>
+</article>
+<!-- ITEM 3: SONG ITEM (Tenmoku iron-brown glaze tile) -->
+<article class="glaze-tenmoku rounded-3xl p-3.5 relative overflow-hidden text-porcelain" data-purpose="song-item">
+<!-- Subtly metallic oil-spot reflection -->
+<div class="absolute -right-8 -bottom-8 w-28 h-28 rounded-full bg-[#644D42]/30 blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-2">
+<!-- Audio rhythm ceramic wave indicator -->
+<div class="flex items-end space-x-1 h-3.5 w-4" title="Playing">
+<span class="w-0.5 h-3 bg-celadon-light/80 rounded-full animate-pulse"></span>
+<span class="w-0.5 h-2 bg-celadon-light/60 rounded-full"></span>
+<span class="w-0.5 h-3.5 bg-celadon-light/90 rounded-full animate-pulse" style="animation-delay: 150ms;"></span>
+<span class="w-0.5 h-1.5 bg-celadon-light/50 rounded-full"></span>
+</div>
+<span class="text-[11px] font-sans uppercase tracking-widest text-celadon-light/70 font-medium">AUDIO</span>
+</div>
+<time class="text-[11px] font-sans text-porcelain/40">昨天 21:05</time>
+</div>
+<div class="flex items-center justify-between mt-1 px-0.5">
+<div>
+<h2 class="font-serif text-[15.5px] text-porcelain tracking-wide font-normal">夜空中最亮的星</h2>
+<p class="text-[12px] font-serif text-porcelain/60 mt-0.5">逃跑计划</p>
+</div>
+<!-- Tactile stone disc play icon -->
+<div class="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center backdrop-blur-sm">
+<svg class="w-3.5 h-3.5 text-celadon-light ml-0.5" fill="currentColor" viewbox="0 0 20 20">
+<path d="M6.3 3.7c-.8-.5-1.8.1-1.8 1.1v10.4c0 1 1 1.6 1.8 1.1l8.7-5.2c.8-.5.8-1.7 0-2.2L6.3 3.7z"></path>
+</svg>
+</div>
+</div>
+</article>
+<!-- ITEM 4: QUOTE ITEM (Dehua white crackle porcelain horizontal plaque) -->
+<article class="glaze-card rounded-3xl p-4 bg-porcelain/90 relative" data-purpose="quote-item">
+<div class="flex items-center justify-between mb-2">
+<span class="font-serif text-[11px] tracking-widest text-[#72857C] uppercase">QUOTE · 文案</span>
+<time class="text-[11px] font-sans text-tenmoku/40">10/19</time>
+</div>
+<!-- Crackle line decoration -->
+<div class="relative pl-3 border-l-2 border-celadon/50 my-1">
+<blockquote class="font-serif text-[14.5px] text-tenmoku/90 leading-relaxed tracking-wide">
+            “我们读诗，是因为我们是人类的一员。”
+          </blockquote>
+<footer class="mt-1.5 text-right font-serif text-[12px] text-tenmoku/55">
+            —— 《死亡诗社》
+          </footer>
+</div>
+</article>
+<!-- ITEM 5: IDEA ITEM (Pale celadon pebble tile) -->
+<article class="glaze-card rounded-3xl p-3.5 bg-gradient-to-br from-[#E6EFEA] to-[#D5E3DC] border-celadon/30" data-purpose="idea-item">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#6C9685]"></span>
+<span class="text-[11px] font-serif text-[#55786A] tracking-wider font-medium">想法 · 灵光</span>
+</div>
+<time class="text-[11px] font-sans text-tenmoku/40">10/18</time>
+</div>
+<p class="font-serif text-[14px] text-tenmoku/85 leading-snug tracking-normal px-0.5">
+          把通勤路上听到的对话写成一组短诗
+        </p>
+</article>
+<!-- ITEM 6: LINK ITEM (Ru ware sky-blue ceramic tile with arrow link) -->
+<article class="glaze-ru rounded-3xl p-3.5 relative flex items-center justify-between" data-purpose="link-item">
+<div class="flex-1 pr-3">
+<div class="flex items-center space-x-1.5 mb-1">
+<span class="text-[10px] font-sans uppercase tracking-widest text-[#5C8193] font-semibold">LINK</span>
+<span class="text-tenmoku/20">·</span>
+<time class="text-[11px] font-sans text-tenmoku/45">10/16</time>
+</div>
+<h2 class="font-serif text-[14.5px] text-tenmoku font-medium tracking-tight">Are.na · 关于收集的收集</h2>
+<span class="text-[11.5px] font-sans text-[#52778A] underline decoration-[#52778A]/30 underline-offset-2">are.na</span>
+</div>
+<!-- Arrow badge -->
+<div class="w-7 h-7 rounded-full bg-white/70 border border-white/80 shadow-xs flex items-center justify-center text-[#52778A] flex-shrink-0">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+</article>
+</main>
+<!-- END: CollectedGleaningsStream -->
+<!-- BEGIN: FloatingGraftButton -->
+<!-- Floating '嫁接' (Graft) Entry Button: Dark stone ceramic pill with branch icon -->
+<aside class="absolute bottom-[84px] right-5 z-30" data-purpose="floating-graft-action">
+<button aria-label="嫁接" class="glaze-tenmoku group flex items-center space-x-2 px-4 py-2.5 rounded-full text-porcelain active:scale-95 transition-transform" title="开始嫁接素材">
+<!-- Sprouting branch icon -->
+<svg class="w-4 h-4 text-celadon-light" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 21v-7"></path>
+<path d="M12 14a5 5 0 0 1 5-5h2"></path>
+<path d="M12 10a5 5 0 0 0-5-5H5"></path>
+<path d="M17 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+</svg>
+<span class="font-serif text-[13.5px] tracking-widest font-medium pr-0.5">嫁接</span>
+</button>
+</aside>
+<!-- END: FloatingGraftButton -->
+<!-- BEGIN: BottomDock -->
+<!-- Exactly 5 tabs with refined Song serif labels: 穗仓 / 嫁接 / 新枝 / 口味 / 设置 -->
+<nav class="relative z-30 h-[74px] px-3 pb-3 pt-2 bg-white/70 backdrop-blur-xl border-t border-white/60 flex items-center justify-around flex-shrink-0" data-purpose="bottom-navigation-dock">
+<!-- Tab 1: 穗仓 (Active) -->
+<button aria-selected="true" class="flex flex-col items-center justify-center flex-1 h-full text-tenmoku transition-colors group" data-purpose="nav-tab-active">
+<span class="font-serif text-[13px] font-semibold tracking-wider text-tenmoku">穗仓</span>
+<!-- Ceramic celadon dot indicator -->
+<span class="w-1.5 h-1.5 rounded-full bg-[#5E947F] mt-1 shadow-sm"></span>
+</button>
+<!-- Tab 2: 嫁接 -->
+<button class="flex flex-col items-center justify-center flex-1 h-full text-tenmoku/45 hover:text-tenmoku/80 transition-colors" data-purpose="nav-tab">
+<span class="font-serif text-[13px] font-normal tracking-wider">嫁接</span>
+<span class="w-1.5 h-1.5 rounded-full bg-transparent mt-1"></span>
+</button>
+<!-- Tab 3: 新枝 -->
+<button class="flex flex-col items-center justify-center flex-1 h-full text-tenmoku/45 hover:text-tenmoku/80 transition-colors" data-purpose="nav-tab">
+<span class="font-serif text-[13px] font-normal tracking-wider">新枝</span>
+<span class="w-1.5 h-1.5 rounded-full bg-transparent mt-1"></span>
+</button>
+<!-- Tab 4: 口味 -->
+<button class="flex flex-col items-center justify-center flex-1 h-full text-tenmoku/45 hover:text-tenmoku/80 transition-colors" data-purpose="nav-tab">
+<span class="font-serif text-[13px] font-normal tracking-wider">口味</span>
+<span class="w-1.5 h-1.5 rounded-full bg-transparent mt-1"></span>
+</button>
+<!-- Tab 5: 设置 -->
+<button class="flex flex-col items-center justify-center flex-1 h-full text-tenmoku/45 hover:text-tenmoku/80 transition-colors" data-purpose="nav-tab">
+<span class="font-serif text-[13px] font-normal tracking-wider">设置</span>
+<span class="w-1.5 h-1.5 rounded-full bg-transparent mt-1"></span>
+</button>
+</nav>
+<!-- END: BottomDock -->
+</div>
+<!-- END: MobileDeviceCanvas -->
+</body></html>
