@@ -6,6 +6,36 @@ import fs from 'node:fs';
 fs.mkdirSync(out, { recursive: true });
 const errs = [];
 const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] });
+// v0.16 引导只在第一次打开时出现：其余用例都当作「走过引导」的老用户（onboard: true 的上下文才看引导）
+const _newContext = b.newContext.bind(b);
+b.newContext = async (opts = {}) => {
+  const { onboard, ...o } = opts;
+  const c = await _newContext(o);
+  if (!onboard) await c.addInitScript(() => { try { localStorage.setItem('glean.onboarded', '1'); } catch { /* svg doc */ } });
+  return c;
+};
+// v0.16 Studio：旧的暖纸 / 麦田 / ASCII / 衬线 一律不该再出现；无圆角、无阴影
+async function studio(pg, tag) {
+  const r = await pg.evaluate(() => {
+    const out = { canvas: document.querySelectorAll('canvas').length, svgInView: document.querySelectorAll('.app svg, .view svg').length, old: [], theme: document.documentElement.dataset.theme };
+    for (const sel of ['.field-canvas', '.wheatfield', '.ascii-wrap', '.paper', '.whisper', '.grow-wheat', '.seed-burst', '.ripple']) if (document.querySelector(sel)) out.old.push(sel);
+    const bad = [];
+    for (const el of document.querySelectorAll('.btn, .card, .chip, .sheet, .confirm, .toast, input, .sprig, .trow')) {
+      const cs = getComputedStyle(el);
+      if (parseFloat(cs.borderTopLeftRadius) > 0 || (cs.boxShadow && cs.boxShadow !== 'none')) bad.push(el.className);
+    }
+    out.round = bad.slice(0, 3);
+    const ff = getComputedStyle(document.body).fontFamily;
+    out.font = /Glean Inter/.test(ff) && /Glean Sans/.test(ff) && !/Serif|Cormorant|Mono/.test(ff);
+    return out;
+  });
+  if (r.canvas) errs.push(`[${tag}] canvas still on page (${r.canvas})`);
+  if (r.svgInView) errs.push(`[${tag}] decorative svg icons in view (${r.svgInView})`);
+  if (r.old.length) errs.push(`[${tag}] old-style elements: ${r.old.join(',')}`);
+  if (r.round.length) errs.push(`[${tag}] rounded corners / shadows on ${r.round.join(' | ')}`);
+  if (!r.font) errs.push(`[${tag}] body font is not Inter + 思源黑体`);
+  if (!['light', 'dark'].includes(r.theme)) errs.push(`[${tag}] data-theme missing ${r.theme}`);
+}
 // v0.10 改名：每页都不该再出现旧暗房用语，标题是「拾穗 Glean」
 async function brand(pg, name) {
   const r = await pg.evaluate(() => {
@@ -110,6 +140,17 @@ async function dbItems(pg) {
     };
   }));
 }
+async function dbItemsFull(pg) {
+  return pg.evaluate(() => new Promise((res, rej) => {
+    const r = indexedDB.open('lingan');
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => {
+      const q = r.result.transaction('items').objectStore('items').getAll();
+      q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ id: x.id, title: x.title, why: x.why || '', tags: x.tags }))); };
+      q.onerror = () => rej(q.error);
+    };
+  }));
+}
 /** 挑一件「好认」的示例：不是摘抄（卡片标题显示原文），标题里没有引号 */
 const plainSample = (list, not = []) => list.find((x) => x.sample && x.type !== 'text' && !/["'「」]/.test(x.title) && !not.includes(x.id));
 const cardSel = (id) => `.card[data-item-id="${id}"]`;
@@ -132,25 +173,22 @@ async function run(name, viewport) {
   await pg.goto(base);
   await pg.waitForSelector('text=穗仓还是空的');
   await brand(pg, name);
-  // v0.10 活的麦田：canvas 在、在动、指针划过会重画
-  const f0 = await pg.evaluate(() => ({ ...window.__gleanField, mode: document.querySelector('.field-canvas')?.dataset.mode, phase: document.documentElement.dataset.phase }));
-  if (!f0.cols || !f0.rows) errs.push(`[${name}] field not mounted ${JSON.stringify(f0)}`);
-  if (!['dawn', 'day', 'dusk', 'night'].includes(f0.phase)) errs.push(`[${name}] phase missing ${f0.phase}`);
-  if (f0.mode !== 'live') errs.push(`[${name}] field should be live, got ${f0.mode}`);
-  await pg.mouse.move(viewport.width * 0.2, viewport.height * 0.85);
-  await pg.mouse.move(viewport.width * 0.8, viewport.height * 0.86, { steps: 8 });
-  await pg.waitForTimeout(400);
-  const f1 = await pg.evaluate(() => ({ ...window.__gleanField }));
-  if (!(f1.frames > f0.frames)) errs.push(`[${name}] field not animating ${f0.frames}->${f1.frames}`);
+  await studio(pg, name);
+  // v0.16 布局：桌面 ≥1024 顶栏导航 + 顶栏右侧速记、没有底部固定栏；手机底部 速记 + 文字导航
+  const lay = await pg.evaluate(() => ({ topNav: !!document.querySelector('.topbar .nav'), topQuick: !!document.querySelector('.topbar .quick-input'), dock: !!document.querySelector('.dock'), dockNav: document.querySelectorAll('.dock .nav-btn').length, navIcons: document.querySelectorAll('.nav svg, .nav img').length }));
+  if (viewport.width >= 1024 ? !(lay.topNav && lay.topQuick && !lay.dock) : !(lay.dock && lay.dockNav === 5 && !lay.topNav)) errs.push(`[${name}] layout wrong ${JSON.stringify(lay)}`);
+  if (lay.navIcons) errs.push(`[${name}] nav should be text only`);
+  const title0 = await pg.locator('.page-title').innerText();
+  if (title0.replace(/\s+/g, '') !== '穗仓(0)') errs.push(`[${name}] empty title should be 穗仓 (0), got ${title0}`);
   // 字体自托管：不从任何外部域名拉字体
   const ext = await pg.evaluate(() => performance.getEntriesByType('resource').map((e) => e.name).filter((u) => /\.(woff2?|ttf|otf)/.test(u) && !u.startsWith(location.origin)));
   if (ext.length) errs.push(`[${name}] external fonts ${ext.join(',')}`);
   const fontsOk = await pg.evaluate(async () => {
-    await Promise.all([document.fonts.load('900 40px "Glean Display"', '穗仓'), document.fonts.load('16px "Glean Serif"', '穗'), document.fonts.load('italic 20px "Glean Latin"', 'Glean'), document.fonts.load('800 13px "Glean Mono"', '|')]);
-    return ['900 40px "Glean Display"', '16px "Glean Serif"', 'italic 20px "Glean Latin"', '800 13px "Glean Mono"'].map((f) => [f, document.fonts.check(f, f.includes('Latin') || f.includes('Mono') ? 'G' : '穗')]);
+    await Promise.all([document.fonts.load('600 56px "Glean Sans"', '穗仓'), document.fonts.load('16px "Glean Sans"', '《一一》'), document.fonts.load('600 20px "Glean Inter"', 'GLEAN (10)')]);
+    return [['600 56px "Glean Sans"', '穗仓'], ['16px "Glean Sans"', '《一一》'], ['600 20px "Glean Inter"', 'GLEAN']].map(([f, t]) => [f, document.fonts.check(f, t)]);
   });
   for (const [f, ok] of fontsOk) if (!ok) errs.push(`[${name}] font not loaded: ${f}`);
-  if (!(await pg.locator('.ascii-empty').count())) errs.push(`[${name}] ascii empty state missing`);
+  if ((await pg.locator('.empty .steps3 li').count()) !== 3) errs.push(`[${name}] empty state should list 3 ways to add`);
   await pg.screenshot({ path: `${out}/${name}-0-empty.png`, fullPage: true });
   // capture one manually
   await pg.click('.empty button:has-text("拾第一穗")');
@@ -163,7 +201,7 @@ async function run(name, viewport) {
   await pg.click('.capture button[type=submit]');
   await pg.waitForSelector('.card:has-text("重庆森林")');
   // validation: empty save
-  await pg.click(viewport.width < 760 ? '.nav-add' : '.nav-write');
+  await pg.click('.quick-more');
   await pg.click('.capture button[type=submit]');
   await pg.waitForSelector('.error');
   await pg.click('.capture button:has-text("取消")');
@@ -172,6 +210,13 @@ async function run(name, viewport) {
   // load samples: wipe then samples
   await pg.click('.nav-btn:has-text("设置")');
   await pg.click('button:has-text("清空")');
+  // v0.16 确认弹层替代系统 confirm：清空要确认两次
+  await pg.waitForSelector('.confirm:has-text("清空所有穗和新枝")');
+  await studio(pg, name + '-confirm');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.confirm:has-text("再确认一次")');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("已清空")');
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.click('text=先放点示例');
   await pg.waitForSelector('.card[data-sample="1"]');
@@ -190,13 +235,16 @@ async function run(name, viewport) {
   // v0.3 quick bar: type + Enter saves, time shown, optional why after save
   await pg.fill('.quick-input', '速记测试一句 #速记');
   await pg.press('.quick-input', 'Enter');
+  await pg.waitForSelector('.quick-ok:has-text("已拾")', { timeout: 1500 }).catch(() => errs.push(`[${name}] 已拾 hint missing`));
   await pg.waitForSelector('.card:has-text("速记测试一句")');
   const when = await pg.locator('.card:has-text("速记测试一句") .card-when').innerText();
   if (!when.startsWith('今天')) errs.push(`[${name}] card time expected 今天 got ${when}`);
-  if (!(await pg.locator('.card:has-text("速记测试一句") .tag:has-text("速记")').count())) errs.push(`[${name}] quick tag missing`);
+  // v0.16 网格图块不再印标签和「为什么」：改读库核对
+  if (!(await dbItemsFull(pg)).some((x) => x.title.startsWith('速记测试一句') && x.tags.includes('速记'))) errs.push(`[${name}] quick tag missing`);
   await pg.fill('.quick-why', '因为很安静 #夜');
   await pg.press('.quick-why', 'Enter');
-  await pg.waitForSelector('.card:has-text("因为很安静")');
+  await pg.waitForSelector('.toast:has-text("已补上")');
+  if (!(await dbItemsFull(pg)).some((x) => x.why === '因为很安静' && x.tags.includes('夜'))) errs.push(`[${name}] quick why not saved`);
   if (await pg.locator('.quick-after').count()) errs.push(`[${name}] quick-after should close`);
   // clipboard offer
   const clipText = `剪贴板里的一句话 ${name}`;
@@ -204,7 +252,7 @@ async function run(name, viewport) {
   await pg.evaluate(() => window.dispatchEvent(new Event('focus')));
   await pg.waitForSelector('.clip-offer', { timeout: 5000 });
   await pg.screenshot({ path: `${out}/${name}-1b-clip.png` });
-  await pg.click('.clip-offer button:has-text("拾进穗仓")');
+  await pg.click('.clip-offer .clip-take');
   await pg.waitForSelector(`.card:has-text("${clipText}")`);
   await pg.evaluate(() => window.dispatchEvent(new Event('focus')));
   await pg.waitForTimeout(700);
@@ -222,8 +270,12 @@ async function run(name, viewport) {
   const all = await dbItems(pg);
   const kw = A.title;
   const expN = all.filter((x) => [x.title, x.creator, x.content, x.tags.join(' ')].join(' ').toLowerCase().includes(kw.toLowerCase())).length;
+  await pg.click('.search-toggle');
   await pg.fill('.search input', kw);
   await pg.waitForTimeout(200);
+  // v0.16 搜索：命中字黑底白字，结果分「穗 (n)」与「新枝 (n)」
+  if (!(await pg.locator(`.masonry ${cardSel(A.id)} mark.hit`).count())) errs.push(`[${name}] search hit not highlighted`);
+  if (!(await pg.locator('.result-head:has-text("穗 (")').count()) || !(await pg.locator('.branch-hits .result-head:has-text("新枝 (")').count())) errs.push(`[${name}] search result heads missing`);
   const n = await pg.locator('.masonry .card').count();
   if (n < 1 || n > expN + 1 || !(await pg.locator(`.masonry ${cardSel(A.id)}`).count())) errs.push(`[${name}] search ${kw} expected ~${expN} incl. #${A.id} got ${n}`);
   await pg.fill('.search input', '');
@@ -239,10 +291,10 @@ async function run(name, viewport) {
   await pg.fill('.when-input', '2025-10-19T08:30');
   await pg.waitForSelector('.toast:has-text("时间已改")');
   await pg.screenshot({ path: `${out}/${name}-2-detail.png` });
-  await pg.click('text=以此嫁接');
+  await studio(pg, name + '-detail');
+  await pg.click('.detail-graft');
   await pg.waitForSelector('.graft');
   await pg.click('.graft-btn');
-  if (!(await pg.locator('.seed-burst').count())) errs.push(`[${name}] seed burst missing`);
   await pg.waitForSelector('.idea', { timeout: 10000 });
   await pg.waitForTimeout(1300);
   await pg.screenshot({ path: `${out}/${name}-3-develop.png`, fullPage: true });
@@ -250,32 +302,22 @@ async function run(name, viewport) {
   await pg.evaluate(() => { const el = document.querySelector('.graft'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 12); });
   await pg.waitForTimeout(500);
   await pg.screenshot({ path: `${out}/${name}-shot-graft.png` });
-  // v0.5 动效：标题解码、正文逐字浮现，最终都应还原为完整文字
+  // v0.16 动效只有淡入：新枝块用 g-fade 进场（减少动效时为 none），标题直接是完整文字（不再解码 / 逐字浮现）
   const mv = await pg.evaluate(() => document.documentElement.dataset.motion);
   if (!['full', 'lite', 'off'].includes(mv)) errs.push(`[${name}] data-motion missing: ${mv}`);
-  await pg.waitForFunction(() => !document.querySelector('.idea .tw-rest'), null, { timeout: 8000 }).catch(() => errs.push(`[${name}] type reveal never finished`));
-  const dec = await pg.evaluate(() => {
-    const el = document.querySelector('.idea-title .decode');
-    return el ? { label: el.getAttribute('aria-label'), text: el.textContent } : null;
-  });
-  if (!dec) errs.push(`[${name}] decode title missing`);
-  else if (dec.label !== dec.text) errs.push(`[${name}] decode title not settled: ${dec.text} vs ${dec.label}`);
-  // 涟漪：按下按钮后应出现 .ripple（off 档除外）
-  if (mv !== 'off') {
-    const rp = await pg.evaluate(async () => {
-      const btn = document.querySelector('.idea button.btn');
-      btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }));
-      return !!btn.querySelector('.ripple');
-    });
-    if (!rp) errs.push(`[${name}] ripple missing`);
-  }
+  const fade = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ anim: getComputedStyle(e).animationName, title: e.querySelector('.idea-title')?.textContent || '', n: e.querySelector('.numeral')?.textContent })));
+  if (fade.length !== 3 || fade.some((f) => !f.title || /《《|》》/.test(f.title))) errs.push(`[${name}] branch titles wrong ${JSON.stringify(fade)}`);
+  if (fade.map((f) => f.n).join(',') !== '01,02,03') errs.push(`[${name}] branch numerals should be 01 02 03, got ${fade.map((f) => f.n)}`);
+  if (mv !== 'off' && fade.some((f) => f.anim !== 'g-fade')) errs.push(`[${name}] branch fade-in missing ${fade.map((f) => f.anim)}`);
+  await studio(pg, name + '-graft');
   // v0.12 从一穗出发也会凑够 3 穗；离线新枝同样能点回 ≥3 穗
   const offPicked = await pg.locator('.graft .pair-item').count();
   if (offPicked !== 3) errs.push(`[${name}] graft from one item should pick 3, got ${offPicked}`);
   await pg.waitForSelector('.three .idea .sprig', { timeout: 5000 }).catch(() => errs.push(`[${name}] offline sprigs missing`));
   const offSpr = await pg.evaluate(() => [...document.querySelectorAll('.three .idea')].map((e) => ({ n: e.querySelectorAll('.sprig').length, ev: e.dataset.evidence })));
   if (offSpr.some((x) => x.n < 3 || x.ev !== 'ok')) errs.push(`[${name}] offline provenance wrong ${JSON.stringify(offSpr)}`);
-  await pg.click('.idea button:has-text("收藏")');
+  await pg.click('.idea .idea-keep');
+  await pg.waitForSelector('.idea .idea-keep:has-text("已留下")');
   await pg.click('text=重新抽穗');
   await pg.click('.seg button:has-text("4")');
   await pg.click('text=重新抽穗');
@@ -373,11 +415,18 @@ async function run(name, viewport) {
   await pg.waitForFunction(() => document.querySelectorAll('.hrow.open .sprig[data-item-id]').length >= 3, null, { timeout: 4000 }).catch(async () => errs.push(`[${name}] history row sprigs < 3 (${await pg.locator('.hrow.open .sprig[data-item-id]').count()})`));
   await pg.locator('.hrow.open .hrow-head').click();
   await pg.click('.hbatch >> nth=0 >> .hbatch-star');
-  await pg.waitForSelector('.toast:has-text("三根都收藏了")', { timeout: 3000 }).catch(() => errs.push(`[${name}] star-all toast missing`));
-  await pg.click('.chip:has-text("只看收藏")');
+  await pg.waitForSelector('.toast:has-text("三根都留下了")', { timeout: 3000 }).catch(() => errs.push(`[${name}] star-all toast missing`));
+  await pg.click('.chip:has-text("只看留下的")');
   const starredRows = await pg.locator('.hrow').count();
   if (starredRows !== 4) errs.push(`[${name}] starred rows expected 4 (1+3) got ${starredRows}`);
-  await pg.click('.chip:has-text("只看收藏")');
+  await pg.click('.chip:has-text("只看留下的")');
+  // v0.16 新枝 Manifesto：黑底大字，一次一根，提到的穗用细体
+  await pg.click('.manifesto-toggle');
+  await pg.waitForSelector('.manifesto .mf-text');
+  const mf = await pg.evaluate(() => { const m = document.querySelector('.manifesto'); return { bg: getComputedStyle(m).backgroundColor, fg: getComputedStyle(m).color, text: m.querySelector('.mf-text').textContent, pages: m.querySelectorAll('.mf-pages button').length }; });
+  if (mf.bg !== 'rgb(0, 0, 0)' || mf.fg !== 'rgb(255, 255, 255)' || !mf.text || mf.pages < 1) errs.push(`[${name}] manifesto wrong ${JSON.stringify(mf)}`);
+  await pg.screenshot({ path: `${out}/${name}-3e-manifesto.png` });
+  await pg.click('.view-switch button:has-text("列表")');
   await pg.unroute('**/mock-ai/v1/chat/completions');
   await pg.evaluate(() => localStorage.removeItem('lingan.settings.v1'));
   await pg.reload();
@@ -398,21 +447,40 @@ async function run(name, viewport) {
   await pg.evaluate(() => window.scrollTo(0, 0));
   await pg.waitForTimeout(300);
   await pg.screenshot({ path: `${out}/${name}-shot-taste.png` });
-  // v0.7 时间线
+  // v0.7 时间线（v0.16 按周成带）+ v0.16 列表 / 月历
   await pg.click('.nav-btn:has-text("穗仓")');
-  await pg.click('.chip:has-text("时间线")');
+  await pg.click('.view-switch button:has-text("时间线")');
   await pg.waitForSelector('.tl-day .tl-frame');
+  const nAll = (await dbItems(pg)).length;
+  const tlN = await pg.locator('.tl-day .tl-frame').count();
+  if (tlN !== nAll) errs.push(`[${name}] timeline rows ${tlN} != ${nAll}`);
   await pg.screenshot({ path: `${out}/${name}-4b-timeline.png`, fullPage: true });
-  await pg.click('.chip:has-text("时间线")');
+  await pg.click('.view-switch button:has-text("列表")');
+  await pg.waitForSelector('.list-view .trow');
+  const lr = await pg.evaluate(() => ({ rows: document.querySelectorAll('.list-view .trow').length, head: getComputedStyle(document.querySelector('.list-view .thead')).borderBottomWidth, rowLine: getComputedStyle(document.querySelector('.list-view .trow')).borderBottomWidth }));
+  if (lr.rows !== nAll || lr.head !== '1px' || lr.rowLine !== '0px') errs.push(`[${name}] list view wrong ${JSON.stringify(lr)} (n=${nAll})`);
+  await pg.click('.view-switch button:has-text("月历")');
+  await pg.waitForSelector('.cal-grid');
+  const today = new Date();
+  const todayKeyStr = localKey(today.getTime());
+  const nToday = (await dbItems(pg)).filter((x) => localKey(x.createdAt) === todayKeyStr).length;
+  await pg.click(`.cal-cell[aria-label^="${todayKeyStr}"]`);
+  const calRows = await pg.locator('.cal-day .trow').count();
+  if (calRows !== nToday || !(await pg.locator(`.cal-cell.has[aria-label^="${todayKeyStr}"]`).count())) errs.push(`[${name}] calendar today ${calRows} rows vs ${nToday}`);
+  const calTitle = await pg.locator('.cal-title').innerText();
+  const nMonth = (await dbItems(pg)).filter((x) => { const d = new Date(x.createdAt); return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth(); }).length;
+  if (!calTitle.includes(`(${nMonth})`)) errs.push(`[${name}] calendar count ${calTitle} vs ${nMonth}`);
+  await pg.screenshot({ path: `${out}/${name}-4c-calendar.png`, fullPage: true });
+  await pg.click('.view-switch button:has-text("网格")');
   await pg.click('.nav-btn:has-text("口味")');
   // settings + theme
   await pg.click('.nav-btn:has-text("设置")');
   await brand(pg, name);
-  await pg.click('.phase-seg button:has-text("夜晚")');
-  // 换配色要经过 设置 → usePhase 的 effect → 写 dataset 两拍渲染，等它落定再读（之前是立即读，偶发读到旧值）
-  await pg.waitForFunction(() => document.documentElement.dataset.phase === 'night', null, { timeout: 3000 }).catch(() => {});
-  const sky = await pg.evaluate(() => [document.documentElement.dataset.phase, document.documentElement.dataset.sky]);
-  if (sky[0] !== 'night' || sky[1] !== 'dark') errs.push(`[${name}] night phase not applied: ${sky}`);
+  await pg.click('.theme-seg button:has-text("黑")');
+  // 换主题要经过 设置 → effect → 写 dataset 两拍渲染，等它落定再读
+  await pg.waitForFunction(() => document.documentElement.dataset.theme === 'dark', null, { timeout: 3000 }).catch(() => {});
+  const sky = await pg.evaluate(() => [document.documentElement.dataset.theme, getComputedStyle(document.body).backgroundColor]);
+  if (sky[0] !== 'dark' || sky[1] !== 'rgb(0, 0, 0)') errs.push(`[${name}] dark theme not applied: ${sky}`);
   await pg.screenshot({ path: `${out}/${name}-5-settings-dark.png`, fullPage: true });
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.screenshot({ path: `${out}/${name}-6-library-dark.png`, fullPage: true });
@@ -424,15 +492,26 @@ async function run(name, viewport) {
   await pg.fill('.capture .field.big input', `${B.title} (edited)`);
   await pg.click('.capture button[type=submit]');
   await pg.waitForSelector('.card:has-text("(edited)")');
+  // v0.16 删除：确认弹层 → 撤销 toast（撤销后原样回来）→ 再删一次
   await pg.click('.card:has-text("(edited)")');
   await pg.click('.detail button:has-text("删除")');
+  await pg.waitForSelector('.confirm .confirm-ok:has-text("删掉")');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("已删掉 1 穗") .toast-act:has-text("撤销")');
+  if (await pg.locator('.card:has-text("(edited)")').count()) errs.push(`[${name}] delete failed`);
+  await pg.screenshot({ path: `${out}/${name}-6b-undo.png` });
+  await pg.click('.toast-act:has-text("撤销")');
+  await pg.waitForSelector('.card:has-text("(edited)")', { timeout: 3000 }).catch(() => errs.push(`[${name}] undo did not restore`));
+  await pg.click('.card:has-text("(edited)")');
+  await pg.click('.detail button:has-text("删除")');
+  await pg.click('.confirm-ok');
   await pg.waitForTimeout(300);
   if (await pg.locator('.card:has-text("(edited)")').count()) errs.push(`[${name}] delete failed`);
   // reload persistence
   await pg.reload();
   await pg.waitForSelector(cardSel(A.id));
-  const th = await pg.evaluate(() => document.documentElement.dataset.phase);
-  if (th !== 'night') errs.push(`[${name}] phase not persisted: ${th}`);
+  const th = await pg.evaluate(() => document.documentElement.dataset.theme);
+  if (th !== 'dark') errs.push(`[${name}] theme not persisted: ${th}`);
   // v0.4 ASCII 显影：塞一张图片素材（直接写 IndexedDB），刷新后应先出字符画再显影成照片
   await pg.evaluate(async () => {
     const c = document.createElement('canvas');
@@ -459,13 +538,66 @@ async function run(name, viewport) {
   await pg.waitForSelector('.card:has-text("渐变测试图")');
   // v0.14 穗仓顶部多了「今日一穗」和示例条，新卡片可能在首屏下面：滚到它（显影只在看得见时播）
   await pg.locator('.card:has-text("渐变测试图")').scrollIntoViewIfNeeded();
-  await pg.waitForSelector('.ascii-canvas', { timeout: 3000 });
-  await pg.waitForTimeout(450);
-  await pg.screenshot({ path: `${out}/${name}-7-ascii-mid.png` });
-  await pg.waitForFunction(() => !document.querySelector('.ascii-canvas') && document.querySelector('.ascii-wrap.ascii-done'), null, { timeout: 5000 });
+  // v0.16 不再 ASCII 显影：满铺照片解码好后淡入，底部压暗小字说明
+  await pg.waitForSelector('.card:has-text("渐变测试图") img.card-img.loaded', { timeout: 5000 });
+  const capColor = await pg.locator('.card:has-text("渐变测试图") .card-title').evaluate((e) => getComputedStyle(e).color);
+  if (capColor !== 'rgb(255, 255, 255)') errs.push(`[${name}] photo caption should be white, got ${capColor}`);
+  await pg.screenshot({ path: `${out}/${name}-7-photo.png` });
   const iw = await pg.locator('.card:has-text("渐变测试图") img.card-img').evaluate((i) => i.naturalWidth);
   if (iw < 10) errs.push(`[${name}] ascii image not loaded`);
   await ctx.close();
+}
+
+// v0.16 引导（只在第一次打开出现）+ 全局速记小窗
+async function onboarding() {
+  for (const [tag, viewport] of [['onboard-mobile', { width: 390, height: 844 }], ['onboard-desktop', { width: 1440, height: 900 }]]) {
+    const ctx = await b.newContext({ viewport, onboard: true });
+    const pg = await ctx.newPage();
+    pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+    pg.on('console', (m) => m.type() === 'error' && !/Failed to load resource|ERR_/.test(m.text()) && errs.push(`[${tag}] console ${m.text()}`));
+    await pg.goto(base);
+    await pg.waitForSelector('.onboard', { timeout: 5000 }).catch(() => errs.push(`[${tag}] onboarding not shown on first open`));
+    if (!(await pg.locator('.onboard').count())) { await ctx.close(); continue; }
+    await studio(pg, tag);
+    await pg.screenshot({ path: `${out}/${tag}-1.png` });
+    if (tag === 'onboard-desktop') {
+      await pg.click('.onboard-skip');
+      await pg.waitForSelector('text=穗仓还是空的');
+    } else {
+      await pg.click('.onboard-next');
+      await pg.waitForSelector('.onboard:has-text("AI 只用你的素材")');
+      if ((await pg.locator('.promise-list li').count()) !== 4) errs.push(`[${tag}] expected 4 promises`);
+      await pg.click('.onboard-next');
+      if ((await pg.locator('.radio-list .radio').count()) !== 4) errs.push(`[${tag}] expected 4 AI services`);
+      await pg.click('.radio-list .radio:has-text("智谱")');
+      await pg.fill('.radio-item input', 'e2e-onboard-key');
+      await pg.screenshot({ path: `${out}/${tag}-3.png` });
+      await pg.click('.onboard-done');
+      await pg.waitForSelector('text=穗仓还是空的');
+      const st = await pg.evaluate(() => JSON.parse(localStorage.getItem('lingan.settings.v1') || '{}'));
+      if (st.preset !== 'zhipu' || st.chat?.apiKey !== 'e2e-onboard-key') errs.push(`[${tag}] onboarding AI choice not saved ${st.preset}`);
+    }
+    await pg.reload();
+    await pg.waitForSelector('text=穗仓还是空的');
+    if (await pg.locator('.onboard').count()) errs.push(`[${tag}] onboarding shown twice`);
+    // 全局速记小窗：托盘 / Ctrl+Shift+L 唤出（浏览器里用 glean:quick 事件模拟）
+    await pg.evaluate(() => window.dispatchEvent(new Event('glean:quick')));
+    await pg.waitForSelector('.quick-window input');
+    const focused = await pg.evaluate(() => document.activeElement?.closest('.quick-window') != null);
+    if (!focused) errs.push(`[${tag}] quick window input not focused`);
+    await pg.fill('.quick-window input', '小窗里拾的一句 #小窗');
+    if (!(await pg.locator('.qw-types .chip.on').count())) errs.push(`[${tag}] quick window type not recognised`);
+    await pg.screenshot({ path: `${out}/${tag}-quickwin.png` });
+    await pg.press('.quick-window input', 'Enter');
+    await pg.waitForSelector('.card:has-text("小窗里拾的一句")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] quick window did not save`));
+    if (await pg.locator('.quick-window').count()) errs.push(`[${tag}] quick window should close after saving`);
+    await pg.evaluate(() => window.dispatchEvent(new Event('glean:quick')));
+    await pg.waitForSelector('.quick-window');
+    await pg.keyboard.press('Escape');
+    await pg.waitForTimeout(200);
+    if (await pg.locator('.quick-window').count()) errs.push(`[${tag}] Esc should close quick window`);
+    await ctx.close();
+  }
 }
 
 // v0.13 虚拟瀑布：同一列里卡片不能叠在一起（量高度出错时会叠）
@@ -518,11 +650,7 @@ async function shots() {
     });
   });
   await pg.reload();
-  await pg.waitForSelector('.card:has-text("傍晚的麦田")');
-  await pg.waitForSelector('.ascii-canvas', { timeout: 4000 }).catch(() => {});
-  await pg.waitForTimeout(250);
-  await pg.screenshot({ path: `${out}/shot-library-developing.png` });
-  await pg.waitForFunction(() => !document.querySelector('.ascii-canvas'), null, { timeout: 6000 }).catch(() => {});
+  await pg.waitForSelector('.card:has-text("傍晚的麦田") img.card-img.loaded', { timeout: 6000 }).catch(() => errs.push('[shots] photo never loaded'));
   await pg.mouse.move(40, 760);
   await pg.mouse.move(360, 770, { steps: 10 });
   await pg.waitForTimeout(250);
@@ -626,6 +754,7 @@ async function daily() {
   if (JSON.stringify(back.old) !== JSON.stringify(d1.old) || JSON.stringify(back.combo) !== JSON.stringify(d1.combo)) errs.push('[daily] today record not stable');
   // 彻底断网（浏览器离线）后在 App 里来回切，卡片照样在；一键去嫁接 → 4 穗已选好，离线长出三根
   await ctx.setOffline(true);
+  await pg.waitForSelector('.offline-bar:has-text("离线")', { timeout: 3000 }).catch(() => errs.push('[daily] offline bar missing'));
   await pg.click('.nav-btn:has-text("设置")');
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.waitForSelector('.daily-ear');
@@ -766,7 +895,7 @@ async function obsidian() {
     g.fillStyle = '#5b3a1e'; g.fillRect(30, 40, 180, 80);
     return c.toDataURL('image/png').split(',')[1];
   });
-  await pg.click('.nav-add');
+  await pg.click('.quick-more');
   await pg.setInputFiles('.capture input[type=file]', { name: 'field.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
   await pg.waitForTimeout(400);
   await pg.fill('.capture .field.big input', '麦田/傍晚: 一角');
@@ -983,7 +1112,7 @@ async function measureScroll(pg, pxPerSec, durMs) {
         last = now;
         const y = Math.min(max, ((now - t0) / 1000) * pxPerSec);
         window.scrollTo(0, y);
-        maxMounted = Math.max(maxMounted, document.querySelectorAll('.card').length);
+        maxMounted = Math.max(maxMounted, document.querySelectorAll('.card, .tl-frame, .list-view .trow').length);
         maxLive = Math.max(maxLive, window.__gleanImg?.live || 0);
         if (now - t0 < durMs && y < max) requestAnimationFrame(step);
         else res(null);
@@ -1017,7 +1146,7 @@ async function coldStart(ctx, cpu) {
   await pg.waitForFunction(() => window.__gleanReady && document.querySelectorAll('.masonry .card').length > 0, null, { timeout: 30000 });
   const r = await pg.evaluate(() => {
     const nav = performance.getEntriesByType('navigation')[0];
-    return { ready: Math.round(window.__gleanReady), dcl: Math.round(nav?.domContentLoadedEventEnd || 0), cards: document.querySelectorAll('.masonry .card').length, count: document.querySelector('.dateline')?.textContent?.match(/共 (\d+) 穗/)?.[1] };
+    return { ready: Math.round(window.__gleanReady), dcl: Math.round(nav?.domContentLoadedEventEnd || 0), cards: document.querySelectorAll('.masonry .card').length, count: document.querySelector('.page-title .count')?.textContent?.match(/\((\d+)\)/)?.[1] };
   });
   // 首屏缩略图全部解码好的时刻
   r.thumbs = await pg.evaluate(async () => {
@@ -1114,19 +1243,25 @@ async function perf() {
   // 滚完回顶：objectURL 已回收（挂着的卡片才有）
   PERF.scrollMasonry.liveObjectUrlsAfter = await sp.evaluate(() => window.__gleanImg?.live);
   PERF.scrollMasonry.objectUrlsCreated = await sp.evaluate(() => window.__gleanImg?.created);
-  await sp.click('.chip:has-text("时间线")');
+  await sp.click('.view-switch button:has-text("时间线")');
   await sp.waitForSelector('.tl-day .tl-frame');
   await sp.waitForTimeout(800);
   PERF.scrollTimeline = await measureScroll(sp, 2400, 6000);
   PERF.scrollTimeline.virtual = await sp.evaluate(() => window.__gleanVirtual?.timeline);
-  // 4 倍降速下再滚一次瀑布
-  await sp.click('.chip:has-text("时间线")');
+  // v0.16 列表视图（无线表格，一行一穗，同样虚拟滚动）
+  await sp.click('.view-switch button:has-text("列表")');
+  await sp.waitForSelector('.list-view .trow');
+  await sp.waitForTimeout(500);
+  PERF.scrollList = await measureScroll(sp, 2400, 6000);
+  PERF.scrollList.virtual = await sp.evaluate(() => window.__gleanVirtual?.timeline);
+  // 4 倍降速下再滚一次网格
+  await sp.click('.view-switch button:has-text("网格")');
   await sp.waitForTimeout(600);
   const cdp = await ctx.newCDPSession(sp);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
   PERF.scrollMasonryCpu4x = await measureScroll(sp, 1600, 5000);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-  for (const [k, r] of [['masonry', PERF.scrollMasonry], ['timeline', PERF.scrollTimeline]]) {
+  for (const [k, r] of [['masonry', PERF.scrollMasonry], ['timeline', PERF.scrollTimeline], ['list', PERF.scrollList]]) {
     if (r.scrolledPx < 8000) errs.push(`[perf] ${k} scrolled only ${r.scrolledPx}px`);
     // 瀑布只挂视口附近 ~20 张；时间线按天挂（一天一整条横排），上限放宽
     if (r.maxMountedCards > (k === 'masonry' ? 60 : 140)) errs.push(`[perf] ${k} not virtualized: ${r.maxMountedCards} cards mounted`);
@@ -1155,6 +1290,8 @@ try {
     await perf();
     throw Object.assign(new Error('perf only'), { only: true });
   }
+  await onboarding();
+  if (process.env.E2E_ONLY === 'onboarding') throw Object.assign(new Error('onboarding only'), { only: true });
   await obsidian();
   if (process.env.E2E_ONLY === 'obsidian') throw Object.assign(new Error('obsidian only'), { only: true });
   await legacy();
@@ -1167,14 +1304,10 @@ try {
   await rpg.waitForSelector('.view');
   const lv = await rpg.evaluate(() => document.documentElement.dataset.motion);
   if (lv !== 'off') errs.push(`[reduced] expected motion off got ${lv}`);
-  const st = await rpg.evaluate(() => ({ mode: document.querySelector('.field-canvas')?.dataset.mode, frames: window.__gleanField?.frames }));
-  await rpg.mouse.move(50, 700);
-  await rpg.mouse.move(300, 720, { steps: 6 });
-  await rpg.waitForTimeout(800);
-  const st2 = await rpg.evaluate(() => window.__gleanField?.frames);
-  if (st.mode !== 'still') errs.push(`[reduced] field should be still, got ${st.mode}`);
-  if (st2 !== st.frames) errs.push(`[reduced] still field kept drawing ${st.frames}->${st2}`);
-  // v0.11 嫁接等待：减少动态效果时麦子是静图
+  // v0.16 减少动态效果：淡入与图片放大全部关闭
+  const rm = await rpg.evaluate(() => ({ anim: getComputedStyle(document.querySelector('.view > *')).animationName, tr: getComputedStyle(document.querySelector('.view > *')).transitionDuration }));
+  if (rm.anim !== 'none') errs.push(`[reduced] fade-in should be off, got ${rm.anim}`);
+  // v0.11 嫁接等待：减少动态效果时四步是静态文字
   await rpg.evaluate((v) => localStorage.setItem('lingan.settings.v1', v), MOCK_SETTINGS(new URL(base).origin));
   await mockAI(rpg, { delay: 2500 });
   await rpg.reload();
@@ -1184,11 +1317,9 @@ try {
   await rpg.click('.controls button:has-text("抽几穗")');
   await rpg.click('.graft-btn');
   await rpg.waitForSelector('.growing', { timeout: 3000 });
-  const g1 = await rpg.evaluate(() => ({ still: document.querySelector('.growing')?.dataset.still, txt: document.querySelector('.grow-wheat')?.textContent }));
-  await rpg.waitForTimeout(700);
-  const g2 = await rpg.evaluate(() => document.querySelector('.grow-wheat')?.textContent);
+  const g1 = await rpg.evaluate(() => ({ still: document.querySelector('.growing')?.dataset.still, steps: document.querySelectorAll('.grow-steps li').length, anim: [...document.querySelectorAll('.growing, .growing *')].some((e) => getComputedStyle(e).animationName !== 'none') }));
   if (g1.still !== '1') errs.push(`[reduced] growing should be still, got ${g1.still}`);
-  if (g1.txt !== g2) errs.push('[reduced] growing wheat animated');
+  if (g1.steps !== 4 || g1.anim) errs.push(`[reduced] growing should be 4 static steps ${JSON.stringify(g1)}`);
   await rpg.waitForSelector('.three .idea', { timeout: 15000 });
   if ((await rpg.locator('.three .idea').count()) !== 3) errs.push('[reduced] expected 3 branches');
   await rctx.close();
@@ -1204,6 +1335,6 @@ await b.close();
 if (PERF.scrollMasonryCpu4x && PERF.scrollTimeline) {
   const P = PERF;
   console.log(`PERF cold start ${P.coldStartMs.median}ms (4x CPU ${P.coldStartCpu4xMs.median}ms) · first open+migration ${P.firstOpenWithMigrationMs}ms · thumbs ${P.thumbJob.made} in ${P.thumbJob.ms}ms avg ${P.storage.avgThumbKB}KB (orig ${P.storage.avgOrigKB}KB)`);
-  console.log(`PERF scroll masonry ${P.scrollMasonry.avgFps}fps p95 ${P.scrollMasonry.p95Ms}ms jank ${P.scrollMasonry.jankPct}% mounted≤${P.scrollMasonry.maxMountedCards} · 4x ${P.scrollMasonryCpu4x.avgFps}fps jank ${P.scrollMasonryCpu4x.jankPct}% · timeline ${P.scrollTimeline.avgFps}fps jank ${P.scrollTimeline.jankPct}%`);
+  console.log(`PERF scroll masonry ${P.scrollMasonry.avgFps}fps p95 ${P.scrollMasonry.p95Ms}ms jank ${P.scrollMasonry.jankPct}% mounted≤${P.scrollMasonry.maxMountedCards} · 4x ${P.scrollMasonryCpu4x.avgFps}fps jank ${P.scrollMasonryCpu4x.jankPct}% · timeline ${P.scrollTimeline.avgFps}fps jank ${P.scrollTimeline.jankPct}%${P.scrollList ? ` · list ${P.scrollList.avgFps}fps jank ${P.scrollList.jankPct}% mounted≤${P.scrollList.maxMountedCards}` : ''}`);
 }
 console.log(errs.length ? 'ERRORS:\n' + errs.join('\n') : 'ALL PASS');
