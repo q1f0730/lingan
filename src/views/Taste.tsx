@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { chat } from '../lib/ai';
 import { db } from '../lib/db';
 import { HeatmapPanel } from '../components/Heatmap';
+import { AsciiLoader } from '../components/AsciiDevelop';
+import { PageTitle } from '../components/PageTitle';
 import { aiReady } from '../lib/settings';
 import { useApp } from '../lib/store';
 import { computeTaste, tastePrompt } from '../lib/taste';
@@ -19,14 +21,14 @@ export function Taste() {
   const [at, setAt] = useState<string>(() => localStorage.getItem(TASTE_AT) || '');
   const [busy, setBusy] = useState(false);
 
-  if (!items || !stats) return <div className="loading mono">冲洗中…</div>;
+  if (!items || !stats) return <AsciiLoader />;
   const maxType = Math.max(1, ...Object.values(stats.byType));
   const maxTag = Math.max(1, ...stats.topTags.map(([, n]) => n));
   const max7 = Math.max(1, ...stats.last7);
 
   async function genPortrait() {
     if (!items || items.length < 3) {
-      toast('至少收集 3 件素材再画像', 'err');
+      toast('至少拾 3 穗再来看口味', 'err');
       return;
     }
     setBusy(true);
@@ -57,32 +59,27 @@ export function Taste() {
 
   return (
     <section className="view">
-      <header className="view-head">
-        <div>
-          <div className="kicker mono">PROOF SHEET · 口味画像</div>
-          <h1>口味画像</h1>
-        </div>
-      </header>
+      <PageTitle title="口味" whisper="What keeps catching your eye" />
       <div className="stat-row">
-        <div className="stat">
+        <div className="paper stat">
           <div className="stat-n">{stats.total}</div>
-          <div className="label mono">件素材</div>
+          <div className="label">穗</div>
         </div>
-        <div className="stat">
+        <div className="paper stat">
           <div className="stat-n">{stats.streakDays}</div>
-          <div className="label mono">天连续收集</div>
+          <div className="label">天连续拾穗</div>
         </div>
-        <div className="stat">
+        <div className="paper stat">
           <div className="stat-n">{stats.topTags.length}</div>
-          <div className="label mono">个常用标签</div>
+          <div className="label">个常用标签</div>
         </div>
       </div>
 
-      <div className="panel">
-        <div className="label mono">最近 7 天</div>
+      <div className="paper panel">
+        <div className="label">最近 7 天</div>
         <div className="bars7">
           {stats.last7.map((n, i) => (
-            <div key={i} className="bar7" title={`${n} 件`}>
+            <div key={i} className="bar7" title={`${n} 穗`}>
               <div className="bar7-fill" style={{ height: `${(n / max7) * 100}%` }} />
             </div>
           ))}
@@ -91,22 +88,22 @@ export function Taste() {
 
       <HeatmapPanel items={items} />
 
-      <div className="panel">
-        <div className="label mono">素材构成</div>
+      <div className="paper panel">
+        <div className="label">穗的构成</div>
         {TYPE_ORDER.map((t) => (
           <div key={t} className="hbar">
             <span className="hbar-k">{TYPE_LABEL[t]}</span>
             <span className="hbar-track">
               <span className="hbar-fill" style={{ width: `${(stats.byType[t] / maxType) * 100}%` }} />
             </span>
-            <span className="mono">{stats.byType[t]}</span>
+            <span className="num">{stats.byType[t]}</span>
           </div>
         ))}
       </div>
 
       {stats.topTags.length > 0 && (
-        <div className="panel">
-          <div className="label mono">母题（标签）</div>
+        <div className="paper panel">
+          <div className="label">母题（标签）</div>
           <div className="tag-weights">
             {stats.topTags.map(([t, n]) => (
               <span key={t} style={{ fontSize: `${0.85 + (n / maxTag) * 1.1}rem` }}>
@@ -118,14 +115,14 @@ export function Taste() {
       )}
 
       {(stats.topCreators.length > 0 || stats.decades.length > 0 || stats.whyWords.length > 0) && (
-        <div className="panel grid2">
+        <div className="paper panel grid2">
           {stats.topCreators.length > 0 && (
             <div>
-              <div className="label mono">常客</div>
+              <div className="label">常客</div>
               <ol className="plain">
                 {stats.topCreators.map(([c, n]) => (
                   <li key={c}>
-                    {c} <span className="mono dim">×{n}</span>
+                    {c} <span className="dim num">×{n}</span>
                   </li>
                 ))}
               </ol>
@@ -133,11 +130,11 @@ export function Taste() {
           )}
           {stats.decades.length > 0 && (
             <div>
-              <div className="label mono">年代</div>
+              <div className="label">年代</div>
               <ol className="plain">
                 {stats.decades.map(([d, n]) => (
                   <li key={d}>
-                    {d} <span className="mono dim">×{n}</span>
+                    {d} <span className="dim num">×{n}</span>
                   </li>
                 ))}
               </ol>
@@ -145,11 +142,11 @@ export function Taste() {
           )}
           {stats.whyWords.length > 0 && (
             <div>
-              <div className="label mono">「为什么」里的高频词</div>
+              <div className="label">「为什么」里的高频词</div>
               <div className="tags">
                 {stats.whyWords.map(([w, n]) => (
                   <span key={w} className="tag">
-                    {w} <span className="dim mono">{n}</span>
+                    {w} <span className="dim num">{n}</span>
                   </span>
                 ))}
               </div>
@@ -158,9 +155,9 @@ export function Taste() {
         </div>
       )}
 
-      <div className="panel portrait">
-        <div className="label mono">AI 侧写 {at && <span className="dim">· {at}</span>}</div>
-        {portrait ? <div className="portrait-text">{portrait}</div> : <p className="dim">让 AI 读一遍你的收藏，说说你到底喜欢什么。显影时也会参考这份画像。</p>}
+      <div className="paper panel portrait">
+        <div className="label">AI 侧写 {at && <span className="dim">· {at}</span>}</div>
+        {portrait ? <div className="portrait-text">{portrait}</div> : <p className="dim">让 AI 读一遍你拾的穗，说说你到底喜欢什么。嫁接时也会参考这份口味。</p>}
         <div className="actions">
           {aiReady(settings) ? (
             <button className="btn primary" onClick={genPortrait} disabled={busy}>
