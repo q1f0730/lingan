@@ -4,6 +4,7 @@
 // 没配 key / 调用失败时，离线同样走四步，确定性地出 3 根变形法两两不同的新枝。
 import { AIError, chat, parseJSONLoose } from './ai';
 import { pickOblique } from './oblique';
+import { checkRefs, evidenceClean, evidenceIds, minEvidence, padRefs, weakNote, type RefCheck } from './provenance';
 import type { Settings } from './settings';
 import { TYPE_LABEL, type GraftSeed, type GraftTension, type Idea, type Item, type ItemType } from './types';
 
@@ -79,8 +80,10 @@ export function transformsDistinct(branches: Idea[]): boolean {
 // ——— prompt ———
 const FORBIDDEN = '禁用词与框架：沉浸式、旅程、交织、融合、碰撞出火花、灵魂、治愈、氛围感、赋能、打破边界、时光的、岁月的、独一无二；以及任何素材里没有依据的说法。';
 
+/** 每件素材前面标上它的素材 ID（穗在库里的真实 id），模型必须用这个 ID 引用 */
 export function describeForGraft(it: Item, idx: number): string {
-  const parts = [`[S${idx + 1} | ${TYPE_LABEL[it.type]}${it.tags.length ? ` | 标签：${it.tags.slice(0, 6).join('、')}` : ''}] ${it.title}`];
+  const id = typeof it.id === 'number' ? it.id : idx + 1;
+  const parts = [`[#${id} | ${TYPE_LABEL[it.type]}${it.tags.length ? ` | 标签：${it.tags.slice(0, 6).join('、')}` : ''}] ${it.title}`];
   if (it.creator) parts.push(`作者：${it.creator}`);
   if (it.year) parts.push(`年份：${it.year}`);
   if (it.content) parts.push(`内容：${it.content.slice(0, 240)}`);
@@ -90,7 +93,12 @@ export function describeForGraft(it: Item, idx: number): string {
 }
 
 function minRefs(n: number) {
-  return Math.min(3, n);
+  return minEvidence(n);
+}
+
+/** 把位置列表写成给模型看的素材 ID（#12、#57） */
+function idList(refs: number[], ids: number[]): string {
+  return refs.map((r) => `#${ids[r - 1] ?? r}`).join('、');
 }
 
 function context(items: Item[], opts: { theme?: string; oblique: string; taste?: string }) {
@@ -98,7 +106,7 @@ function context(items: Item[], opts: { theme?: string; oblique: string; taste?:
     opts.theme ? `创作方向：${opts.theme}` : '创作方向：没有指定，自由嫁接。',
     `斜策略（作为额外约束）：${opts.oblique}`,
     opts.taste ? `我的口味（参考，不要复述）：${opts.taste.slice(0, 400)}` : '',
-    '素材（只能用这些）：',
+    '素材（只能用这些；方括号里 # 后面的数字是素材 ID）：',
     items.map(describeForGraft).join('\n\n'),
   ]
     .filter(Boolean)
@@ -117,12 +125,12 @@ export function buildMapPrompt(items: Item[], opts: { theme?: string; oblique: s
   const system = [
     SYS_HEAD,
     '这一次只做 PHASE A 和 PHASE B，不要写完整创意，不要排序。',
-    'PHASE A — MAP：找出 4 个素材之间的张力或意外的桥（结构、节奏、情绪、材料、动作上的同构或冲突，而不是表面题材相似），每个标出依据的素材编号。',
+    'PHASE A — MAP：找出 4 个素材之间的张力或意外的桥（结构、节奏、情绪、材料、动作上的同构或冲突，而不是表面题材相似），每个标出依据的素材 ID。',
     `PHASE B — DIVERGE：写 8 粒一句话种子（每粒不超过 45 字）。8 种变形法每种恰好用一次：`,
     ...TRANSFORMS.map((t) => `- ${t.id}（${t.name}）：${t.hint}`),
-    `每粒种子至少引用 ${k} 件素材编号（写数字，S3 写 3）。`,
+    `每粒种子至少引用 ${k} 件素材 ID（写方括号里 # 后面的数字，#12 就写 12；不许写不存在的 ID）。`,
     '只输出一个 JSON 对象：',
-    '{"tensions":[{"text":"张力（40字内）","refs":[1,2]}],"seeds":[{"t":"invert","text":"一句话种子","refs":[1,2,3]}]}',
+    '{"tensions":[{"text":"张力（40字内）","refs":[素材ID,素材ID]}],"seeds":[{"t":"invert","text":"一句话种子","refs":[素材ID,素材ID,素材ID]}]}',
   ].join('\n');
   return { system, user: context(items, opts) };
 }
@@ -132,24 +140,30 @@ export function buildConvergePrompt(
   opts: { theme?: string; oblique: string; taste?: string },
   tensions: GraftTension[],
   seeds: GraftSeed[],
+  recheck?: string,
 ): { system: string; user: string } {
   const k = minRefs(items.length);
+  const ids = evidenceIds(items);
   const system = [
     SYS_HEAD,
     '这一次做 PHASE C 和 PHASE D。',
-    `PHASE C — DEFIX：看下面 8 粒种子，用一句话指出它们重复的结构、场景、语气或动词（pattern）；把最相像的 3 粒换成落在完全不同语义区域的新种子。新种子沿用被换掉那粒的变形法，仍至少引用 ${k} 件素材。`,
+    `PHASE C — DEFIX：看下面 8 粒种子，用一句话指出它们重复的结构、场景、语气或动词（pattern）；把最相像的 3 粒换成落在完全不同语义区域的新种子。新种子沿用被换掉那粒的变形法，仍至少引用 ${k} 件素材 ID。`,
     'PHASE D — CONVERGE：从换过之后的 8 粒里，选 3 粒彼此最不一样、且变形法两两不同的，各长成一根新枝。挑选标准：证据扎实、在这一批里新、对我有用、做得出来、忠于这些素材。',
-    '每根新枝给出：seed（种子编号 1-8）、title（12 字内，不要冒号）、idea（100-180 字，具体到画面 / 声音 / 结构）、form（形式，如短片 / 歌 / 海报 / 装置 / 文案 / 游戏）、refs（素材编号）、unlike（它和另外两根哪里不同，40 字内）、experiment（我 20 分钟内就能完成的一个小实验）。',
+    '每根新枝给出：seed（种子编号 1-8）、title（12 字内，不要冒号）、idea（100-180 字，具体到画面 / 声音 / 结构）、form（形式，如短片 / 歌 / 海报 / 装置 / 文案 / 游戏）、refs（这根新枝真正用到的素材 ID，至少 ${k} 个，只能是上面方括号里的数字）、unlike（它和另外两根哪里不同，40 字内）、experiment（我 20 分钟内就能完成的一个小实验）。',
+    'idea 正文里用到哪件素材，就点出它的名字（如《花样年华》），方便我对照。说不出依据的新枝宁可不写。',
     '再列出 3-5 个这组素材最容易落入的套路（cliches），三根新枝都必须避开。',
+    recheck ? `注意：上一次的回答里${recheck}。这一次每根新枝的 refs 必须是至少 ${k} 个真实存在的素材 ID。` : '',
     '只输出一个 JSON 对象：',
-    '{"pattern":"…","replaced":[{"n":2,"text":"新种子","refs":[1,3]}],"branches":[{"seed":1,"title":"…","idea":"…","form":"…","refs":[1,2,3],"unlike":"…","experiment":"…"}],"cliches":["…"]}',
-  ].join('\n');
+    '{"pattern":"…","replaced":[{"n":2,"text":"新种子","refs":[素材ID,素材ID,素材ID]}],"branches":[{"seed":1,"title":"…","idea":"…","form":"…","refs":[素材ID,素材ID,素材ID],"unlike":"…","experiment":"…"}],"cliches":["…"]}',
+  ]
+    .filter(Boolean)
+    .join('\n');
   const user = [
     context(items, opts),
     'PHASE A 找到的张力：',
-    tensions.map((t, i) => `${i + 1}. ${t.text}（S${t.refs.join('、S')}）`).join('\n'),
+    tensions.map((t, i) => `${i + 1}. ${t.text}${t.refs.length ? `（${idList(t.refs, ids)}）` : ''}`).join('\n'),
     'PHASE B 的 8 粒种子：',
-    seeds.map((s, i) => `${i + 1}. [${s.transform}/${transformName(s.transform)}] ${s.text}（S${s.refs.join('、S')}）`).join('\n'),
+    seeds.map((s, i) => `${i + 1}. [${s.transform}/${transformName(s.transform)}] ${s.text}${s.refs.length ? `（${idList(s.refs, ids)}）` : ''}`).join('\n'),
   ].join('\n\n');
   return { system, user };
 }
@@ -161,42 +175,37 @@ function str(v: unknown): string {
   return typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '';
 }
 
-export function normalizeRefs(v: unknown, n: number): number[] {
-  const arr = Array.isArray(v) ? v : typeof v === 'string' ? v.split(/[,，、\s]+/) : [];
-  const out: number[] = [];
-  for (const x of arr) {
-    const k = typeof x === 'number' ? x : parseInt(String(x).replace(/[^\d]/g, ''), 10);
-    if (Number.isInteger(k) && k >= 1 && k <= n && !out.includes(k)) out.push(k);
-  }
-  return out;
+/** ids：这次嫁接素材的 ID 表（数字 n 表示 ID 就是 1..n）。模型写的是素材 ID，返回的是位置（1 起）。 */
+type IdsArg = number | number[];
+function idsOf(v: IdsArg): number[] {
+  return Array.isArray(v) ? v : Array.from({ length: v }, (_, i) => i + 1);
 }
 
-function defaultRefs(n: number, offset = 0): number[] {
-  const k = minRefs(n);
-  return Array.from({ length: k }, (_, i) => ((offset + i) % n) + 1);
+export function normalizeRefs(v: unknown, ids: IdsArg): number[] {
+  return checkRefs(v, idsOf(ids)).refs;
 }
 
 /** 第 1 次调用的结果：4 个张力、8 粒种子（变形法去重、补齐） */
-export function normalizeMap(raw: unknown, nItems: number): { tensions: GraftTension[]; seeds: GraftSeed[] } {
+export function normalizeMap(raw: unknown, idsArg: IdsArg): { tensions: GraftTension[]; seeds: GraftSeed[] } {
   if (!raw || typeof raw !== 'object') throw new ParseError('模型没有按格式回答（张力 / 种子）');
+  const nItems = idsOf(idsArg);
   const r = raw as Record<string, unknown>;
   const tensions: GraftTension[] = (Array.isArray(r.tensions) ? r.tensions : [])
-    .map((t, i) => {
+    .map((t) => {
       const o = (t && typeof t === 'object' ? t : { text: t }) as Record<string, unknown>;
-      const refs = normalizeRefs(o.refs, nItems);
-      return { text: str(o.text || o.tension), refs: refs.length ? refs : defaultRefs(nItems, i) };
+      // 说不出依据就留空，不替模型编
+      return { text: str(o.text || o.tension), refs: normalizeRefs(o.refs, nItems) };
     })
     .filter((t) => t.text)
     .slice(0, 4);
   const used = new Set<string>();
   const pending: GraftSeed[] = [];
   const seeds: GraftSeed[] = [];
-  (Array.isArray(r.seeds) ? r.seeds : []).forEach((x, i) => {
+  (Array.isArray(r.seeds) ? r.seeds : []).forEach((x) => {
     const o = (x && typeof x === 'object' ? x : { text: x }) as Record<string, unknown>;
     const text = str(o.text || o.seed);
     if (!text) return;
-    const refs = normalizeRefs(o.refs, nItems);
-    const seed: GraftSeed = { text, transform: resolveTransform(o.t ?? o.transform) || '', refs: refs.length ? refs : defaultRefs(nItems, i) };
+    const seed: GraftSeed = { text, transform: resolveTransform(o.t ?? o.transform) || '', refs: normalizeRefs(o.refs, nItems) };
     if (seed.transform && !used.has(seed.transform)) {
       used.add(seed.transform);
       seeds.push(seed);
@@ -214,7 +223,7 @@ export function normalizeMap(raw: unknown, nItems: number): { tensions: GraftTen
 }
 
 /** DEFIX：按模型给的编号把最相像的种子换掉（最多 3 粒），沿用原变形法 */
-export function applyDefix(seeds: GraftSeed[], replaced: unknown, nItems: number): GraftSeed[] {
+export function applyDefix(seeds: GraftSeed[], replaced: unknown, nItems: IdsArg): GraftSeed[] {
   const out = seeds.map((s) => ({ ...s }));
   let n = 0;
   for (const x of Array.isArray(replaced) ? replaced : []) {
@@ -278,10 +287,14 @@ export function normalizeConverge(
   seedsIn: GraftSeed[],
   items: Item[],
   oblique: string,
-): { branches: Idea[]; seeds: GraftSeed[]; pattern?: string; cliches: string[]; filled: number } {
+): { branches: Idea[]; seeds: GraftSeed[]; pattern?: string; cliches: string[]; filled: number; faults: number; checks: RefCheck[] } {
   const n = items.length;
+  const ids = evidenceIds(items);
+  const k = minRefs(n);
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const seeds = applyDefix(seedsIn, r.replaced, n);
+  const seeds = applyDefix(seedsIn, r.replaced, ids);
+  const checks: RefCheck[] = [];
+  let faults = 0;
   const cliches = Array.isArray(r.cliches) ? r.cliches.map((x) => str(x)).filter(Boolean).slice(0, 6) : [];
   const branches: Idea[] = [];
   const chosen: number[] = [];
@@ -293,7 +306,11 @@ export function normalizeConverge(
     const t = seed?.transform || resolveTransform(o.transform ?? o.t) || '';
     const body = str(o.idea || o.concept);
     if (!t || !body || branches.some((b) => b.transform === t)) continue;
-    const refs = normalizeRefs(o.refs, n);
+    // 溯源：只认模型真的写出来、且确实存在的素材 ID；不够 k 件或编了 ID 就记一次不合格
+    const chk = checkRefs(o.refs, ids);
+    const clean = evidenceClean(chk, k);
+    if (!clean) faults++;
+    checks.push(chk);
     branches.push({
       title: (str(o.title) || seed?.text.slice(0, 12) || '新枝').replace(/[:：]/g, ' '),
       bridge: seed?.text || '',
@@ -304,7 +321,9 @@ export function normalizeConverge(
       transform: t,
       unlike: str(o.unlike) || undefined,
       experiment: str(o.experiment) || undefined,
-      refs: refs.length ? refs : seed?.refs || defaultRefs(n),
+      refs: chk.refs,
+      evidence: clean ? 'ok' : 'weak',
+      evidenceNote: clean ? undefined : weakNote(chk, k),
     });
     if (seed) chosen.push(si);
     else {
@@ -322,7 +341,7 @@ export function normalizeConverge(
     }
   }
   const fin = finishBranches(branches, seeds, chosen);
-  return { ...fin, pattern: str(r.pattern) || undefined, cliches, filled };
+  return { ...fin, pattern: str(r.pattern) || undefined, cliches, filled, faults, checks };
 }
 
 // ——— 离线素材拼装 ———
@@ -400,8 +419,9 @@ function seedFor(t: string, i: number, items: Item[], alt: boolean): GraftSeed {
 /** 从一粒种子长成一根新枝（离线 / 兜底） */
 export function branchFromSeed(seed: GraftSeed, items: Item[], oblique: string, k: number, theme?: string): Idea {
   const t = T_BY_ID.get(seed.transform);
-  const used = seed.refs.map((r) => items[r - 1]).filter(Boolean);
-  const [a, b, c] = used.length >= 2 ? used : [items[0], items[1] || items[0], items[2]];
+  // 溯源：正文就是用这几穗拼出来的，所以补到至少 3 穗，并且三穗都写进正文
+  const refs = padRefs(seed.refs, items.length);
+  const [a, b, c] = refs.map((r) => items[r - 1]);
   const form = FORMS[(TRANSFORMS.findIndex((x) => x.id === seed.transform) + k * 3) % FORMS.length];
   const idea = [
     seed.text,
@@ -421,7 +441,8 @@ export function branchFromSeed(seed: GraftSeed, items: Item[], oblique: string, 
     oblique,
     transform: seed.transform,
     experiment: t?.experiment,
-    refs: seed.refs,
+    refs,
+    evidence: 'ok',
   };
 }
 
@@ -434,6 +455,10 @@ export interface GraftResult {
   calls: number;
   /** AI 第 2 次调用失败、用种子在本地收拢 */
   partial?: boolean;
+  /** v0.12：有新枝说不清来源，第 2 步重来了一次 */
+  recheck?: boolean;
+  /** 重来之后仍然证据不足的根数 */
+  weak?: number;
 }
 
 /** 离线四步：张力 → 8 种变形各一粒 → 换掉最相像的 3 粒 → 收拢 3 根变形法两两不同的 */
@@ -463,6 +488,12 @@ export function graftOffline(items: Item[], opts: { theme?: string; rand?: () =>
   const branches = chosen.map((i, k) => branchFromSeed(seeds[i], list, oblique, k, opts.theme));
   const fin = finishBranches(branches, seeds, chosen);
   return { branches: fin.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0 };
+}
+
+/** 给模型的「上一次哪里不对」 */
+function describeFaults(checks: RefCheck[], k: number): string {
+  const bad = checks.map((c, i) => [c, i] as const).filter(([c]) => !evidenceClean(c, k));
+  return bad.map(([c, i]) => `第 ${i + 1} 根新枝${c.missing ? '没写 refs' : c.invalid ? '引用了不存在的素材 ID' : `只引用了 ${c.refs.length} 件素材`}`).join('；');
 }
 
 // ——— 重试 / 退避 ———
@@ -515,6 +546,8 @@ export type GraftStage = 'map' | 'defix' | 'done';
 export interface GraftProgress {
   stage: GraftStage;
   retry?: RetryInfo;
+  /** v0.12：有新枝说不清从哪几穗长出来，正在重长一次 */
+  recheck?: boolean;
 }
 
 /** AI 四步嫁接：2 次调用。第 2 次失败时用第 1 次的种子本地收拢（仍是 3 根） */
@@ -557,9 +590,9 @@ export async function graftWithAI(
   }, rOpts('map'));
 
   opts.onProgress?.({ stage: 'defix' });
-  const p2 = buildConvergePrompt(items, ctx, map.tensions, map.seeds);
-  try {
-    const conv = await withRetry(async () => {
+  const converge = (recheck?: string) =>
+    withRetry(async () => {
+      const p2 = buildConvergePrompt(items, ctx, map.tensions, map.seeds, recheck);
       calls++;
       const out = await chat(
         s,
@@ -573,8 +606,23 @@ export async function graftWithAI(
       if (!parsed) throw new ParseError('模型没有按格式回答（新枝）');
       return normalizeConverge(parsed, map.seeds, items, oblique);
     }, rOpts('defix'));
+  try {
+    let conv = await converge();
+    let recheck = false;
+    if (conv.faults > 0) {
+      // 溯源不合格：重来一次（只这一次），还不行就如实标「证据不足」
+      recheck = true;
+      opts.onProgress?.({ stage: 'defix', recheck: true });
+      try {
+        conv = await converge(describeFaults(conv.checks, minRefs(items.length)));
+      } catch (e) {
+        if (opts.signal?.aborted) throw e;
+        // 重来那次没跑通：保留第一次的结果，不合格的已经标好了「证据不足」
+      }
+    }
     opts.onProgress?.({ stage: 'done' });
-    return { branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls };
+    const weak = conv.branches.filter((b) => b.evidence === 'weak').length;
+    return { branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak };
   } catch (e) {
     if (opts.signal?.aborted) throw e;
     // 第二步没跑完：用第一步的 8 粒种子本地收拢
