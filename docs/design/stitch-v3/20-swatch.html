@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · Glean - 穗仓</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-high": "#e8e8ea",
+            "inverse-on-surface": "#f1f0f3",
+            "outline": "#757685",
+            "on-primary": "#ffffff",
+            "tertiary-fixed-dim": "#8fd5b6",
+            "tertiary": "#002f21",
+            "surface": "#f9f9fc",
+            "surface-container": "#eeeef0",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed-variant": "#1439af",
+            "on-surface-variant": "#444653",
+            "primary-container": "#002fa7",
+            "secondary-fixed": "#ffdad2",
+            "background": "#f9f9fc",
+            "on-secondary-container": "#fffbff",
+            "on-secondary-fixed": "#3d0600",
+            "tertiary-fixed": "#aaf1d1",
+            "on-primary-container": "#90a4ff",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed-variant": "#00513b",
+            "primary-fixed-dim": "#b8c4ff",
+            "secondary": "#b22300",
+            "surface-bright": "#f9f9fc",
+            "secondary-container": "#db350e",
+            "error-container": "#ffdad6",
+            "secondary-fixed-dim": "#ffb4a3",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-highest": "#e2e2e5",
+            "on-secondary-fixed-variant": "#8b1900",
+            "primary-fixed": "#dde1ff",
+            "on-error-container": "#93000a",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-container": "#72b79a",
+            "inverse-surface": "#2f3133",
+            "on-surface": "#1a1c1e",
+            "surface-variant": "#e2e2e5",
+            "on-primary-fixed": "#001355",
+            "surface-container-low": "#f3f3f6",
+            "inverse-primary": "#b8c4ff",
+            "on-tertiary-fixed": "#002116",
+            "surface-dim": "#dadadc",
+            "surface-tint": "#3654c8",
+            "tertiary-container": "#004834",
+            "on-background": "#1a1c1e",
+            "error": "#ba1a1a",
+            "outline-variant": "#c4c5d6",
+            "primary": "#001e73"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2.5rem",
+            "gutter": "1rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "gutter-desktop": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin-desktop": "2.5rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Space Grotesk"],
+            "body-md": ["Hanken Grotesk"],
+            "body-lg": ["Hanken Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"],
+            "display": ["Space Grotesk"],
+            "label-code": ["JetBrains Mono"],
+            "headline-md": ["Space Grotesk"],
+            "label-caps": ["Space Grotesk"],
+            "body-sm": ["Hanken Grotesk"],
+            "headline-lg": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["18px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "headline-lg-mobile": ["28px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "display": ["56px", { "lineHeight": "60px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-code": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-lg": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Clean custom utility rules strictly matching Pantone swatch aesthetics */
+    .razor-hairline {
+      border: 1px solid #e4e7ec;
+    }
+    .razor-hairline-b {
+      border-bottom: 1px solid #e4e7ec;
+    }
+    .razor-hairline-t {
+      border-top: 1px solid #e4e7ec;
+    }
+    .razor-hairline-r {
+      border-right: 1px solid #e4e7ec;
+    }
+    .specimen-card-shadow {
+      box-shadow: 0 1px 2px rgba(17, 19, 21, 0.04), 0 4px 12px rgba(17, 19, 21, 0.03);
+    }
+    .swatch-active-shadow {
+      box-shadow: 0 1px 0 0 #dde1e5, 0 8px 16px -4px rgba(17, 19, 21, 0.08);
+    }
+    /* Hide scrollbars for seamless precision light table look */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface w-[390px] h-[844px] overflow-hidden select-none mx-auto relative flex flex-col font-body-md antialiased">
+<!-- TOP APP BAR (Shared Component Anchored JSON Execution) -->
+<header class="fixed top-0 left-0 w-[390px] z-40 flex justify-between items-center px-margin h-14 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="palette">palette</span>
+<h1 class="text-headline-sm font-headline-sm tracking-tight text-on-surface font-semibold">拾穗 · Glean</h1>
+</div>
+<div class="flex items-center space-x-2">
+<!-- Studio index registration code -->
+<span class="text-label-code font-label-code px-1.5 py-0.5 bg-surface-container-low text-on-surface-variant rounded-DEFAULT border border-outline-variant tracking-wider">
+        Q1f730
+      </span>
+<button aria-label="Index View" class="w-8 h-8 flex items-center justify-center hover:bg-surface-container transition-colors duration-150 rounded-DEFAULT text-on-surface-variant active:scale-95">
+<span class="material-symbols-outlined text-[19px]" data-icon="view_agenda">view_agenda</span>
+</button>
+</div>
+</header>
+<!-- MAIN SCROLLABLE CANVAS (Studio Light Table with Architectural Grid) -->
+<main class="flex-1 overflow-y-auto pt-14 pb-24 px-3.5 bg-surface">
+<!-- SUB-HEADER CALIBRATION STRIP -->
+<section class="mt-2.5 mb-2.5 flex items-center justify-between text-label-code font-label-code text-on-surface-variant border-b border-outline-variant pb-2">
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+<span class="tracking-widest">DECK · 06 SPECIMENS</span>
+</div>
+<div class="flex items-center space-x-2 text-[10px] text-outline">
+<span>5000K ILLUM</span>
+<span>•</span>
+<span>DELTA-E &lt; 0.4</span>
+</div>
+</section>
+<!-- QUICK INGEST BAR (Swatch Formula Entry Input) -->
+<section class="mb-4">
+<div class="relative flex items-center bg-surface-container-lowest border border-outline-variant hover:border-primary focus-within:border-primary-container transition-colors duration-150 rounded-DEFAULT shadow-xs">
+<div class="h-10 pl-3 pr-2 flex items-center justify-center border-r border-outline-variant bg-surface-container-low">
+<span class="text-label-code font-label-code text-primary font-semibold tracking-wider text-[11px]">+ REC</span>
+</div>
+<input class="w-full h-10 px-3 bg-transparent text-body-md font-body-md text-on-surface placeholder:text-outline focus:outline-none border-none text-[13px]" placeholder="随手拾一穗…" type="text"/>
+<div class="pr-2 flex items-center space-x-1.5">
+<button class="p-1 text-on-surface-variant hover:text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="mic">mic</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="add_photo_alternate">add_photo_alternate</span>
+</button>
+</div>
+</div>
+</section>
+<!-- SWATCH SPECIMEN STACK (6 PRECISE PANTONE-STYLE SWATCH CARDS) -->
+<div class="space-y-3.5">
+<!-- ITEM 1: PHOTO SPECIMEN (Twilight Petrol Blue) -->
+<article class="bg-surface-container-lowest razor-hairline rounded-DEFAULT overflow-hidden specimen-card-shadow active:scale-[0.99] transition-transform duration-100">
+<!-- Top Image Chip -->
+<div class="relative h-44 w-full overflow-hidden bg-[#1e3a5f]">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover object-center filter saturate-[0.95] contrast-[1.05]" src="https://lh3.googleusercontent.com/aida/AEtjO1Xsr-NX4Mwz0JBYqZze83Z_DuRQVua-8j-7aUYBIZvDr0Dk74eApMvfQObrFplhAxmVzFCIfRl6fvDca_w-1GYR1xtMCAyWoY2-U2k68Meb8_3jH8uIQWQAf2BExSOAb76R84rLJys3c72b7Xnj724UGaLLDV4HFrtTvRUlA8_ZUzVfyTtUdIG63c3k3gzhx_jKQgY991OhmYIc8gLDrzWmG_mmuP8ePULUZwyYZn1O5oFV_nK_MaIhSVZb"/>
+<!-- Chromatic Pill Tag -->
+<div class="absolute top-2.5 left-2.5 bg-surface-container-lowest/90 backdrop-blur-xs px-2 py-0.5 rounded-DEFAULT border border-outline-variant/60 flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-none bg-[#1e3a5f]"></span>
+<span class="text-label-code font-label-code text-on-surface text-[10px] tracking-wide">PETROL BLUE · #1E3A5F</span>
+</div>
+<!-- Type Badge -->
+<div class="absolute top-2.5 right-2.5 bg-surface-container-lowest/90 backdrop-blur-xs px-1.5 py-0.5 rounded-DEFAULT border border-outline-variant/60">
+<span class="text-label-caps font-label-caps text-primary text-[10px]">摄影 · PHOTO</span>
+</div>
+</div>
+<!-- Bottom Clinical Formula Area -->
+<div class="p-3 bg-surface-container-lowest border-t border-outline-variant flex justify-between items-end">
+<div class="space-y-0.5">
+<h2 class="text-headline-sm font-headline-sm text-on-surface text-[16px] leading-tight font-medium">雨后的梧桐街</h2>
+<div class="flex items-center space-x-2 text-label-code font-label-code text-on-surface-variant text-[11px]">
+<span>SWATCH-01</span>
+<span class="text-outline">/</span>
+<span>ISO 400 · f/2.0</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-code font-label-code text-outline text-[11px] block">今天 09:12</span>
+<span class="material-symbols-outlined text-outline text-[14px]" data-icon="crop_free">crop_free</span>
+</div>
+</div>
+</article>
+<!-- ITEM 2: FILM SPECIMEN (Parisian Carmine / Ciné Rose) -->
+<article class="bg-surface-container-lowest razor-hairline rounded-DEFAULT overflow-hidden specimen-card-shadow active:scale-[0.99] transition-transform duration-100">
+<!-- Top Solid Pigment Chip -->
+<div class="h-28 w-full bg-[#c1121f] p-3 flex flex-col justify-between relative">
+<div class="flex justify-between items-start">
+<span class="text-label-code font-label-code text-white/90 text-[10px] tracking-widest bg-black/25 px-1.5 py-0.5 rounded-DEFAULT">CARMINE · #C1121F</span>
+<span class="material-symbols-outlined text-white/80 text-[18px]" data-icon="movie">movie</span>
+</div>
+<!-- Visual swatch code stamped directly on field -->
+<div class="text-white/30 text-display font-display text-[32px] font-bold leading-none select-none tracking-tighter">
+            PANTONE 19-1763
+          </div>
+</div>
+<!-- Formula & Metadata -->
+<div class="p-3 bg-surface-container-lowest border-t border-outline-variant flex justify-between items-end">
+<div class="space-y-0.5">
+<div class="flex items-baseline space-x-1.5">
+<h2 class="text-headline-sm font-headline-sm text-on-surface text-[16px] leading-tight font-medium">燃烧女子的肖像</h2>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">(2019, 瑟琳·席安玛)</span>
+</div>
+<div class="text-label-code font-label-code text-on-surface-variant text-[11px] flex items-center space-x-1.5">
+<span class="text-secondary font-semibold">电影 · FILM</span>
+<span class="text-outline">|</span>
+<span>35MM CELLULOID</span>
+</div>
+</div>
+<span class="text-label-code font-label-code text-outline text-[11px]">昨天 23:40</span>
+</div>
+</article>
+<!-- ITEM 3: SONG SPECIMEN (Midnight Cobalt / Neon Blue) -->
+<article class="bg-surface-container-lowest razor-hairline rounded-DEFAULT overflow-hidden specimen-card-shadow active:scale-[0.99] transition-transform duration-100">
+<!-- Top Solid Pigment Chip with Audio Spectrum Frequency -->
+<div class="h-28 w-full bg-[#1d4ed8] p-3 flex flex-col justify-between relative overflow-hidden">
+<div class="flex justify-between items-start z-10">
+<span class="text-label-code font-label-code text-white/90 text-[10px] tracking-widest bg-black/25 px-1.5 py-0.5 rounded-DEFAULT">COBALT · #1D4ED8</span>
+<span class="material-symbols-outlined text-white/80 text-[18px]" data-icon="graphic_eq">graphic_eq</span>
+</div>
+<!-- Clean minimal graphic audio frequency spectrum motif -->
+<div class="flex items-end space-x-1 h-8 opacity-75 z-10">
+<div class="w-1 bg-white h-2"></div>
+<div class="w-1 bg-white h-5"></div>
+<div class="w-1 bg-white h-7"></div>
+<div class="w-1 bg-white h-3"></div>
+<div class="w-1 bg-white h-8"></div>
+<div class="w-1 bg-white h-4"></div>
+<div class="w-1 bg-white h-6"></div>
+<div class="w-1 bg-white h-3"></div>
+<div class="w-1 bg-white h-5"></div>
+<div class="w-1 bg-white h-2"></div>
+<div class="w-1 bg-white h-4"></div>
+<div class="w-1 bg-white h-6"></div>
+<div class="w-1 bg-white h-2"></div>
+</div>
+<div class="absolute right-3 bottom-2 text-white/20 text-label-code font-label-code text-[20px] font-bold">44.1 kHz</div>
+</div>
+<!-- Formula & Metadata -->
+<div class="p-3 bg-surface-container-lowest border-t border-outline-variant flex justify-between items-end">
+<div class="space-y-0.5">
+<div class="flex items-baseline space-x-2">
+<h2 class="text-headline-sm font-headline-sm text-on-surface text-[16px] leading-tight font-medium">夜空中最亮的星</h2>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">逃跑计划</span>
+</div>
+<div class="text-label-code font-label-code text-on-surface-variant text-[11px] flex items-center space-x-1.5">
+<span class="text-primary font-semibold">音乐 · AUDIO</span>
+<span class="text-outline">|</span>
+<span>STEREO CH-02</span>
+</div>
+</div>
+<span class="text-label-code font-label-code text-outline text-[11px]">昨天 21:05</span>
+</div>
+</article>
+<!-- ITEM 4: QUOTE SPECIMEN (Vibrant Ochre / Solar Amber) -->
+<article class="bg-surface-container-lowest razor-hairline rounded-DEFAULT overflow-hidden specimen-card-shadow active:scale-[0.99] transition-transform duration-100">
+<!-- Top Solid Pigment Chip with Typography Overlay -->
+<div class="h-28 w-full bg-[#f59e0b] p-3 flex flex-col justify-between relative">
+<div class="flex justify-between items-start">
+<span class="text-label-code font-label-code text-black/80 text-[10px] tracking-widest bg-white/40 px-1.5 py-0.5 rounded-DEFAULT">OCHRE · #F59E0B</span>
+<span class="material-symbols-outlined text-black/70 text-[18px]" data-icon="format_quote">format_quote</span>
+</div>
+<p class="text-on-surface font-headline-sm text-[14px] leading-snug font-medium pr-4">
+            “我们读诗，是因为我们是人类的一员。”
+          </p>
+</div>
+<!-- Formula & Metadata -->
+<div class="p-3 bg-surface-container-lowest border-t border-outline-variant flex justify-between items-end">
+<div class="space-y-0.5">
+<span class="text-label-code font-label-code text-on-surface-variant text-[11px] font-semibold block">文案 · TEXT FORMULA</span>
+<div class="text-label-code font-label-code text-outline text-[10px]">CHARS: 18 · C0 M37 Y93 K4</div>
+</div>
+<span class="text-label-code font-label-code text-outline text-[11px]">10/19</span>
+</div>
+</article>
+<!-- ITEM 5: IDEA SPECIMEN (Acid Lime / Mint Sage) -->
+<article class="bg-surface-container-lowest razor-hairline rounded-DEFAULT overflow-hidden specimen-card-shadow active:scale-[0.99] transition-transform duration-100">
+<!-- Top Solid Pigment Chip -->
+<div class="h-24 w-full bg-[#10b981] p-3 flex flex-col justify-between relative">
+<div class="flex justify-between items-start">
+<span class="text-label-code font-label-code text-black/80 text-[10px] tracking-widest bg-white/40 px-1.5 py-0.5 rounded-DEFAULT">MINT · #10B981</span>
+<span class="material-symbols-outlined text-black/70 text-[18px]" data-icon="lightbulb">lightbulb</span>
+</div>
+<p class="text-white font-body-md text-[13px] leading-tight font-medium pr-2 drop-shadow-xs">
+            把通勤路上听到的对话写成一组短诗
+          </p>
+</div>
+<!-- Formula & Metadata -->
+<div class="p-3 bg-surface-container-lowest border-t border-outline-variant flex justify-between items-end">
+<div class="space-y-0.5">
+<span class="text-label-code font-label-code text-tertiary font-semibold text-[11px] block">想法 · SEED IDEA</span>
+<div class="text-label-code font-label-code text-outline text-[10px]">STATUS: UNGRAFTED</div>
+</div>
+<span class="text-label-code font-label-code text-outline text-[11px]">10/18</span>
+</div>
+</article>
+<!-- ITEM 6: LINK SPECIMEN (Electric Ultramarine / Deep Cyan) -->
+<article class="bg-surface-container-lowest razor-hairline rounded-DEFAULT overflow-hidden specimen-card-shadow active:scale-[0.99] transition-transform duration-100">
+<!-- Top Solid Pigment Chip -->
+<div class="h-24 w-full bg-[#0284c7] p-3 flex flex-col justify-between relative">
+<div class="flex justify-between items-start">
+<span class="text-label-code font-label-code text-white/90 text-[10px] tracking-widest bg-black/25 px-1.5 py-0.5 rounded-DEFAULT">CYAN · #0284C7</span>
+<span class="material-symbols-outlined text-white/80 text-[18px]" data-icon="link">link</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="text-white text-headline-sm text-[14px] font-medium tracking-tight">Are.na · 关于收集的收集</span>
+</div>
+</div>
+<!-- Formula & Metadata -->
+<div class="p-3 bg-surface-container-lowest border-t border-outline-variant flex justify-between items-end">
+<div class="space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="text-label-code font-label-code text-primary font-semibold text-[11px]">链接 · URL</span>
+<span class="text-outline text-[10px]">•</span>
+<span class="text-label-code font-label-code text-on-surface-variant text-[11px] underline underline-offset-2">are.na</span>
+</div>
+<div class="text-label-code font-label-code text-outline text-[10px]">HTTP 200 · PROTOCOL OK</div>
+</div>
+<span class="text-label-code font-label-code text-outline text-[11px]">10/16</span>
+</div>
+</article>
+</div>
+<!-- STUDIO METRIC FOOTNOTE -->
+<div class="mt-5 mb-3 flex items-center justify-center space-x-2 text-label-code font-label-code text-outline text-[10px]">
+<span class="material-symbols-outlined text-[12px]" data-icon="straighten">straighten</span>
+<span>6 / 6 SWATCHES MOUNTED · ARCHIVE COMPLETE</span>
+</div>
+</main>
+<!-- ENTRY ACTION BUTTON '嫁接' (Prominent High-Craft Studio Fusion Action) -->
+<aside class="absolute bottom-20 right-4 z-40">
+<button class="flex items-center space-x-2 px-4 py-2.5 bg-primary text-on-primary rounded-DEFAULT shadow-lg hover:bg-primary-container active:scale-95 transition-all duration-150 border border-primary-fixed-dim">
+<span class="material-symbols-outlined text-[19px]" data-icon="call_split" style="font-variation-settings: 'FILL' 1;">call_split</span>
+<span class="text-label-caps font-label-caps text-[12px] tracking-wider text-white">嫁接 · GRAFT</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-fixed animate-pulse"></span>
+</button>
+</aside>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchored JSON Execution) -->
+<!-- Dest: 5 items ['穗仓', '嫁接', '新枝', '口味', '设置'], '穗仓' actively highlighted with Klein Blue swatch indicator -->
+<nav class="fixed bottom-0 left-0 w-[390px] z-50 flex justify-around items-center px-space-xs h-16 bg-surface-container-lowest border-t border-outline-variant">
+<!-- Tab 1: 穗仓 (ACTIVE - Destination Match) -->
+<a class="flex flex-col items-center justify-center text-primary border-t-2 border-primary -mt-[1px] pt-1.5 pb-1 flex-1 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-label-caps font-label-caps text-[10px] mt-0.5 font-bold">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary pt-2 pb-1 flex-1 transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="call_split">call_split</span>
+<span class="text-label-caps font-label-caps text-[10px] mt-0.5">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary pt-2 pb-1 flex-1 transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="psychology">psychology</span>
+<span class="text-label-caps font-label-caps text-[10px] mt-0.5">新枝</span>
+</a>
+<!-- Tab 4: 口味 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary pt-2 pb-1 flex-1 transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="palette">palette</span>
+<span class="text-label-caps font-label-caps text-[10px] mt-0.5">口味</span>
+</a>
+<!-- Tab 5: 设置 (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary pt-2 pb-1 flex-1 transition-colors duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+<span class="text-label-caps font-label-caps text-[10px] mt-0.5">设置</span>
+</a>
+</nav>
+<script>
+    // Lightweight tactile click feedback for swatch leaves
+    document.querySelectorAll('article').forEach(card => {
+      card.addEventListener('click', () => {
+        card.classList.toggle('ring-2');
+        card.classList.toggle('ring-primary');
+      });
+    });
+  </script>
+</body></html>
