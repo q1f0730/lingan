@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Lingan",
+  "productName": "Glean",
   "version": "0.1.0",
   "identifier": "com.q1f730.lingan",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "灵感暗房 Lingan",
+        "title": "拾穗 Glean",
         "width": 1100,
         "height": 760,
         "resizable": true,
@@ -40,7 +40,7 @@
     "android": {
       "debugApplicationIdSuffix": ".debug"
     },
-    "shortDescription": "灵感暗房：私人灵感收集与显影",
+    "shortDescription": "拾穗 Glean：把散落在生活里的灵感一穗一穗捡回来",
     "publisher": "Q1f730",
     "windows": {
       "nsis": {
@@ -52,6 +52,7 @@
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       }
-    }
+    },
+    "longDescription": "拾穗 Glean 是一个私人灵感收集器：随手拾进打动你的音乐、电影、图片、文案和想法，再把相距很远的两穗嫁接成新的创意。数据只保存在本机。"
   }
 }
