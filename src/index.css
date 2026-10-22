@@ -331,6 +331,9 @@ summary { cursor: pointer; color: var(--ink-soft); font-size: 0.9rem; }
 .throwback ul { margin: 6px 0 4px; padding-left: 1.1em; }
 .throwback li { margin: 2px 0; }
 .throwback .btnlike:hover { color: var(--accent-ink); }
+.sample-badge { margin-left: 6px; }
+.daily-sub { margin: 6px 0 0; font-size: 0.84rem; }
+.daily-combo { margin: 4px 0 8px; line-height: 1.9; }
 .tagcloud { padding: 14px 18px; }
 
 .masonry { columns: 3 250px; column-gap: var(--gap); }
