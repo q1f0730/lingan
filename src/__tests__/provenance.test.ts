@@ -4,7 +4,10 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { LinganDB, exportAll, importAll } from '../lib/db';
 import { buildConvergePrompt, buildMapPrompt, graftOffline, graftWithAI, normalizeConverge, normalizeMap, TRANSFORMS } from '../lib/graft';
 import { checkRefs, evidenceClean, evidenceOf, migrateDevelopment, padRefs, sourceIds, splitMentions } from '../lib/provenance';
-import { SAMPLES } from '../lib/samples';
+import { drawSamples } from '../lib/samples';
+import { mulberry32 as seeded } from '../lib/similarity';
+// v0.14：从约 80 条示例池里按固定种子抽，不同测试文件用不同的种子，别总是那几条
+const SAMPLES = drawSamples(10, seeded(9031)).map(({ sample: _s, ...rest }) => (void _s, rest));
 import { defaultSettings } from '../lib/settings';
 import { mulberry32 } from '../lib/similarity';
 import type { Development, Item } from '../lib/types';
