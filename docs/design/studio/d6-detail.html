@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 穗详情「轮渡上的雾」 (1440px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            primary: '#000000',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            lighttile: '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    /* 12-column grid system */
+    .grid-12 {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+    .col-span-7 {
+      grid-column: span 7 / span 7;
+    }
+    .col-start-9 {
+      grid-column-start: 9;
+    }
+    .col-span-4 {
+      grid-column: span 4 / span 4;
+    }
+    /* Underline input */
+    .underline-input {
+      border: none;
+      border-bottom: 1px solid #000000;
+      background: transparent;
+      outline: none;
+      border-radius: 0;
+    }
+    .underline-input::placeholder {
+      color: #7E7E7E;
+    }
+  </style>
+</head>
+<body class="bg-white text-black min-h-screen flex flex-col justify-between">
+
+  <!-- TOP NAV BAR (Identical to d1 desktop) -->
+  <header class="w-full bg-white border-b-0 px-[40px] pt-8 pb-4">
+    <div class="w-full flex items-center justify-between">
+      <!-- Left: Logo -->
+      <div class="text-[20px] font-semibold tracking-tight">
+        拾穗 · GLEAN
+      </div>
+
+      <!-- Center: Text Navigation -->
+      <nav class="flex items-center space-x-8 text-[12px] font-medium tracking-[0.08em]">
+        <a href="#" class="text-black border-b border-black pb-[2px]">穗仓</a>
+        <a href="#" class="text-secondary hover:text-black">嫁接</a>
+        <a href="#" class="text-secondary hover:text-black">新枝</a>
+        <a href="#" class="text-secondary hover:text-black">口味</a>
+        <a href="#" class="text-secondary hover:text-black">设置</a>
+      </nav>
+
+      <!-- Right: Quick capture underline input -->
+      <div class="w-[320px]">
+        <input 
+          type="text" 
+          placeholder="随手拾一穗 →" 
+          class="underline-input w-full text-[12px] font-medium py-1 tracking-[0.04em]"
+        >
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER (About 140px white space between nav and content) -->
+  <main class="w-full px-[40px] pt-[120px] pb-[100px] flex-grow">
+
+    <!-- 12-COLUMN GRID -->
+    <div class="grid-12 items-start">
+      
+      <!-- LEFT 7 COLUMNS: Full-bleed Photo (4:5) -->
+      <div class="col-span-7">
+        <div class="relative w-full aspect-[4/5] bg-[#F3F3F3] overflow-hidden">
+          <img 
+            src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" 
+            alt="轮渡上的雾" 
+            class="w-full h-full object-cover block"
+          >
+          <!-- Top-right tiny count -->
+          <div class="absolute top-5 right-5 text-[12px] font-medium text-white tracking-widest drop-shadow-sm select-none">
+            1 / 20
+          </div>
+        </div>
+
+        <!-- Below photo pagination -->
+        <div class="mt-4 text-[12px] font-medium text-secondary tracking-widest flex items-center space-x-6">
+          <a href="#" class="hover:text-black transition-none">← 上一穗</a>
+          <span class="text-faint">/</span>
+          <a href="#" class="hover:text-black transition-none">下一穗 →</a>
+        </div>
+      </div>
+
+      <!-- RIGHT 4 COLUMNS: Column 9 to 12 -->
+      <div class="col-start-9 col-span-4 flex flex-col pt-1">
+        
+        <!-- Breadcrumb -->
+        <div class="text-[12px] font-medium text-secondary tracking-[0.08em] mb-8">
+          <a href="#" class="hover:text-black">穗仓</a>
+          <span class="mx-1 text-faint">/</span>
+          <span>照片</span>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-[64px] font-semibold leading-[1.05] tracking-[-0.03em] mb-12">
+          轮渡上的雾
+        </h1>
+
+        <!-- No-line Definition List -->
+        <div class="space-y-4 mb-10 text-[16px] leading-[1.6]">
+          <div class="flex items-baseline">
+            <span class="text-[12px] font-medium text-secondary tracking-[0.08em] w-[72px] shrink-0">类型</span>
+            <span class="font-normal text-black">照片</span>
+          </div>
+
+          <div class="flex items-baseline">
+            <span class="text-[12px] font-medium text-secondary tracking-[0.08em] w-[72px] shrink-0">拾于</span>
+            <span class="font-normal text-black">2026年10月21日 06:42</span>
+          </div>
+
+          <div class="flex items-baseline">
+            <span class="text-[12px] font-medium text-secondary tracking-[0.08em] w-[72px] shrink-0">来源</span>
+            <span class="font-normal text-black">自己拍</span>
+          </div>
+
+          <div class="flex items-baseline">
+            <span class="text-[12px] font-medium text-secondary tracking-[0.08em] w-[72px] shrink-0">标签</span>
+            <span class="font-normal text-black">清晨 / 雾 / 通勤</span>
+          </div>
+
+          <div class="flex items-baseline">
+            <span class="text-[12px] font-medium text-secondary tracking-[0.08em] w-[72px] shrink-0">地点</span>
+            <span class="font-normal text-black">徐州</span>
+          </div>
+
+          <div class="flex items-baseline">
+            <span class="text-[12px] font-medium text-secondary tracking-[0.08em] w-[72px] shrink-0">尺寸</span>
+            <span class="font-normal text-black">3024 × 4032</span>
+          </div>
+        </div>
+
+        <!-- 备注 Section -->
+        <div class="mb-12">
+          <div class="text-[12px] font-medium text-secondary tracking-[0.08em] mb-2">
+            备注
+          </div>
+          <p class="text-[16px] leading-[1.7] font-normal text-black">
+            六点四十的船，栏杆冰的，对岸什么都看不见。想记住这种什么都看不见的感觉。
+          </p>
+        </div>
+
+        <!-- 相近的穗 Section (Three 1:1 Thumbnails) -->
+        <div class="mb-14">
+          <div class="text-[12px] font-medium text-secondary tracking-[0.08em] mb-4">
+            相近的穗
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <!-- Thumb 1: Re: Stacks (Snowy cabin window) -->
+            <a href="#" class="group block">
+              <div class="w-full aspect-square bg-[#F3F3F3] overflow-hidden mb-1.5">
+                <img 
+                  src="https://lh3.googleusercontent.com/aida/AEtjO1Vi-LhX-l8RD3zrf3It4rRe_YiL3BWt5MnmjjywiB3w_5kVgyD0MEdV50ibhvu8lkDzfOT6JhH7AEmJ-Tyw565Mpw2MlbfuJG1YtErrlaPD5WmZqsM6Xw3iL_8GvfOUOUMpubG2-I6dK3oDbsSBh3GWqupWhQqb4NSg8sXCg617wEEp0c3XDas90mE052bZcXnJ97GO6BRBPprkvvM0sfXXH1IJ_PHrCWMTss8GxWSBBjx30DAjaDi8yQ" 
+                  alt="Re: Stacks" 
+                  class="w-full h-full object-cover block group-hover:opacity-90 transition-none"
+                >
+              </div>
+              <div class="text-[11px] font-medium text-secondary tracking-tight truncate group-hover:text-black">
+                Re: Stacks
+              </div>
+            </a>
+
+            <!-- Thumb 2: 完美的日子 (Quiet Tokyo street) -->
+            <a href="#" class="group block">
+              <div class="w-full aspect-square bg-[#F3F3F3] overflow-hidden mb-1.5">
+                <img 
+                  src="https://lh3.googleusercontent.com/aida/AEtjO1VwRjAApBlw0cvYV3mNMlQzujVjYPgk5WXPj28qCa_Ru-cY-MzE_uAnqQYpqHML3FRqlygqu2YpLhZGoUdNrNY48FBokjg6of-mFxlEynN8YFHbEDlwLmaZ_CRqH4fJ745Jo6tFsclKRVmPXJs6zUDwvgpNzGB3Et7qxTGfIUE9yt34hm1nrteJ5CsRO_LsfMS_2RgB30QiKmDr4Sq9aXdTCBz4_BFJkBzMEPv_FZEI-1XlZowcKhx5TA" 
+                  alt="《完美的日子》" 
+                  class="w-full h-full object-cover block group-hover:opacity-90 transition-none"
+                >
+              </div>
+              <div class="text-[11px] font-medium text-secondary tracking-tight truncate group-hover:text-black">
+                《完美的日子》
+              </div>
+            </a>
+
+            <!-- Thumb 3: 钢琴/白床单氛围静物 (旧小区晾衣绳/清晨白光) -->
+            <a href="#" class="group block">
+              <div class="w-full aspect-square bg-[#F3F3F3] overflow-hidden mb-1.5">
+                <img 
+                  src="https://lh3.googleusercontent.com/aida/AEtjO1VNEkLPApRT2dQX1op0NyFcM1bZ3Wb1flttLMHNs6ZLxYDwcuq2hA5hv5m6C7Mrm0XXoFtc7YEP_ED7laokNuVr0YjdCyfGi5D8QwliBG7Yty90-4KUAiaJlKxmXe6c9j_D3LLWHjVLQI7eWSKv3KSVyODK4u98e85qmxxewgpFd8SecCh-nflYNXZ79Sfc-RDOs45VQFBNXgyd02zLaJmieCcwNLkydiFGzfyw6arSk1mhClS41HzL9PE" 
+                  alt="aqua" 
+                  class="w-full h-full object-cover block group-hover:opacity-90 transition-none"
+                >
+              </div>
+              <div class="text-[11px] font-medium text-secondary tracking-tight truncate group-hover:text-black">
+                aqua
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Actions Row -->
+        <div class="flex items-center space-x-6 text-[13px] font-medium">
+          <!-- Black square button -->
+          <button class="bg-black text-white px-5 py-3 tracking-[0.04em] hover:bg-neutral-800 transition-none">
+            嫁接这一穗
+          </button>
+          <!-- Text actions -->
+          <button class="text-secondary hover:text-black tracking-[0.04em] transition-none">
+            编辑
+          </button>
+          <button class="text-faint hover:text-secondary tracking-[0.04em] transition-none">
+            移出穗仓
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full px-[40px] pb-8 pt-4">
+    <div class="text-[10px] text-black tracking-[0.1em] font-normal">
+      © 2026 Q1f730
+    </div>
+  </footer>
+
+</body>
+</html>
