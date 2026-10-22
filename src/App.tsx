@@ -7,7 +7,9 @@ import { Field } from './components/Field';
 import { IcGear, IcGraft, IcPlus, IcSheaf, IcSprout, IcTaste } from './components/Icons';
 import { Sheet } from './components/Sheet';
 import { formatWhen, fromLocalInput, toLocalInput } from './lib/quick';
-import { addItem, db, updateItem } from './lib/db';
+import { addItem, db, deleteItem, updateItem } from './lib/db';
+import { getOriginalDataUrl } from './lib/imagestore';
+import { useOriginalSrc } from './lib/useImage';
 import { enrichItem } from './lib/enrich';
 import { msToNextPhase, phaseCssVars, PHASES, resolvePhase, type Phase } from './lib/phases';
 import { shareToDraft, takeShared } from './lib/share';
@@ -56,7 +58,7 @@ export default function App() {
   const [view, setView] = useState<View>('library');
   const [settings, setSettingsState] = useState<Settings>(loadSettings);
   const [toasts, setToasts] = useState<Array<{ id: number; msg: string; kind: 'ok' | 'err' }>>([]);
-  const [capture, setCapture] = useState<{ draft: Draft; editId?: number } | null>(null);
+  const [capture, setCapture] = useState<{ draft: Draft; editId?: number; origImage?: string } | null>(null);
   const [detail, setDetail] = useState<Item | null>(null);
   const [saving, setSaving] = useState(false);
   const [preset, setPreset] = useState<number[] | null>(null);
@@ -148,9 +150,10 @@ export default function App() {
       let id: number;
       if (capture?.editId) {
         id = capture.editId;
-        const prev = await db.items.get(id);
-        const imageChanged = prev?.image !== d.image;
-        await updateItem(id, { ...d, ...(imageChanged ? { caption: undefined } : {}), embedding: undefined, embedModel: undefined });
+        // 原图在 images 表：只有真的换了 / 删了图才动它（带 image 键），否则不碰
+        const imageChanged = (capture.origImage || undefined) !== (d.image || undefined);
+        const { image, ...rest } = d;
+        await updateItem(id, { ...rest, ...(imageChanged ? { image: image || undefined, caption: undefined } : {}), embedding: undefined, embedModel: undefined });
         toast('已更新');
       } else {
         id = await addItem(d);
@@ -171,7 +174,7 @@ export default function App() {
   async function onDelete(it: Item) {
     if (!it.id) return;
     if (!confirm(`删除「${it.title}」？`)) return;
-    await db.items.delete(it.id);
+    await deleteItem(it.id);
     setDetail(null);
     toast('已删除');
   }
@@ -216,11 +219,12 @@ export default function App() {
           {detail && (
             <Detail
               it={detail}
-              onEdit={() => {
-                const { id, createdAt: _c, updatedAt: _u, ...rest } = detail;
-                void _c;
-                void _u;
-                setCapture({ draft: rest, editId: id });
+              onEdit={async () => {
+                const { id, createdAt: _c, updatedAt: _u, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _td, thumbFail: _f, hasImage: _hi, ...rest } = detail;
+                void _c, void _u, void _t, void _w, void _h, void _td, void _f, void _hi;
+                // 编辑时才把原图读出来给表单预览
+                const origImage = id != null && (detail.hasImage || detail.image) ? await getOriginalDataUrl(db, id) : undefined;
+                setCapture({ draft: { ...rest, image: origImage }, editId: id, origImage });
               }}
               onDelete={() => onDelete(detail)}
               onDevelop={() => {
@@ -258,9 +262,10 @@ export default function App() {
 }
 
 function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void }) {
+  const full = useOriginalSrc(it);
   return (
     <div className="detail">
-      {it.image && <img className="detail-img" src={it.image} alt={it.title} />}
+      {full && <img className="detail-img" src={full} alt={it.title} decoding="async" />}
       <h2 className="detail-title">{it.title}</h2>
       {(it.creator || it.year) && (
         <div className="card-sub">
