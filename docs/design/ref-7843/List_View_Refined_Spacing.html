@@ -1,0 +1,214 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>STUDIO - All Projects (List View)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#000000",
+                        "surface-container-high": "#e8e8e8",
+                        "primary-fixed": "#e2e2e2",
+                        "tertiary-container": "#1a1c1c",
+                        "secondary-container": "#e1dfdf",
+                        "on-secondary-container": "#626263",
+                        "primary": "#000000",
+                        "on-secondary-fixed-variant": "#464747",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container-low": "#f3f3f4",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#5e5e5e",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-container": "#eeeeee",
+                        "outline": "#7e7576",
+                        "surface": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-tertiary-container": "#838484",
+                        "on-surface": "#1a1c1c",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#cfc4c5",
+                        "secondary-fixed": "#e4e2e2",
+                        "on-primary-container": "#848484",
+                        "surface-bright": "#f9f9f9",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#c6c6c6",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#1b1b1b",
+                        "on-background": "#1a1c1c",
+                        "inverse-surface": "#2f3131",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "background": "#f9f9f9",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface-dim": "#dadada",
+                        "secondary": "#5e5e5e",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-surface-variant": "#4c4546"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "element-gap": "12px",
+                        "edge-margin": "64px",
+                        "gutter": "24px",
+                        "section-gap": "160px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "display-xl": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "display-xl": ["80px", { "lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .list-row-hover:hover .list-image-preview {
+            opacity: 1;
+            transform: translateY(-50%) translateX(16px);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<nav class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-inter text-xs tracking-widest uppercase font-medium docked full-width top-0 z-50 border-b border-zinc-200 dark:border-zinc-800 flat no shadows flex justify-between items-center w-full px-edge-margin h-20 pt-[10px] fixed bg-opacity-95 backdrop-blur-sm">
+<a class="text-lg font-bold tracking-tighter text-zinc-900 dark:text-zinc-50" href="#">STUDIO</a>
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-zinc-900 dark:text-zinc-50 border-b border-zinc-900 dark:border-zinc-50 pb-1 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-150 opacity-80" href="#">WORK</a>
+<a class="text-zinc-400 dark:text-zinc-500 pb-1 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-150" href="#">ABOUT</a>
+<a class="text-zinc-400 dark:text-zinc-500 pb-1 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-150" href="#">NEWS</a>
+<a class="text-zinc-400 dark:text-zinc-500 pb-1 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-150" href="#">CAREERS</a>
+</div>
+<a class="bg-primary text-on-primary px-6 py-3 font-label-caps text-label-caps hover:bg-tertiary-container transition-colors duration-150" href="#">GET IN TOUCH</a>
+</nav>
+<!-- Main Content -->
+<main class="flex-grow pt-20 px-edge-margin max-w-container-max mx-auto w-full">
+<!-- Header Section with 160px vertical space -->
+<div class="mt-section-gap mb-16 flex justify-between items-end">
+<h1 class="font-display-xl text-display-xl text-primary">All Projects (12)</h1>
+<!-- View Toggle -->
+<div class="flex items-center gap-4 font-label-caps text-label-caps text-primary">
+<a class="text-outline-variant hover:text-primary transition-colors duration-150" href="#">GRID</a>
+<div class="w-[1px] h-4 bg-tertiary"></div>
+<span class="border-b border-primary pb-1">LIST VIEW</span>
+</div>
+</div>
+<!-- Editorial List View -->
+<div class="w-full flex flex-col pb-section-gap">
+<!-- List Header -->
+<div class="grid grid-cols-12 gap-gutter border-b border-tertiary pb-4 mb-4 font-label-caps text-label-caps text-outline uppercase tracking-widest">
+<div class="col-span-5">PROJECT</div>
+<div class="col-span-3">CLIENT</div>
+<div class="col-span-3">INDUSTRY</div>
+<div class="col-span-1 text-right">YEAR</div>
+</div>
+<!-- List Items -->
+<!-- Project 1 -->
+<div class="group list-row-hover relative grid grid-cols-12 gap-gutter py-6 border-b border-outline-variant hover:border-tertiary transition-colors duration-150 items-center cursor-pointer">
+<div class="col-span-5 font-headline-md text-headline-md text-primary group-hover:pl-4 transition-all duration-300">Casa Blanc</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Private Client</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Residential</div>
+<div class="col-span-1 text-right font-body-sm text-body-sm text-on-surface-variant">2023</div>
+<!-- Hover Image Preview (Hidden by default, shown on hover via CSS) -->
+<div class="list-image-preview absolute left-[40%] top-1/2 -translate-y-1/2 w-64 h-40 opacity-0 pointer-events-none transition-all duration-300 z-10">
+<img alt="Modern minimalist white house exterior with clean lines and subtle lighting" class="w-full h-full object-cover shadow-2xl" data-alt="Modern minimalist white house exterior with clean lines and subtle lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCL2AP7z3XOBagEpK4OiuMv8jdELVWfQkM2NDZ48OlX5NvYZgzj3bRY2ZdwKVvizD36hoZw3vD9pMWRfD7I-uCtZlLP_Hr9eGP0pTiz2SmhdHiUkDXlRRjeU7iMGKlisnG_s42aVmy-bJ20E_Y5oTMJSFV6oClaJ7P_e_vEhX21EQWXJflCRm4vOH9KRRjLqADWUkOEyUG5CVveMxX_i52u6Swg9TmthRi5IKW288cX1YjT66AeIZXO8oCOz-iYw2ZHnldbPcAB5VQ">
+</div>
+</div>
+<!-- Project 2 -->
+<div class="group list-row-hover relative grid grid-cols-12 gap-gutter py-6 border-b border-outline-variant hover:border-tertiary transition-colors duration-150 items-center cursor-pointer">
+<div class="col-span-5 font-headline-md text-headline-md text-primary group-hover:pl-4 transition-all duration-300">The Onyx Residence</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Onyx Development Group</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Luxury Multi-Family</div>
+<div class="col-span-1 text-right font-body-sm text-body-sm text-on-surface-variant">2022</div>
+<div class="list-image-preview absolute left-[40%] top-1/2 -translate-y-1/2 w-64 h-40 opacity-0 pointer-events-none transition-all duration-300 z-10">
+<img alt="Dark modern architectural interior with large windows and dramatic shadows" class="w-full h-full object-cover shadow-2xl" data-alt="Dark modern architectural interior with large windows and dramatic shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvkbW1VAlR5FFiGygLrMzJ7HQF1WCxeD_Kcwyvd3m9yFVPQmqUI1wFOMHaMC3n-dzQ8hltST0mLcIc0NqBXIKBlMcFm2gISPAxAh4hvrcG31bNiNrRl_VpgF8g4oy3et8zOfU2Aqc9TrCABmwmjxKutggCmKImjEslKdDkOn3r4MVDJHLydHqAjRZDqnVoPaFRQTSkzQSba6H33zs0gMDUk9KULl0PbT7n_E9FrrkqWGDvpdyZCL9dsHTf-y0RfqA0tnICikH8uO0">
+</div>
+</div>
+<!-- Project 3 -->
+<div class="group list-row-hover relative grid grid-cols-12 gap-gutter py-6 border-b border-outline-variant hover:border-tertiary transition-colors duration-150 items-center cursor-pointer">
+<div class="col-span-5 font-headline-md text-headline-md text-primary group-hover:pl-4 transition-all duration-300">Gallery House</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Art Foundation Trust</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Cultural / Residential</div>
+<div class="col-span-1 text-right font-body-sm text-body-sm text-on-surface-variant">2021</div>
+<div class="list-image-preview absolute left-[40%] top-1/2 -translate-y-1/2 w-64 h-40 opacity-0 pointer-events-none transition-all duration-300 z-10">
+<img alt="Spacious gallery-like interior with white walls, minimalist art, and natural light" class="w-full h-full object-cover shadow-2xl" data-alt="Spacious gallery-like interior with white walls, minimalist art, and natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZC5jkODBDmTJZhLMhnLwLARHIEco9_L1_M7A7i9miH508VKQr8z7go7DvaM75X4bheH9wOI4A96q2q-gFeTrQKx5KJ1ao8XfkSTYbWoGsBg-c7huihPduHhuk5SVtp27TvpJRZ8LdVnXBS1rmWTOm5AoAqI-QeUCfi7_i1pB1pu4I9vqA5vy3iIS13jCqHqYo9xOvXwL5DFrp151DWIvnPcw4kIsA4D8qt5DRvjDcfalorIN0CuEBRQnTIucdgJJk13IOo17QyNk">
+</div>
+</div>
+<!-- Project 4 -->
+<div class="group list-row-hover relative grid grid-cols-12 gap-gutter py-6 border-b border-outline-variant hover:border-tertiary transition-colors duration-150 items-center cursor-pointer">
+<div class="col-span-5 font-headline-md text-headline-md text-primary group-hover:pl-4 transition-all duration-300">Lumina Pavilion</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">City Parks Dept.</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Public Space</div>
+<div class="col-span-1 text-right font-body-sm text-body-sm text-on-surface-variant">2021</div>
+<div class="list-image-preview absolute left-[40%] top-1/2 -translate-y-1/2 w-64 h-40 opacity-0 pointer-events-none transition-all duration-300 z-10">
+<img alt="Modern glass and steel pavilion in a park setting at dusk" class="w-full h-full object-cover shadow-2xl" data-alt="Modern glass and steel pavilion in a park setting at dusk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEbymUi9DzNBnG_A4S_sNNosRaEgLl9BsooBFqngKViRX0miVoRD4tVOXgCbqMFZjZmHj82liMeToezHXC9H11S1egGY9LXjtMgYzcEqQIEBvvF1U_hL4iV3f9zuJ9aO3Vjj1_SqCFlZ9SpXV9JPBv8mkHNNGggSg5BwnQyQxAAbonHlNdpnGH_3LI6MoP4d-Ho0uuhljGcPwF7DDMupy9xNCK0yo69DiIIwBMGy_qDn3oAkxLNg0fUFqxMHUTIoO2wxDS_3qhAAA">
+</div>
+</div>
+<!-- Project 5 -->
+<div class="group list-row-hover relative grid grid-cols-12 gap-gutter py-6 border-b border-outline-variant hover:border-tertiary transition-colors duration-150 items-center cursor-pointer">
+<div class="col-span-5 font-headline-md text-headline-md text-primary group-hover:pl-4 transition-all duration-300">The Nordic Loft</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Private Client</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Interior Architecture</div>
+<div class="col-span-1 text-right font-body-sm text-body-sm text-on-surface-variant">2020</div>
+<div class="list-image-preview absolute left-[40%] top-1/2 -translate-y-1/2 w-64 h-40 opacity-0 pointer-events-none transition-all duration-300 z-10">
+<img alt="Minimalist nordic interior with light wood floors and neutral tones" class="w-full h-full object-cover shadow-2xl" data-alt="Minimalist nordic interior with light wood floors and neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpNnds3mZLijdrqbVn8XhDLIxyVHZrvIETwqw5tsaLEVLtPmV0V7suKa7O0Nvv4PFh0hAfcE9Q7pCTFEo9KzIGkrNGAt6Bx3vclLzA75-tbuJPv46AkLHf3u904e13RqJt9mBarBMWxsPNZobJYieL3hyWv16JCT9kx9ExkjPdsTH-U_3qQx6jJXL3Ubcw8CqJwpW-V9danukP7h4j8qtG0tLS9_tmFqk86wXMovaXf_IuHVn6FAwBWI4LDMJybBjzWUFvhlkmLOU">
+</div>
+</div>
+<!-- Project 6 -->
+<div class="group list-row-hover relative grid grid-cols-12 gap-gutter py-6 border-b border-outline-variant hover:border-tertiary transition-colors duration-150 items-center cursor-pointer">
+<div class="col-span-5 font-headline-md text-headline-md text-primary group-hover:pl-4 transition-all duration-300">Echo Headquarters</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Echo Tech</div>
+<div class="col-span-3 font-body-sm text-body-sm text-on-surface-variant">Commercial</div>
+<div class="col-span-1 text-right font-body-sm text-body-sm text-on-surface-variant">2019</div>
+<div class="list-image-preview absolute left-[40%] top-1/2 -translate-y-1/2 w-64 h-40 opacity-0 pointer-events-none transition-all duration-300 z-10">
+<img alt="Sleek modern office interior with concrete columns and glass partitions" class="w-full h-full object-cover shadow-2xl" data-alt="Sleek modern office interior with concrete columns and glass partitions" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCI9M0gopCtG9uDCbj0vqkWZXYGmxQOA8nAmVliVabTK7vdpN4FuK3jUUn47x1-ohJnNP8HSy3qMbJzkS_9qTI0M_z6YQvu1vO_FuV9Nc17rAg67rQKzI3cGqmmJs_IVNqjhMumUY4JcRqaHuG20U683UxBadWA7L79HLLQ-WJFGgM3BdIvcuS-2gptl5Ea3Z0pINKbPvxIQnjAGbU9ypy37gZNnFvwEvimFawvKklGOqjG2MCPhdGUsxuG1kTiCq1TZAicjgGMQ0c">
+</div>
+</div>
+<!-- Load More Button -->
+<div class="flex justify-center mt-16">
+<button class="border border-tertiary text-primary px-8 py-4 font-label-caps text-label-caps hover:bg-tertiary hover:text-white transition-colors duration-150">LOAD MORE</button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-inter text-[10px] tracking-widest uppercase docked full-width bottom-0 border-t border-zinc-200 dark:border-zinc-800 flat no shadows flex flex-col md:flex-row justify-between items-center w-full px-edge-margin py-12 gap-8 mt-auto">
+<div class="text-zinc-400 dark:text-zinc-500">© 2024 STUDIO. ALL RIGHTS RESERVED.</div>
+<div class="flex gap-8">
+<a class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-150" href="#">INSTAGRAM</a>
+<a class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-150" href="#">LINKEDIN</a>
+<a class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-150" href="#">TWITTER</a>
+</div>
+</footer>
+</body></html>
