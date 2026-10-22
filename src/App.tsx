@@ -1,94 +1,121 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaptureForm, emptyDraft, type Draft } from './components/CaptureForm';
-import { safeHost } from './components/ItemCard';
-import { ClipOffer } from './components/QuickBar';
-import { level, useButtonFx } from './components/Motion';
-import { Field } from './components/Field';
-import { IcGear, IcGraft, IcPlus, IcSheaf, IcSprout, IcTaste } from './components/Icons';
+import { ClipOffer, QuickBar, QuickWindow } from './components/QuickBar';
+import { ConfirmLayer, type ConfirmReq } from './components/Confirm';
+import { Detail } from './components/Detail';
 import { Sheet } from './components/Sheet';
-import { formatWhen, fromLocalInput, toLocalInput } from './lib/quick';
-import { addItem, db, deleteItem, touchItems, updateItem } from './lib/db';
+import { addItem, db, deleteItem, restoreItem, snapshotItem, touchItems, updateItem } from './lib/db';
 import { getOriginalDataUrl } from './lib/imagestore';
-import { useOriginalSrc } from './lib/useImage';
 import { enrichItem } from './lib/enrich';
-import { msToNextPhase, phaseCssVars, PHASES, resolvePhase, type Phase } from './lib/phases';
+import { detectMotionLevel } from './lib/motion';
+import { onQuickFocus, onTrayGo } from './lib/desktop';
 import { shareToDraft, takeShared } from './lib/share';
 import { loadSettings, saveSettings, type Settings } from './lib/settings';
-import { Ctx, type View } from './lib/store';
+import { Ctx, type ConfirmOpts, type View } from './lib/store';
+import { resolveTheme, type Theme } from './lib/theme';
 import { TYPE_LABEL, type Item } from './lib/types';
+import { shortDate } from './lib/studio';
 import { Branches } from './views/Branches';
 import { Develop } from './views/Develop';
 import { Library } from './views/Library';
+import { Onboarding, needsOnboarding } from './views/Onboarding';
 import { SettingsView } from './views/SettingsView';
 import { Taste } from './views/Taste';
 
-const NAV: Array<{ v: View; label: string; Icon: typeof IcSheaf }> = [
-  { v: 'library', label: '穗仓', Icon: IcSheaf },
-  { v: 'develop', label: '嫁接', Icon: IcGraft },
-  { v: 'branches', label: '新枝', Icon: IcSprout },
-  { v: 'taste', label: '口味', Icon: IcTaste },
-  { v: 'settings', label: '设置', Icon: IcGear },
+const NAV: Array<{ v: View; label: string }> = [
+  { v: 'library', label: '穗仓' },
+  { v: 'develop', label: '嫁接' },
+  { v: 'branches', label: '新枝' },
+  { v: 'taste', label: '口味' },
+  { v: 'settings', label: '设置' },
 ];
 
-/** 当前时段：设置里固定，或跟随本地时间（到点自动切换） */
-function usePhase(pref: Settings['phase']): Phase {
-  const [phase, setPhase] = useState<Phase>(() => resolvePhase(pref));
+function useMedia(q: string): boolean {
+  const get = () => typeof window !== 'undefined' && !!window.matchMedia?.(q).matches;
+  const [m, setM] = useState(get);
   useEffect(() => {
-    setPhase(resolvePhase(pref));
-    if (pref !== 'auto') return;
-    let t = 0;
-    const arm = () => {
-      t = window.setTimeout(() => {
-        setPhase(resolvePhase('auto'));
-        arm();
-      }, msToNextPhase());
-    };
-    arm();
-    const onVis = () => document.visibilityState === 'visible' && setPhase(resolvePhase('auto'));
-    document.addEventListener('visibilitychange', onVis);
+    const mq = window.matchMedia?.(q);
+    if (!mq) return;
+    const on = () => setM(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [q]);
+  return m;
+}
+
+/** 白 / 黑：设置里固定，或跟随系统 */
+function useTheme(pref: Settings['theme']): Theme {
+  const sysDark = useMedia('(prefers-color-scheme: dark)');
+  return resolveTheme(pref, sysDark);
+}
+
+function useOnline(): boolean {
+  const [on, setOn] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine !== false));
+  useEffect(() => {
+    const f = () => setOn(navigator.onLine !== false);
+    window.addEventListener('online', f);
+    window.addEventListener('offline', f);
     return () => {
-      clearTimeout(t);
-      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('online', f);
+      window.removeEventListener('offline', f);
     };
-  }, [pref]);
-  return phase;
+  }, []);
+  return on;
+}
+
+interface ToastT {
+  id: number;
+  msg: string;
+  kind: 'ok' | 'err';
+  action?: { label: string; run: () => void };
+  ms: number;
 }
 
 export default function App() {
   const [view, setView] = useState<View>('library');
   const [settings, setSettingsState] = useState<Settings>(loadSettings);
-  const [toasts, setToasts] = useState<Array<{ id: number; msg: string; kind: 'ok' | 'err' }>>([]);
+  const [toasts, setToasts] = useState<ToastT[]>([]);
   const [capture, setCapture] = useState<{ draft: Draft; editId?: number; origImage?: string } | null>(null);
   const [detail, setDetail] = useState<Item | null>(null);
   const [saving, setSaving] = useState(false);
   const [preset, setPreset] = useState<number[] | null>(null);
+  const [confirmReq, setConfirmReq] = useState<ConfirmReq | null>(null);
+  const [onboard, setOnboard] = useState<boolean | null>(null);
+  const [quickWin, setQuickWin] = useState(false);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const phase = usePhase(settings.phase);
-  const motion = level();
+  const theme = useTheme(settings.theme);
+  const desktop = useMedia('(min-width: 1024px)');
+  const online = useOnline();
+  const motion = useMemo(detectMotionLevel, []);
 
-  useButtonFx();
   useEffect(() => {
     document.documentElement.dataset.motion = motion;
   }, [motion]);
-
   useEffect(() => {
-    const root = document.documentElement;
-    for (const [k, v] of Object.entries(phaseCssVars(phase))) root.style.setProperty(k, v);
-    root.dataset.phase = phase;
-    root.dataset.sky = PHASES[phase].ui.dark ? 'dark' : 'light';
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', PHASES[phase].ui.paper);
-  }, [phase]);
-
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#000000' : '#ffffff');
+  }, [theme]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [view]);
-
-  const toast = useCallback((msg: string, kind: 'ok' | 'err' = 'ok') => {
-    const id = Date.now() + Math.random();
-    setToasts((t) => [...t.slice(-2), { id, msg, kind }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'err' ? 6000 : 2600);
+  // 第一次打开（空仓、没走过引导）才出引导；老用户升级不打扰
+  useEffect(() => {
+    let alive = true;
+    needsOnboarding().then((n) => alive && setOnboard(n));
+    return () => {
+      alive = false;
+    };
   }, []);
+
+  const toast = useCallback((msg: string, kind: 'ok' | 'err' = 'ok', action?: ToastT['action']) => {
+    const id = Date.now() + Math.random();
+    const ms = action ? 5000 : kind === 'err' ? 6000 : 2600;
+    setToasts((t) => [...t.slice(-2), { id, msg, kind, action, ms }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), ms);
+  }, []);
+  const confirm = useCallback((o: ConfirmOpts) => new Promise<boolean>((resolve) => setConfirmReq({ ...o, resolve })), []);
 
   const setSettings = useCallback((s: Settings) => {
     saveSettings(s);
@@ -103,12 +130,17 @@ export default function App() {
   }, []);
   const developFrom = useCallback((ids: number[]) => {
     setPreset(ids);
+    setDetail(null);
     setView('develop');
+  }, []);
+  const go = useCallback((v: View) => {
+    setDetail(null);
+    setView(v);
   }, []);
 
   const ctx = useMemo(
-    () => ({ settings, setSettings, toast, openItem, openCapture, go: setView, developFrom, phase }),
-    [settings, setSettings, toast, openItem, openCapture, developFrom, phase],
+    () => ({ settings, setSettings, toast, confirm, openItem, openCapture, go, developFrom, theme, desktop }),
+    [settings, setSettings, toast, confirm, openItem, openCapture, go, developFrom, theme, desktop],
   );
 
   // 安卓分享菜单 → 直接拾进穗仓
@@ -134,19 +166,52 @@ export default function App() {
     };
   }, [toast]);
 
-  // 快捷键：N = 速记
+  // 托盘菜单：打开穗仓 / 今日一穗 / 设置
+  useEffect(() => {
+    let off = () => {};
+    let dead = false;
+    onTrayGo((v) => {
+      setCapture(null);
+      setDetail(null);
+      if (v === 'settings') setView('settings');
+      else {
+        setView('library');
+        if (v === 'daily') setTimeout(() => document.querySelector('.daily-ear')?.scrollIntoView({ block: 'start' }), 300);
+      }
+    }).then((f) => (dead ? f() : (off = f)));
+    return () => {
+      dead = true;
+      off();
+    };
+  }, []);
+
+  // 全局速记小窗（托盘 / Ctrl+Shift+L 唤出；浏览器里由 glean:quick 事件唤出）
+  useEffect(() => {
+    const on = () => setQuickWin(true);
+    window.addEventListener('glean:quick', on);
+    let off = () => {};
+    let dead = false;
+    onQuickFocus(on).then((f) => (dead ? f() : (off = f)));
+    return () => {
+      dead = true;
+      off();
+      window.removeEventListener('glean:quick', on);
+    };
+  }, []);
+
+  // 快捷键：N = 速记展开
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || capture || detail) return;
-      if (e.key === 'n' || e.key === 'N') {
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || capture || detail || confirmReq) return;
+      if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         openCapture();
       }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [capture, detail, openCapture]);
+  }, [capture, detail, confirmReq, openCapture]);
 
   async function onSave(d: Draft) {
     setSaving(true);
@@ -177,36 +242,61 @@ export default function App() {
 
   async function onDelete(it: Item) {
     if (!it.id) return;
-    if (!confirm(`删除「${it.title}」？`)) return;
+    const used = (await db.developments.toArray()).filter((d) => d.itemIds.includes(it.id!)).length;
+    const ok = await confirm({
+      title: `删掉「${it.title}」？`,
+      body: used ? `它是 ${used} 根新枝的来源。删掉以后，这些新枝的「因为这几穗」里会少它一穗。` : '删掉以后 5 秒内可以撤销。',
+      ok: '删掉',
+      cancel: '留着',
+      danger: true,
+    });
+    if (!ok) return;
+    const snap = await snapshotItem(it.id);
     await deleteItem(it.id);
     setDetail(null);
-    toast('已删除');
+    setCapture(null);
+    toast('已删掉 1 穗', 'ok', snap ? { label: '撤销', run: () => void restoreItem(snap).then(() => toast('已放回穗仓')) } : undefined);
   }
+
+  const nav = (
+    <nav className="nav" aria-label="主导航">
+      {NAV.map((n) => (
+        <button key={n.v} className={`nav-btn${view === n.v ? ' on' : ''}`} onClick={() => go(n.v)} aria-current={view === n.v ? 'page' : undefined}>
+          {n.label}
+        </button>
+      ))}
+    </nav>
+  );
+
+  if (onboard) return (
+    <Ctx.Provider value={ctx}>
+      <Onboarding onDone={() => setOnboard(false)} />
+    </Ctx.Provider>
+  );
 
   return (
     <Ctx.Provider value={ctx}>
-      <Field phase={phase} still={motion === 'off' || settings.fieldStill} lite={motion === 'lite'} />
-      <div className="app">
-        <nav className="nav" aria-label="主导航">
-          <div className="brand">
-            <span className="brand-name">拾穗</span>
-            <span className="brand-sub">Glean</span>
+      <div className={`app${desktop ? ' is-desktop' : ' is-mobile'}`}>
+        {!online && (
+          <div className="offline-bar" role="status">
+            离线 · 拾穗照常保存，嫁接会改用离线方式
           </div>
-          {NAV.map((n, idx) => [
-            idx === 2 && (
-              <button key="add" className="nav-add" onClick={openCapture} aria-label="速记">
-                <IcPlus />
-              </button>
-            ),
-            <button key={n.v} className={`nav-btn${view === n.v ? ' on' : ''}`} onClick={() => setView(n.v)} aria-current={view === n.v ? 'page' : undefined}>
-              <n.Icon />
-              <span>{n.label}</span>
-            </button>,
-          ])}
-          <button className="nav-write" onClick={openCapture}>
-            <IcPlus /> 拾一穗
+        )}
+        <header className="topbar">
+          <button className="logo" onClick={() => go('library')} aria-label="拾穗 · GLEAN，回到穗仓">
+            拾穗 · GLEAN
           </button>
-        </nav>
+          {desktop ? (
+            <>
+              {nav}
+              <QuickBar where="top" />
+            </>
+          ) : (
+            <button className={`top-settings${view === 'settings' ? ' on' : ''}`} onClick={() => go('settings')}>
+              设置
+            </button>
+          )}
+        </header>
         <main className="main">
           {view === 'library' && <Library />}
           {view === 'develop' && <Develop preset={preset} clearPreset={() => setPreset(null)} />}
@@ -214,27 +304,37 @@ export default function App() {
           {view === 'taste' && <Taste />}
           {view === 'settings' && <SettingsView />}
         </main>
+        <footer className="colophon">© 2026 Q1f730</footer>
+        {!desktop && (
+          <div className="dock">
+            <QuickBar where="dock" />
+            {nav}
+          </div>
+        )}
 
-        <Sheet open={!!capture} onClose={() => setCapture(null)} title={capture?.editId ? '编辑这一穗' : '速记'}>
-          {capture && <CaptureForm initial={capture.draft} onSave={onSave} onCancel={() => setCapture(null)} saving={saving} />}
+        <Sheet open={!!capture} onClose={() => setCapture(null)} title={capture?.editId ? '编辑穗' : '速记'} variant={capture?.editId ? 'page' : 'capture'}>
+          {capture && <CaptureForm initial={capture.draft} onSave={onSave} onCancel={() => setCapture(null)} saving={saving} editing={!!capture.editId} onDelete={capture.editId ? () => db.items.get(capture.editId!).then((it) => it && onDelete(it)) : undefined} />}
         </Sheet>
 
-        <Sheet open={!!detail && !capture} onClose={() => setDetail(null)} title={detail ? `${detail.sample ? '示例 · ' : ''}${TYPE_LABEL[detail.type]} · ${formatWhen(detail.createdAt)}` : ''}>
+        <Sheet
+          open={!!detail && !capture}
+          onClose={() => setDetail(null)}
+          title={detail ? `${detail.sample ? '示例 · ' : ''}${TYPE_LABEL[detail.type]} · ${shortDate(detail.createdAt)}` : ''}
+          variant="page"
+          aside={
+            detail ? (
+              <button className="sheet-act" onClick={() => editDetail(detail)}>
+                编辑
+              </button>
+            ) : null
+          }
+        >
           {detail && (
             <Detail
               it={detail}
-              onEdit={async () => {
-                const { id, createdAt: _c, updatedAt: _u, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _td, thumbFail: _f, hasImage: _hi, ...rest } = detail;
-                void _c, void _u, void _t, void _w, void _h, void _td, void _f, void _hi;
-                // 编辑时才把原图读出来给表单预览
-                const origImage = id != null && (detail.hasImage || detail.image) ? await getOriginalDataUrl(db, id) : undefined;
-                setCapture({ draft: { ...rest, image: origImage }, editId: id, origImage });
-              }}
+              onEdit={() => editDetail(detail)}
               onDelete={() => onDelete(detail)}
-              onDevelop={() => {
-                setDetail(null);
-                developFrom([detail.id!]);
-              }}
+              onDevelop={() => developFrom([detail.id!])}
               onWhen={async (ts) => {
                 await updateItem(detail.id!, { createdAt: ts });
                 const fresh = await db.items.get(detail.id!);
@@ -251,91 +351,38 @@ export default function App() {
           )}
         </Sheet>
 
+        {quickWin && <QuickWindow onClose={() => setQuickWin(false)} />}
         {!capture && !detail && <ClipOffer />}
+        <ConfirmLayer req={confirmReq} onDone={() => setConfirmReq(null)} />
 
         <div className="toasts" role="status" aria-live="polite">
           {toasts.map((t) => (
-            <div key={t.id} className={`toast ${t.kind}`}>
-              {t.msg}
+            <div key={t.id} className={`toast ${t.kind}${t.action ? ' has-action' : ''}`} style={{ ['--ms' as string]: `${t.ms}ms` }}>
+              <span className="toast-msg">{t.msg}</span>
+              {t.action && (
+                <button
+                  className="toast-act"
+                  onClick={() => {
+                    t.action!.run();
+                    setToasts((x) => x.filter((y) => y.id !== t.id));
+                  }}
+                >
+                  {t.action.label}
+                </button>
+              )}
+              {t.action && <i className="toast-timer" aria-hidden />}
             </div>
           ))}
         </div>
       </div>
     </Ctx.Provider>
   );
-}
 
-function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void }) {
-  const full = useOriginalSrc(it);
-  return (
-    <div className="detail">
-      {full && <img className="detail-img" src={full} alt={it.title} decoding="async" />}
-      <h2 className="detail-title">{it.title}</h2>
-      {(it.creator || it.year) && (
-        <div className="card-sub">
-          {it.creator}
-          {it.creator && it.year ? ' · ' : ''}
-          {it.year}
-        </div>
-      )}
-      {it.content && <p className="detail-content">{it.content}</p>}
-      {it.url && (
-        <a className="detail-url" href={it.url} target="_blank" rel="noreferrer">
-          ↗ {safeHost(it.url)}
-        </a>
-      )}
-      {it.why && (
-        <blockquote className="detail-why">
-          <span className="label">为什么打动我</span>
-          {it.why}
-        </blockquote>
-      )}
-      {it.caption && (
-        <div className="detail-caption">
-          <span className="label">AI 看到的</span>
-          {it.caption}
-        </div>
-      )}
-      {it.tags.length > 0 && (
-        <div className="tags">
-          {it.tags.map((t) => (
-            <span key={t} className="tag">
-              #{t}
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="when-row">
-        <label>
-          拾于{' '}
-          <input
-            type="datetime-local"
-            className="when-input"
-            aria-label="记录时间"
-            defaultValue={toLocalInput(it.createdAt)}
-            key={it.createdAt}
-            onChange={(e) => {
-              const t = fromLocalInput(e.target.value);
-              if (t && Math.abs(t - it.createdAt) >= 60000) onWhen(t);
-            }}
-          />
-        </label>
-        {it.embedding ? <span className="dim"> · 已向量化</span> : null}
-      </div>
-      <div className="actions">
-        <button className="btn primary" onClick={onDevelop}>
-          以此嫁接
-        </button>
-        <button className="btn ghost" onClick={onEdit}>
-          编辑
-        </button>
-        <button className="btn ghost" onClick={onReAI}>
-          AI 重新整理
-        </button>
-        <button className="btn ghost danger" onClick={onDelete}>
-          删除
-        </button>
-      </div>
-    </div>
-  );
+  async function editDetail(it: Item) {
+    const { id, createdAt: _c, updatedAt: _u, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _td, thumbFail: _f, hasImage: _hi, ...rest } = it;
+    void _c, void _u, void _t, void _w, void _h, void _td, void _f, void _hi;
+    // 编辑时才把原图读出来给表单预览
+    const origImage = id != null && (it.hasImage || it.image) ? await getOriginalDataUrl(db, id) : undefined;
+    setCapture({ draft: { ...rest, image: origImage }, editId: id, origImage });
+  }
 }
