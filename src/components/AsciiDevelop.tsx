@@ -4,6 +4,9 @@ import { gridFor, inkOnPaper, lumToChar, prefersReducedMotion, revealTimes, SPIN
 // 每张图每次打开 App 只显影一次，之后直接显示照片，避免滚动时反复动
 const played = new Set<string>();
 const DURATION = 1500;
+// v0.13：同时最多两张在显影，快速滚动时其余直接显示照片，避免一屏十几个 rAF 同时跑
+const MAX_ACTIVE = 2;
+let active = 0;
 const MONO = '"Glean Mono", "JetBrains Mono", ui-monospace, Consolas, monospace';
 
 function cssVar(name: string, fallback: string) {
@@ -12,8 +15,8 @@ function cssVar(name: string, fallback: string) {
 }
 
 /** 图片 ASCII 显影：先是纸上一层用图片自身颜色写成的字符，再从中心向外慢慢显成照片。支持减少动态效果。 */
-export function AsciiImage({ src, alt, id, className }: { src: string; alt: string; id?: number; className?: string }) {
-  const key = `${id ?? ''}:${src.length}:${src.slice(-24)}`;
+export function AsciiImage({ src, alt, id, className, playKey, ratio }: { src: string; alt: string; id?: number; className?: string; playKey?: string; ratio?: number }) {
+  const key = playKey ?? `${id ?? ''}:${src.length}:${src.slice(-24)}`;
   const skip = played.has(key) || prefersReducedMotion();
   const [done, setDone] = useState(skip);
   const [fresh, setFresh] = useState(false);
@@ -30,8 +33,13 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
     let raf = 0;
     let cancelled = false;
     let started = false;
+    let counted = false;
 
     const finish = (developed = false) => {
+      if (counted) {
+        counted = false;
+        active--;
+      }
       played.add(key);
       if (cancelled) return;
       if (developed) setFresh(true);
@@ -41,6 +49,9 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
     const start = () => {
       if (started || cancelled) return;
       started = true;
+      if (active >= MAX_ACTIVE) return finish();
+      active++;
+      counted = true;
       try {
         const w = Math.max(1, im.clientWidth);
         const h = Math.max(1, im.clientHeight);
@@ -134,6 +145,10 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
     }
     return () => {
       cancelled = true;
+      if (counted) {
+        counted = false;
+        active--;
+      }
       cancelAnimationFrame(raf);
       cleanups.forEach((f) => f());
     };
@@ -141,7 +156,7 @@ export function AsciiImage({ src, alt, id, className }: { src: string; alt: stri
 
   return (
     <div ref={wrap} className={`ascii-wrap${done ? ' ascii-done' : ''}${fresh ? ' ascii-fresh' : ''}`}>
-      <img ref={img} className={className} src={src} alt={alt} loading={done ? 'lazy' : undefined} />
+      <img ref={img} className={className} src={src} alt={alt} decoding="async" loading={done ? 'lazy' : undefined} style={ratio ? { aspectRatio: String(ratio) } : undefined} />
       {!done && <canvas ref={cvs} className="ascii-canvas" aria-hidden />}
     </div>
   );
