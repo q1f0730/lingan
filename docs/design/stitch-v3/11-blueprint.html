@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · Glean</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-container": "#88c2f8",
+            "on-secondary-fixed-variant": "#32495c",
+            "on-surface": "#d3e4ff",
+            "on-tertiary-container": "#00507a",
+            "on-surface-variant": "#c1c7d0",
+            "surface-container-high": "#082b4d",
+            "inverse-primary": "#1f6393",
+            "on-primary": "#003353",
+            "on-primary-fixed": "#001d32",
+            "surface-tint": "#96ccff",
+            "surface-bright": "#1c3a5d",
+            "secondary": "#b1c9e1",
+            "on-error": "#690005",
+            "outline": "#8b919a",
+            "on-tertiary-fixed": "#001d31",
+            "surface-container-low": "#001c38",
+            "on-background": "#d3e4ff",
+            "inverse-surface": "#d3e4ff",
+            "on-secondary-fixed": "#031d2f",
+            "on-error-container": "#ffdad6",
+            "surface-dim": "#00142a",
+            "on-primary-container": "#00507d",
+            "on-secondary-container": "#a3bbd2",
+            "surface-container": "#00203f",
+            "error-container": "#93000a",
+            "outline-variant": "#41474f",
+            "tertiary-fixed-dim": "#92ccff",
+            "secondary-container": "#354b5f",
+            "surface": "#00142a",
+            "surface-container-lowest": "#000f22",
+            "surface-container-highest": "#173658",
+            "tertiary": "#b8dcff",
+            "on-primary-fixed-variant": "#004a75",
+            "primary-fixed-dim": "#96ccff",
+            "tertiary-fixed": "#cce5ff",
+            "surface-variant": "#173658",
+            "secondary-fixed": "#cde5fd",
+            "secondary-fixed-dim": "#b1c9e1",
+            "on-tertiary": "#003351",
+            "primary": "#badcff",
+            "background": "#00142a",
+            "tertiary-container": "#7ac3ff",
+            "error": "#ffb4ab",
+            "on-secondary": "#1b3345",
+            "inverse-on-surface": "#113154",
+            "primary-fixed": "#cee5ff",
+            "on-tertiary-fixed-variant": "#004b73"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "gutter-tablet": "1rem",
+            "gutter-desktop": "1.5rem",
+            "space-lg": "1.25rem",
+            "margin-desktop": "2.5rem",
+            "space-md": "0.75rem",
+            "margin": "1rem",
+            "space-xl": "2rem",
+            "gutter": "0.75rem",
+            "margin-tablet": "1.5rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "display-lg-mobile": ["Space Grotesk"],
+            "label-md": ["Space Mono"],
+            "body-sm": ["Space Grotesk"],
+            "headline-sm": ["Space Grotesk"],
+            "headline-lg": ["Space Grotesk"],
+            "body-lg": ["Space Grotesk"],
+            "label-sm": ["Space Mono"],
+            "label-lg": ["Space Mono"],
+            "display-lg": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "display-lg-mobile": ["28px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "400" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-sm": ["9px", { "lineHeight": "12px", "letterSpacing": "0.12em", "fontWeight": "400" }],
+            "label-lg": ["12px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "display-lg": ["40px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Architectural Blueprint Grid Canvas */
+    .blueprint-grid {
+      background-color: #00142a;
+      background-image: 
+        linear-gradient(to right, rgba(136, 194, 248, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(136, 194, 248, 0.08) 1px, transparent 1px),
+        linear-gradient(to right, rgba(136, 194, 248, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(136, 194, 248, 0.18) 1px, transparent 1px);
+      background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
+    }
+    /* Hide scrollbar for clean technical blueprint feel */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Hairline technical ticks */
+    .crosshair {
+      position: relative;
+    }
+    .crosshair::before {
+      content: '+';
+      position: absolute;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      line-height: 10px;
+      color: rgba(136, 194, 248, 0.7);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface w-[390px] h-[844px] overflow-hidden select-none blueprint-grid relative font-body-sm flex flex-col mx-auto">
+<!-- TOP SHELL: Blueprint Header Block conforming to TopAppBar JSON -->
+<header class="w-full bg-surface shrink-0 z-40 border-b border-primary/20">
+<!-- Top System & DWG Meta Bar -->
+<div class="px-3 pt-2 pb-1 flex justify-between items-center text-primary/70 font-label-sm text-label-sm border-b border-primary/10">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 bg-primary-container animate-pulse"></span>
+<span>DWG NO: GLN-2024</span>
+<span class="text-primary/30">|</span>
+<span>SEC: 01</span>
+</div>
+<div class="flex items-center gap-2">
+<span>ARCH: Q1f730</span>
+<span class="text-primary/30">/</span>
+<span class="text-primary">SCALE: 1:1</span>
+</div>
+</div>
+<!-- Core TopAppBar Component -->
+<div class="flex justify-between items-center w-full px-margin h-14">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="grid_4x4">grid_4x4</span>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold tracking-tight text-primary">拾穗 · Glean</span>
+<span class="text-[8px] font-label-sm text-primary/60 tracking-wider">CYANOTYPE ARCHIVE SYSTEM</span>
+</div>
+</div>
+<div class="flex items-center border border-primary/40 bg-surface-container-low px-2 py-0.5">
+<span class="text-primary font-label-md text-label-md">Q1f730 // C-01</span>
+</div>
+</div>
+<!-- Architectural Quick Capture Spec Bar -->
+<div class="px-margin pb-2.5">
+<div class="relative flex items-center bg-surface-container-lowest border border-primary/40 pl-2 pr-1.5 py-1">
+<span class="text-primary font-label-sm text-label-sm mr-2 shrink-0">[INPUT // SPEC]</span>
+<input class="bg-transparent border-0 p-0 text-body-sm font-body-sm text-on-surface placeholder:text-on-surface-variant/40 focus:ring-0 w-full" placeholder="随手拾一穗…" type="text"/>
+<button class="bg-primary-container text-on-primary-container w-7 h-7 flex items-center justify-center shrink-0 active:scale-95 transition-transform" title="Commit Entry">
+<span class="material-symbols-outlined text-base" data-icon="subdirectory_arrow_right">subdirectory_arrow_right</span>
+</button>
+</div>
+</div>
+</header>
+<!-- MAIN SCROLLABLE SCHEMATIC REPOSITORY (Canvas) -->
+<main class="flex-1 overflow-y-auto no-scrollbar px-margin pt-2.5 pb-24 relative space-y-3">
+<!-- Datum Reference Line & Grid Axis Markers -->
+<div class="flex justify-between items-center text-primary/40 font-label-sm text-label-sm border-b border-primary/15 pb-1">
+<span>AXIS: X-01 → X-04</span>
+<span>INDEX: 6 COLLECTED ARTIFACTS</span>
+<span>Y-COORD: 04</span>
+</div>
+<!-- ITEM 1: PHOTO (雨后的梧桐街) -->
+<div class="bg-surface-container border border-primary/30 p-2.5 relative">
+<!-- Corner Crosshairs -->
+<div class="absolute -top-1.5 -left-1.5 text-primary text-xs font-label-sm">+</div>
+<div class="absolute -top-1.5 -right-1.5 text-primary text-xs font-label-sm">+</div>
+<div class="absolute -bottom-1.5 -left-1.5 text-primary text-xs font-label-sm">+</div>
+<div class="absolute -bottom-1.5 -right-1.5 text-primary text-xs font-label-sm">+</div>
+<!-- Item Header Spec -->
+<div class="flex justify-between items-center mb-1.5 border-b border-primary/15 pb-1">
+<div class="flex items-center gap-1.5">
+<span class="border border-primary-container/60 px-1 py-0.2 text-primary font-label-sm text-label-sm">§ PHOTO</span>
+<span class="font-label-sm text-label-sm text-primary/60">ID: AR-0194</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-label-sm text-label-sm">今天 09:12</span>
+<span class="material-symbols-outlined text-xs text-primary/50" data-icon="crop_free">crop_free</span>
+</div>
+</div>
+<!-- Blueprint Dimension Frame and Actual Photo -->
+<div class="relative border border-primary/50 p-1 bg-surface-container-lowest">
+<div class="relative w-full h-36 overflow-hidden">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover filter contrast-105" src="https://lh3.googleusercontent.com/aida/AEtjO1Xsr-NX4Mwz0JBYqZze83Z_DuRQVua-8j-7aUYBIZvDr0Dk74eApMvfQObrFplhAxmVzFCIfRl6fvDca_w-1GYR1xtMCAyWoY2-U2k68Meb8_3jH8uIQWQAf2BExSOAb76R84rLJys3c72b7Xnj724UGaLLDV4HFrtTvRUlA8_ZUzVfyTtUdIG63c3k3gzhx_jKQgY991OhmYIc8gLDrzWmG_mmuP8ePULUZwyYZn1O5oFV_nK_MaIhSVZb"/>
+<!-- Technical Overlay Reticle -->
+<div class="absolute inset-0 pointer-events-none border border-primary/30 flex items-center justify-center">
+<div class="w-8 h-8 border border-primary/40 rounded-full flex items-center justify-center">
+<div class="w-1 h-1 bg-primary-container"></div>
+</div>
+<div class="absolute top-1 left-1.5 text-white/80 font-label-sm text-[8px] bg-black/50 px-1">APERTURE 28mm · F/2.8</div>
+<div class="absolute bottom-1 right-1.5 text-white/80 font-label-sm text-[8px] bg-black/50 px-1">REF: P-770</div>
+</div>
+</div>
+</div>
+<!-- Dimension Lines & Caption -->
+<div class="mt-2 flex justify-between items-end">
+<div class="flex flex-col">
+<span class="font-headline-sm text-sm text-on-surface font-medium">雨后的梧桐街</span>
+<span class="font-label-sm text-[8px] text-primary/60">LAT: 48.8566° N // LON: 2.3522° E</span>
+</div>
+<div class="flex items-center font-label-sm text-label-sm text-primary-container">
+<span class="mr-1">DIM:</span>
+<span>W: 358 × H: 144</span>
+</div>
+</div>
+</div>
+<!-- ITEM 2: FILM (燃烧女子的肖像) -->
+<div class="bg-surface-container-low border border-primary/25 p-2.5 relative">
+<div class="flex justify-between items-center mb-1.5 border-b border-primary/10 pb-1">
+<div class="flex items-center gap-1.5">
+<span class="border border-secondary/50 px-1 text-secondary font-label-sm text-label-sm">§ FILM</span>
+<span class="font-label-sm text-label-sm text-primary/50">SEC: CIN-02</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">昨天 23:40</span>
+</div>
+<div class="flex items-start gap-3">
+<!-- Film Cad Graphic Marker -->
+<div class="w-12 h-14 border border-dashed border-primary/50 shrink-0 flex flex-col justify-between p-1 bg-surface-container-lowest">
+<div class="flex justify-between text-[7px] text-primary font-label-sm">
+<span>24</span><span>FPS</span>
+</div>
+<div class="flex justify-center items-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="movie">movie</span>
+</div>
+<div class="text-[7px] text-center text-primary/70 font-label-sm">1.85:1</div>
+</div>
+<div class="flex-1">
+<h4 class="font-headline-sm text-sm text-on-surface font-medium">《燃烧女子的肖像》</h4>
+<p class="font-body-sm text-xs text-on-surface-variant/80 mt-0.5">2019 · 瑟琳·席安玛 (Céline Sciamma)</p>
+<div class="mt-2 flex items-center gap-2 border-t border-primary/10 pt-1 text-primary/70 font-label-sm text-[9px]">
+<span>COLOR: ULTRAMARINE / FLAME</span>
+<span>//</span>
+<span>LOC: 布列塔尼</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ITEM 3: SONG (夜空中最亮的星) -->
+<div class="bg-surface-container-low border border-primary/25 p-2.5 relative">
+<div class="flex justify-between items-center mb-1.5 border-b border-primary/10 pb-1">
+<div class="flex items-center gap-1.5">
+<span class="border border-tertiary-container/60 px-1 text-tertiary font-label-sm text-label-sm">§ AUDIO</span>
+<span class="font-label-sm text-label-sm text-primary/50">FRQ: 440Hz</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">昨天 21:05</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<!-- Stylized Vinyl/Schematic Reticle -->
+<div class="w-10 h-10 rounded-full border border-primary/60 flex items-center justify-center relative bg-surface-container-lowest shrink-0">
+<div class="w-6 h-6 rounded-full border border-dashed border-primary/40 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+</div>
+<!-- Radius line -->
+<div class="absolute w-5 h-px bg-primary/80 right-0"></div>
+</div>
+<div>
+<div class="font-headline-sm text-sm text-on-surface font-medium">夜空中最亮的星</div>
+<div class="font-body-sm text-xs text-on-surface-variant/80">逃跑计划 (Escape Plan)</div>
+</div>
+</div>
+<!-- Acoustic schematic wave markers -->
+<div class="flex items-end gap-0.5 h-6">
+<div class="w-1 h-3 bg-primary/40"></div>
+<div class="w-1 h-5 bg-primary/70"></div>
+<div class="w-1 h-2 bg-primary/40"></div>
+<div class="w-1 h-6 bg-primary-container"></div>
+<div class="w-1 h-4 bg-primary/60"></div>
+<div class="w-1 h-2 bg-primary/30"></div>
+</div>
+</div>
+</div>
+<!-- ITEM 4: QUOTE (文案) -->
+<div class="bg-surface-container border border-primary/30 p-2.5 relative">
+<div class="flex justify-between items-center mb-1 border-b border-primary/10 pb-1">
+<div class="flex items-center gap-1.5">
+<span class="border border-primary px-1 text-primary font-label-sm text-label-sm">§ 文案</span>
+<span class="font-label-sm text-label-sm text-primary/60">SPEC: VERBATIM</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">10/19</span>
+</div>
+<!-- Quote schematic bracket -->
+<div class="pl-2.5 border-l-2 border-primary-container my-1">
+<p class="font-body-lg text-sm text-on-surface italic leading-relaxed">
+          “我们读诗，是因为我们是人类的一员。”
+        </p>
+</div>
+<div class="flex justify-between items-center text-primary/60 font-label-sm text-label-sm mt-1">
+<span>REF: 《死亡诗社》/ N.H. KLEINBAUM</span>
+<span>LINE: 01</span>
+</div>
+</div>
+<!-- ITEM 5: IDEA (想法) -->
+<div class="bg-surface-container-low border border-primary/25 p-2.5 relative">
+<div class="flex justify-between items-center mb-1.5 border-b border-primary/10 pb-1">
+<div class="flex items-center gap-1.5">
+<span class="border border-secondary-fixed-dim/60 px-1 text-secondary-fixed-dim font-label-sm text-label-sm">§ 想法</span>
+<span class="font-label-sm text-label-sm text-primary/50">MEMO: SCHEME-B</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">10/18</span>
+</div>
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-base mt-0.5" data-icon="lightbulb">lightbulb</span>
+<div class="flex-1">
+<p class="font-body-sm text-sm text-on-surface leading-normal">
+            把通勤路上听到的对话写成一组短诗
+          </p>
+<div class="mt-1.5 flex gap-1.5 flex-wrap">
+<span class="font-label-sm text-[8px] border border-primary/20 px-1 text-primary/70">#城市观察</span>
+<span class="font-label-sm text-[8px] border border-primary/20 px-1 text-primary/70">#碎片录音</span>
+<span class="font-label-sm text-[8px] border border-primary/20 px-1 text-primary/70">#地铁白噪音</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ITEM 6: LINK (Are.na) -->
+<div class="bg-surface-container-low border border-primary/25 p-2.5 relative">
+<div class="flex justify-between items-center mb-1.5 border-b border-primary/10 pb-1">
+<div class="flex items-center gap-1.5">
+<span class="border border-tertiary/40 px-1 text-tertiary font-label-sm text-label-sm">§ LINK</span>
+<span class="font-label-sm text-label-sm text-primary/50">NODE: EXT-NET</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">10/16</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 border border-primary/40 flex items-center justify-center bg-surface-container-lowest">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="hub">hub</span>
+</div>
+<div>
+<div class="font-headline-sm text-sm text-on-surface font-medium">Are.na · 关于收集的收集</div>
+<div class="font-label-sm text-label-sm text-primary underline underline-offset-2">are.na</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary/60 text-base" data-icon="arrow_outward">arrow_outward</span>
+</div>
+</div>
+</main>
+<!-- ARCHITECTURAL JOINT DETAIL CALLOUT: 嫁接 (DETAIL A · 嫁接) -->
+<!-- Designed precisely as an engineering drafting section callout circle with leader pointer -->
+<aside class="absolute bottom-20 right-4 z-40 flex flex-col items-center">
+<!-- Callout Leader Line Guide -->
+<div class="absolute -top-3 right-6 w-px h-3 bg-primary-container"></div>
+<button class="relative group active:scale-95 transition-transform" title="DETAIL A · 嫁接">
+<!-- Outer Crosshair Bracket Frame -->
+<div class="w-16 h-16 rounded-full border border-primary-container bg-surface-container-highest/95 backdrop-blur-sm p-0.5 flex flex-col items-center justify-center relative shadow-none">
+<!-- Top Half of Drafting Bubble: Detail ID -->
+<div class="w-full h-1/2 flex items-center justify-center border-b border-primary-container">
+<span class="font-label-sm text-[8px] tracking-wider text-primary font-bold">DETAIL A</span>
+</div>
+<!-- Bottom Half of Drafting Bubble: Component Name -->
+<div class="w-full h-1/2 flex items-center justify-center bg-primary-container/15">
+<span class="font-body-sm text-xs font-semibold text-primary-container">嫁接</span>
+</div>
+<!-- Perimeter Reticle Marks -->
+<div class="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-0.5 bg-primary-container"></div>
+<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-0.5 bg-primary-container"></div>
+<div class="absolute top-1/2 -left-1 -translate-y-1/2 w-0.5 h-1.5 bg-primary-container"></div>
+<div class="absolute top-1/2 -right-1 -translate-y-1/2 w-0.5 h-1.5 bg-primary-container"></div>
+</div>
+</button>
+</aside>
+<!-- BOTTOM NAVIGATION BAR: BottomNavBar component from JSON -->
+<!-- Active tab is strictly 穗仓 (index 0) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-space-xs pb-safe bg-surface-container-lowest">
+<!-- Tab 1: 穗仓 (ACTIVE) -->
+<button class="flex flex-col items-center justify-center text-primary border-b-2 border-primary pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-label-sm text-label-sm mt-0.5">穗仓</span>
+</button>
+<!-- Tab 2: 嫁接 (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="hub">hub</span>
+<span class="font-label-sm text-label-sm mt-0.5">嫁接</span>
+</button>
+<!-- Tab 3: 新枝 (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="eco">eco</span>
+<span class="font-label-sm text-label-sm mt-0.5">新枝</span>
+</button>
+<!-- Tab 4: 口味 (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="tune">tune</span>
+<span class="font-label-sm text-label-sm mt-0.5">口味</span>
+</button>
+<!-- Tab 5: 设置 (INACTIVE) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant pb-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm mt-0.5">设置</span>
+</button>
+</nav>
+</body></html>
