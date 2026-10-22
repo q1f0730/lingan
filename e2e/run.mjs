@@ -163,6 +163,58 @@ async function dailyState(pg) {
 }
 const localKey = (t) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
+// v0.17 秒搜：e2e 按同一套规则自己数一遍（中文连续出现、英文按词首前缀、多个词都要中），和界面上的计数对账
+const CJK_RE = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\uac00-\ud7af]+|[a-z0-9\u00c0-\u024f]+/g;
+const isCjkWord = (w) => /^[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\uac00-\ud7af]/.test(w);
+function e2eTerms(q) { return [...new Set([...(q || '').normalize('NFKC').toLowerCase().matchAll(CJK_RE)].map((m) => m[0]))]; }
+function e2eMatch(text, terms) {
+  const t = (text || '').normalize('NFKC').toLowerCase();
+  return terms.length > 0 && terms.every((w) => (isCjkWord(w) ? t.includes(w) : new RegExp('(^|[^a-z0-9\\u00c0-\\u024f])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(t)));
+}
+const itemSearchText = (x) => [x.title, x.creator, x.year, x.content && x.content !== x.title ? x.content : '', x.why, (x.tags || []).join(' · '), x.caption, x.url].filter(Boolean).join('\n');
+const devSearchText = (d) => [(d.idea?.title || '').replace(/^《|》$/g, ''), d.idea?.idea, d.idea?.bridge, d.idea?.form, d.idea?.firstStep, d.idea?.experiment, d.theme].filter(Boolean).join('\n');
+async function dbRaw(pg, store) {
+  return pg.evaluate((store) => new Promise((res, rej) => {
+    const r = indexedDB.open('lingan');
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains(store)) { db.close(); return res([]); }
+      const q = db.transaction(store).objectStore(store).getAll();
+      q.onsuccess = () => { db.close(); res(q.result.map((x) => { const { thumb, image, ...rest } = x; void thumb; void image; return rest; })); };
+      q.onerror = () => rej(q.error);
+    };
+  }), store);
+}
+async function sqType(pg, q) {
+  await pg.fill('.sq-input', q);
+  await pg.waitForFunction((q) => document.querySelector('.sq-count')?.dataset.q === q, q, { timeout: 3000 });
+}
+async function sqHeads(pg) {
+  return pg.evaluate(() => {
+    const n = (sel) => { const m = document.querySelector(sel)?.textContent?.match(/\((\d+)\)/); return m ? Number(m[1]) : 0; };
+    return { items: n('.sq-items .sq-sec-head'), branches: n('.sq-branches .sq-sec-head'), total: Number(document.querySelector('.sq-count')?.dataset.n) };
+  });
+}
+/** 输入 → 结果（含高亮）画到屏幕上的耗时：在页面里量，清空后再输入，等计数对上且有黑底命中字，再等一帧绘制 */
+async function sqTime(pg, q) {
+  return pg.evaluate(async (q) => {
+    const inp = document.querySelector('.sq-input');
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    set.call(inp, '');
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const t0 = performance.now();
+    set.call(inp, q);
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((res) => { const chk = () => (document.querySelector('.sq-count')?.dataset.q === q && document.querySelector('.sq-results mark.hit') ? res() : requestAnimationFrame(chk)); chk(); });
+    await new Promise((r) => requestAnimationFrame(r));
+    const ms = performance.now() - t0;
+    const hit = document.querySelector('.sq-results mark.hit');
+    return { q, ms: +ms.toFixed(1), n: Number(document.querySelector('.sq-count').dataset.n), marks: document.querySelectorAll('.sq-results mark.hit').length, markText: hit?.textContent, markBg: hit ? getComputedStyle(hit).backgroundColor : '', core: window.__gleanSearch?.lastMs };
+  }, q);
+}
+
 async function run(name, viewport) {
   const ctx = await b.newContext({ viewport, deviceScaleFactor: 1, permissions: ['clipboard-read', 'clipboard-write'] });
   const pg = await ctx.newPage();
@@ -266,19 +318,95 @@ async function run(name, viewport) {
   await pg.waitForTimeout(900);
   await pg.screenshot({ path: `${out}/${name}-shot-library.png` });
   await noOverlap(pg, name);
-  // search + filter（关键词与期望数量来自这次实际抽到的示例）
-  const all = await dbItems(pg);
-  const kw = A.title;
-  const expN = all.filter((x) => [x.title, x.creator, x.content, x.tags.join(' ')].join(' ').toLowerCase().includes(kw.toLowerCase())).length;
+  // v0.17 秒搜：输入即出结果、命中字黑底白字；类型 / 标签 / 日期 筛选可叠加；结果与按同一规则数出来的完全一致
   await pg.click('.search-toggle');
-  await pg.fill('.search input', kw);
-  await pg.waitForTimeout(200);
-  // v0.16 搜索：命中字黑底白字，结果分「穗 (n)」与「新枝 (n)」
-  if (!(await pg.locator(`.masonry ${cardSel(A.id)} mark.hit`).count())) errs.push(`[${name}] search hit not highlighted`);
-  if (!(await pg.locator('.result-head:has-text("穗 (")').count()) || !(await pg.locator('.branch-hits .result-head:has-text("新枝 (")').count())) errs.push(`[${name}] search result heads missing`);
-  const n = await pg.locator('.masonry .card').count();
-  if (n < 1 || n > expN + 1 || !(await pg.locator(`.masonry ${cardSel(A.id)}`).count())) errs.push(`[${name}] search ${kw} expected ~${expN} incl. #${A.id} got ${n}`);
-  await pg.fill('.search input', '');
+  await pg.waitForSelector('.search-view .sq-input');
+  if (!(await pg.evaluate(() => document.activeElement?.classList.contains('sq-input')))) errs.push(`[${name}] search input not focused`);
+  await studio(pg, name + '-search');
+  const all = await dbItems(pg);
+  const rawItems = await dbRaw(pg, 'items');
+  const kw = A.title;
+  const expectItems = (q, pred = () => true) => rawItems.filter((x) => pred(x) && e2eMatch(itemSearchText(x), e2eTerms(q))).length;
+  await sqType(pg, kw);
+  const h1 = await sqHeads(pg);
+  if (h1.items !== expectItems(kw)) errs.push(`[${name}] search ${kw}: 穗 (${h1.items}) expected ${expectItems(kw)}`);
+  if (!(await pg.locator(`.sq-items .sq-row[data-item-id="${A.id}"] mark.hit`).count())) errs.push(`[${name}] search hit not highlighted for #${A.id}`);
+  if (h1.branches !== 0) errs.push(`[${name}] 新枝 (n) section wrong ${h1.branches}`);
+  const markBg = await pg.locator('.sq-results mark.hit').first().evaluate((e) => getComputedStyle(e).backgroundColor);
+  if (!['rgb(0, 0, 0)', 'rgb(255, 255, 255)'].includes(markBg)) errs.push(`[${name}] hit should be reversed black/white, got ${markBg}`);
+  await pg.screenshot({ path: `${out}/${name}-1c-search.png` });
+  // 刚用速记存的那一穗已经进了索引（增量）：搜得到、而且索引表里有它的行
+  await sqType(pg, '速记测试');
+  if ((await sqHeads(pg)).items !== 1) errs.push(`[${name}] freshly captured item not searchable`);
+  const quickRow = rawItems.find((x) => x.title.startsWith('速记测试一句'));
+  await pg.waitForFunction(() => window.__gleanSearch?.ready, null, { timeout: 8000 }).catch(() => errs.push(`[${name}] search index never ready`));
+  const ftRows = await dbRaw(pg, 'ftidx');
+  const qr = ftRows.find((r) => r.key === `i:${quickRow?.id}`);
+  if (!qr || !qr.tok.includes('速记') || !qr.tok.includes('记测')) errs.push(`[${name}] quick item not in ftidx ${JSON.stringify(qr?.tok?.slice(0, 6))}`);
+  // 英文按词首前缀（示例里有拉丁字母的作者 / 标题就用它测）
+  const latin = rawItems.map((x) => (`${x.creator || ''} ${x.title}`.match(/[A-Za-z]{4,}/) || [])[0]).find(Boolean);
+  if (latin) {
+    const pre = latin.slice(0, 3).toLowerCase();
+    await sqType(pg, pre);
+    const hl = await sqHeads(pg);
+    if (hl.items !== expectItems(pre) || hl.items < 1) errs.push(`[${name}] prefix "${pre}" 穗 (${hl.items}) expected ${expectItems(pre)}`);
+  }
+  // 两个字 + 类型 / 日期 / 标签叠加：挑一个出现在 ≥2 穗里的中文二字词
+  const bi = (() => {
+    const m = new Map();
+    for (const x of rawItems) { const seen = new Set(); for (const r of itemSearchText(x).match(/[\u4e00-\u9fff]{2,}/g) || []) for (let i = 0; i + 1 < r.length; i++) seen.add(r.slice(i, i + 2)); for (const k of seen) m.set(k, (m.get(k) || 0) + 1); }
+    return [...m.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '速记';
+  })();
+  await sqType(pg, bi);
+  const h2 = await sqHeads(pg);
+  if (h2.items !== expectItems(bi)) errs.push(`[${name}] search ${bi}: 穗 (${h2.items}) expected ${expectItems(bi)}`);
+  const ty = await pg.locator('.sq-type').first().getAttribute('data-type');
+  if (ty && ty !== 'branch') {
+    await pg.click(`.sq-type[data-type="${ty}"]`);
+    const ht = await sqHeads(pg);
+    if (ht.items !== expectItems(bi, (x) => x.type === ty)) errs.push(`[${name}] ${bi} + type ${ty}: ${ht.items} expected ${expectItems(bi, (x) => x.type === ty)}`);
+    await pg.click(`.sq-type[data-type="${ty}"]`);
+  }
+  const startToday = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+  await pg.click('.sq-range[data-range="7d"]');
+  const h7 = await sqHeads(pg);
+  if (h7.items !== expectItems(bi, (x) => x.createdAt >= startToday - 6 * 864e5)) errs.push(`[${name}] ${bi} + 近 7 天: ${h7.items} expected ${expectItems(bi, (x) => x.createdAt >= startToday - 6 * 864e5)}`);
+  await pg.click('.sq-range[data-range="custom"]');
+  const d0 = localKey(Date.now() - 30 * 864e5);
+  const d1 = localKey(Date.now() - 2 * 864e5);
+  await pg.fill('.sq-from', d0);
+  await pg.fill('.sq-to', d1);
+  const lo = new Date(d0 + 'T00:00').getTime();
+  const hi = new Date(d1 + 'T00:00').getTime() + 864e5;
+  const hcu = await sqHeads(pg);
+  if (hcu.items !== expectItems(bi, (x) => x.createdAt >= lo && x.createdAt < hi)) errs.push(`[${name}] ${bi} + ${d0}~${d1}: ${hcu.items} expected ${expectItems(bi, (x) => x.createdAt >= lo && x.createdAt < hi)}`);
+  await pg.click('.sq-range[data-range="all"]');
+  const tg = await pg.locator('.sq-tag').first().getAttribute('data-tag').catch(() => null);
+  if (tg) {
+    await pg.click(`.sq-tag[data-tag="${tg}"]`);
+    const hg = await sqHeads(pg);
+    if (hg.items !== expectItems(bi, (x) => x.tags.includes(tg))) errs.push(`[${name}] ${bi} + #${tg}: ${hg.items} expected ${expectItems(bi, (x) => x.tags.includes(tg))}`);
+    await pg.screenshot({ path: `${out}/${name}-1d-search-filters.png` });
+    await pg.click(`.sq-tag[data-tag="${tg}"]`);
+  }
+  // 断网照样搜
+  await ctx.setOffline(true);
+  await sqType(pg, kw);
+  if ((await sqHeads(pg)).items !== expectItems(kw)) errs.push(`[${name}] offline search broken`);
+  await ctx.setOffline(false);
+  // 没找到：给出可点的提示
+  await sqType(pg, '琥珀色的猫头鹰');
+  if ((await sqHeads(pg)).total !== 0 || !(await pg.locator('.sq-none').count())) errs.push(`[${name}] no-result state missing`);
+  // 点结果 → 详情；「最近搜过」记下了刚才的词
+  await sqType(pg, kw);
+  await pg.click(`.sq-row[data-item-id="${A.id}"]`);
+  await pg.waitForSelector('.detail');
+  await pg.click('.sheet .icon-btn[aria-label="关闭"]');
+  await pg.fill('.sq-input', '');
+  await pg.waitForSelector('.sq-recent-q', { timeout: 3000 }).catch(() => errs.push(`[${name}] 最近搜过 missing`));
+  if (!(await pg.locator(`.sq-recent-q:has-text("${kw}")`).count())) errs.push(`[${name}] recent search not recorded`);
+  await pg.click('.sq-cancel');
+  await pg.waitForSelector('.masonry .card');
   await pg.click('.chips.scroll .chip:has-text("音乐")');
   const m = await pg.locator('.masonry .card').count();
   const expM = all.filter((x) => x.type === 'music').length;
@@ -429,6 +557,22 @@ async function run(name, viewport) {
   if (mf.bg !== 'rgb(0, 0, 0)' || mf.fg !== 'rgb(255, 255, 255)' || !mf.text || mf.pages < 1) errs.push(`[${name}] manifesto wrong ${JSON.stringify(mf)}`);
   await pg.screenshot({ path: `${out}/${name}-3e-manifesto.png` });
   await pg.click('.view-switch button:has-text("列表")');
+  // v0.17 搜索也覆盖新枝：搜新枝标题里的两个字 → 「新枝 (n)」与按规则数出来的一致 → 点开直达那一根
+  const rawDevs = await dbRaw(pg, 'developments');
+  const devT = (rawDevs.find((d) => /[\u4e00-\u9fff]{2}/.test(d.idea?.title || ''))?.idea.title || '').replace(/^《/, '').match(/[\u4e00-\u9fff]{2}/)?.[0];
+  if (devT) {
+    await pg.click('.nav-btn:has-text("穗仓")');
+    await pg.click('.search-toggle');
+    await sqType(pg, devT);
+    const hb = await sqHeads(pg);
+    const expB = rawDevs.filter((d) => e2eMatch(devSearchText(d), e2eTerms(devT))).length;
+    if (hb.branches !== expB || expB < 1) errs.push(`[${name}] branch search ${devT}: 新枝 (${hb.branches}) expected ${expB}`);
+    if (!(await pg.locator('.sq-branch mark.hit').count())) errs.push(`[${name}] branch hit not highlighted`);
+    await pg.screenshot({ path: `${out}/${name}-3f-search-branch.png`, fullPage: true });
+    const bid = await pg.locator('.sq-branch').first().getAttribute('data-dev-id');
+    await pg.click('.sq-branch >> nth=0');
+    await pg.waitForSelector(`.hrow.open.focus[data-dev-id="${bid}"]`, { timeout: 3000 }).catch(() => errs.push(`[${name}] branch result did not open that branch`));
+  } else errs.push(`[${name}] no branch title to search`);
   await pg.unroute('**/mock-ai/v1/chat/completions');
   await pg.evaluate(() => localStorage.removeItem('lingan.settings.v1'));
   await pg.reload();
@@ -547,6 +691,15 @@ async function run(name, viewport) {
   await pg.screenshot({ path: `${out}/${name}-7-photo.png` });
   const iw = await pg.locator('.card:has-text("渐变测试图") img.card-img').evaluate((i) => i.naturalWidth);
   if (iw < 10) errs.push(`[${name}] ascii image not loaded`);
+  // v0.17 一整轮增删改（速记、编辑、删除、撤销、嫁接、直接写库）之后：索引表和穗 / 新枝一一对应，不多不少
+  await pg.waitForFunction(() => window.__gleanSearch?.ready, null, { timeout: 8000 }).catch(() => {});
+  await pg.waitForTimeout(400);
+  const keysNow = [...(await dbRaw(pg, 'items')).map((x) => `i:${x.id}`), ...(await dbRaw(pg, 'developments')).map((x) => `b:${x.id}`)].sort();
+  const ftNow = (await dbRaw(pg, 'ftidx')).map((r) => r.key).sort();
+  if (JSON.stringify(keysNow) !== JSON.stringify(ftNow)) errs.push(`[${name}] ftidx out of sync: ${ftNow.length} rows vs ${keysNow.length} docs`);
+  await pg.click('.search-toggle');
+  await sqType(pg, '渐变测试');
+  if ((await sqHeads(pg)).items !== 1) errs.push(`[${name}] item written straight to the db not searchable`);
   await ctx.close();
 }
 
@@ -658,6 +811,12 @@ async function shots() {
   await pg.waitForTimeout(250);
   await pg.screenshot({ path: `${out}/shot-library.png` });
   await noOverlap(pg, 'shots');
+  // v0.17 截图：秒搜（m18）
+  await pg.click('.search-toggle');
+  await sqType(pg, '麦田');
+  await pg.waitForTimeout(400);
+  await pg.screenshot({ path: `${out}/shot-search.png` });
+  await pg.click('.sq-cancel');
   await pg.click('.nav-btn:has-text("嫁接")');
   await mockAI(pg, { delay: 2600 });
   await pg.click('text=嫁接今日三穗');
@@ -1027,7 +1186,14 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 40) errs.push(`[legacy] db version expected 40 (Dexie v4) got ${ver}`);
+  if (ver !== 50) errs.push(`[legacy] db version expected 50 (Dexie v5) got ${ver}`);
+  // v0.17 旧库升级后：后台补好索引，旧穗和旧新枝都搜得到
+  await pg.waitForFunction(() => window.__gleanSearch?.ready && window.__gleanSearch.indexed === 5, null, { timeout: 8000 }).catch(async () => errs.push(`[legacy] index not built ${JSON.stringify(await pg.evaluate(() => window.__gleanSearch))}`));
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.click('.search-toggle');
+  await sqType(pg, '旧念头');
+  const lh = await sqHeads(pg);
+  if (lh.items !== 1 || lh.branches !== 1) errs.push(`[legacy] search 旧念头 expected 1 穗 + 1 新枝 got ${JSON.stringify(lh)}`);
   await ctx.close();
 }
 
@@ -1161,6 +1327,40 @@ async function coldStart(ctx, cpu) {
   await pg.close();
   return r;
 }
+// v0.17 秒搜：1000 穗、断网，搜两个汉字从输入到结果（含黑底高亮）画出来 ≤ 100ms；计数与按规则数出来的一致
+async function perfSearch(ctx) {
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[perf-search] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForFunction(() => window.__gleanReady && window.__gleanSearch?.ready, null, { timeout: 30000 });
+  const reopen = await pg.evaluate(() => ({ ...window.__gleanSearch }));
+  PERF.searchIndex.reopenLoadMs = reopen.loadMs;
+  PERF.searchIndex.reopenRebuilt = reopen.built;
+  if (reopen.built !== 0) errs.push(`[perf-search] reopening should not re-tokenize (built ${reopen.built})`);
+  const raw = await dbRaw(pg, 'items');
+  await ctx.setOffline(true);
+  await pg.click('.search-toggle');
+  await pg.waitForSelector('.sq-input');
+  const runs = [];
+  for (const q of ['黄昏', '海边', '钢琴', '夜车', '麦田', '黄昏']) {
+    const r = await sqTime(pg, q);
+    const exp = raw.filter((x) => e2eMatch(itemSearchText(x), e2eTerms(q))).length;
+    if (r.n !== exp) errs.push(`[perf-search] ${q}: ${r.n} results, expected ${exp}`);
+    if (!r.marks || r.markText !== q || !['rgb(0, 0, 0)', 'rgb(255, 255, 255)'].includes(r.markBg)) errs.push(`[perf-search] ${q}: highlight wrong ${JSON.stringify(r)}`);
+    runs.push(r);
+  }
+  await pg.screenshot({ path: `${out}/perf-search-1000.png` });
+  // 4 倍降速（中端安卓）也量一次，只记录
+  const cdp = await ctx.newCDPSession(pg);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  const slow = [];
+  for (const q of ['黄昏', '便利', '霓虹']) slow.push(await sqTime(pg, q));
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  await ctx.setOffline(false);
+  PERF.search = { items: raw.length, offline: true, runs: runs.map((r) => ({ q: r.q, ms: r.ms, results: r.n, coreMs: r.core })), maxMs: Math.max(...runs.map((r) => r.ms)), medianMs: median(runs.map((r) => r.ms)), cpu4x: slow.map((r) => ({ q: r.q, ms: r.ms, results: r.n, coreMs: r.core })) };
+  for (const r of runs) if (r.ms > 100) errs.push(`[perf-search] ${r.q} took ${r.ms}ms > 100ms`);
+  await pg.close();
+}
 const median = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
 async function perf() {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
@@ -1211,12 +1411,19 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 40) errs.push(`[perf] db version (expected 40 = Dexie v4) ${integ.version}`);
+  if (integ.version !== 50) errs.push(`[perf] db version (expected 50 = Dexie v5) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
   if (integ.avgThumbKB > 30) errs.push(`[perf] thumbnails too big: avg ${integ.avgThumbKB}KB`);
+  // v0.17 秒搜：旧库升级后后台把 1000 穗补进索引表
+  await pg.waitForFunction(() => window.__gleanSearch?.ready && window.__gleanSearch.indexed === 1000, null, { timeout: 60000 }).catch(async () => errs.push(`[perf] search index not built ${JSON.stringify(await pg.evaluate(() => window.__gleanSearch))}`));
+  const ftBuild = await pg.evaluate(() => ({ ...window.__gleanSearch }));
+  const ftCount = (await dbRaw(pg, 'ftidx')).length;
+  PERF.searchIndex = { built: ftBuild.built, buildMs: ftBuild.buildMs, rows: ftCount };
+  if (ftCount !== 1000) errs.push(`[perf] ftidx rows ${ftCount} != 1000`);
   await pg.close();
+  await perfSearch(ctx);
   // 冷启动：每次新开页面（新的 JS 堆、重新读库），各 3 次取中位数
   const normal = [];
   const slow = [];
@@ -1337,6 +1544,7 @@ await b.close();
 if (PERF.scrollMasonryCpu4x && PERF.scrollTimeline) {
   const P = PERF;
   console.log(`PERF cold start ${P.coldStartMs.median}ms (4x CPU ${P.coldStartCpu4xMs.median}ms) · first open+migration ${P.firstOpenWithMigrationMs}ms · thumbs ${P.thumbJob.made} in ${P.thumbJob.ms}ms avg ${P.storage.avgThumbKB}KB (orig ${P.storage.avgOrigKB}KB)`);
+  if (P.search) console.log(`PERF search 1000 items offline: max ${P.search.maxMs}ms median ${P.search.medianMs}ms (${P.search.runs.map((r) => `${r.q} ${r.ms}ms/${r.results}`).join(', ')}) · 4x CPU ${P.search.cpu4x.map((r) => `${r.q} ${r.ms}ms`).join(', ')} · index build ${P.searchIndex.built} rows in ${P.searchIndex.buildMs}ms, reopen load ${P.searchIndex.reopenLoadMs}ms`);
   console.log(`PERF scroll masonry ${P.scrollMasonry.avgFps}fps p95 ${P.scrollMasonry.p95Ms}ms jank ${P.scrollMasonry.jankPct}% mounted≤${P.scrollMasonry.maxMountedCards} · 4x ${P.scrollMasonryCpu4x.avgFps}fps jank ${P.scrollMasonryCpu4x.jankPct}% · timeline ${P.scrollTimeline.avgFps}fps jank ${P.scrollTimeline.jankPct}%${P.scrollList ? ` · list ${P.scrollList.avgFps}fps jank ${P.scrollList.jankPct}% mounted≤${P.scrollList.maxMountedCards}` : ''}`);
 }
 console.log(errs.length ? 'ERRORS:\n' + errs.join('\n') : 'ALL PASS');
