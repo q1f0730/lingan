@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN — 穗详情 (摘抄 · 卡尔维诺) (390px)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-secondary-fixed": "#1b1c1c",
+            "on-secondary-container": "#646464",
+            "inverse-surface": "#2f3131",
+            "outline-variant": "#cfc4c5",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "surface-container-highest": "#e2e2e2",
+            "secondary-container": "#e3e2e2",
+            "on-tertiary-fixed": "#1a1c1c",
+            "on-secondary": "#ffffff",
+            "primary": "#000000",
+            "on-surface": "#1a1c1c",
+            "inverse-primary": "#c6c6c6",
+            "surface-dim": "#dadada",
+            "on-tertiary-fixed-variant": "#464747",
+            "on-primary-container": "#848484",
+            "on-secondary-fixed-variant": "#464747",
+            "secondary-fixed": "#e3e2e2",
+            "on-primary": "#ffffff",
+            "on-tertiary-container": "#838484",
+            "secondary": "#7e7e7e",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "surface-container-lowest": "#ffffff",
+            "primary-container": "#1b1b1b",
+            "primary-fixed": "#e2e2e2",
+            "surface": "#ffffff",
+            "surface-container": "#eeeeee",
+            "secondary-fixed-dim": "#c7c6c6",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed": "#e3e2e2",
+            "surface-container-high": "#e8e8e8",
+            "tertiary-container": "#1a1c1c",
+            "on-background": "#1a1c1c",
+            "tertiary": "#000000",
+            "on-primary-fixed": "#1b1b1b",
+            "on-error-container": "#93000a",
+            "error-container": "#ffdad6",
+            "surface-tint": "#5e5e5e",
+            "primary-fixed-dim": "#c6c6c6",
+            "outline": "#7e7e7e",
+            "on-primary-fixed-variant": "#474747",
+            "surface-container-low": "#f3f3f3",
+            "background": "#ffffff",
+            "surface-variant": "#e2e2e2",
+            "inverse-on-surface": "#f1f1f1",
+            "surface-bright": "#ffffff",
+            "on-surface-variant": "#4c4546"
+          },
+          borderRadius: {
+            DEFAULT: "0px",
+            none: "0px",
+            sm: "0px",
+            md: "0px",
+            lg: "0px",
+            xl: "0px",
+            full: "0px"
+          },
+          spacing: {
+            "space-xl": "30px",
+            "gutter": "10px",
+            "space-md": "10px",
+            "space-sm": "8px",
+            "space-lg": "20px",
+            "space-xs": "4px",
+            "margin": "16px"
+          },
+          fontFamily: {
+            "label-mono-caps": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "sans-serif"],
+            "display-hero": ["Inter", "sans-serif"]
+          },
+          fontSize: {
+            "label-mono-caps": ["11px", { lineHeight: "14px", letterSpacing: "0.12em", fontWeight: "500" }],
+            "headline-sm": ["20px", { lineHeight: "24px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "body-lg": ["15px", { lineHeight: "22px", letterSpacing: "-0.01em", fontWeight: "400" }],
+            "label-micro": ["10px", { lineHeight: "12px", letterSpacing: "0.08em", fontWeight: "500" }],
+            "headline-lg": ["32px", { lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "600" }],
+            "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+            "display-hero-zh": ["48px", { lineHeight: "52px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "display-hero": ["56px", { lineHeight: "56px", letterSpacing: "-0.04em", fontWeight: "700" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    }
+    /* Hide scrollbars for clean Swiss portfolio presentation */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-[#f0f0f0] text-primary min-h-screen">
+<!-- Mobile Frame Container: strictly 390px wide -->
+<div class="w-[390px] min-h-screen bg-[#ffffff] text-primary relative flex flex-col justify-between overflow-x-hidden border-x border-[#f0f0f0]">
+<!-- TOP STICKY BAR: Pure Text Only (No Icons) -->
+<header class="sticky top-0 z-40 bg-[#ffffff] w-full px-[16px] h-12 flex justify-between items-center select-none">
+<button class="text-[14px] leading-none text-primary font-medium tracking-tight hover:opacity-60 transition-none cursor-pointer bg-transparent border-0 p-0" type="button">
+        返回
+      </button>
+<div class="text-[11px] font-medium tracking-widest text-secondary uppercase">
+        拾穗 · GLEAN
+      </div>
+<button class="text-[14px] leading-none text-primary font-medium tracking-tight hover:opacity-60 transition-none cursor-pointer bg-transparent border-0 p-0" type="button">
+        编辑
+      </button>
+</header>
+<!-- MAIN SCROLLABLE EDITORIAL CONTENT -->
+<main class="flex-1 px-[16px] pt-4 pb-36 overflow-y-auto no-scrollbar">
+<!-- Sequence Indicator -->
+<div class="mb-4">
+<span class="text-[12px] text-[#7E7E7E] tracking-widest block font-medium">
+          摘抄 · 04 / 10
+        </span>
+</div>
+<!-- Hero Quote: Very large, architectural scale, uncompromising contrast -->
+<section class="mb-4">
+<h1 class="text-[32px] leading-[1.3] font-semibold text-primary tracking-tight text-left">
+          “记忆中的形象一旦被词语固定住，就给抹掉了。”
+        </h1>
+</section>
+<!-- Attribution line -->
+<div class="mb-8">
+<p class="text-[15px] text-[#7E7E7E] tracking-normal font-normal">
+          — 伊塔洛·卡尔维诺《看不见的城市》
+        </p>
+</div>
+<!-- Sharp 1px solid black architectural rule -->
+<div class="w-full border-t border-black mb-8"></div>
+<!-- 2-Column Key/Value Metadata List (Grid Layout, No Borders, Strict 10px rhythm) -->
+<section class="grid grid-cols-[56px_1fr] gap-y-3 gap-x-3 mb-10 text-left">
+<span class="text-[13px] text-[#7E7E7E] leading-normal font-normal">出处</span>
+<span class="text-[14px] text-primary leading-normal font-normal tracking-tight">《看不见的城市》</span>
+<span class="text-[13px] text-[#7E7E7E] leading-normal font-normal">作者</span>
+<span class="text-[14px] text-primary leading-normal font-normal tracking-tight">卡尔维诺</span>
+<span class="text-[13px] text-[#7E7E7E] leading-normal font-normal">拾于</span>
+<span class="text-[14px] text-primary leading-normal font-normal tracking-tight">2026/10/18 23:15</span>
+<span class="text-[13px] text-[#7E7E7E] leading-normal font-normal">标签</span>
+<div class="text-[14px] text-primary leading-normal font-normal flex space-x-3">
+<span>#书</span>
+<span>#城市</span>
+</div>
+</section>
+<!-- Section: 为什么收 -->
+<section class="mb-8 text-left">
+<div class="text-[12px] text-[#7E7E7E] tracking-wider mb-2 font-medium">
+          为什么收
+        </div>
+<p class="text-[15px] text-primary leading-relaxed font-normal">
+          拍照也是一种固定。也许有些地方只该记在心里。
+        </p>
+</section>
+<!-- Section: 长进了这些新枝 -->
+<section class="mb-10 text-left">
+<div class="text-[12px] text-[#7E7E7E] tracking-wider mb-2 font-medium">
+          长进了这些新枝
+        </div>
+<div>
+<a class="text-[15px] text-primary underline underline-offset-4 decoration-1 hover:text-secondary transition-none cursor-pointer" href="#">
+            说出来就消失的书店
+          </a>
+</div>
+</section>
+<!-- Text Actions Row: Pure typographic commands -->
+<section class="flex items-center space-x-6 pt-2 mb-12">
+<button class="text-[14px] font-medium text-primary hover:opacity-60 transition-none cursor-pointer bg-transparent border-0 p-0" type="button">
+          复制原文
+        </button>
+<button class="text-[14px] font-medium text-primary hover:opacity-60 transition-none cursor-pointer bg-transparent border-0 p-0" type="button">
+          拿去嫁接
+        </button>
+<button class="text-[14px] font-normal text-[#B0B0B0] hover:text-error transition-none cursor-pointer bg-transparent border-0 p-0" type="button">
+          删除
+        </button>
+</section>
+<!-- Footer tiny copyright / provenance -->
+<footer class="pt-4 border-t border-[#f0f0f0]">
+<div class="text-[11px] text-[#A0A0A0] tracking-widest uppercase">© 2026 Q1F730</div>
+</footer>
+</main>
+<!-- PINNED BOTTOM CANVAS: Strictly Pinned Area -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-[#ffffff] z-50 select-none">
+<!-- Quick-capture input line: 1px black rule at top -->
+<div class="border-t border-black px-[16px] py-2.5 flex items-center justify-between gap-3 bg-[#ffffff]">
+<input class="flex-1 bg-transparent border-0 p-0 text-[13px] text-primary placeholder-[#7E7E7E] focus:ring-0 focus:outline-none" placeholder="随手拾一穗" type="text"/>
+<button class="text-[13px] font-medium text-primary tracking-wider cursor-pointer hover:opacity-60 transition-none border-0 bg-transparent p-0 leading-none" type="button">拾</button>
+</div>
+<!-- Five-word Text Navigation Bar (Strictly Words, NO Icons) -->
+<nav class="border-t border-[#f0f0f0] px-[16px] py-3.5 flex items-center justify-between bg-[#ffffff]">
+<!-- 穗仓: Active State (Black text with 1px black underline) -->
+<a class="text-[13px] font-semibold text-primary pb-0.5 border-b border-black tracking-widest cursor-pointer" href="#">
+          穗仓
+        </a>
+<!-- 嫁接 -->
+<a class="text-[13px] font-normal text-[#7E7E7E] hover:text-primary tracking-widest cursor-pointer transition-none" href="#">
+          嫁接
+        </a>
+<!-- 新枝 -->
+<a class="text-[13px] font-normal text-[#7E7E7E] hover:text-primary tracking-widest cursor-pointer transition-none" href="#">
+          新枝
+        </a>
+<!-- 口味 -->
+<a class="text-[13px] font-normal text-[#7E7E7E] hover:text-primary tracking-widest cursor-pointer transition-none" href="#">
+          口味
+        </a>
+<!-- 设置 -->
+<a class="text-[13px] font-normal text-[#7E7E7E] hover:text-primary tracking-widest cursor-pointer transition-none" href="#">
+          设置
+        </a>
+</nav>
+</div>
+</div>
+</body></html>
