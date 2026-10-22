@@ -1,3 +1,4 @@
+import type { PhasePref } from './phases';
 export interface Provider {
   baseUrl: string;
   apiKey: string;
@@ -9,7 +10,8 @@ export interface Settings {
   preset: string;
   chat: Provider;
   embed: { baseUrl: string; apiKey: string; model: string; sameAsChat: boolean };
-  theme: 'paper' | 'darkroom';
+  phase: PhasePref; // 'auto' = 随时间变色
+  fieldStill: boolean; // 麦田静止（省电 / 不喜欢动）
   temperature: number;
   autoCaption: boolean;
   autoEmbed: boolean;
@@ -58,7 +60,7 @@ export const PRESETS: Preset[] = [
   },
 ];
 
-const KEY = 'lingan.settings.v1';
+const KEY = 'lingan.settings.v1'; // 不改键名：升级后保留旧设置
 
 export function defaultSettings(): Settings {
   const p = PRESETS[0];
@@ -66,7 +68,8 @@ export function defaultSettings(): Settings {
     preset: p.id,
     chat: { ...p.chat, apiKey: '' },
     embed: { baseUrl: '', apiKey: '', model: '', sameAsChat: true },
-    theme: 'paper',
+    phase: 'auto',
+    fieldStill: false,
     temperature: 1.0,
     autoCaption: true,
     autoEmbed: true,
@@ -79,6 +82,8 @@ export function loadSettings(): Settings {
     if (!raw) return defaultSettings();
     const s = JSON.parse(raw);
     const d = defaultSettings();
+    delete s.theme; // v0.10 起由 phase 取代旧的「相纸/暗房」
+    if (!['auto', 'dawn', 'day', 'dusk', 'night'].includes(s.phase)) s.phase = 'auto';
     return { ...d, ...s, chat: { ...d.chat, ...(s.chat || {}) }, embed: { ...d.embed, ...(s.embed || {}) } };
   } catch {
     return defaultSettings();
