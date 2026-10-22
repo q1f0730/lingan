@@ -25,6 +25,10 @@ export interface Item {
   caption?: string; // AI image caption
   embedding?: number[];
   embedModel?: string;
+  /** v0.14 示例穗（示例池抽来的），可一键清掉 */
+  sample?: 1;
+  /** v0.14 最近一次「碰过」：打开详情、编辑、拿去嫁接。每日一穗按它找很久没碰的旧穗 */
+  touchedAt?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -106,4 +110,15 @@ export const TYPE_ORDER: ItemType[] = ['music', 'film', 'image', 'text', 'link',
 export interface StoredImage {
   itemId: number;
   blob: Blob;
+}
+
+/** v0.14 每日一穗：某一天定下来的内容（同一天打开都一样） */
+export interface DailyPick {
+  /** 本地日期 YYYY-MM-DD */
+  day: string;
+  /** 3 件很久没碰的旧穗 */
+  oldIds: number[];
+  /** 1 个没试过的远距离组合（4 件） */
+  comboIds: number[];
+  createdAt: number;
 }
