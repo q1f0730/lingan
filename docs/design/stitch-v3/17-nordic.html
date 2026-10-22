@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · Glean</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-on-surface": "#ecf1ff",
+            "on-surface": "#111c2d",
+            "surface-container-high": "#dee8ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-container": "#56503f",
+            "primary-fixed-dim": "#b3c5ff",
+            "secondary-fixed-dim": "#f7be1d",
+            "on-primary-container": "#afc1ff",
+            "surface-bright": "#f9f9ff",
+            "on-tertiary-fixed": "#1f1b0d",
+            "on-secondary-container": "#6d5200",
+            "on-tertiary-container": "#cbc3ad",
+            "surface": "#f9f9ff",
+            "on-error-container": "#93000a",
+            "inverse-surface": "#263143",
+            "primary": "#00328a",
+            "on-surface-variant": "#434653",
+            "primary-container": "#0047bb",
+            "on-secondary-fixed-variant": "#5a4300",
+            "tertiary-fixed-dim": "#cec6b0",
+            "background": "#f9f9ff",
+            "on-secondary-fixed": "#251a00",
+            "outline-variant": "#c3c6d6",
+            "surface-container-low": "#f0f3ff",
+            "tertiary-fixed": "#ebe2cb",
+            "outline": "#737685",
+            "surface-variant": "#d8e3fb",
+            "on-primary-fixed": "#00174a",
+            "on-error": "#ffffff",
+            "primary-fixed": "#dbe1ff",
+            "on-background": "#111c2d",
+            "surface-container": "#e7eeff",
+            "on-tertiary": "#ffffff",
+            "tertiary": "#3e3929",
+            "error-container": "#ffdad6",
+            "surface-tint": "#2156ca",
+            "on-secondary": "#ffffff",
+            "surface-dim": "#cfdaf2",
+            "secondary": "#785a00",
+            "error": "#ba1a1a",
+            "on-primary-fixed-variant": "#003ea6",
+            "secondary-container": "#fdc425",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#ffdf9a",
+            "on-tertiary-fixed-variant": "#4c4736",
+            "inverse-primary": "#b3c5ff",
+            "surface-container-highest": "#d8e3fb"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "2.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "gutter-mobile": "1rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "margin": "3rem",
+            "margin-mobile": "1.25rem",
+            "gutter": "1.5rem",
+            "space-2xl": "4rem"
+          },
+          "fontFamily": {
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-caps": ["Space Grotesk"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "label-price": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "spec-code": ["Space Grotesk"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-hero-mobile": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "400"}],
+            "label-caps": ["11px", {"lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "700"}],
+            "headline-sm": ["20px", {"lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "600"}],
+            "body-md": ["15px", {"lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400"}],
+            "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+            "label-price": ["24px", {"lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+            "headline-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "display-hero": ["56px", {"lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+            "spec-code": ["13px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+            "body-sm": ["13px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+            "headline-md": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "700"}],
+            "display-hero-mobile": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      width: 390px;
+      height: 844px;
+      margin: 0 auto;
+      overflow: hidden;
+      background-color: #fbfbfb;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="relative bg-background text-on-surface font-body-md antialiased flex flex-col justify-between">
+<!-- TopAppBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-margin-mobile h-14 fixed top-0 left-0 z-50 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="grain">grain</span>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-tight">拾穗 · Glean</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="inline-block px-2 py-0.5 bg-surface-container-low text-on-surface-variant font-spec-code text-spec-code rounded border border-outline-variant">Q1f730</span>
+</div>
+</header>
+<!-- Main Scrollable Canvas -->
+<main class="w-full flex-1 overflow-y-auto no-scrollbar pt-14 pb-20 px-4 space-y-4">
+<!-- Quick-Capture & Action Bar -->
+<section class="mt-3 bg-surface-container-lowest p-2.5 rounded-lg border border-outline-variant shadow-sm space-y-2.5">
+<div class="flex items-center gap-2">
+<div class="flex-1 flex items-center bg-surface-container-low border border-outline-variant rounded-md px-3 py-1.5 focus-within:border-primary-container">
+<span class="material-symbols-outlined text-outline text-lg mr-1.5" data-icon="add">add</span>
+<input class="w-full bg-transparent border-0 p-0 text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:ring-0 focus:outline-none" placeholder="随手拾一穗…" type="text"/>
+<button class="text-outline hover:text-primary transition-colors flex items-center justify-center p-0.5">
+<span class="material-symbols-outlined text-lg" data-icon="photo_camera">photo_camera</span>
+</button>
+</div>
+<!-- Primary Action: 嫁接 (Grafting) -->
+<button class="bg-primary-container text-on-primary font-headline-sm font-semibold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+<span class="w-4 h-4 rounded-full bg-secondary-container text-on-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-xs text-on-secondary-container" data-icon="call_split">call_split</span>
+</span>
+<span class="font-body-sm text-body-sm font-bold text-on-primary">嫁接</span>
+</button>
+</div>
+<!-- Quick Editorial Index Bar -->
+<div class="flex justify-between items-center text-outline font-spec-code text-spec-code px-1 pt-1 border-t border-outline-variant">
+<span>COLLECTION // 2024.10</span>
+<span class="text-primary font-bold">TOTAL: 06 穗</span>
+</div>
+</section>
+<!-- Bento / Catalogue Grid -->
+<div class="grid grid-cols-2 gap-3 pb-2">
+<!-- 01 PHOTO ITEM (Full-Width Hero Card) -->
+<article class="col-span-2 bg-surface-container-lowest rounded-lg border border-outline-variant p-2.5 relative group hover:border-primary transition-colors">
+<!-- Number Badge -->
+<div class="absolute -top-2.5 -left-2 z-10 w-7 h-7 rounded-full bg-secondary-container text-on-surface flex items-center justify-center font-spec-code text-xs font-bold border-2 border-surface-container-lowest shadow-sm">
+          01
+        </div>
+<!-- Birch Frame Image Container -->
+<div class="bg-tertiary-fixed p-1.5 rounded border border-outline-variant overflow-hidden mb-2">
+<div class="relative w-full h-44 rounded overflow-hidden">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UbVJfn8Nrd_xcfFL5vl-qYkYmDLBqv-cDjRhB21nGelhuXdOf0v-pmoh3zEJefh0NvKJvGLe_PQG2mfcVJeCwUTEeYXNCqk8DZH8UIuVCY6QZ38UlEIeupGFjUBi4yI82uh4iROgq25OO05OYqPTQp-bAXOmf2uN7zawvGwNhMNccK6oSLx11EFgkRbmeNJKTjgVqve5NrfBUQGTb6zWK36jCepKR0GCm3KjLRhcRjLGIe3EEp037VJI4"/>
+<div class="absolute top-2 right-2 px-1.5 py-0.5 bg-surface-container-lowest/90 backdrop-blur rounded font-spec-code text-spec-code text-primary font-bold border border-outline-variant">
+              [照片]
+            </div>
+</div>
+</div>
+<div class="flex justify-between items-baseline px-1">
+<div>
+<h3 class="font-headline-sm text-base font-bold text-on-surface">雨后的梧桐街</h3>
+<p class="font-spec-code text-spec-code text-outline mt-0.5">LOC // PARIS BOULEVARD</p>
+</div>
+<div class="text-right">
+<span class="inline-block px-1.5 py-0.5 bg-surface-container text-primary font-spec-code text-spec-code rounded">今天 09:12</span>
+</div>
+</div>
+</article>
+<!-- 02 FILM ITEM -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant p-2.5 relative flex flex-col justify-between hover:border-primary transition-colors">
+<div class="absolute -top-2.5 -left-2 z-10 w-6 h-6 rounded-full bg-secondary-container text-on-surface flex items-center justify-center font-spec-code text-xs font-bold border-2 border-surface-container-lowest shadow-sm">
+          02
+        </div>
+<div>
+<div class="flex justify-between items-start mb-2 pt-1">
+<span class="px-1.5 py-0.5 bg-surface-container-high text-primary font-spec-code text-spec-code rounded font-bold">[电影]</span>
+<span class="font-spec-code text-spec-code text-outline">昨天 23:40</span>
+</div>
+<div class="bg-surface-container-low p-2 rounded border border-outline-variant mb-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="movie">movie</span>
+<h4 class="font-headline-sm text-sm font-bold text-on-surface mt-1 line-clamp-1">燃烧女子的肖像</h4>
+<p class="font-body-sm text-xs text-on-surface-variant mt-0.5">2019 · 瑟琳·席安玛</p>
+</div>
+</div>
+<div class="flex items-center justify-between text-outline font-spec-code text-spec-code border-t border-outline-variant pt-1.5">
+<span>NO. 402.11</span>
+<span class="text-primary font-bold">122 MIN</span>
+</div>
+</article>
+<!-- 03 SONG ITEM -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant p-2.5 relative flex flex-col justify-between hover:border-primary transition-colors">
+<div class="absolute -top-2.5 -left-2 z-10 w-6 h-6 rounded-full bg-secondary-container text-on-surface flex items-center justify-center font-spec-code text-xs font-bold border-2 border-surface-container-lowest shadow-sm">
+          03
+        </div>
+<div>
+<div class="flex justify-between items-start mb-2 pt-1">
+<span class="px-1.5 py-0.5 bg-surface-container-high text-primary font-spec-code text-spec-code rounded font-bold">[音乐]</span>
+<span class="font-spec-code text-spec-code text-outline">昨天 21:05</span>
+</div>
+<div class="bg-tertiary-fixed p-2 rounded border border-outline-variant mb-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-lg" data-icon="graphic_eq">graphic_eq</span>
+<div class="flex-1 flex items-end gap-0.5 h-3">
+<span class="w-1 h-3 bg-primary rounded-full"></span>
+<span class="w-1 h-1.5 bg-primary rounded-full"></span>
+<span class="w-1 h-2.5 bg-primary rounded-full"></span>
+<span class="w-1 h-2 bg-primary rounded-full"></span>
+<span class="w-1 h-3 bg-primary rounded-full"></span>
+</div>
+</div>
+<h4 class="font-headline-sm text-sm font-bold text-on-surface mt-1.5 line-clamp-1">夜空中最亮的星</h4>
+<p class="font-body-sm text-xs text-on-surface-variant mt-0.5">逃跑计划</p>
+</div>
+</div>
+<div class="flex items-center justify-between text-outline font-spec-code text-spec-code border-t border-outline-variant pt-1.5">
+<span>AUDIO // 44.1k</span>
+<span class="text-primary font-bold">TRACK 04</span>
+</div>
+</article>
+<!-- 04 QUOTE ITEM -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant p-2.5 relative flex flex-col justify-between hover:border-primary transition-colors">
+<div class="absolute -top-2.5 -left-2 z-10 w-6 h-6 rounded-full bg-secondary-container text-on-surface flex items-center justify-center font-spec-code text-xs font-bold border-2 border-surface-container-lowest shadow-sm">
+          04
+        </div>
+<div>
+<div class="flex justify-between items-start mb-2 pt-1">
+<span class="px-1.5 py-0.5 bg-secondary-fixed text-on-secondary-container font-spec-code text-spec-code rounded font-bold">[文案]</span>
+<span class="font-spec-code text-spec-code text-outline">10/19</span>
+</div>
+<div class="bg-surface-container-low p-2 rounded border border-outline-variant mb-2 relative">
+<span class="material-symbols-outlined text-primary-fixed-dim absolute top-1 right-1 text-2xl -z-0 opacity-40" data-icon="format_quote">format_quote</span>
+<p class="font-body-md text-xs font-medium text-on-surface leading-relaxed z-10 relative">
+              “我们读诗，是因为我们是人类的一员。”
+            </p>
+</div>
+</div>
+<div class="flex items-center justify-between text-outline font-spec-code text-spec-code border-t border-outline-variant pt-1.5">
+<span>SOURCE // POETRY</span>
+<span class="text-primary font-bold">LIT-08</span>
+</div>
+</article>
+<!-- 05 IDEA ITEM -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant p-2.5 relative flex flex-col justify-between hover:border-primary transition-colors">
+<div class="absolute -top-2.5 -left-2 z-10 w-6 h-6 rounded-full bg-secondary-container text-on-surface flex items-center justify-center font-spec-code text-xs font-bold border-2 border-surface-container-lowest shadow-sm">
+          05
+        </div>
+<div>
+<div class="flex justify-between items-start mb-2 pt-1">
+<span class="px-1.5 py-0.5 bg-secondary-fixed text-on-secondary-container font-spec-code text-spec-code rounded font-bold">[想法]</span>
+<span class="font-spec-code text-spec-code text-outline">10/18</span>
+</div>
+<div class="bg-tertiary-fixed p-2 rounded border border-outline-variant mb-2">
+<div class="flex items-center gap-1 text-outline font-spec-code text-spec-code mb-1">
+<span class="material-symbols-outlined text-sm text-primary" data-icon="lightbulb">lightbulb</span>
+<span>SKETCHPAD</span>
+</div>
+<p class="font-body-md text-xs font-medium text-on-surface leading-snug">
+              把通勤路上听到的对话写成一组短诗
+            </p>
+</div>
+</div>
+<div class="flex items-center justify-between text-outline font-spec-code text-spec-code border-t border-outline-variant pt-1.5">
+<span>DRAFT // NOTE</span>
+<span class="text-primary font-bold">COMMUTE</span>
+</div>
+</article>
+<!-- 06 LINK ITEM (Full-Width Card to Balance Layout) -->
+<article class="col-span-2 bg-surface-container-lowest rounded-lg border border-outline-variant p-2.5 relative hover:border-primary transition-colors">
+<div class="absolute -top-2.5 -left-2 z-10 w-7 h-7 rounded-full bg-secondary-container text-on-surface flex items-center justify-center font-spec-code text-xs font-bold border-2 border-surface-container-lowest shadow-sm">
+          06
+        </div>
+<div class="flex items-center justify-between mb-1.5 pl-3">
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.5 bg-surface-container-high text-primary font-spec-code text-spec-code rounded font-bold">[链接]</span>
+<h4 class="font-headline-sm text-sm font-bold text-on-surface">Are.na · 关于收集的收集</h4>
+</div>
+<span class="font-spec-code text-spec-code text-outline">10/16</span>
+</div>
+<div class="bg-surface-container-low px-3 py-2 rounded border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base" data-icon="link">link</span>
+<span class="font-spec-code text-spec-code text-primary font-semibold">are.na</span>
+</div>
+<span class="font-spec-code text-spec-code text-outline">HTTP // ARENA-BOARD</span>
+</div>
+</article>
+</div>
+</main>
+<!-- BottomNavBar (Shared Component) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs bg-surface-container-lowest border-t border-outline-variant">
+<!-- Tab 1: 穗仓 (Active) -->
+<button class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-lg px-3 py-1.5 shadow-sm active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-base" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-caps text-label-caps mt-0.5">穗仓</span>
+</button>
+<!-- Tab 2: 嫁接 -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors duration-150 px-3 py-1.5 active:scale-95">
+<span class="material-symbols-outlined text-base" data-icon="call_split">call_split</span>
+<span class="font-label-caps text-label-caps mt-0.5">嫁接</span>
+</button>
+<!-- Tab 3: 新枝 -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors duration-150 px-3 py-1.5 active:scale-95">
+<span class="material-symbols-outlined text-base" data-icon="spa">spa</span>
+<span class="font-label-caps text-label-caps mt-0.5">新枝</span>
+</button>
+<!-- Tab 4: 口味 -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors duration-150 px-3 py-1.5 active:scale-95">
+<span class="material-symbols-outlined text-base" data-icon="palette">palette</span>
+<span class="font-label-caps text-label-caps mt-0.5">口味</span>
+</button>
+<!-- Tab 5: 设置 -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-colors duration-150 px-3 py-1.5 active:scale-95">
+<span class="material-symbols-outlined text-base" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps mt-0.5">设置</span>
+</button>
+</nav>
+</body></html>
