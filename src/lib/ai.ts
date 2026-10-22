@@ -24,12 +24,26 @@ function joinUrl(base: string, path: string) {
   return base.replace(/\/+$/, '') + path;
 }
 
-export class AIError extends Error {}
+export class AIError extends Error {
+  /** HTTP 状态码；网络错误/超时为 0，其他本地错误为 undefined */
+  status?: number;
+  /** 服务端给的 Retry-After（毫秒） */
+  retryAfterMs?: number;
+  constructor(msg: string, status?: number, retryAfterMs?: number) {
+    super(msg);
+    this.status = status;
+    this.retryAfterMs = retryAfterMs;
+  }
+}
 
-async function postJSON(url: string, key: string, body: unknown, timeoutMs = 90000): Promise<unknown> {
+async function postJSON(url: string, key: string, body: unknown, timeoutMs = 90000, signal?: AbortSignal): Promise<unknown> {
   const f = await getFetch();
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  if (signal) {
+    if (signal.aborted) ctrl.abort();
+    else signal.addEventListener('abort', () => ctrl.abort(), { once: true });
+  }
   let res: Response;
   try {
     res = await f(url, {
@@ -41,7 +55,8 @@ async function postJSON(url: string, key: string, body: unknown, timeoutMs = 900
   } catch (e) {
     clearTimeout(t);
     const msg = e instanceof Error ? e.message : String(e);
-    throw new AIError(msg.includes('abort') ? '请求超时，请检查网络或换个模型' : `网络错误：${msg}`);
+    if (signal?.aborted) throw new AIError('已取消');
+    throw new AIError(msg.includes('abort') ? '请求超时，请检查网络或换个模型' : `网络错误：${msg}`, 0);
   }
   clearTimeout(t);
   const text = await res.text();
@@ -53,9 +68,11 @@ async function postJSON(url: string, key: string, body: unknown, timeoutMs = 900
     } catch {
       /* ignore */
     }
-    if (res.status === 401 || res.status === 403) throw new AIError(`密钥无效或无权限（${res.status}）：${detail}`);
-    if (res.status === 429) throw new AIError(`请求太频繁或额度用完（429）：${detail}`);
-    throw new AIError(`接口返回 ${res.status}：${detail}`);
+    if (res.status === 401 || res.status === 403) throw new AIError(`密钥无效或无权限（${res.status}）：${detail}`, res.status);
+    const ra = Number(res.headers?.get?.('retry-after'));
+    const raMs = Number.isFinite(ra) && ra > 0 ? ra * 1000 : undefined;
+    if (res.status === 429) throw new AIError(`请求太频繁或额度用完（429）：${detail}`, 429, raMs);
+    throw new AIError(`接口返回 ${res.status}：${detail}`, res.status, raMs);
   }
   try {
     return JSON.parse(text);
@@ -80,7 +97,7 @@ function extra(s: Settings): Record<string, unknown> {
   }
 }
 
-export async function chat(s: Settings, messages: ChatMsg[], opts: { model?: string; temperature?: number; maxTokens?: number } = {}): Promise<string> {
+export async function chat(s: Settings, messages: ChatMsg[], opts: { model?: string; temperature?: number; maxTokens?: number; signal?: AbortSignal; timeoutMs?: number } = {}): Promise<string> {
   const body = {
     model: opts.model || s.chat.chatModel,
     messages,
@@ -88,7 +105,7 @@ export async function chat(s: Settings, messages: ChatMsg[], opts: { model?: str
     max_tokens: opts.maxTokens ?? 1600,
     ...extra(s),
   };
-  const j = (await postJSON(joinUrl(s.chat.baseUrl, '/chat/completions'), s.chat.apiKey, body)) as {
+  const j = (await postJSON(joinUrl(s.chat.baseUrl, '/chat/completions'), s.chat.apiKey, body, opts.timeoutMs, opts.signal)) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const out = j.choices?.[0]?.message?.content;
