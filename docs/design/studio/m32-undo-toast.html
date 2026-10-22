@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN — 穗仓网格视图</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#e2e2e2",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#2f3131",
+            "surface-tint": "#5e5e5e",
+            "background": "#f9f9f9",
+            "error": "#ba1a1a",
+            "secondary": "#5e5e5e",
+            "surface-bright": "#f9f9f9",
+            "on-background": "#1a1c1c",
+            "secondary-fixed": "#e3e2e2",
+            "on-tertiary-fixed-variant": "#464747",
+            "tertiary": "#000000",
+            "primary-fixed-dim": "#c6c6c6",
+            "surface-container-lowest": "#ffffff",
+            "error-container": "#ffdad6",
+            "secondary-container": "#e3e2e2",
+            "on-surface-variant": "#4c4546",
+            "on-primary": "#ffffff",
+            "tertiary-container": "#1a1c1c",
+            "surface-container-high": "#e8e8e8",
+            "on-primary-fixed-variant": "#474747",
+            "surface-container-low": "#f3f3f3",
+            "outline": "#7e7576",
+            "outline-variant": "#cfc4c5",
+            "on-secondary-fixed-variant": "#464747",
+            "surface-container": "#eeeeee",
+            "on-tertiary-container": "#838484",
+            "on-secondary-container": "#646464",
+            "surface": "#f9f9f9",
+            "secondary-fixed-dim": "#c7c6c6",
+            "on-primary-container": "#848484",
+            "primary": "#000000",
+            "tertiary-fixed": "#e3e2e2",
+            "primary-container": "#1b1b1b",
+            "inverse-on-surface": "#f1f1f1",
+            "on-tertiary": "#ffffff",
+            "on-secondary-fixed": "#1b1c1c",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "surface-container-highest": "#e2e2e2",
+            "surface-dim": "#dadada",
+            "on-tertiary-fixed": "#1a1c1c",
+            "on-primary-fixed": "#1b1b1b",
+            "on-error-container": "#93000a",
+            "on-error": "#ffffff",
+            "surface-variant": "#e2e2e2",
+            "on-surface": "#1a1c1c",
+            "inverse-primary": "#c6c6c6"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "none": "0px",
+            "sm": "0px",
+            "md": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "0px"
+          },
+          "spacing": {
+            "space-lg": "20px",
+            "space-xs": "4px",
+            "space-md": "10px",
+            "gutter": "10px",
+            "space-sm": "8px",
+            "space-xl": "30px",
+            "margin": "10px"
+          },
+          "fontFamily": {
+            "display-hero": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "Inter", "sans-serif"],
+            "body-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-mono-caps": ["Inter", "Noto Sans SC", "monospace"],
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-lg": ["Inter", "Noto Sans SC", "sans-serif"]
+          },
+          "fontSize": {
+            "display-hero": [
+              "56px",
+              {
+                "lineHeight": "56px",
+                "letterSpacing": "-0.04em",
+                "fontWeight": "600"
+              }
+            ],
+            "display-hero-zh": [
+              "48px",
+              {
+                "lineHeight": "52px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "700"
+              }
+            ],
+            "body-sm": [
+              "13px",
+              {
+                "lineHeight": "18px",
+                "letterSpacing": "0em",
+                "fontWeight": "400"
+              }
+            ],
+            "headline-sm": [
+              "20px",
+              {
+                "lineHeight": "24px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "600"
+              }
+            ],
+            "headline-lg": [
+              "32px",
+              {
+                "lineHeight": "36px",
+                "letterSpacing": "-0.03em",
+                "fontWeight": "600"
+              }
+            ],
+            "label-mono-caps": [
+              "11px",
+              {
+                "lineHeight": "14px",
+                "letterSpacing": "0.12em",
+                "fontWeight": "500"
+              }
+            ],
+            "label-micro": [
+              "10px",
+              {
+                "lineHeight": "12px",
+                "letterSpacing": "0.08em",
+                "fontWeight": "500"
+              }
+            ],
+            "body-lg": [
+              "15px",
+              {
+                "lineHeight": "22px",
+                "letterSpacing": "-0.01em",
+                "fontWeight": "400"
+              }
+            ]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      box-shadow: none !important;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      width: 390px;
+      margin: 0 auto;
+      overflow-x: hidden;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-[#FFFFFF] text-primary antialiased min-h-screen relative flex flex-col justify-between selection:bg-primary selection:text-surface-container-lowest">
+<!-- TOP APP BAR -->
+<header class="w-full h-12 px-4 flex items-center justify-between border-0 bg-[#FFFFFF] sticky top-0 z-40">
+<span class="font-headline-sm text-headline-sm text-primary tracking-tight font-semibold">拾穗 · GLEAN</span>
+<button class="font-body-sm text-[14px] text-[#7E7E7E] hover:text-primary transition-none" type="button">设置</button>
+</header>
+<!-- MAIN CANVAS -->
+<main class="w-full px-4 pt-3 pb-36 flex-1">
+<!-- DISPLAY HEADLINE -->
+<section class="mb-4">
+<h1 class="text-[56px] leading-[1.0] font-semibold tracking-[-0.04em] text-primary font-display-hero">
+        穗仓 (9)
+      </h1>
+</section>
+<!-- ACTION / FILTER BAR -->
+<section class="flex items-center justify-between pb-3 mb-3 border-b border-[#F3F3F3]">
+<button class="h-8 px-3 bg-primary text-surface-container-lowest font-label-mono-caps text-label-mono-caps flex items-center justify-center" type="button">
+        嫁接所选
+      </button>
+<div class="flex items-center space-x-1 font-body-sm text-[13px]">
+<span class="font-medium text-primary">网格</span>
+<span class="text-[#C6C6C6]">|</span>
+<button class="text-[#C6C6C6] hover:text-primary transition-none" type="button">列表</button>
+</div>
+</section>
+<!-- 2-COLUMN GRID (10px GAP, 4:5 TILES) -->
+<section class="grid grid-cols-2 gap-[10px]">
+<!-- 1. 照片『轮渡上的雾』 -->
+<article class="relative w-full aspect-[4/5] overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Quiet moody atmospheric photograph taken from the deck of an old coastal passenger ferry looking into dense morning sea fog. A stark industrial wet metal railing curves into the cold misty abyss, with subtle dark grey water reflections beneath. Muted monochrome palette with slate tones, Swiss editorial minimalist composition, natural overcast light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9unmvcU9J0PZc8HUTWURh_Q0xx9FQQwQ6OB_mxDZIYKNiKataVePJ6XD0xo_dG4eNBjvxTjB89-K7e4WJ0IATUx8aVqfwm3-iRSQRI7r4rWrt6hmQOyiv8o0642A0KSZ9fQYcDwOQmxhl3yl1Aju-sfosCpjeqpewrtAGGLbYv20xilvxA36zzlv_EawsTasZXKmb0DgIkBO5g0jScWzmklbsmu54hbvm164B6agUPXC66kiS2WPDkZRfJkLSE2qbGf_UHVTMlgU"/>
+<div class="absolute inset-x-0 bottom-0 pt-10 pb-2.5 px-2.5 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end">
+<span class="text-[#FFFFFF] text-[15px] font-semibold leading-tight font-headline-sm">轮渡上的雾</span>
+<span class="text-[#FFFFFF]/80 text-[12px] font-body-sm tracking-wide mt-1">照片 · 10/21</span>
+</div>
+</article>
+<!-- 2. 电影《完美的日子》 -->
+<article class="relative w-full aspect-[4/5] overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img class="w-full h-full object-cover contrast-110" data-alt="Cinematic still inspired by Wim Wenders film Perfect Days showing an empty Tokyo narrow urban residential alleyway at dawn with subtle soft blue early morning sky. Weathered concrete homes, a vintage small light blue utility van parked quietly, overhead telephone wires framing the street, calm nostalgic contemplative light, strictly architectural." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWuTQVV9R8Jr1zdSjFb3ib-IRFUxGNm_AN0KGnxsIi11_TK7ratpGeLqGWtrJd8sbzwTVm0VXb8oFtZZR9o0Vd2vjJpuulLRoORX36LXJlPIsACOSu3Z63GxhVDorVgtwhvODNQU3yCeWhfJ7LfZwJeZJElxtP4lDISXbdIIhTVMaikqGYfKYl7dy6h39mLBMKQrGwIcwYgpE98ye5NrHE26LuOVl6bAYyLLyvg03d3wcml_80568t0ALVeIN9MJbNG3S98SiO6bs"/>
+<div class="absolute inset-x-0 bottom-0 pt-10 pb-2.5 px-2.5 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end">
+<span class="text-[#FFFFFF] text-[15px] font-semibold leading-tight font-headline-sm">完美的日子</span>
+<span class="text-[#FFFFFF]/80 text-[12px] font-body-sm tracking-wide mt-1">电影 · 10/20</span>
+</div>
+</article>
+<!-- 3. 歌『Re: Stacks』 -->
+<article class="relative w-full aspect-[4/5] overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="Quiet and isolated dark wooden cabin sitting in a deep snow-covered pine forest at night during a gentle snowfall. A single small square window glows with warm golden candlelight, contrasting the cold dark blue monochrome wilderness. Minimalist, evocative of acoustic indie folk music and peaceful solitude." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGEbkkhUqNuyWkUexYPxVyT41ENNHzaK2ZdX-PkumbBwzLUMU0LpiPZBk02nCfa0utiT8DbQdLPg7U7b57oSpHe7SQHFOII_wNA5G5h1PlfKGvHyW6y75TnzPcyvKYPaLaYg4Dw_CFRK9WvA2HuWMGBJ9nfoeM6sIUm4_tqt-lAmEd36vmT_MYBQdf_TwhKQHWUScREnaRIwcDuJo2LPQaXgE0Uj1SfBbvhbj_l135CwuVfQOoS-GdKfUgZH8b0nRACEtFtTWdcH8"/>
+<div class="absolute inset-x-0 bottom-0 pt-10 pb-2.5 px-2.5 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end">
+<span class="text-[#FFFFFF] text-[15px] font-semibold leading-tight font-headline-sm">Re: Stacks</span>
+<span class="text-[#FFFFFF]/80 text-[12px] font-body-sm tracking-wide mt-1">歌 · 10/19</span>
+</div>
+</article>
+<!-- 4. 摘抄『记忆中的形象一旦被词语固定住，就给抹掉了。』 -->
+<article class="w-full aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer">
+<p class="text-[14px] font-medium leading-[22px] text-primary tracking-tight">
+          “记忆中的形象一旦被词语固定住，就给抹掉了。”
+        </p>
+<div class="pt-2 border-t border-[#E8E8E8]">
+<p class="text-[11px] text-[#7E7E7E] leading-tight truncate">卡尔维诺《看不见的城市》</p>
+<span class="text-[11px] text-[#7E7E7E] font-label-mono-caps mt-0.5 block">摘抄 · 10/18</span>
+</div>
+</article>
+<!-- 5. 想法『给楼道里每一盏声控灯起一个名字』 -->
+<article class="w-full aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer">
+<p class="text-[14px] font-medium leading-[22px] text-primary tracking-tight">
+          给楼道里每一盏声控灯起一个名字。
+        </p>
+<div class="pt-2 border-t border-[#E8E8E8]">
+<span class="text-[11px] text-[#7E7E7E] font-label-mono-caps block">想法 · 10/17</span>
+</div>
+</article>
+<!-- 6. 链接『Radio Garden · 转动地球收听各地电台』 -->
+<article class="w-full aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer">
+<div>
+<p class="text-[14px] font-semibold leading-snug text-primary">
+            Radio Garden · 转动地球收听各地电台
+          </p>
+<span class="text-[11px] font-mono underline text-primary mt-2 block tracking-tight">radio.garden</span>
+</div>
+<div class="pt-2 border-t border-[#E8E8E8]">
+<span class="text-[11px] text-[#7E7E7E] font-label-mono-caps block">链接 · 10/16</span>
+</div>
+</article>
+<!-- 7. 歌『aqua』 -->
+<article class="relative w-full aspect-[4/5] overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="Black grand piano standing beside a floor-to-ceiling glass window with soft overcast grey daylight, minimalist spacious room, Ryuichi Sakamoto aqua aesthetic" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzFEnFxLynRJo6GRG2iwWO77uLo8ivg3lo4qVbmBT-7j0x_GDPX-0pvf8bDJ6spLrEFFFjRS9IvrcKLy0bZCEOwHhJuQc6G3wSESiheqIedaOhoZdhNiFI89-MYMoBGaxWlqfaTL5Q15_XoQZEKhNabHtPxAsQy9Hc5oCu_VmI98osuYboTiUXXOi4xUXwvd553xZT0h-mqRGVe1u28W4FjH-glGYMjKuM2AAgRRW08gExZesmloH9r8KRjgEP9Fk01xl5iAAMRis"/>
+<div class="absolute inset-x-0 bottom-0 pt-10 pb-2.5 px-2.5 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end">
+<span class="text-[#FFFFFF] text-[15px] font-semibold leading-tight font-headline-sm">aqua</span>
+<span class="text-[#FFFFFF]/80 text-[12px] font-body-sm tracking-wide mt-1">歌 · 10/12</span>
+</div>
+</article>
+<!-- 8. 电影《一一》 -->
+<article class="relative w-full aspect-[4/5] overflow-hidden bg-[#F3F3F3] group cursor-pointer">
+<img alt="Night view of a Taipei high-rise apartment exterior with warm lit square windows, Edward Yang Yi Yi movie style, quiet cinematic composition" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOinwLKRWsK1qmKP2oR5-n-2kniksaQ2bxX_11Acr3Vd6x6i9ewBW2js-vvri7dOHNxtDv81p7kLquAQTj89MMGw6nQdgoo7mCrlMTeqsDVbCC-JZwEFqnyRYHFXEb1HFUplHSZgdnKn57erGHStEQlC30u7lZEOsNT5Qplx9KvuU3PrRsNV1rtloEaSZcQeCa1dCKdZ4oCAq_ZRsMl5Asrf8GsWjW3VE83Bi9avcknxWMXte9_b35Q05Rx_t0zj8eMbqGGzRfcUM"/>
+<div class="absolute inset-x-0 bottom-0 pt-10 pb-2.5 px-2.5 bg-gradient-to-t from-black via-black/70 to-transparent flex flex-col justify-end">
+<span class="text-[#FFFFFF] text-[15px] font-semibold leading-tight font-headline-sm">《一一》</span>
+<span class="text-[#FFFFFF]/80 text-[12px] font-body-sm tracking-wide mt-1">电影 · 10/09</span>
+</div>
+</article>
+<!-- 9. 想法『把外卖小票上的备注收集成一本诗集』 -->
+<article class="w-full aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer">
+<p class="text-[14px] font-medium leading-[22px] text-primary tracking-tight">
+          “把外卖小票上的备注收集成一本诗集。”
+        </p>
+<div class="pt-2 border-t border-[#E8E8E8]">
+<span class="text-[11px] text-[#7E7E7E] font-label-mono-caps block">想法 · 10/05</span>
+</div>
+</article>
+</section>
+</main>
+<!-- FIXED BOTTOM SECTION: UNDO TOAST + QUICK CAPTURE + TEXT NAV -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] z-50 bg-[#FFFFFF]">
+<!-- UNDO TOAST STRIP -->
+<div class="w-full h-[50px] bg-primary text-surface-container-lowest px-4 flex items-center justify-between relative border-0" id="undoToast">
+<div class="flex items-center space-x-2">
+<span class="text-[15px] font-normal tracking-tight text-[#FFFFFF]">已删掉 1 穗</span>
+</div>
+<button class="text-[14px] font-medium text-[#FFFFFF] underline decoration-1 underline-offset-4 tracking-normal hover:opacity-80 transition-none" onclick="document.getElementById('undoToast').style.display='none'" type="button">
+        撤销
+      </button>
+<!-- 2/3 hairline countdown progress line -->
+<div class="absolute bottom-0 left-0 h-[1px] bg-[#FFFFFF] w-[66%] pointer-events-none"></div>
+</div>
+<!-- QUICK-CAPTURE HAIRLINE ROW -->
+<div class="w-full px-4 py-2 border-t border-primary flex items-center justify-between bg-[#FFFFFF]">
+<input class="w-full bg-transparent border-0 p-0 text-[14px] text-primary placeholder-[#C6C6C6] focus:ring-0 focus:outline-none" placeholder="随手拾一穗" type="text"/>
+<button class="ml-2 text-primary text-[13px] font-medium tracking-widest shrink-0 cursor-pointer bg-transparent border-0 p-0 hover:opacity-80 transition-none" type="button">拾</button>
+</div>
+<!-- BOTTOM NAVIGATION (STRICTLY 5 TEXT WORDS ONLY - NO ICONS) -->
+<nav class="w-full px-4 pt-2.5 pb-2 flex justify-between items-center bg-[#FFFFFF]">
+<button class="text-[12px] font-semibold text-primary border-b border-primary pb-0.5 tracking-wider" type="button">
+        穗仓
+      </button>
+<button class="text-[12px] font-medium text-[#7E7E7E] hover:text-primary tracking-wider transition-none" type="button">
+        嫁接
+      </button>
+<button class="text-[12px] font-medium text-[#7E7E7E] hover:text-primary tracking-wider transition-none" type="button">
+        新枝
+      </button>
+<button class="text-[12px] font-medium text-[#7E7E7E] hover:text-primary tracking-wider transition-none" type="button">
+        口味
+      </button>
+<button class="text-[12px] font-medium text-[#7E7E7E] hover:text-primary tracking-wider transition-none" type="button">
+        设置
+      </button>
+</nav>
+<!-- ARCHIVAL SYSTEM FOOTER -->
+<div class="w-full text-center pb-1.5 pt-0.5 bg-[#FFFFFF]">
+<span class="text-[11px] text-[#C6C6C6] tracking-widest">© 2026 Q1f730</span>
+</div>
+</div>
+</body></html>
