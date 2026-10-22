@@ -1,0 +1,171 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Architectural Studio - Portfolio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#5e5e5e",
+                        "outline": "#7e7576",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c6c6c6",
+                        "on-secondary-container": "#626263",
+                        "on-secondary-fixed-variant": "#464747",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-surface": "#2f3131",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-primary-fixed": "#1b1b1b",
+                        "surface-variant": "#e2e2e2",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#000000",
+                        "on-background": "#1a1c1c",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#1a1c1c",
+                        "surface-container-low": "#f3f3f4",
+                        "background": "#f9f9f9",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container": "#eeeeee",
+                        "primary-fixed": "#e2e2e2",
+                        "on-primary-container": "#848484",
+                        "inverse-primary": "#c6c6c6",
+                        "on-surface": "#1a1c1c",
+                        "on-tertiary-container": "#838484",
+                        "surface": "#f9f9f9",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#dadada",
+                        "secondary-container": "#e1dfdf",
+                        "on-surface-variant": "#4c4546",
+                        "tertiary-fixed": "#e2e2e2",
+                        "surface-bright": "#f9f9f9",
+                        "secondary": "#5e5e5e",
+                        "primary-container": "#1b1b1b",
+                        "secondary-fixed": "#e4e2e2",
+                        "outline-variant": "#cfc4c5",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e2e2e2",
+                        "inverse-on-surface": "#f0f1f1",
+                        "secondary-fixed-dim": "#c7c6c6",
+                        "tertiary": "#000000",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "on-tertiary-fixed": "#1a1c1c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "element-gap": "12px",
+                        "edge-margin": "64px",
+                        "container-max": "1800px",
+                        "section-gap": "160px"
+                    },
+                    "fontFamily": {
+                        "display-xl": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-xl": ["80px", { "lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }],
+                        "headline-lg": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "letterSpacing": "0", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-primary text-on-tertiary font-body-lg antialiased selection:bg-on-tertiary selection:text-primary overflow-x-hidden">
+<main class="relative flex flex-col w-full">
+<!-- TopNavBar -->
+<nav class="absolute z-20 w-full top-0 flex justify-between items-center pb-6 transition-colors duration-150 max-w-container-max mx-auto px-[10px] pt-[10px] text-white">
+<div class="font-semibold tracking-tight text-[20px]">
+            STUDIO
+        </div>
+<div class="hidden md:flex items-center absolute left-1/2 -translate-x-1/2 gap-6">
+<a class="font-label-caps text-label-caps transition-opacity duration-150 text-[12px] hover:opacity-70" href="#">WORK</a>
+<a class="font-label-caps text-label-caps hover:opacity-70 transition-opacity duration-150 text-[12px]" href="#">ABOUT</a>
+<a class="font-label-caps text-label-caps hover:opacity-70 transition-opacity duration-150 text-[12px]" href="#">NEWS</a>
+<a class="font-label-caps text-label-caps hover:opacity-70 transition-opacity duration-150 text-[12px]" href="#">CAREERS</a>
+</div>
+<a class="font-label-caps text-label-caps hover:opacity-70 transition-opacity duration-150 flex items-center gap-1 text-[12px] uppercase tracking-[0.2em]" href="#">
+            GET IN TOUCH <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</nav>
+<!-- Hero Content Container -->
+<div class="relative w-full h-screen">
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-cover bg-center bg-no-repeat" data-alt="Stark monochromatic architectural photograph featuring brutalist concrete structures intersecting with sharp diagonal shadows cast by harsh sunlight, embodying strict minimalist aesthetics." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDpkSjWRlCfxShxIx4Lv1PIB92lr-RjNeol6bDU1hF3GBDcp2RmW3f242uX7AgULSjmCuwT5DQTkhRKNVQLh6D_M7XAkZAvAHPQcoWBPc53JtEmwQTLx0hhwNFzN2X1WclBoazql6sWocOwr4gUc2XqOLlu_u9pr_2KHZYSTjEvHKQgdpKov52kmXSqRHuv8epP82acikDJ-rT9Q62U9m5DfzGWZJzIMh3Naj1aQJabs0BaCp_y31kknX5KzieuDyInPjG7H4zZ0RE&quot;);"></div>
+<!-- Gradient/Dark overlay to ensure text legibility -->
+<div class="absolute inset-0 bg-primary/40"></div>
+</div>
+<section class="absolute inset-0 z-10 flex flex-col justify-center max-w-container-max mx-auto w-full px-[10px]">
+<div class=""><h1 class="font-semibold tracking-tighter text-on-tertiary leading-none text-[40px]">Visual identity for Paris<br>fashion house Loewe</h1></div>
+</section>
+</div>
+<!-- New Content Section -->
+<section class="w-full max-w-container-max mx-auto px-[10px] py-section-gap grid grid-cols-1 md:grid-cols-12 gap-gutter text-on-surface-variant bg-surface">
+<!-- Left Column: Project Description -->
+<div class="col-span-1 md:col-span-8 flex flex-col gap-6">
+<h2 class="font-headline-md text-primary">Overview</h2>
+<p class="font-body-lg text-on-secondary-container leading-relaxed max-w-prose">
+            A comprehensive visual identity redesign for the renowned Parisian fashion house, Loewe. The objective was to modernize the brand's aesthetic while honoring its rich heritage in leather craftsmanship. The new system spans across digital platforms, print collateral, and retail environments, introducing a refined typographic language and a minimalist structural approach that elevates the product.
+        </p>
+</div>
+<!-- Right Column: Metadata -->
+<div class="col-span-1 md:col-span-4 flex flex-col gap-8 md:pl-12">
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-tertiary-container uppercase">CLIENT</span>
+<span class="font-body-lg text-primary">Loewe Paris</span>
+</div>
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-tertiary-container uppercase">YEAR</span>
+<span class="font-body-lg text-primary">2024</span>
+</div>
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-tertiary-container uppercase">ROLE</span>
+<span class="font-body-lg text-primary">Art Direction, Identity Design, Web Design</span>
+</div>
+<div class="flex flex-col gap-2">
+<span class="font-label-caps text-on-tertiary-container uppercase">DESCRIPTION</span>
+<span class="font-body-lg text-primary">Complete brand overhaul including bespoke typography and packaging systems.</span>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="fixed bottom-0 left-0 right-0 z-20 flex justify-between items-center w-full px-[10px] pb-[10px] pt-8 max-w-container-max mx-auto uppercase text-white mix-blend-difference pointer-events-none">
+<div class="text-[10px] font-medium tracking-wider pointer-events-auto">
+        © 2026 STUDIO
+    </div>
+<div class="flex gap-6 pointer-events-auto">
+<a class="text-[10px] font-medium tracking-wider hover:opacity-70 transition-opacity" href="#">INSTAGRAM</a>
+<a class="text-[10px] font-medium tracking-wider hover:opacity-70 transition-opacity" href="#">LINKEDIN</a>
+<a class="text-[10px] font-medium tracking-wider hover:opacity-70 transition-opacity" href="#">TWITTER</a>
+</div>
+</footer></main>
+</body></html>
