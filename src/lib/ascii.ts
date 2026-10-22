@@ -1,6 +1,6 @@
-// ASCII 显影：纯函数部分（可单测）。画布绘制在 components/AsciiDevelop.tsx。
+// 图片 ASCII 显影：纯函数部分（可单测）。画布绘制在 components/AsciiDevelop.tsx。
 
-/** 从暗到亮的字符梯度（暗处用密字符，亮处留白，像相纸上的显影） */
+/** 从暗到亮的字符梯度（暗处用密字符，亮处留白） */
 export const RAMP = '@%#*+=-:. ';
 
 export function lumToChar(lum: number): string {
@@ -64,35 +64,46 @@ export function lumToText(lums: ArrayLike<number>, cols: number, rows: number): 
   return lines.join('\n');
 }
 
-export const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+/** 等待时的小动画：一排种子轻轻起伏 */
+export const SPINNER = ['·  ', '·· ', '···', ' ··', '  ·', '   '];
 
-/** 暗房空状态：一格底片从噪点逐渐显出 ◉ 的循环帧 */
-export function emptyFrames(cols = 21, rows = 7): string[] {
-  const cx = (cols - 1) / 2;
-  const cy = (rows - 1) / 2;
-  const r = rng(7);
-  const noise = Array.from({ length: cols * rows }, () => r());
-  const steps = 8;
+const SPROUT = [
+  '    \'v`    ',
+  '    `#\'    ',
+  '   \\ # /   ',
+  '    \\|/    ',
+  '     |     ',
+  '    /|     ',
+  ' .,;:|:;,. ',
+];
+
+/** 空状态：一根麦子从土里慢慢长出来（自下而上，9 帧，最后一帧是完整的穗） */
+export function sproutFrames(): string[] {
+  const rows = SPROUT.length;
   const frames: string[] = [];
-  for (let s = 0; s <= steps; s++) {
-    const p = s / steps;
-    const lines: string[] = [];
-    for (let y = 0; y < rows; y++) {
-      let line = '';
-      for (let x = 0; x < cols; x++) {
-        const d = Math.hypot((x - cx) / 2.2, y - cy); // 字符约 1:2
-        const inCore = d < 2.2;
-        const ring = Math.abs(d - 2.9) < 0.45;
-        const target = inCore ? '@' : ring ? 'o' : ' ';
-        const n = noise[y * cols + x];
-        if (n < p) line += target;
-        else line += n < p + 0.18 ? '.:-=+*#%'[Math.floor(n * 80) % 8] : ' ';
-      }
-      lines.push(line);
-    }
+  for (let s = 0; s <= 8; s++) {
+    const shown = Math.round((s / 8) * rows); // 从下往上露出几行
+    const lines = SPROUT.map((line, y) => (y >= rows - shown ? line : ' '.repeat(line.length)));
     frames.push(lines.join('\n'));
   }
   return frames;
+}
+
+/**
+ * 图片 ASCII 显影的字符颜色：用像素自己的颜色，但保证在纸上读得出。
+ * 浅色纸：太亮的颜色压暗；深色纸（夜晚）：太暗的颜色提亮。返回 rgb 字符串。
+ */
+export function inkOnPaper(r: number, g: number, b: number, dark: boolean): string {
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  let k = 1;
+  if (!dark && lum > 0.58) k = 0.58 / lum;
+  if (dark && lum < 0.45) k = lum > 0.02 ? 0.45 / lum : 1;
+  let R = r * k;
+  let G = g * k;
+  let B = b * k;
+  if (dark && lum <= 0.02) R = G = B = 115;
+  const c = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  return `rgb(${c(R)},${c(G)},${c(B)})`;
 }
 
 export function prefersReducedMotion(): boolean {
