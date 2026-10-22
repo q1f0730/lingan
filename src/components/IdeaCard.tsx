@@ -79,6 +79,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
         <span className="numeral">{typeof index === 'number' ? nn(index) : '—'}</span>
         <span className="idea-tags label">
           {evidence === 'weak' && <span className="weak-badge">证据不足</span>}
+          {idea.wall && <span className="wall-badge">{idea.wall === 'replaced' ? '撞墙后重长' : '删了撞墙的字'}</span>}
           {idea.transform && <span className="idea-transform">{transformName(idea.transform)}</span>}
           <span className="idea-src">{source === 'ai' ? 'AI 嫁接' : '离线嫁接'}</span>
           {dev && typeof index !== 'number' ? <span className="dim"> · {new Date(dev.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span> : null}
