@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 桌面端口味 (Taste) (1440px)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Sans+SC:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            black: '#000000',
+            white: '#FFFFFF',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            lightTile: '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .grid-12 {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+  </style>
+</head>
+<body class="w-[1440px] min-h-screen bg-white text-black mx-auto overflow-x-hidden selection:bg-black selection:text-white">
+<!-- TOP NAV BAR (Exact 1440px width with px-10 / 40px margin, perfect edge alignment) -->
+<header class="w-full h-16 px-10 flex items-center justify-between border-b border-transparent bg-white fixed top-0 left-0 right-0 z-50">
+<!-- Left: Brand + Navigation -->
+<div class="flex items-center space-x-12">
+<!-- Brand -->
+<div class="text-[20px] font-semibold tracking-tight text-black select-none">
+        拾穗 · GLEAN
+      </div>
+<!-- Nav items -->
+<nav class="flex items-center space-x-8 text-[12px] font-medium tracking-[0.08em]">
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">穗仓</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">嫁接</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">新枝</a>
+<a class="text-black border-b border-black pb-0.5 font-semibold" href="#">口味</a>
+<a class="text-[#7E7E7E] hover:text-black transition-colors" href="#">设置</a>
+</nav>
+</div>
+<!-- Right: Quick-Capture input (Strictly 320px wide, touching exactly 40px right margin) -->
+<div class="w-[320px] shrink-0">
+<input class="w-full bg-transparent border-0 border-b border-black py-1 px-0 text-[12px] font-medium text-black placeholder-[#7E7E7E] focus:outline-none focus:border-black tracking-wide" placeholder="随手拾一穗 →" type="text"/>
+</div>
+</header>
+<!-- MAIN CONTENT AREA (Strictly px-10 / 40px horizontal margin) -->
+<main class="w-full px-10 pt-[140px] pb-24">
+<!-- Huge display headline -->
+<h1 class="text-[108px] font-semibold leading-none tracking-[-0.04em] text-black mb-12 select-none">
+      口味
+    </h1>
+<!-- Manifesto lead text (Spanning 8 of 12 columns) -->
+<div class="grid-12 mb-20">
+<div class="col-span-8">
+<p class="text-[36px] font-semibold leading-[1.35] text-black tracking-[-0.02em]">
+          你在收集安静的东西：清晨、窗、没人注意的日常，以及那些<span class="font-light">可以每天重复一遍</span>的小仪式。
+        </p>
+</div>
+</div>
+<!-- Two-part layout on 12-column grid -->
+<section class="grid-12 mb-24 items-start">
+<!-- LEFT (7 cols): 倾向 Table -->
+<div class="col-span-7 pr-6">
+<!-- Section label -->
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-[0.12em] mb-4">
+          倾向
+        </div>
+<!-- Table Header with single 1px black rule -->
+<div class="w-full flex justify-between items-end pb-2.5 border-b border-black text-[12px] font-medium text-[#7E7E7E] tracking-[0.06em]">
+<div>倾向 / 来自这些穗</div>
+<div></div>
+</div>
+<!-- Table Rows -->
+<div class="flex flex-col space-y-9 pt-7">
+<!-- Row 1: 清晨与雾 -->
+<div>
+<div class="flex items-baseline justify-between mb-2">
+<span class="text-[20px] font-medium text-black tracking-tight">清晨与雾</span>
+<span class="text-[14px] text-[#7E7E7E] text-right font-normal">轮渡上的雾 / 《完美的日子》 / 老小区晾衣绳上的白床单</span>
+</div>
+<div class="text-[12px] text-[#7E7E7E] tracking-wide space-x-4 select-none">
+<button class="hover:text-black transition-colors">多一点</button>
+<button class="hover:text-black transition-colors">少一点</button>
+<button class="hover:text-black transition-colors text-[#C6C6C6]">这不是我</button>
+</div>
+</div>
+<!-- Row 2: 窗与夜 -->
+<div>
+<div class="flex items-baseline justify-between mb-2">
+<span class="text-[20px] font-medium text-black tracking-tight">窗与夜</span>
+<span class="text-[14px] text-[#7E7E7E] text-right font-normal">《一一》 / Re: Stacks / 凌晨四点的便利店</span>
+</div>
+<div class="text-[12px] text-[#7E7E7E] tracking-wide space-x-4 select-none">
+<button class="hover:text-black transition-colors">多一点</button>
+<button class="hover:text-black transition-colors">少一点</button>
+<button class="hover:text-black transition-colors text-[#C6C6C6]">这不是我</button>
+</div>
+</div>
+<!-- Row 3: 日常里的诗 -->
+<div>
+<div class="flex items-baseline justify-between mb-2">
+<span class="text-[20px] font-medium text-black tracking-tight">日常里的诗</span>
+<span class="text-[14px] text-[#7E7E7E] text-right font-normal">把外卖小票上的备注集成一本诗集 / 给楼道里每一盏声控灯起一个名字</span>
+</div>
+<div class="text-[12px] text-[#7E7E7E] tracking-wide space-x-4 select-none">
+<button class="hover:text-black transition-colors">多一点</button>
+<button class="hover:text-black transition-colors">少一点</button>
+<button class="hover:text-black transition-colors text-[#C6C6C6]">这不是我</button>
+</div>
+</div>
+<!-- Row 4: 安静的钢琴 -->
+<div>
+<div class="flex items-baseline justify-between mb-2">
+<span class="text-[20px] font-medium text-black tracking-tight">安静的钢琴</span>
+<span class="text-[14px] text-[#7E7E7E] text-right font-normal">aqua / Avril 14th / Gymnopédie No.1</span>
+</div>
+<div class="text-[12px] text-[#7E7E7E] tracking-wide space-x-4 select-none">
+<button class="hover:text-black transition-colors">多一点</button>
+<button class="hover:text-black transition-colors">少一点</button>
+<button class="hover:text-black transition-colors text-[#C6C6C6]">这不是我</button>
+</div>
+</div>
+<!-- Row 5: 收集本身 -->
+<div>
+<div class="flex items-baseline justify-between mb-2">
+<span class="text-[20px] font-medium text-black tracking-tight">收集本身</span>
+<span class="text-[14px] text-[#7E7E7E] text-right font-normal">旧书店堆到天花板的书脊 / Radio Garden / 在每张旧车票背面写下当天的天气</span>
+</div>
+<div class="text-[12px] text-[#7E7E7E] tracking-wide space-x-4 select-none">
+<button class="hover:text-black transition-colors">多一点</button>
+<button class="hover:text-black transition-colors">少一点</button>
+<button class="hover:text-black transition-colors text-[#C6C6C6]">这不是我</button>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT (4 cols, starting at col 9): 最近冷下来的 -->
+<div class="col-start-9 col-span-4 pl-4">
+<!-- Section label -->
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-[0.12em] mb-4">
+          最近冷下来的
+        </div>
+<!-- Single 1px black rule to match table rhythm -->
+<div class="w-full pb-2.5 border-b border-black text-[12px] font-medium text-[#7E7E7E] tracking-[0.06em]">
+          
+        </div>
+<!-- Short list -->
+<div class="flex flex-col space-y-8 pt-7">
+<div>
+<div class="text-[18px] font-medium text-black tracking-tight mb-1">摇滚现场</div>
+<div class="text-[14px] text-[#7E7E7E] font-normal">8 月之后没有新穗</div>
+</div>
+<div>
+<div class="text-[18px] font-medium text-black tracking-tight mb-1">旅行攻略</div>
+<div class="text-[14px] text-[#7E7E7E] font-normal">7 月之后没有新穗</div>
+</div>
+<div>
+<div class="text-[18px] font-medium text-black tracking-tight mb-1">科幻小说</div>
+<div class="text-[14px] text-[#7E7E7E] font-normal">6 月之后没有新穗</div>
+</div>
+</div>
+</div>
+</section>
+<!-- BOTTOM FULL WIDTH: 按月收集 (Heat Strip, perfectly flush left and right at 40px margins) -->
+<section class="w-full pt-8 mb-20">
+<!-- Section label & Legend row -->
+<div class="flex justify-between items-baseline mb-4">
+<div class="text-[12px] font-medium text-[#7E7E7E] tracking-[0.12em]">
+          按月收集
+        </div>
+<!-- Legend at the right end: 少 [4 squares gradient] 多 (flush right with 320px input) -->
+<div class="flex items-center space-x-2 text-[12px] text-[#7E7E7E]">
+<span class="tracking-widest">少</span>
+<div class="flex space-x-1 items-center">
+<span class="inline-block w-2.5 h-2.5 bg-[#F3F3F3]"></span>
+<span class="inline-block w-2.5 h-2.5 bg-[#C6C6C6]"></span>
+<span class="inline-block w-2.5 h-2.5 bg-[#666666]"></span>
+<span class="inline-block w-2.5 h-2.5 bg-[#000000]"></span>
+</div>
+<span class="tracking-widest">多</span>
+</div>
+</div>
+<!-- Single horizontal heat strip of 12 equal square-cornered cells spanning full width (1360px inner) -->
+<div class="w-full grid grid-cols-12 gap-2 mb-3">
+<!-- 2025.11 -->
+<div class="h-14 w-full bg-[#D4D4D4]" title="2025年11月"></div>
+<!-- 2025.12 -->
+<div class="h-14 w-full bg-[#B0B0B0]" title="2025年12月"></div>
+<!-- 2026.01 -->
+<div class="h-14 w-full bg-[#E5E5E5]" title="2026年1月"></div>
+<!-- 2026.02 -->
+<div class="h-14 w-full bg-[#F3F3F3]" title="2026年2月"></div>
+<!-- 2026.03 -->
+<div class="h-14 w-full bg-[#DBDBDB]" title="2026年3月"></div>
+<!-- 2026.04 -->
+<div class="h-14 w-full bg-[#9E9E9E]" title="2026年4月"></div>
+<!-- 2026.05 -->
+<div class="h-14 w-full bg-[#828282]" title="2026年5月"></div>
+<!-- 2026.06 -->
+<div class="h-14 w-full bg-[#6B6B6B]" title="2026年6月"></div>
+<!-- 2026.07 -->
+<div class="h-14 w-full bg-[#525252]" title="2026年7月"></div>
+<!-- 2026.08 -->
+<div class="h-14 w-full bg-[#383838]" title="2026年8月"></div>
+<!-- 2026.09 -->
+<div class="h-14 w-full bg-[#1A1A1A]" title="2026年9月"></div>
+<!-- 2026.10 -->
+<div class="h-14 w-full bg-[#000000]" title="2026年10月"></div>
+</div>
+<!-- Month labels under each cell -->
+<div class="w-full grid grid-cols-12 gap-2 text-[12px] text-[#7E7E7E] font-normal">
+<div class="text-left">11月</div>
+<div class="text-left">12月</div>
+<div class="text-left">1月</div>
+<div class="text-left">2月</div>
+<div class="text-left">3月</div>
+<div class="text-left">4月</div>
+<div class="text-left">5月</div>
+<div class="text-left">6月</div>
+<div class="text-left">7月</div>
+<div class="text-left">8月</div>
+<div class="text-left">9月</div>
+<div class="text-left">10月</div>
+</div>
+</section>
+</main>
+<!-- FOOTER (Exact 40px margin) -->
+<footer class="w-full px-10 pb-16 flex items-center justify-between text-[10px] text-[#7E7E7E] tracking-[0.1em] select-none">
+<div>© 2026 Q1F730</div>
+</footer>
+</body></html>
