@@ -26,6 +26,39 @@ export interface Idea {
   firstStep?: string;
   cliches: string[];
   oblique?: string;
+  /** v0.11 一次三枝：用了哪种变形（反转 / 换媒介 …） */
+  transform?: string;
+  /** 和另外两根哪里不同 */
+  unlike?: string;
+  /** 20 分钟能做的小实验 */
+  experiment?: string;
+  /** 用到的素材：嫁接时素材的序号（1 起，对应 Development.itemIds 的位置） */
+  refs?: number[];
+}
+
+/** 四步嫁接的中间产物：张力与种子（可展开看） */
+export interface GraftTension {
+  text: string;
+  refs: number[];
+}
+export interface GraftSeed {
+  text: string;
+  transform: string; // 变形法 id，见 lib/graft.ts TRANSFORMS
+  refs: number[];
+  /** DEFIX 时被换上来的新种子 */
+  replaced?: boolean;
+  /** CONVERGE 时被选中长成新枝 */
+  chosen?: boolean;
+}
+export interface GraftBatch {
+  id: string;
+  index: number; // 0..size-1
+  size: number;
+  /** 只存在 index 0 上，避免重复 */
+  tensions?: GraftTension[];
+  seeds?: GraftSeed[];
+  pattern?: string; // DEFIX 找到的重复套路
+  calls?: number; // 实际调用了几次模型（含重试）
 }
 
 export interface Development {
@@ -36,6 +69,8 @@ export interface Development {
   idea: Idea;
   source: 'ai' | 'offline';
   starred?: boolean;
+  /** v0.11 起：同一次嫁接的三根新枝共享一个 batch.id */
+  batch?: GraftBatch;
   createdAt: number;
 }
 
