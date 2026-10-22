@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>拾穗 · Glean</title>
+<!-- Google Fonts: Noto Serif SC & Source Sans 3 -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&amp;family=Source+Sans+3:wght@300;400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-high": "#e7e8e6",
+            "secondary-fixed-dim": "#ffb4a9",
+            "on-secondary-fixed-variant": "#8b1912",
+            "tertiary-fixed": "#dae3f4",
+            "inverse-surface": "#2e312f",
+            "background": "#f9faf7",
+            "surface-container-highest": "#e2e3e0",
+            "surface-tint": "#535e7b",
+            "on-primary-fixed-variant": "#3b4662",
+            "on-surface-variant": "#45464d",
+            "on-background": "#191c1b",
+            "surface-dim": "#d9dad7",
+            "outline": "#76777e",
+            "primary": "#09152e",
+            "on-tertiary-fixed": "#131c28",
+            "inverse-primary": "#bbc6e7",
+            "on-primary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "surface-container": "#edeeeb",
+            "secondary-container": "#fe6d5c",
+            "tertiary-fixed-dim": "#bec7d8",
+            "surface-variant": "#e2e3e0",
+            "primary-fixed": "#d9e2ff",
+            "surface-container-low": "#f3f4f1",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-tertiary-container": "#8992a2",
+            "tertiary-container": "#222b38",
+            "on-secondary-fixed": "#410001",
+            "on-primary-container": "#8691b0",
+            "error": "#ba1a1a",
+            "surface": "#f9faf7",
+            "primary-fixed-dim": "#bbc6e7",
+            "secondary": "#ad3227",
+            "primary-container": "#1f2a44",
+            "surface-container-lowest": "#ffffff",
+            "inverse-on-surface": "#f0f1ee",
+            "on-surface": "#191c1b",
+            "on-error-container": "#93000a",
+            "on-tertiary-fixed-variant": "#3e4755",
+            "on-secondary-container": "#6e0002",
+            "surface-bright": "#f9faf7",
+            "outline-variant": "#c6c6ce",
+            "on-primary-fixed": "#0f1b34",
+            "tertiary": "#0d1723",
+            "secondary-fixed": "#ffdad5"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.75rem",
+            "space-md": "1.5rem",
+            "space-xs": "0.375rem",
+            "gutter-mobile": "1.25rem",
+            "margin-mobile": "1.5rem",
+            "space-xl": "5rem",
+            "space-lg": "3rem",
+            "margin": "4rem",
+            "gutter": "2.5rem"
+          },
+          "fontFamily": {
+            "display-vertical": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-lg-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-horizontal": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-lg": ["Noto Serif SC", "Noto Serif", "serif"],
+            "headline-md": ["Noto Serif SC", "Noto Serif", "serif"],
+            "caption-meta": ["\"Source Sans 3\"", "sans-serif"],
+            "display-vertical-mobile": ["Noto Serif SC", "Noto Serif", "serif"],
+            "label-seal": ["Noto Serif SC", "Noto Serif", "serif"],
+            "body-vertical": ["Noto Serif SC", "Noto Serif", "serif"]
+          },
+          "fontSize": {
+            "display-vertical": ["3.5rem", { "lineHeight": "1.75", "letterSpacing": "0.15em", "fontWeight": "400" }],
+            "headline-lg-mobile": ["1.75rem", { "lineHeight": "1.35", "letterSpacing": "0.03em", "fontWeight": "500" }],
+            "body-horizontal": ["1.0625rem", { "lineHeight": "1.9", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-lg": ["2.25rem", { "lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "headline-md": ["1.5rem", { "lineHeight": "1.5", "letterSpacing": "0.04em", "fontWeight": "400" }],
+            "caption-meta": ["0.8125rem", { "lineHeight": "1.5", "letterSpacing": "0.08em", "fontWeight": "400" }],
+            "display-vertical-mobile": ["2.25rem", { "lineHeight": "1.6", "letterSpacing": "0.12em", "fontWeight": "400" }],
+            "label-seal": ["0.75rem", { "lineHeight": "1.2", "letterSpacing": "0.2em", "fontWeight": "600" }],
+            "body-vertical": ["1.125rem", { "lineHeight": "2.4", "letterSpacing": "0.18em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Traditional East Asian Vertical Typesetting */
+    .vertical-rl {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    
+    /* Subtle horizontal scrollbar removal for serene scroll */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#F2F3F1] text-on-surface font-body-horizontal text-body-horizontal h-full w-[390px] mx-auto select-none overflow-hidden flex flex-col relative antialiased">
+<!-- TOP APP BAR (Shared Component JSON anchor) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-space-md py-space-sm bg-surface/95 backdrop-blur-sm transition-opacity duration-200">
+<div class="flex items-center gap-2">
+<!-- Leading Avatar: discreet Q1f730 seal -->
+<div class="w-6 h-6 border border-primary/30 flex items-center justify-center bg-surface-container-low text-[10px] font-caption-meta text-primary font-medium tracking-tighter" title="Q1f730">
+        Q1
+      </div>
+<span class="text-[10px] font-caption-meta text-outline tracking-wider">Q1f730</span>
+</div>
+<!-- Center Headline -->
+<h1 class="font-headline-lg-mobile text-[1.125rem] font-medium tracking-widest text-primary">
+      拾穗 · Glean
+    </h1>
+<!-- Trailing Action: Ink Pen -->
+<button aria-label="记录" class="w-8 h-8 flex items-center justify-center text-primary hover:opacity-85 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-[1.25rem]">ink_pen</span>
+</button>
+</header>
+<!-- QUICK-CAPTURE BAR (Always Visible) -->
+<div class="pt-[58px] px-space-md pb-2 bg-gradient-to-b from-surface via-[#F2F3F1] to-[#F2F3F1] z-30">
+<div class="relative flex items-center border-b border-[#D8DBD5] focus-within:border-primary transition-colors py-2">
+<input class="w-full bg-transparent border-0 p-0 text-sm font-body-horizontal text-on-surface placeholder:text-outline/70 focus:ring-0 tracking-wide" placeholder="随手拾一穗…" type="text"/>
+<div class="flex items-center gap-1.5 pl-2 text-primary-container">
+<span class="material-symbols-outlined text-[1.1rem]">edit_note</span>
+</div>
+</div>
+</div>
+<!-- MAIN SCROLL CANVAS: East Asian Yohaku Horizontal Scroll with Vertical Slabs -->
+<main class="flex-1 overflow-x-auto overflow-y-hidden no-scrollbar px-6 py-3 flex flex-row-reverse items-stretch gap-0">
+<!-- Yohaku Atmosphere Lead (Rightmost Start in traditional vertical flow) -->
+<section class="h-full flex flex-col justify-between py-6 px-4 border-l border-[#DFE1DC] min-w-[70px] select-none">
+<div class="vertical-rl flex items-center gap-3">
+<span class="font-label-seal text-label-seal text-secondary tracking-widest border border-secondary px-1 py-1">卷一</span>
+<span class="font-caption-meta text-caption-meta text-outline tracking-widest">秋露 · 录沉思</span>
+</div>
+<div class="vertical-rl text-[11px] text-outline font-caption-meta leading-loose tracking-widest opacity-60">
+        空故纳万境
+      </div>
+</section>
+<!-- ITEM 1: [PHOTO] 雨后的梧桐街 -->
+<article class="h-full min-w-[210px] max-w-[220px] flex flex-col justify-between p-3.5 border-l border-[#DFE1DC] bg-[#FAFBF9]/80 group relative hover:bg-[#FAFBF9] transition-colors">
+<!-- Header meta / Tag -->
+<div class="flex items-center justify-between">
+<span class="font-label-seal text-[10px] tracking-widest text-[#626B7A] border border-[#D8DBD5] px-1.5 py-0.5">摄影</span>
+<span class="font-caption-meta text-caption-meta text-outline">今天 09:12</span>
+</div>
+<!-- Center content: Photograph & vertical caption -->
+<div class="my-auto flex flex-col items-center gap-3">
+<div class="w-full h-[220px] relative overflow-hidden bg-surface-container-high border border-[#DFE1DC]">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover grayscale-[15%] contrast-[1.05]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCs7XzY1llm8jQzVGdv19wHS3qTWPkvJ97iEw-0kbkR8dBfSSaUSiyymuL6QYqCoVlkj7nVDIIibtDTBZaBcZUMa4PVIKXRC1PnQeH54746CcdNBylvPti9jvkP66rXIRaTRqgpvwEEKtLPKSB6goEkSrLTltuCHMAOeRj-4Ji95F8vtjacACHobf0d2zmEF-FpYo-oTHzBvJK35zbxHT2lNbQ2J4VoZldZgbrmOqDOesEOwxY9oYTekSREdCCwqOLCq1lpTiV9SZlt"/>
+</div>
+<div class="vertical-rl font-display-vertical-mobile text-[1.05rem] text-primary tracking-widest py-1">
+          雨后的梧桐街
+        </div>
+</div>
+<!-- Select / Inspect indicator -->
+<div class="flex items-center justify-between pt-2 border-t border-[#E4E6E1]/60">
+<div class="w-3.5 h-3.5 border border-[#626B7A] flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-primary"></div>
+</div>
+<span class="font-caption-meta text-[10px] text-outline">穗 · 零一</span>
+</div>
+</article>
+<!-- ITEM 2: [FILM] 燃烧女子的肖像 -->
+<article class="h-full min-w-[130px] flex flex-col justify-between p-3.5 border-l border-[#DFE1DC] bg-[#FAFBF9]/40 hover:bg-[#FAFBF9] transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-seal text-[10px] tracking-widest text-[#626B7A] border border-[#D8DBD5] px-1.5 py-0.5">电影</span>
+<span class="font-caption-meta text-caption-meta text-outline">昨 23:40</span>
+</div>
+<div class="my-auto vertical-rl flex items-start gap-4 mx-auto py-2">
+<h2 class="font-headline-md text-[1.18rem] text-primary tracking-widest leading-loose font-medium">
+          燃烧女子的肖像
+        </h2>
+<p class="font-caption-meta text-caption-meta text-outline tracking-wider opacity-85">
+          (2019, 瑟琳·席安玛)
+        </p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-[#E4E6E1]/60">
+<div class="w-3.5 h-3.5 border border-[#626B7A] flex items-center justify-center"></div>
+<span class="font-caption-meta text-[10px] text-outline">穗 · 零二</span>
+</div>
+</article>
+<!-- ITEM 3: [SONG] 夜空中最亮的星 -->
+<article class="h-full min-w-[130px] flex flex-col justify-between p-3.5 border-l border-[#DFE1DC] bg-[#FAFBF9]/40 hover:bg-[#FAFBF9] transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-seal text-[10px] tracking-widest text-[#626B7A] border border-[#D8DBD5] px-1.5 py-0.5">音乐</span>
+<span class="font-caption-meta text-caption-meta text-outline">昨 21:05</span>
+</div>
+<div class="my-auto vertical-rl flex items-start gap-3 mx-auto py-2">
+<h2 class="font-headline-md text-[1.125rem] text-primary tracking-widest leading-loose">
+          夜空中最亮的星
+        </h2>
+<span class="font-caption-meta text-caption-meta text-outline tracking-widest">
+          — 逃跑计划
+        </span>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-[#E4E6E1]/60">
+<div class="w-3.5 h-3.5 border border-[#626B7A] flex items-center justify-center"></div>
+<span class="font-caption-meta text-[10px] text-outline">穗 · 零三</span>
+</div>
+</article>
+<!-- ITEM 4: [QUOTE] 我们读诗，是因为我们是人类的一员。 -->
+<article class="h-full min-w-[160px] flex flex-col justify-between p-3.5 border-l border-[#DFE1DC] bg-[#FAFBF9]/70 hover:bg-[#FAFBF9] transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-seal text-[10px] tracking-widest text-[#626B7A] border border-[#D8DBD5] px-1.5 py-0.5">文案</span>
+<span class="font-caption-meta text-caption-meta text-outline">10/19</span>
+</div>
+<div class="my-auto vertical-rl mx-auto py-1">
+<p class="font-body-vertical text-[1rem] text-primary tracking-[0.16em] leading-[2.1]">
+          我们读诗，是因为我们是人类的一员。
+        </p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-[#E4E6E1]/60">
+<div class="w-3.5 h-3.5 border border-[#626B7A] flex items-center justify-center">
+<div class="w-1.5 h-1.5 bg-primary"></div>
+</div>
+<span class="font-caption-meta text-[10px] text-outline">穗 · 零四</span>
+</div>
+</article>
+<!-- ITEM 5: [IDEA] 把通勤路上听到的对话写成一组短诗 -->
+<article class="h-full min-w-[150px] flex flex-col justify-between p-3.5 border-l border-[#DFE1DC] bg-[#FAFBF9]/40 hover:bg-[#FAFBF9] transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-seal text-[10px] tracking-widest text-[#626B7A] border border-[#D8DBD5] px-1.5 py-0.5">想法</span>
+<span class="font-caption-meta text-caption-meta text-outline">10/18</span>
+</div>
+<div class="my-auto vertical-rl mx-auto py-1">
+<p class="font-body-vertical text-[0.98rem] text-on-surface tracking-[0.14em] leading-[2.2]">
+          把通勤路上听到的对话写成一组短诗
+        </p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-[#E4E6E1]/60">
+<div class="w-3.5 h-3.5 border border-[#626B7A] flex items-center justify-center"></div>
+<span class="font-caption-meta text-[10px] text-outline">穗 · 零五</span>
+</div>
+</article>
+<!-- ITEM 6: [LINK] Are.na · 关于收集的收集 -->
+<article class="h-full min-w-[140px] flex flex-col justify-between p-3.5 border-l border-[#DFE1DC] bg-[#FAFBF9]/40 hover:bg-[#FAFBF9] transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-seal text-[10px] tracking-widest text-[#626B7A] border border-[#D8DBD5] px-1.5 py-0.5">链接</span>
+<span class="font-caption-meta text-caption-meta text-outline">10/16</span>
+</div>
+<div class="my-auto vertical-rl flex items-start gap-3 mx-auto py-1">
+<h2 class="font-headline-md text-[1.05rem] text-primary tracking-widest leading-relaxed">
+          Are.na · 关于收集的收集
+        </h2>
+<span class="font-caption-meta text-[11px] text-outline tracking-wider font-mono">
+          are.na
+        </span>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-[#E4E6E1]/60">
+<div class="w-3.5 h-3.5 border border-[#626B7A] flex items-center justify-center"></div>
+<span class="font-caption-meta text-[10px] text-outline">穗 · 零六</span>
+</div>
+</article>
+<!-- Left breathing margin to satisfy extreme Yohaku -->
+<div class="min-w-[40px] h-full flex items-center justify-center select-none opacity-20">
+<div class="vertical-rl font-caption-meta text-[9px] tracking-widest text-outline">
+        拾穗而藏
+      </div>
+</div>
+</main>
+<!-- GRAFTING ACTION ENTRY ('嫁接' Seal Button) -->
+<aside class="absolute bottom-[72px] right-5 z-40">
+<button aria-label="嫁接选中的穗" class="w-12 h-12 bg-primary-container text-[#FAFBF9] border border-primary/20 shadow-none flex flex-col items-center justify-center hover:opacity-90 active:scale-[0.96] transition-all" title="将拾穗嫁接为新枝">
+<span class="font-label-seal text-[0.8rem] tracking-widest font-semibold">嫁接</span>
+<span class="w-1 h-1 bg-secondary rounded-none mt-0.5"></span>
+</button>
+</aside>
+<!-- BOTTOM NAVIGATION BAR (Shared Component JSON anchor) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex items-center justify-around px-space-sm pt-space-xs pb-5 bg-surface/95 backdrop-blur-sm transition-opacity duration-200">
+<!-- Tab 1: 穗仓 (Active) -->
+<a class="flex flex-col items-center justify-center gap-1 text-primary border-t-2 border-secondary pt-1 min-w-[54px]" href="#">
+<span class="material-symbols-outlined text-[1.3rem]" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-label-seal text-[10px] tracking-widest">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 -->
+<a class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary transition-colors duration-200 pt-1.5 min-w-[54px]" href="#">
+<span class="material-symbols-outlined text-[1.3rem]">alt_route</span>
+<span class="font-label-seal text-[10px] tracking-widest">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 -->
+<a class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary transition-colors duration-200 pt-1.5 min-w-[54px]" href="#">
+<span class="material-symbols-outlined text-[1.3rem]">nature</span>
+<span class="font-label-seal text-[10px] tracking-widest">新枝</span>
+</a>
+<!-- Tab 4: 口味 -->
+<a class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary transition-colors duration-200 pt-1.5 min-w-[54px]" href="#">
+<span class="material-symbols-outlined text-[1.3rem]">local_florist</span>
+<span class="font-label-seal text-[10px] tracking-widest">口味</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-primary transition-colors duration-200 pt-1.5 min-w-[54px]" href="#">
+<span class="material-symbols-outlined text-[1.3rem]">tune</span>
+<span class="font-label-seal text-[10px] tracking-widest">设置</span>
+</a>
+</nav>
+</body></html>
