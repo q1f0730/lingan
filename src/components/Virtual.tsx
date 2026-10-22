@@ -1,4 +1,4 @@
-// v0.13 虚拟滚动：只挂载视口上下各约一屏内的卡片。页面本身滚动（window），不改样式结构。
+// v0.13 虚拟滚动：只挂载视口上下各约一屏内的卡片。页面本身滚动（window），不改样式结构。v0.16 网格图块固定 4:5，估算即准。
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { columnCount, layoutList, layoutMasonry, listRange, visibleIndexes } from '../lib/virtual';
 
@@ -92,12 +92,10 @@ function useMeasure(onBatch: (changes: Array<[string, number, number]>) => void)
   }, [flush, getOb]);
 }
 
-/** 读当前断点下的列参数，和 index.css 的 .masonry 规则一致（≤760px：最多 2 列、最窄 150、列距 12、行距 14） */
-function gridParams(el: HTMLElement | null) {
-  const mobile = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 760px)').matches;
-  if (mobile) return { maxCols: 2, minCol: 150, gapX: 12, gapY: 14 };
-  const g = el ? parseFloat(getComputedStyle(el).getPropertyValue('--gap')) || 16 : 16;
-  return { maxCols: 3, minCol: 250, gapX: g, gapY: g };
+/** 读当前断点下的列参数，和 index.css 的 .masonry 规则一致（v0.16 Studio：手机 2 列、桌面 ≥1024px 3 列，间距 10px，图块 4:5） */
+function gridParams(_el: HTMLElement | null) {
+  const desktop = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)').matches;
+  return desktop ? { maxCols: 3, minCol: 200, gapX: 10, gapY: 10 } : { maxCols: 2, minCol: 120, gapX: 10, gapY: 10 };
 }
 
 /** 瀑布 / 双列虚拟滚动 */
