@@ -3187,3 +3187,77 @@ button.heat-cell {
     letter-spacing: -0.01em;
   }
 }
+
+/* ———————————————————————— v0.19 套路墙（口味页） ———————————————————————— */
+.wall-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wall-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+.wall-title .n {
+  font-weight: 300;
+}
+.wall-sub {
+  max-width: 640px;
+}
+.wall-add {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 20px 0 24px;
+  max-width: 640px;
+}
+.wall-add .wall-input {
+  flex: 1;
+}
+.wall-add-btn {
+  white-space: nowrap;
+}
+.wall-table .thead,
+.wall-table .trow {
+  grid-template-columns: 1fr 9em 3em 3.5em;
+  column-gap: 12px;
+}
+.wall-table .tc-act {
+  text-align: right;
+}
+.wall-table .wall-text {
+  white-space: normal;
+}
+.wall-row.struck .wall-text {
+  color: var(--fg-3);
+  font-weight: 400;
+}
+.wall-more,
+.wall-struck {
+  margin-top: 12px;
+}
+.wall-struck .wall-table {
+  margin-top: 8px;
+}
+.wall-builtin {
+  margin-top: 16px;
+  color: var(--fg-3);
+}
+.wall-go {
+  margin-left: auto;
+}
+@media (min-width: 1024px) {
+  .wall-title {
+    font-size: 32px;
+  }
+  .wall-table .thead,
+  .wall-table .trow {
+    grid-template-columns: 1fr 12em 4em 4em;
+  }
+}
+.wall-badge {
+  color: var(--fg-2);
+  white-space: nowrap;
+}
