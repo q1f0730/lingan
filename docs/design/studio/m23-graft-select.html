@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, user-scalable=no">
+<title>拾穗 · GLEAN — 嫁接</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        background: '#FFFFFF',
+        foreground: '#000000',
+        greySecondary: '#7E7E7E',
+        greyFaint: '#C6C6C6',
+        greyLight: '#F3F3F3'
+      },
+      fontFamily: {
+        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  border-radius: 0 !important;
+}
+body {
+  width: 390px;
+  margin: 0 auto;
+  background-color: #FFFFFF;
+  color: #000000;
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+}
+.display-title {
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+}
+</style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="min-h-screen bg-white text-black flex flex-col justify-between selection:bg-black selection:text-white pb-32">
+
+  <!-- Main Container -->
+  <div class="w-full px-[16px] pt-4">
+
+    <!-- Top Bar -->
+    <header class="flex justify-between items-baseline mb-8">
+      <div class="text-[20px] font-semibold tracking-tight">拾穗 · GLEAN</div>
+      <a href="#" class="text-[12px] text-greySecondary tracking-wider hover:text-black">设置</a>
+    </header>
+
+    <!-- Page Title & Subtitle -->
+    <div class="mb-6">
+      <h1 class="display-title mb-2">嫁接</h1>
+      <p class="text-[15px] text-greySecondary leading-snug">选 3 到 5 穗，再选一种接法。</p>
+    </div>
+
+    <!-- Section 1: 穗 Selection Status -->
+    <div class="flex justify-between items-center text-[12px] pb-1.5 mb-1">
+      <span class="text-black font-medium">已选 (3)</span>
+      <span class="text-greySecondary">最多 5</span>
+    </div>
+
+    <!-- 穗 Table Header (1px black rule under) -->
+    <div class="border-b border-black pb-1.5 mb-1 flex items-center text-[11px] text-greySecondary">
+      <div class="w-[24px] flex-shrink-0"></div>
+      <div class="flex-1">穗</div>
+      <div class="w-[42px] text-left">类型</div>
+      <div class="w-[44px] text-right">日期</div>
+    </div>
+
+    <!-- 10 穗 List (tight list, NO lines between rows, selected rows have 01/02/03 in 24px column) -->
+    <div class="flex flex-col text-[13px] leading-tight mb-8">
+      <!-- Row 1: Selected (01) -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] text-[12px] font-mono text-black font-normal flex-shrink-0">01</div>
+        <div class="flex-1 font-medium text-black truncate pr-2">轮渡上的雾</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">照片</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/21</div>
+      </div>
+
+      <!-- Row 2: Unselected -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] flex-shrink-0"></div>
+        <div class="flex-1 text-greySecondary truncate pr-2">完美的日子</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">电影</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/20</div>
+      </div>
+
+      <!-- Row 3: Unselected -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] flex-shrink-0"></div>
+        <div class="flex-1 text-greySecondary truncate pr-2">Re: Stacks</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">歌</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/19</div>
+      </div>
+
+      <!-- Row 4: Unselected -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] flex-shrink-0"></div>
+        <div class="flex-1 text-greySecondary truncate pr-2">记忆中的形象一旦…</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">摘抄</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/18</div>
+      </div>
+
+      <!-- Row 5: Selected (02) -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] text-[12px] font-mono text-black font-normal flex-shrink-0">02</div>
+        <div class="flex-1 font-medium text-black truncate pr-2">给楼道里每一盏声控灯起一个名字</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">想法</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/17</div>
+      </div>
+
+      <!-- Row 6: Unselected -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] flex-shrink-0"></div>
+        <div class="flex-1 text-greySecondary truncate pr-2">Radio Garden</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">链接</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/16</div>
+      </div>
+
+      <!-- Row 7: Unselected -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] flex-shrink-0"></div>
+        <div class="flex-1 text-greySecondary truncate pr-2">旧书店堆到天花板的书脊</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">照片</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/14</div>
+      </div>
+
+      <!-- Row 8: Selected (03) -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] text-[12px] font-mono text-black font-normal flex-shrink-0">03</div>
+        <div class="flex-1 font-medium text-black truncate pr-2">aqua</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">歌</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/12</div>
+      </div>
+
+      <!-- Row 9: Unselected -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] flex-shrink-0"></div>
+        <div class="flex-1 text-greySecondary truncate pr-2">《一一》</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">电影</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/09</div>
+      </div>
+
+      <!-- Row 10: Unselected -->
+      <div class="flex items-center py-[7px]">
+        <div class="w-[24px] flex-shrink-0"></div>
+        <div class="flex-1 text-greySecondary truncate pr-2">把外卖小票上的备注…</div>
+        <div class="w-[42px] text-[12px] text-greySecondary flex-shrink-0">想法</div>
+        <div class="w-[44px] text-[12px] text-greySecondary text-right font-mono flex-shrink-0">10/05</div>
+      </div>
+    </div>
+
+    <!-- Section 2: 接法 (Methods) -->
+    <div class="mb-8">
+      <div class="text-[11px] text-greySecondary uppercase tracking-wider mb-3">接法</div>
+
+      <div class="space-y-4">
+        <!-- Option 1: 相近 -->
+        <div class="flex items-center gap-3">
+          <div class="w-[10px] h-[10px] border border-greySecondary flex-shrink-0"></div>
+          <div class="flex items-baseline gap-2.5">
+            <span class="text-[16px] text-greySecondary">相近</span>
+            <span class="text-[12px] text-greySecondary">挑气质接近的</span>
+          </div>
+        </div>
+
+        <!-- Option 2: 远距 (Selected) -->
+        <div class="flex items-center gap-3">
+          <div class="w-[10px] h-[10px] bg-black flex-shrink-0"></div>
+          <div class="flex items-baseline gap-2.5">
+            <span class="text-[16px] text-black font-semibold">远距</span>
+            <span class="text-[12px] text-greySecondary">故意挑最不搭的</span>
+          </div>
+        </div>
+
+        <!-- Option 3: 被冷落 -->
+        <div class="flex items-center gap-3">
+          <div class="w-[10px] h-[10px] border border-greySecondary flex-shrink-0"></div>
+          <div class="flex items-baseline gap-2.5">
+            <span class="text-[16px] text-greySecondary">被冷落</span>
+            <span class="text-[12px] text-greySecondary">优先最久没看的</span>
+          </div>
+        </div>
+
+        <!-- Option 4: 跨媒介 -->
+        <div class="flex items-center gap-3">
+          <div class="w-[10px] h-[10px] border border-greySecondary flex-shrink-0"></div>
+          <div class="flex items-baseline gap-2.5">
+            <span class="text-[16px] text-greySecondary">跨媒介</span>
+            <span class="text-[12px] text-greySecondary">照片接歌，摘抄接电影</span>
+          </div>
+        </div>
+
+        <!-- Option 5: 反氛围 -->
+        <div class="flex items-center gap-3">
+          <div class="w-[10px] h-[10px] border border-greySecondary flex-shrink-0"></div>
+          <div class="flex items-baseline gap-2.5">
+            <span class="text-[16px] text-greySecondary">反氛围</span>
+            <span class="text-[12px] text-greySecondary">把一穗的反面接上去</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Button: 嫁接这 3 穗 (Full-width square black button) -->
+    <div class="mb-6">
+      <button class="w-full bg-black text-white text-[15px] font-medium h-[48px] flex items-center justify-center tracking-wide active:bg-neutral-800 transition-none">
+        嫁接这 3 穗
+      </button>
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="text-center text-[10px] text-greySecondary tracking-wider pb-6">
+      © 2026 Q1f730
+    </div>
+
+  </div>
+
+  <!-- Persistent Bottom Fixed Area: Quick Capture + Text Navigation -->
+  <div class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto bg-white z-50">
+    <!-- Quick-capture Line (1px black hairline above) -->
+    <div class="border-t border-black px-[16px] h-[44px] flex items-center justify-between">
+      <input type="text" placeholder="随手拾一穗" class="w-full bg-transparent text-[14px] placeholder:text-greySecondary text-black focus:outline-none border-none p-0 mr-2" />
+      <button class="text-[14px] text-black font-semibold px-1 py-1 flex-shrink-0 hover:opacity-70">
+        拾
+      </button>
+    </div>
+
+    <!-- Bottom Navigation: Five tiny words only, 嫁接 active with underline -->
+    <nav class="border-t border-neutral-100 px-[16px] py-3 flex justify-between items-center text-[12px] bg-white">
+      <a href="#" class="text-greySecondary hover:text-black">穗仓</a>
+      <a href="#" class="text-black font-semibold border-b border-black pb-0.5">嫁接</a>
+      <a href="#" class="text-greySecondary hover:text-black">新枝</a>
+      <a href="#" class="text-greySecondary hover:text-black">口味</a>
+      <a href="#" class="text-greySecondary hover:text-black">设置</a>
+    </nav>
+  </div>
+
+</body>
+</html>
