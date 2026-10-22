@@ -1,240 +1,209 @@
 <!DOCTYPE html>
 
-<html class="h-full bg-white" lang="zh-CN">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-<title>拾穗 · GLEAN - 穗仓</title>
-<!-- Google Fonts: Inter & Noto Sans SC -->
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 嫁接结果页「新枝 (3)」</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<!-- Tailwind CSS CDN -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Noto+Sans+SC:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            display: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            pureBlack: '#000000',
+            pureWhite: '#ffffff',
+            secondaryGrey: '#7E7E7E',
+            inactiveGrey: '#C6C6C6',
+            faintGrey: '#F3F3F3',
+            borderGrey: '#E5E5E5',
+          }
+        }
+      }
+    }
+  </script>
 <style>
     * {
       border-radius: 0px !important;
       box-shadow: none !important;
-      text-shadow: none !important;
     }
     body {
-      font-family: 'Inter', 'Noto Sans SC', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      background-color: #ffffff;
+      background-color: #FFFFFF;
       color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
-    ::selection {
-      background: #000000;
-      color: #ffffff;
+    .headline-huge {
+      font-size: 40px;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+    }
+    .numeral-large {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 32px;
+      line-height: 1.0;
+      letter-spacing: -0.02em;
+    }
+    .letter-spacing-wide {
+      letter-spacing: 0.08em;
     }
   </style>
 </head>
-<body class="bg-white text-black min-h-screen flex justify-center">
-<!-- Mobile Screen Container (390px fixed width representation) -->
-<div class="w-full max-w-[390px] min-h-screen bg-white flex flex-col relative pb-36">
+<body class="min-h-screen flex justify-center bg-pureWhite text-pureBlack">
+<!-- Mobile container: 390px -->
+<main class="w-[390px] min-h-screen bg-pureWhite flex flex-col relative pb-32">
 <!-- Top Header -->
-<header class="w-full pt-6 px-[10px] pb-2 flex justify-between items-baseline">
-<div class="text-[20px] font-semibold tracking-tight text-black">
+<header class="w-full px-5 pt-8 pb-4 flex justify-between items-baseline">
+<h1 class="text-[20px] font-semibold tracking-tight text-pureBlack select-none">
         拾穗 · GLEAN
-      </div>
-<button class="text-[11px] font-medium tracking-[0.12em] text-[#7E7E7E] hover:text-black transition-none uppercase">
-        设置
-      </button>
-</header>
-<!-- Substantial White Space & Headline Section -->
-<section class="px-[10px] pt-12 pb-6">
-<!-- Huge Headline: 56px semibold, tight negative letter-spacing (-0.04em), leading-none -->
-<h1 class="text-[56px] leading-[1.0] font-semibold tracking-[-0.04em] text-black mb-7">
-        穗仓 (10)
       </h1>
-<!-- Action Row: Button '嫁接所选' left, View Toggle right -->
-<div class="flex items-center justify-between pt-1">
-<!-- Tiny Black Button '嫁接所选' -->
-<button class="bg-black text-white text-[11px] font-medium tracking-wider px-2.5 py-1.5 hover:opacity-85 transition-none flex items-center justify-center">
-          嫁接所选
-        </button>
-<!-- Toggle '网格 | 列表' right-aligned -->
-<div class="flex items-center space-x-1.5 text-[11px] font-medium tracking-widest">
-<span class="text-black font-semibold cursor-pointer">网格</span>
-<span class="text-[#C6C6C6]">|</span>
-<span class="text-[#C6C6C6] cursor-pointer hover:text-[#7E7E7E] transition-none">列表</span>
-</div>
-</div>
+<span class="text-[12px] font-medium tracking-wide text-secondaryGrey cursor-pointer hover:text-pureBlack">
+        设置
+      </span>
+</header>
+<!-- Page Title Section -->
+<section class="w-full px-5 pt-6 pb-2">
+<h2 class="headline-huge font-semibold text-pureBlack tracking-tight">
+        新枝 (3)
+      </h2>
+<p class="text-[11px] font-medium tracking-wider text-secondaryGrey uppercase mt-2">
+        本次嫁接 · 10/22
+      </p>
 </section>
-<!-- 2-Column Full-Bleed Grid (10px gaps and outer margins, tiles 4:5 aspect ratio) -->
-<main class="px-[10px] flex-grow">
-<div class="grid grid-cols-2 gap-[10px] w-full">
-<!-- 1. 照片『轮渡上的雾』 -->
-<div class="relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] cursor-pointer group">
-<img alt="早晨轮渡栏杆延伸进灰色浓雾中" class="w-full h-full object-cover grayscale contrast-[1.05]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9unmvcU9J0PZc8HUTWURh_Q0xx9FQQwQ6OB_mxDZIYKNiKataVePJ6XD0xo_dG4eNBjvxTjB89-K7e4WJ0IATUx8aVqfwm3-iRSQRI7r4rWrt6hmQOyiv8o0642A0KSZ9fQYcDwOQmxhl3yl1Aju-sfosCpjeqpewrtAGGLbYv20xilvxA36zzlv_EawsTasZXKmb0DgIkBO5g0jScWzmklbsmu54hbvm164B6agUPXC66kiS2WPDkZRfJkLSE2qbGf_UHVTMlgU"/>
-<!-- Photo Bottom Gradient Scrim & Caption -->
-<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
-<p class="text-white text-[16px] font-semibold tracking-tight leading-tight mb-0.5">
-              轮渡上的雾
-            </p>
-<p class="text-white/80 text-[12px] font-normal tracking-normal">
-              照片 · 10/21
-            </p>
+<!-- Three Stacked Blocks -->
+<div class="w-full flex flex-col mt-6">
+<!-- Block 01: 楼道电台 -->
+<article class="flex flex-col">
+<!-- Optional full-bleed photo -->
+<div class="relative w-full aspect-[16/9] bg-[#111111] overflow-hidden">
+<img alt="dark stairwell with single warm lightbulb" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1XjcLlK7o9K1NcOVReA23bBDWL0N0aS7VUoaqVcWUiHBTTU3x9fv3L06pMztQqI0Ypsfgwzslg8lp2n6qmd8XiDPrjVmQ5guKkWjWjB1iiJjEDsi7Qv_M45_4xjRaP6ggNK_EEQbR0K_2nIQH-eakbAWv1IVKD12YyHkHye9Wf5vdDSsnLGBxKsgs7exx5qsBWnqm018VIT80S7Uoo9bpncGbjiHd0WLkZYG-cnPJ83f7vAgLyWfQ4FmAU"/>
+<!-- Bottom-left caption with scrim -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-4">
+<span class="text-[16px] font-semibold text-white leading-snug">
+              楼道里的声控灯与电台
+            </span>
+<span class="text-[12px] text-white/80 mt-0.5 tracking-wide">
+              嫁接灵感 · 10/22
+            </span>
 </div>
 </div>
-<!-- 2. 电影『完美的日子』 2023 · 维姆·文德斯 -->
-<div class="relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] cursor-pointer group">
-<img alt="东京清晨街道与蓝色小货车" class="w-full h-full object-cover contrast-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIT6tms5B2aWPXchqFOAu_tPVe6PL8-PHcb4ABeLxmDnIObUbFU6TeD2c4fdRRLSfPD6CSPC-VZMhOZzgIhdwKvMoa9Leuajovr5-BvdyKMaMnWw3nqWtcumbiGSmjAgm2fvcdmAAyB57drKpeLXuv4FJQPoZ8dXqHk8RmP1uEr0Q3vDnrMcBZfwwvfnyeq9iJwBvt2ptCd68lqZhYCuHFbWcxRbsdEHcjkQleabkPAzeJ-UJeEVPf8ef05VdwqKqj--JzEUZ8b20"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
-<p class="text-white text-[16px] font-semibold tracking-tight leading-tight mb-0.5">
-              完美的日子
-            </p>
-<p class="text-white/80 text-[12px] font-normal tracking-normal">
-              电影 · 10/20
-            </p>
+<div class="px-5 pt-5 pb-2">
+<div class="numeral-large text-pureBlack">01</div>
+<h3 class="text-[24px] font-bold text-pureBlack tracking-tight mt-1 leading-tight">
+            楼道电台
+          </h3>
+<p class="text-[15px] font-normal text-pureBlack mt-2.5 leading-relaxed">
+            给每盏声控灯配一个频道，夜里有人经过，只播这一层住户拾过的歌。
+          </p>
+<div class="mt-4">
+<div class="text-[11px] font-medium tracking-wider text-secondaryGrey">
+              因为这几穗
+            </div>
+<div class="text-[13px] font-normal text-pureBlack mt-1 leading-snug">
+              给楼道里每一盏声控灯起一个名字 <span class="text-secondaryGrey">/</span> Radio Garden <span class="text-secondaryGrey">/</span> Re: Stacks
+            </div>
+</div>
+<!-- Tiny actions -->
+<div class="flex items-center gap-6 mt-4 pt-1 text-[12px] font-medium tracking-wide">
+<button class="text-pureBlack hover:opacity-60 transition-opacity">留下</button>
+<button class="text-secondaryGrey hover:text-pureBlack transition-opacity">再接一次</button>
+<button class="text-inactiveGrey hover:text-pureBlack transition-opacity">不要</button>
 </div>
 </div>
-<!-- 3. 歌『Re: Stacks』 Bon Iver -->
-<div class="relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] cursor-pointer group">
-<img alt="雪夜微光小木屋窗景" class="w-full h-full object-cover contrast-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBP4yUUpCeDzSHKP3iWoj6g3xtBxxfaSJUPzRwbBJJlUpPJj6946ZZ2ZLbfZ9Zo3PfxbU9-OzWS5kvY5SdgCjk5gF2DF6sSOoWcoO8dlPsA7xtlzPrbirG765anUyoI2YKSYBfzLFY8jV8MB3mxkFiOTO0kklEu5b4OG5K-jwvb2wSU_pTSfq3ljv1QX-y46wu9sU9h4M8UzZJlURusWykEanEBMwzg7oVZUKIUORB4oPWze9wBWfENdXmJ9g6RVKh77q_ZL-rU_RQ"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
-<p class="text-white text-[16px] font-semibold tracking-tight leading-tight mb-0.5">
-              Re: Stacks
-            </p>
-<p class="text-white/80 text-[12px] font-normal tracking-normal">
-              歌 · 10/19
-            </p>
-</div>
-</div>
-<!-- 4. 摘抄『记忆中的形象一旦被词语固定住，就给抹掉了。』 卡尔维诺《看不见的城市》 - Plain light-grey #F3F3F3 tile -->
-<div class="aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer hover:bg-[#EAEAEA] transition-none">
-<div class="pt-1">
-<p class="text-[15px] leading-[22px] font-semibold text-black tracking-tight">
-              “记忆中的形象一旦被词语固定住，就给抹掉了。”
-            </p>
-</div>
-<div class="pt-2">
-<p class="text-[11px] text-[#000000] leading-tight font-normal">卡尔维诺《看不见的城市》</p>
-<p class="text-[12px] text-black mt-1 font-normal">
-              摘抄 · 10/18
-            </p>
-</div>
-</div>
-<!-- 5. 想法『给楼道里每一盏声控灯起一个名字』 - Plain light-grey #F3F3F3 tile -->
-<div class="aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer hover:bg-[#EAEAEA] transition-none">
-<div class="pt-1">
-<p class="text-[15px] leading-[22px] font-semibold text-black tracking-tight">
-              “给楼道里每一盏声控灯起一个名字。”
-            </p>
-</div>
-<div class="pt-2">
-<p class="text-[12px] text-black font-normal">
-              想法 · 10/17
-            </p>
-</div>
-</div>
-<!-- 6. 链接『Radio Garden · 转动地球收听各地电台』 radio.garden - Plain light-grey #F3F3F3 tile -->
-<div class="aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer hover:bg-[#EAEAEA] transition-none">
-<div class="pt-1">
-<p class="text-[14px] leading-[20px] font-semibold text-black tracking-tight mb-1">
-              Radio Garden · 转动地球收听各地电台
-            </p>
-<p class="text-[11px] text-[#7E7E7E] underline tracking-wider font-mono">
-              radio.garden
-            </p>
-</div>
-<div class="pt-2">
-<p class="text-[12px] text-black font-normal">
-              链接 · 10/16
-            </p>
-</div>
-</div>
-<!-- 7. 照片『旧书店堆到天花板的书脊』 -->
-<div class="relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] cursor-pointer group">
-<img alt="狭窄旧书店书本堆叠至天花板" class="w-full h-full object-cover contrast-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpy_oMLuSM4OSAQuG-eMm0-eNfzO2ygRtQCfopQIbnuPCWt4YcTCMIFZtx3kcXBb4_jwivQqV2nmK4GnE0jQAZQZuquJkmYSdLPYUV9-3ymCBy3HLptgBa55GAMrWeWqQSw-uh42awDN_eetdjIXiUx5aN-j9I0Ug97nZo6DBpOYmAY1aigqDM3jyEKlL1K1MSCQwLsZHOs9Y-6EIClMhho7wZKCR7okmMvxnsQ2EpIytBod4PEzuuAAYtR9AN7mvw8kIH3D5cSLU"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
-<p class="text-white text-[16px] font-semibold tracking-tight leading-tight mb-0.5 truncate">
-              旧书店堆到天花板的书脊
-            </p>
-<p class="text-white/80 text-[12px] font-normal tracking-normal">
-              照片 · 10/14
-            </p>
-</div>
-</div>
-<!-- 8. 歌『aqua』 坂本龙一 -->
-<div class="relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] cursor-pointer group">
-<img alt="窗边黑色三角钢琴与柔和日光" class="w-full h-full object-cover contrast-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzFEnFxLynRJo6GRG2iwWO77uLo8ivg3lo4qVbmBT-7j0x_GDPX-0pvf8bDJ6spLrEFFFjRS9IvrcKLy0bZCEOwHhJuQc6G3wSESiheqIedaOhoZdhNiFI89-MYMoBGaxWlqfaTL5Q15_XoQZEKhNabHtPxAsQy9Hc5oCu_VmI98osuYboTiUXXOi4xUXwvd553xZT0h-mqRGVe1u28W4FjH-glGYMjKuM2AAgRRW08gExZesmloH9r8KRjgEP9Fk01xl5iAAMRis"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
-<p class="text-white text-[16px] font-semibold tracking-tight leading-tight mb-0.5">
-              aqua
-            </p>
-<p class="text-white/80 text-[12px] font-normal tracking-normal">
-              歌 · 10/12
-            </p>
-</div>
-</div>
-<!-- 9. 电影『一一』 2000 · 杨德昌 -->
-<div class="relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] cursor-pointer group">
-<img alt="夜晚台北公寓窗口" class="w-full h-full object-cover contrast-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmn5HGiUNpBJ2woEnrhRkKZc6LTIkboLUScuCHumb45qCDXGP1-K3GcDRf3bKJkmxHgY_YyXLc5yfkrovbd1w6WZvqJACEz4luRTDLWyHB3nFg-VS4LwCt6VbBnkQVaLiHqt7NxvwpurT3LfSOYr4KmloUxpj-sVQmeudhDSTi6tFEq0bHWCVI4O4HgkaRnSvu97JaRyBmqNTTUgKTvxBJ2HvfuSI4QW6R46C0XWPF2wUH4IhsG1bRgWImh4-jDjefwatnk-rKF-I"/>
-<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2.5">
-<p class="text-white text-[16px] font-semibold tracking-tight leading-tight mb-0.5">《一一》</p>
-<p class="text-white/80 text-[12px] font-normal tracking-normal">
-              电影 · 10/09
-            </p>
-</div>
-</div>
-<!-- 10. 想法『把外卖小票上的备注收集成一本诗集』 - Plain light-grey #F3F3F3 tile -->
-<div class="aspect-[4/5] bg-[#F3F3F3] p-3 flex flex-col justify-between cursor-pointer hover:bg-[#EAEAEA] transition-none">
-<div class="pt-1">
-<p class="text-[15px] leading-[22px] font-semibold text-black tracking-tight">
-              “把外卖小票上的备注收集成一本诗集。”
-            </p>
-</div>
-<div class="pt-2">
-<p class="text-[12px] text-black font-normal">
-              想法 · 10/05
-            </p>
-</div>
-</div>
-</div>
-<!-- Archival Footer Notice -->
-<footer class="pt-12 pb-6 text-center">
-<p class="text-[10px] tracking-[0.16em] text-[#7E7E7E] uppercase">
-          © 2026 Q1f730
+</article>
+<!-- Generous Spacing -->
+<div class="w-full h-12"></div>
+<!-- Block 02: 渡轮上的平山 -->
+<article class="flex flex-col px-5">
+<div class="numeral-large text-pureBlack">02</div>
+<h3 class="text-[24px] font-bold text-pureBlack tracking-tight mt-1 leading-tight">
+          渡轮上的平山
+        </h3>
+<p class="text-[15px] font-normal text-pureBlack mt-2.5 leading-relaxed">
+          用《完美的日子》的节奏拍一组通勤短片：每天同一时刻、同一段栏杆，只拍清晨的雾。
         </p>
-</footer>
-</main>
-<!-- Persistent Pinned Bottom Section: Quick-Capture Bar + Bottom Nav -->
-<div class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto z-50 bg-white">
-<!-- Quick-Capture Line: separated only by a 1px black hairline above; no box, no radius -->
-<div class="w-full border-t border-black px-[10px] py-2.5 bg-white flex items-center justify-between">
-<input class="text-[13px] text-black placeholder:text-[#7E7E7E] bg-transparent border-0 outline-none p-0 focus:ring-0 focus:outline-none w-full font-normal" placeholder="随手拾一穗" type="text"/>
-<button class="text-[14px] font-semibold text-black hover:opacity-70 px-2 py-0.5 transition-none shrink-0">
+<div class="mt-4">
+<div class="text-[11px] font-medium tracking-wider text-secondaryGrey">
+            因为这几穗
+          </div>
+<div class="text-[13px] font-normal text-pureBlack mt-1 leading-snug">轮渡上的雾 <span class="text-secondaryGrey">/</span> 完美的日子 <span class="text-secondaryGrey">/</span> 《一一》</div>
+</div>
+<!-- Tiny actions -->
+<div class="flex items-center gap-6 mt-4 pt-1 text-[12px] font-medium tracking-wide">
+<button class="text-pureBlack hover:opacity-60 transition-opacity">留下</button>
+<button class="text-secondaryGrey hover:text-pureBlack transition-opacity">再接一次</button>
+<button class="text-inactiveGrey hover:text-pureBlack transition-opacity">不要</button>
+</div>
+</article>
+<!-- Generous Spacing -->
+<div class="w-full h-12"></div>
+<!-- Block 03: 说出来就消失的书店 -->
+<article class="flex flex-col px-5">
+<div class="numeral-large text-pureBlack">03</div>
+<h3 class="text-[24px] font-bold text-pureBlack tracking-tight mt-1 leading-tight">
+          说出来就消失的书店
+        </h3>
+<p class="text-[15px] font-normal text-pureBlack mt-2.5 leading-relaxed">
+          一本只有照片的城市笔记：每拍一家旧书店，就删掉一句描述它的话。
+        </p>
+<div class="mt-4">
+<div class="text-[11px] font-medium tracking-wider text-secondaryGrey">
+            因为这几穗
+          </div>
+<div class="text-[13px] font-normal text-pureBlack mt-1 leading-snug">
+            记忆中的形象一旦被词语固定住，就给抹掉了。（卡尔维诺） <span class="text-secondaryGrey">/</span> 旧书店堆到天花板的书脊 <span class="text-secondaryGrey">/</span> aqua
+          </div>
+</div>
+<!-- Tiny actions -->
+<div class="flex items-center gap-6 mt-4 pt-1 text-[12px] font-medium tracking-wide">
+<button class="text-pureBlack hover:opacity-60 transition-opacity">留下</button>
+<button class="text-secondaryGrey hover:text-pureBlack transition-opacity">再接一次</button>
+<button class="text-inactiveGrey hover:text-pureBlack transition-opacity">不要</button>
+</div>
+</article>
+</div>
+<!-- Editorial Footer Copyright -->
+<div class="w-full px-5 pt-12 pb-8 text-center">
+<span class="text-[11px] font-mono tracking-widest text-secondaryGrey uppercase">
+        © 2026 Q1f730
+      </span>
+</div>
+<!-- Persistent Bottom Bar Group (Quick-capture + Bottom Nav) -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-pureWhite z-50">
+<!-- Quick-capture line pinned above nav -->
+<div class="w-full border-t border-pureBlack px-5 py-2.5 flex items-center justify-between bg-pureWhite">
+<input class="w-full bg-transparent text-[13px] text-pureBlack placeholder-secondaryGrey outline-none border-none p-0 focus:ring-0" placeholder="随手拾一穗" type="text"/>
+<button class="text-[13px] font-semibold text-pureBlack pl-3 hover:opacity-60 transition-opacity select-none">
           拾
         </button>
 </div>
-<!-- Five-item Tiny Text Nav: 穗仓 / 嫁接 / 新枝 / 口味 / 设置 (active one black and underlined, others grey) -->
-<nav class="w-full border-t border-[#E5E5E5] bg-white px-[10px] py-3">
-<div class="flex justify-between items-center w-full text-[11px] tracking-wider">
-<!-- Item 1: 穗仓 (Active: black and underlined) -->
-<button class="text-black font-semibold underline underline-offset-4 decoration-1">
-            穗仓
-          </button>
-<!-- Item 2: 嫁接 (Inactive) -->
-<button class="text-[#7E7E7E] hover:text-black transition-none">
-            嫁接
-          </button>
-<!-- Item 3: 新枝 (Inactive) -->
-<button class="text-[#7E7E7E] hover:text-black transition-none">
-            新枝
-          </button>
-<!-- Item 4: 口味 (Inactive) -->
-<button class="text-[#7E7E7E] hover:text-black transition-none">
-            口味
-          </button>
-<!-- Item 5: 设置 (Inactive) -->
-<button class="text-[#7E7E7E] hover:text-black transition-none">
-            设置
-          </button>
-</div>
+<!-- Five-item tiny navigation: 穗仓 / 嫁接 / 新枝 / 口味 / 设置 (嫁接 active) -->
+<nav class="w-full px-5 pt-2 pb-5 flex justify-between items-center bg-pureWhite border-t border-pureBlack/10">
+<a class="text-[11px] font-medium tracking-wider text-secondaryGrey hover:text-pureBlack py-1" href="#">
+          穗仓
+        </a>
+<a class="text-[11px] font-semibold tracking-wider text-pureBlack border-b border-pureBlack py-1" href="#">
+          嫁接
+        </a>
+<a class="text-[11px] font-medium tracking-wider text-secondaryGrey hover:text-pureBlack py-1" href="#">
+          新枝
+        </a>
+<a class="text-[11px] font-medium tracking-wider text-secondaryGrey hover:text-pureBlack py-1" href="#">
+          口味
+        </a>
+<a class="text-[11px] font-medium tracking-wider text-secondaryGrey hover:text-pureBlack py-1" href="#">
+          设置
+        </a>
 </nav>
 </div>
-</div>
+</main>
 </body>
 </html>
