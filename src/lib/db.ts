@@ -53,7 +53,7 @@ export async function exportAll(d: LinganDB = db): Promise<Backup> {
 /** Merge import: items are re-added with new ids; developments are remapped. Returns counts. */
 export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: number; developments: number }> {
   if (!b || typeof b !== 'object' || (b as Backup).app !== 'lingan' || !Array.isArray((b as Backup).items)) {
-    throw new Error('不是灵感暗房的备份文件');
+    throw new Error('不是拾穗（灵感暗房）的备份文件');
   }
   const bk = b as Backup;
   const map = new Map<number, number>();
