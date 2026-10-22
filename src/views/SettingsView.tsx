@@ -1,3 +1,4 @@
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
 import { clearAll, exportAll, importAll } from '../lib/db';
@@ -5,15 +6,16 @@ import { embedAllMissing } from '../lib/enrich';
 import { androidFiles, deliverZip, readFileText, saveTextFile, type ZipTarget } from '../lib/files';
 import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
 import { db } from '../lib/db';
-import { PRESETS, embedConfig, type Settings } from '../lib/settings';
+import { PRESETS, embedConfig, withPreset, type Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
-import { PageTitle } from '../components/PageTitle';
-import { PHASE_LABEL, PHASE_ORDER, type PhasePref } from '../lib/phases';
+import { DisplayTitle } from '../components/DisplayTitle';
+import { THEME_LABEL, THEME_ORDER } from '../lib/theme';
 
 export const APP_VERSION = __APP_VERSION__;
 
 export function SettingsView() {
-  const { settings, setSettings, toast } = useApp();
+  const { settings, setSettings, toast, confirm } = useApp();
+  const counts = useLiveQuery(async () => ({ items: await db.items.count(), devs: await db.developments.count(), imgs: await db.images.count() }), []);
   const [s, setS] = useState<Settings>(settings);
   const [testing, setTesting] = useState(false);
   const [embedding, setEmbedding] = useState<string>('');
@@ -26,14 +28,7 @@ export function SettingsView() {
   const preset = PRESETS.find((p) => p.id === s.preset) || PRESETS[PRESETS.length - 1];
 
   function applyPreset(id: string) {
-    const p = PRESETS.find((x) => x.id === id);
-    if (!p) return;
-    setS((x) => ({
-      ...x,
-      preset: id,
-      chat: { ...x.chat, ...p.chat, apiKey: x.preset === id ? x.chat.apiKey : '' },
-      embed: { ...x.embed, baseUrl: p.embed.baseUrl, model: p.embed.model, sameAsChat: true },
-    }));
+    setS((x) => withPreset(x, id));
   }
   const setChat = (k: keyof Settings['chat'], v: string) => setS((x) => ({ ...x, chat: { ...x.chat, [k]: v } }));
   const setEmbed = (k: keyof Settings['embed'], v: string | boolean) => setS((x) => ({ ...x, embed: { ...x.embed, [k]: v } }));
@@ -106,189 +101,237 @@ export function SettingsView() {
   }
 
   async function wipe() {
-    if (!confirm('清空所有穗和新枝？此操作不能撤销。建议先导出备份。')) return;
-    if (!confirm('再确认一次：真的清空？')) return;
+    if (!(await confirm({ title: '清空所有穗和新枝？', body: '此操作不能撤销。建议先导出备份。', ok: '清空', cancel: '留着', danger: true }))) return;
+    if (!(await confirm({ title: '再确认一次：真的清空？', ok: '真的清空', cancel: '算了', danger: true }))) return;
     await clearAll();
     toast('已清空');
   }
 
+  const SECTIONS: Array<[string, string, string]> = [
+    ['set-ai', 'AI 服务', PRESETS.find((p) => p.id === settings.preset)?.name.replace(/（.*）/, '') || ''],
+    ['set-embed', '向量', settings.embed.model || '不用'],
+    ['set-look', '外观', THEME_LABEL[settings.theme]],
+    ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
+    ['set-obsidian', '搬去 Obsidian', 'Markdown'],
+    ['set-about', '关于', `v${APP_VERSION}`],
+  ];
   return (
-    <section className="view">
-      <PageTitle title="设置" whisper="Tend the field your way" />
-
-      <div className="paper panel">
-        <div className="label">AI 服务</div>
-        <div className="chips wrap">
-          {PRESETS.map((p) => (
-            <button key={p.id} className={`chip${s.preset === p.id ? ' on' : ''}`} onClick={() => applyPreset(p.id)}>
-              {p.name}
+    <section className="view settings">
+      <DisplayTitle title="设置" />
+      <div className="settings-layout">
+        <nav className="settings-index" aria-label="设置分组">
+          {SECTIONS.map(([id, label, value]) => (
+            <button key={id} className="set-link" onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              <span className="set-link-k">{label}</span>
+              <span className="set-link-v">{value} →</span>
             </button>
           ))}
-        </div>
-        <p className="hint">
-          {preset.note}
-          {preset.keyUrl && (
-            <>
-              {' '}获取密钥：<span className="sel">{preset.keyUrl}</span>
-            </>
-          )}
-        </p>
-        <label className="field">
-          <span className="label">接口地址 Base URL</span>
-          <input value={s.chat.baseUrl} onChange={(e) => setChat('baseUrl', e.target.value.trim())} placeholder="https://…/v1" />
-        </label>
-        <label className="field">
-          <span className="label">API Key（只保存在本机）</span>
-          <div className="inline">
-            <input type={showKey ? 'text' : 'password'} value={s.chat.apiKey} onChange={(e) => setChat('apiKey', e.target.value.trim())} placeholder="粘贴你的密钥" autoComplete="off" />
-            <button type="button" className="btn ghost small" onClick={() => setShowKey((x) => !x)}>
-              {showKey ? '隐藏' : '显示'}
-            </button>
-          </div>
-        </label>
-        <div className="row2">
-          <label className="field">
-            <span className="label">对话模型</span>
-            <input value={s.chat.chatModel} onChange={(e) => setChat('chatModel', e.target.value.trim())} />
-          </label>
-          <label className="field">
-            <span className="label">看图模型（可空）</span>
-            <input value={s.chat.visionModel} onChange={(e) => setChat('visionModel', e.target.value.trim())} />
-          </label>
-        </div>
-        <label className="field">
-          <span className="label">创意温度 {s.temperature.toFixed(1)}（越高越野）</span>
-          <input type="range" min={0.3} max={1.5} step={0.1} value={s.temperature} onChange={(e) => setS((x) => ({ ...x, temperature: parseFloat(e.target.value) }))} />
-        </label>
-        <details>
-          <summary>高级</summary>
-          <label className="field">
-            <span className="label">附加请求参数（JSON）</span>
-            <input value={s.chat.extraBody || ''} onChange={(e) => setChat('extraBody', e.target.value)} placeholder='{"thinking":{"type":"disabled"}}' />
-          </label>
-          <label className="check">
-            <input type="checkbox" checked={s.autoCaption} onChange={(e) => setS((x) => ({ ...x, autoCaption: e.target.checked }))} /> 保存图片后自动让 AI 看图打标签
-          </label>
-        </details>
-        <div className="actions">
-          <button className="btn ghost" onClick={test} disabled={testing || !s.chat.apiKey}>
-            {testing ? '测试中…' : '测试连接'}
-          </button>
-          <button className="btn primary" onClick={save} disabled={!dirty}>
-            保存
-          </button>
-        </div>
-      </div>
-
-      <div className="paper panel">
-        <div className="label">向量（让「跳跃度」更准，可选）</div>
-        <p className="hint">没有向量时用文字相似度近似。硅基流动的 BAAI/bge-m3 免费。</p>
-        <label className="check">
-          <input type="checkbox" checked={s.embed.sameAsChat} onChange={(e) => setEmbed('sameAsChat', e.target.checked)} /> 与对话使用同一个服务和密钥
-        </label>
-        {!s.embed.sameAsChat && (
-          <>
+        </nav>
+        <div className="settings-body">
+          <section className="set-sec" id="set-ai">
+            <h2 className="sec-title">AI 服务</h2>
+            <p className="meta-text">key 只存在这台手机 / 电脑上，不会上传到 Glean。</p>
+            <div className="radio-list" role="radiogroup" aria-label="AI 服务">
+              {PRESETS.map((p) => (
+                <button key={p.id} role="radio" aria-checked={s.preset === p.id} className={`radio chip${s.preset === p.id ? ' on' : ''}`} onClick={() => applyPreset(p.id)}>
+                  <i className="sq" aria-hidden />
+                  <span className="radio-name">{p.name}</span>
+                </button>
+              ))}
+            </div>
+            <p className="hint meta-text">
+              {preset.note}
+              {preset.keyUrl && (
+                <>
+                  {' '}获取密钥：<span className="sel">{preset.keyUrl}</span>
+                </>
+              )}
+            </p>
             <label className="field">
-              <span className="label">向量接口地址</span>
-              <input value={s.embed.baseUrl} onChange={(e) => setEmbed('baseUrl', e.target.value.trim())} placeholder="https://api.siliconflow.cn/v1" />
+              <span className="label">接口地址</span>
+              <input value={s.chat.baseUrl} onChange={(e) => setChat('baseUrl', e.target.value.trim())} placeholder="https://…/v1" />
             </label>
             <label className="field">
-              <span className="label">向量 API Key</span>
-              <input type="password" value={s.embed.apiKey} onChange={(e) => setEmbed('apiKey', e.target.value.trim())} autoComplete="off" />
+              <span className="label">API Key（只保存在本机）</span>
+              <div className="inline">
+                <input type={showKey ? 'text' : 'password'} value={s.chat.apiKey} onChange={(e) => setChat('apiKey', e.target.value.trim())} placeholder="粘贴你的密钥" autoComplete="off" />
+                <button type="button" className="btn text" onClick={() => setShowKey((x) => !x)}>
+                  {showKey ? '隐藏' : '显示'}
+                </button>
+              </div>
             </label>
-          </>
-        )}
-        <label className="field">
-          <span className="label">向量模型（空 = 不用）</span>
-          <input value={s.embed.model} onChange={(e) => setEmbed('model', e.target.value.trim())} placeholder="BAAI/bge-m3" />
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={s.autoEmbed} onChange={(e) => setS((x) => ({ ...x, autoEmbed: e.target.checked }))} /> 新拾的穗自动向量化
-        </label>
-        <div className="actions">
-          <button className="btn ghost" onClick={doEmbed} disabled={!embedConfig(s) || !!embedding}>
-            {embedding ? `向量化 ${embedding}` : '补全全部向量'}
-          </button>
-          <button className="btn primary" onClick={save} disabled={!dirty}>
-            保存
-          </button>
-        </div>
-      </div>
-
-      <div className="paper panel">
-        <div className="label">外观 · 一天里的颜色</div>
-        <div className="seg wrap phase-seg">
-          {(['auto', ...PHASE_ORDER] as PhasePref[]).map((p) => (
-            <button
-              key={p}
-              className={settings.phase === p ? 'on' : ''}
-              onClick={() => {
-                setS((x) => ({ ...x, phase: p }));
-                setSettings({ ...settings, phase: p });
-              }}
-            >
-              {p === 'auto' ? '跟随时间' : PHASE_LABEL[p]}
-            </button>
-          ))}
-        </div>
-        <p className="hint">跟随时间：清晨暖橙、白天麦金、黄昏玫瑰、夜晚萤火。</p>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={settings.fieldStill}
-            onChange={(e) => {
-              setS((x) => ({ ...x, fieldStill: e.target.checked }));
-              setSettings({ ...settings, fieldStill: e.target.checked });
-            }}
-          />{' '}
-          麦田静止（更省电；系统开启「减少动态效果」时会自动静止）
-        </label>
-      </div>
-
-      <div className="paper panel">
-        <div className="label">数据（全部保存在这台设备上）</div>
-        <div className="actions left">
-          <button className="btn ghost" onClick={doExport}>
-            导出备份
-          </button>
-          <button className="btn ghost" onClick={() => fileRef.current?.click()}>
-            导入备份
-          </button>
-          <button className="btn ghost danger" onClick={wipe}>
-            清空
-          </button>
-          <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => { doImport(e.target.files?.[0]); e.target.value = ''; }} />
-        </div>
-        <p className="hint">手机和电脑之间可以用「导出 → 导入」搬运。</p>
-      </div>
-
-      <div className="paper panel obsidian-panel">
-        <div className="label">搬去 Obsidian</div>
-        <p className="hint">导出成 Markdown + 图片的 ZIP。解压后在 Obsidian 里「打开文件夹作为仓库」：每穗一篇笔记（按类型分文件夹），图片在 attachments/，新枝用双链指回它的来源穗，从「拾穗索引」开始逛。</p>
-        <label className="check">
-          <input className="obsidian-samples" type="checkbox" checked={withSamples} onChange={(e) => setWithSamples(e.target.checked)} /> 包含示例穗
-        </label>
-        <div className="actions left">
-          {onAndroid ? (
-            <>
-              <button className="btn ghost obsidian-share" onClick={() => doObsidian('share')} disabled={vaulting}>
-                {vaulting ? '打包中…' : '分享 ZIP…'}
+            <div className="row2">
+              <label className="field">
+                <span className="label">对话模型</span>
+                <input value={s.chat.chatModel} onChange={(e) => setChat('chatModel', e.target.value.trim())} />
+              </label>
+              <label className="field">
+                <span className="label">看图模型（可空）</span>
+                <input value={s.chat.visionModel} onChange={(e) => setChat('visionModel', e.target.value.trim())} />
+              </label>
+            </div>
+            <label className="field">
+              <span className="label">创意温度 <span className="num">{s.temperature.toFixed(1)}</span>（越高越野）</span>
+              <input type="range" min={0.3} max={1.5} step={0.1} value={s.temperature} onChange={(e) => setS((x) => ({ ...x, temperature: parseFloat(e.target.value) }))} />
+            </label>
+            <details>
+              <summary>高级</summary>
+              <label className="field">
+                <span className="label">附加请求参数（JSON）</span>
+                <input value={s.chat.extraBody || ''} onChange={(e) => setChat('extraBody', e.target.value)} placeholder='{"thinking":{"type":"disabled"}}' />
+              </label>
+              <label className="check">
+                <input type="checkbox" checked={s.autoCaption} onChange={(e) => setS((x) => ({ ...x, autoCaption: e.target.checked }))} /> 保存图片后自动让 AI 看图打标签
+              </label>
+            </details>
+            <div className="actions">
+              <button className="btn primary" onClick={save} disabled={!dirty}>
+                保存
               </button>
-              <button className="btn ghost obsidian-downloads" onClick={() => doObsidian('downloads')} disabled={vaulting}>
-                存到「下载」
+              <button className="btn text" onClick={test} disabled={testing || !s.chat.apiKey}>
+                {testing ? '测试中…' : '测试连接'}
               </button>
-            </>
-          ) : (
-            <button className="btn ghost obsidian-export" onClick={() => doObsidian('save')} disabled={vaulting}>
-              {vaulting ? '打包中…' : '导出为 Markdown'}
-            </button>
-          )}
+            </div>
+          </section>
+
+          <section className="set-sec" id="set-embed">
+            <h2 className="sec-title">向量</h2>
+            <p className="meta-text">让「跳跃度」更准，可选。没有向量时用文字相似度近似。硅基流动的 BAAI/bge-m3 免费。</p>
+            <label className="check">
+              <input type="checkbox" checked={s.embed.sameAsChat} onChange={(e) => setEmbed('sameAsChat', e.target.checked)} /> 与对话使用同一个服务和密钥
+            </label>
+            {!s.embed.sameAsChat && (
+              <>
+                <label className="field">
+                  <span className="label">向量接口地址</span>
+                  <input value={s.embed.baseUrl} onChange={(e) => setEmbed('baseUrl', e.target.value.trim())} placeholder="https://api.siliconflow.cn/v1" />
+                </label>
+                <label className="field">
+                  <span className="label">向量 API Key</span>
+                  <input type="password" value={s.embed.apiKey} onChange={(e) => setEmbed('apiKey', e.target.value.trim())} autoComplete="off" />
+                </label>
+              </>
+            )}
+            <label className="field">
+              <span className="label">向量模型（空 = 不用）</span>
+              <input value={s.embed.model} onChange={(e) => setEmbed('model', e.target.value.trim())} placeholder="BAAI/bge-m3" />
+            </label>
+            <label className="check">
+              <input type="checkbox" checked={s.autoEmbed} onChange={(e) => setS((x) => ({ ...x, autoEmbed: e.target.checked }))} /> 新拾的穗自动向量化
+            </label>
+            <div className="actions">
+              <button className="btn primary" onClick={save} disabled={!dirty}>
+                保存
+              </button>
+              <button className="btn text" onClick={doEmbed} disabled={!embedConfig(s) || !!embedding}>
+                {embedding ? `向量化 ${embedding}` : '补全全部向量'}
+              </button>
+            </div>
+          </section>
+
+          <section className="set-sec" id="set-look">
+            <h2 className="sec-title">外观</h2>
+            <div className="kv-row">
+              <span className="label">主题</span>
+              <div className="seg theme-seg">
+                {THEME_ORDER.map((p, i) => [
+                  i > 0 && (
+                    <span key={'s' + p} className="sep" aria-hidden>
+                      |
+                    </span>
+                  ),
+                  <button
+                    key={p}
+                    className={settings.theme === p ? 'on' : ''}
+                    onClick={() => {
+                      setS((x) => ({ ...x, theme: p }));
+                      setSettings({ ...settings, theme: p });
+                    }}
+                  >
+                    {THEME_LABEL[p]}
+                  </button>,
+                ])}
+              </div>
+            </div>
+            <p className="hint meta-text">只有黑、白两套。跟随系统时随手机 / 电脑的深色模式切换。系统开启「减少动态效果」时，淡入与放大全部关闭。</p>
+          </section>
+
+          <section className="set-sec" id="set-data">
+            <h2 className="sec-title">备份与导入</h2>
+            <dl className="kv">
+              <div>
+                <dt>本机</dt>
+                <dd className="num backup-counts">{counts ? `${counts.items} 穗 · ${counts.devs} 新枝 · ${counts.imgs} 张图` : '…'}</dd>
+              </div>
+            </dl>
+            <div className="table action-table">
+              <button className="trow" onClick={doExport}>
+                <span className="tc tc-title">导出备份</span>
+                <span className="tc tc-src">全部穗与新枝，可在另一台设备导入</span>
+                <span className="tc tc-date">.json</span>
+              </button>
+              <button className="trow" onClick={() => fileRef.current?.click()}>
+                <span className="tc tc-title">导入备份</span>
+                <span className="tc tc-src">合并进来，不覆盖现有的</span>
+                <span className="tc tc-date">.json</span>
+              </button>
+              <button className="trow danger" onClick={wipe}>
+                <span className="tc tc-title">清空</span>
+                <span className="tc tc-src">删掉这台设备上的所有穗和新枝</span>
+                <span className="tc tc-date" />
+              </button>
+            </div>
+            <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => { doImport(e.target.files?.[0]); e.target.value = ''; }} />
+            <p className="hint meta-text">手机和电脑之间可以用「导出 → 导入」搬运。</p>
+          </section>
+
+          <section className="set-sec obsidian-panel" id="set-obsidian">
+            <h2 className="sec-title">搬去 Obsidian</h2>
+            <p className="meta-text">导出成 Markdown + 图片的 ZIP。解压后在 Obsidian 里「打开文件夹作为仓库」：每穗一篇笔记（按类型分文件夹），图片在 attachments/，新枝用双链指回它的来源穗，从「拾穗索引」开始逛。</p>
+            <label className="check">
+              <input className="obsidian-samples" type="checkbox" checked={withSamples} onChange={(e) => setWithSamples(e.target.checked)} /> 包含示例穗
+            </label>
+            <div className="actions">
+              {onAndroid ? (
+                <>
+                  <button className="btn primary obsidian-share" onClick={() => doObsidian('share')} disabled={vaulting}>
+                    {vaulting ? '打包中…' : '分享 ZIP…'}
+                  </button>
+                  <button className="btn text obsidian-downloads" onClick={() => doObsidian('downloads')} disabled={vaulting}>
+                    存到「下载」
+                  </button>
+                </>
+              ) : (
+                <button className="btn primary obsidian-export" onClick={() => doObsidian('save')} disabled={vaulting}>
+                  {vaulting ? '打包中…' : '导出为 Markdown'}
+                </button>
+              )}
+            </div>
+          </section>
+
+          <section className="set-sec" id="set-about">
+            <h2 className="sec-title">关于</h2>
+            <dl className="kv">
+              <div>
+                <dt>版本</dt>
+                <dd className="num">v{APP_VERSION}</dd>
+              </div>
+              <div>
+                <dt>署名</dt>
+                <dd>Q1f730</dd>
+              </div>
+              <div>
+                <dt>隐私</dt>
+                <dd>素材只存在本机</dd>
+              </div>
+              <div>
+                <dt>快捷键</dt>
+                <dd>N 速记展开 · Ctrl+Shift+L 全局速记（桌面）</dd>
+              </div>
+            </dl>
+          </section>
         </div>
       </div>
-
-      <p className="colophon">
-        拾穗 <i>Glean</i> v{APP_VERSION} · by Q1f730 · 数据只在本机
-      </p>
     </section>
   );
 }
