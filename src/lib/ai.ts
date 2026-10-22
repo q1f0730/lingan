@@ -124,7 +124,7 @@ export async function embed(s: Settings, texts: string[]): Promise<number[][]> {
 }
 
 export async function testConnection(s: Settings): Promise<string> {
-  const r = await chat(s, [{ role: 'user', content: '只回复两个字：显影' }], { temperature: 0, maxTokens: 20 });
+  const r = await chat(s, [{ role: 'user', content: '只回复两个字：拾穗' }], { temperature: 0, maxTokens: 20 });
   return r.slice(0, 40);
 }
 
