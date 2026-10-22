@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 穗详情 · 想法「给楼道里每一盏声控灯起一个名字」 (390px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brandBlack: '#000000',
+            brandGrey: '#7E7E7E',
+            brandLightGrey: '#C6C6C6',
+            brandHairline: '#000000',
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0px !important;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    /* Mobile container constraint */
+    .mobile-frame {
+      width: 390px;
+      min-width: 390px;
+      max-width: 390px;
+      background: #FFFFFF;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-white text-black">
+  <div class="mobile-frame">
+    <!-- Top Bar: 返回 left, 编辑 right (Word only, no icons) -->
+    <header class="w-full px-4 pt-4 pb-3 flex justify-between items-center text-[15px] font-normal tracking-tight">
+      <button class="text-black hover:opacity-70 bg-transparent p-0 cursor-pointer">返回</button>
+      <button class="text-black hover:opacity-70 bg-transparent p-0 cursor-pointer">编辑</button>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 px-4 pt-6 pb-8">
+      <!-- Tiny grey label: 想法 · 05 / 10 -->
+      <div class="text-[12px] font-normal text-brandGrey tracking-wide mb-3">
+        想法 · 05 / 10
+      </div>
+
+      <!-- Hero Idea Text: 32px semibold black -->
+      <h1 class="text-[32px] font-semibold text-black leading-[1.25] tracking-[-0.03em] mb-3">
+        给楼道里每一盏声控灯起一个名字
+      </h1>
+
+      <!-- Meta line: 15px grey -->
+      <div class="text-[15px] text-brandGrey font-normal mb-8">
+        自己 · 2026/10/17 23:48 · 回家爬楼时
+      </div>
+
+      <!-- Section: 标签 -->
+      <div class="mb-7">
+        <div class="text-[11px] text-brandGrey font-normal mb-1.5">
+          标签
+        </div>
+        <div class="text-[15px] text-black font-normal tracking-tight">
+          #夜里&nbsp;&nbsp;#声音&nbsp;&nbsp;#城市
+        </div>
+      </div>
+
+      <!-- Section: 补充 -->
+      <div class="mb-8">
+        <div class="text-[11px] text-brandGrey font-normal mb-1.5">
+          补充
+        </div>
+        <div class="text-[15px] text-black font-normal leading-relaxed">
+          三楼那盏总要跺两次脚才亮，可以叫「迟到的」。五楼那盏从来不灭。
+        </div>
+      </div>
+
+      <!-- Section: 长进了这些新枝 -->
+      <div class="mb-8">
+        <div class="text-[11px] text-brandGrey font-normal mb-2">
+          长进了这些新枝
+        </div>
+        <div>
+          <a href="#" class="text-[15px] text-black font-normal underline underline-offset-4 decoration-1 hover:opacity-70">
+            楼道电台
+          </a>
+        </div>
+      </div>
+
+      <!-- Section: 相近的穗 -->
+      <div class="mb-10">
+        <div class="text-[11px] text-brandGrey font-normal mb-3">
+          相近的穗
+        </div>
+        <div class="space-y-3">
+          <div class="flex justify-between items-baseline text-[15px]">
+            <span class="text-black font-normal truncate mr-2">Radio Garden · 转动地球收听各地电台</span>
+            <span class="text-[12px] text-brandGrey shrink-0">链接</span>
+          </div>
+          <div class="flex justify-between items-baseline text-[15px]">
+            <span class="text-black font-normal truncate mr-2">Re: Stacks</span>
+            <span class="text-[12px] text-brandGrey shrink-0">歌</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Actions: 拿去嫁接 black, 删除 light grey -->
+      <div class="flex items-center space-x-6 text-[15px] font-normal mb-14">
+        <button class="text-black hover:opacity-70 p-0 bg-transparent cursor-pointer">
+          拿去嫁接
+        </button>
+        <button class="text-brandLightGrey hover:text-black p-0 bg-transparent cursor-pointer">
+          删除
+        </button>
+      </div>
+
+      <!-- Footer: only © 2026 Q1f730 -->
+      <div class="text-center text-[12px] text-brandLightGrey tracking-wider pb-4">
+        © 2026 Q1f730
+      </div>
+    </main>
+
+    <!-- Bottom Persistent Area (Quick capture & 5-word Nav) -->
+    <footer class="w-full bg-white mt-auto">
+      <!-- 1px black hairline above quick-capture line -->
+      <div class="w-full border-t border-brandHairline"></div>
+
+      <!-- Quick-capture line: placeholder '随手拾一穗' and plain small black text button '拾' with no filled box -->
+      <div class="w-full px-4 py-2.5 flex items-center justify-between text-[14px]">
+        <span class="text-brandGrey select-none font-normal">随手拾一穗</span>
+        <button class="text-black text-[14px] font-normal bg-transparent p-0 cursor-pointer hover:opacity-70">拾</button>
+      </div>
+
+      <!-- Subtle line before nav -->
+      <div class="w-full border-t border-[#F0F0F0]"></div>
+
+      <!-- Five-word text navigation: 穗仓 / 嫁接 / 新枝 / 口味 / 设置 (穗仓 active with 1px underline) -->
+      <nav class="w-full px-4 pt-3 pb-4 flex justify-between items-center text-[12px] font-normal">
+        <a href="#" class="text-black border-b border-black pb-0.5 font-medium">穗仓</a>
+        <a href="#" class="text-brandGrey hover:text-black">嫁接</a>
+        <a href="#" class="text-brandGrey hover:text-black">新枝</a>
+        <a href="#" class="text-brandGrey hover:text-black">口味</a>
+        <a href="#" class="text-brandGrey hover:text-black">设置</a>
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>
