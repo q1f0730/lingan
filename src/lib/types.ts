@@ -122,3 +122,14 @@ export interface DailyPick {
   comboIds: number[];
   createdAt: number;
 }
+
+/** v0.17 秒搜：全文索引表的一行（key = i:<穗 id> / b:<新枝 id>） */
+export interface FtRow {
+  key: string;
+  kind: 'i' | 'b';
+  ref: number;
+  /** 内容签名（字段变了才重切） */
+  sig: string;
+  /** 切好的词：中文单字 + 二元、英文整词 */
+  tok: string[];
+}
