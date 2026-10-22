@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 桌面端设置 · AI 服务 (1440px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            primary: '#000000',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            lighttile: '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    /* Inviolable design constraints: absolutely NO rounded corners, no shadows */
+    * {
+      border-radius: 0px !important;
+      box-shadow: none !important;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 1px;
+      cursor: pointer;
+      background: #000000;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 10px;
+      width: 10px;
+      background: #000000;
+      cursor: pointer;
+      -webkit-appearance: none;
+      margin-top: -4.5px;
+    }
+    input[type=range]::-moz-range-track {
+      width: 100%;
+      height: 1px;
+      cursor: pointer;
+      background: #000000;
+    }
+    input[type=range]::-moz-range-thumb {
+      height: 10px;
+      width: 10px;
+      background: #000000;
+      cursor: pointer;
+      border: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-white text-black selection:bg-black selection:text-white">
+
+  <!-- TOP NAV BAR (identical to d1 desktop screens) -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-transparent">
+    <div class="w-full px-[40px] h-[64px] flex items-center justify-between">
+      <!-- Left: Brand Logo -->
+      <a href="#" class="text-[20px] font-semibold tracking-tight text-black hover:opacity-70 transition-opacity">
+        拾穗 · GLEAN
+      </a>
+
+      <!-- Center: Text Navigation -->
+      <nav class="flex items-center space-x-8 text-[12px] font-medium tracking-wide">
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors pb-1">穗仓</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors pb-1">嫁接</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors pb-1">新枝</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors pb-1">口味</a>
+        <a href="#" class="text-black border-b border-black pb-1">设置</a>
+      </nav>
+
+      <!-- Right: Quick-capture input (320px underline with placeholder) -->
+      <div class="w-[320px]">
+        <input 
+          type="text" 
+          placeholder="随手拾一穗 →" 
+          class="w-full bg-transparent border-0 border-b border-black pb-1 text-[13px] text-black placeholder-[#7E7E7E] focus:outline-none focus:border-black"
+        >
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="w-full px-[40px] pt-[140px] pb-[160px]">
+    
+    <!-- HUGE DISPLAY HEADLINE -->
+    <section class="mb-[64px]">
+      <h1 class="text-[104px] font-semibold leading-none tracking-[-0.04em] text-black">
+        设置
+      </h1>
+    </section>
+
+    <!-- 12-COLUMN EDITORIAL GRID LAYOUT (16px gutters) -->
+    <div class="grid grid-cols-12 gap-[16px] items-start">
+      
+      <!-- LEFT 3 COLUMNS: Vertical tiny text sub-nav -->
+      <aside class="col-span-3">
+        <nav class="flex flex-col space-y-[22px] text-[13px] font-medium tracking-wide">
+          <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors w-fit">通用</a>
+          <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors w-fit">外观</a>
+          <a href="#" class="text-black border-b border-black pb-[2px] w-fit">AI 服务</a>
+          <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors w-fit">速记与快捷键</a>
+          <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors w-fit">备份与导入</a>
+          <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors w-fit">关于</a>
+        </nav>
+      </aside>
+
+      <!-- EMPTY COLUMN 4 AS ARCHITECTURAL BREATHING GUTTER -->
+      <div class="col-span-1 hidden lg:block"></div>
+
+      <!-- RIGHT 8 COLUMNS: STARTING COL 5 -->
+      <div class="col-span-12 lg:col-span-8 max-w-[800px]">
+        
+        <!-- SECTION TITLE & DESCRIPTIVE SENTENCE -->
+        <div class="mb-[48px]">
+          <h2 class="text-[32px] font-semibold tracking-tight text-black mb-[12px]">
+            AI 服务
+          </h2>
+          <p class="text-[16px] text-[#7E7E7E] leading-relaxed">
+            嫁接和口味需要一个大模型。穗只在你自己的电脑里，调用时只发送被选中的几穗。
+          </p>
+        </div>
+
+        <!-- FORM WITH NO BOXES (EVERY INPUT IS LABEL ABOVE + 1px BLACK UNDERLINE) -->
+        <div class="space-y-[40px] mb-[64px]">
+          
+          <!-- FIELD: 服务商 -->
+          <div>
+            <div class="text-[12px] font-medium text-[#7E7E7E] tracking-wider mb-[12px]">
+              服务商
+            </div>
+            <div class="flex items-center space-x-[28px] text-[14px]">
+              <button type="button" class="text-[#7E7E7E] hover:text-black transition-colors pb-[2px]">
+                OpenAI 兼容
+              </button>
+              <button type="button" class="text-black border-b border-black pb-[2px] font-medium">
+                DeepSeek
+              </button>
+              <button type="button" class="text-[#7E7E7E] hover:text-black transition-colors pb-[2px]">
+                通义千问
+              </button>
+              <button type="button" class="text-[#7E7E7E] hover:text-black transition-colors pb-[2px]">
+                本地 Ollama
+              </button>
+            </div>
+          </div>
+
+          <!-- FIELD: 接口地址 -->
+          <div>
+            <label class="block text-[12px] font-medium text-[#7E7E7E] tracking-wider mb-[8px]">
+              接口地址
+            </label>
+            <input 
+              type="text" 
+              value="https://api.deepseek.com/v1" 
+              class="w-full bg-transparent border-0 border-b border-black py-[6px] text-[15px] text-black focus:outline-none"
+            >
+          </div>
+
+          <!-- FIELD: 模型 -->
+          <div>
+            <label class="block text-[12px] font-medium text-[#7E7E7E] tracking-wider mb-[8px]">
+              模型
+            </label>
+            <input 
+              type="text" 
+              value="deepseek-chat" 
+              class="w-full bg-transparent border-0 border-b border-black py-[6px] text-[15px] text-black focus:outline-none"
+            >
+          </div>
+
+          <!-- FIELD: API Key -->
+          <div>
+            <div class="flex items-center justify-between mb-[8px]">
+              <label class="text-[12px] font-medium text-[#7E7E7E] tracking-wider">
+                API Key
+              </label>
+            </div>
+            <div class="relative w-full border-b border-black flex items-center justify-between py-[6px]">
+              <input 
+                type="text" 
+                value="••••••••••••••••3f2a" 
+                readonly
+                class="w-full bg-transparent border-0 text-[15px] text-black tracking-widest focus:outline-none font-sans"
+              >
+              <button type="button" class="text-[12px] text-[#7E7E7E] hover:text-black tracking-wide pl-4 whitespace-nowrap transition-colors">
+                显示
+              </button>
+            </div>
+          </div>
+
+          <!-- FIELD: 温度 (thin 1px horizontal line slider with small black square handle at 0.8) -->
+          <div>
+            <div class="flex items-center justify-between mb-[14px]">
+              <span class="text-[12px] font-medium text-[#7E7E7E] tracking-wider">
+                温度
+              </span>
+              <span class="text-[13px] font-medium text-black">
+                0.8
+              </span>
+            </div>
+            <div class="relative w-full flex items-center py-1">
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.05" 
+                value="0.8" 
+                class="w-full"
+              >
+            </div>
+          </div>
+
+          <!-- ROW: 测试连接 + 连通状态文本 -->
+          <div class="pt-[8px] flex items-center space-x-[20px]">
+            <button type="button" class="bg-black text-white px-[20px] py-[10px] text-[13px] font-medium hover:bg-neutral-800 transition-colors">
+              测试连接
+            </button>
+            <span class="text-[12px] text-black tracking-wide">
+              已连通 · 延迟 820 ms · 10:42
+            </span>
+          </div>
+
+        </div>
+
+        <!-- DIVIDER LINE -->
+        <div class="w-full h-[1px] bg-black/10 my-[48px]"></div>
+
+        <!-- SECOND GROUP: 用量 -->
+        <section class="mb-[56px]">
+          <h3 class="text-[18px] font-semibold tracking-tight text-black mb-[14px]">
+            用量
+          </h3>
+          <div class="text-[14px] text-[#7E7E7E] leading-relaxed">
+            本月嫁接 18 次　口味刷新 3 次
+          </div>
+        </section>
+
+        <!-- THIRD GROUP: 外观 -->
+        <section>
+          <h3 class="text-[18px] font-semibold tracking-tight text-black mb-[16px]">
+            外观
+          </h3>
+          <div class="flex items-center space-x-[28px] text-[14px]">
+            <button type="button" class="text-black border-b border-black pb-[2px] font-medium">
+              跟随系统
+            </button>
+            <button type="button" class="text-[#7E7E7E] hover:text-black transition-colors pb-[2px]">
+              白
+            </button>
+            <button type="button" class="text-[#7E7E7E] hover:text-black transition-colors pb-[2px]">
+              黑
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full px-[40px] pb-[40px] pt-[20px] flex items-center justify-between text-[10px] text-[#7E7E7E] tracking-[0.1em]">
+    <div>
+      © 2026 Q1f730 · 版本 0.4.0
+    </div>
+    <div class="hidden sm:block">
+      
+    </div>
+  </footer>
+
+</body>
+</html>
