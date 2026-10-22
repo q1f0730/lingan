@@ -5,6 +5,7 @@ import { migrateDevelopment } from './provenance';
 import { drawSamples, sampleTimes } from './samples';
 import { blobToDataUrl, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
 import type { DailyPick, Development, FtRow, Item, StoredImage } from './types';
+import { cleanText, clicheKey, validKey, wallCandidates, type Cliche } from './wall';
 
 export class LinganDB extends Dexie {
   items!: Table<Item, number>;
@@ -12,6 +13,7 @@ export class LinganDB extends Dexie {
   images!: Table<StoredImage, number>;
   daily!: Table<DailyPick, string>;
   ftidx!: Table<FtRow, string>;
+  cliches!: Table<Cliche, number>;
   constructor(name = 'lingan') {
     super(name);
     this.version(1).stores({
@@ -73,7 +75,92 @@ export class LinganDB extends Dexie {
             if (st && st.last) it.graftedAt = st.last;
           });
       });
+    // v0.19 我的套路墙：cliches 表（key 唯一）。迁移：把旧新枝里模型列出过的套路沉淀上墙（同一批三根算一次），不动新枝本身
+    this.version(7)
+      .stores({ cliches: '++id, &key, source, struck, lastAt' })
+      .upgrade(async (tx) => {
+        const devs = (await tx.table('developments').toArray()) as Development[];
+        const rows = clichesFromDevs(devs);
+        if (rows.length) await tx.table('cliches').bulkAdd(rows);
+      });
   }
+}
+
+/** v0.19 从新枝里收集模型列出过的套路：同一批（batch.id）只算一次；返回可直接入库的行 */
+export function clichesFromDevs(devs: Array<Pick<Development, 'idea' | 'batch' | 'createdAt' | 'id'>>): Cliche[] {
+  const seenBatch = new Set<string>();
+  const m = new Map<string, Cliche>();
+  for (const d of [...devs].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))) {
+    const bid = d.batch?.id ? `b:${d.batch.id}` : `d:${d.id ?? Math.random()}`;
+    if (seenBatch.has(bid)) continue;
+    seenBatch.add(bid);
+    for (const c of wallCandidates(d.idea?.cliches)) {
+      const t = d.createdAt || Date.now();
+      const row = m.get(c.key);
+      if (row) {
+        row.listed++;
+        row.lastAt = Math.max(row.lastAt, t);
+      } else m.set(c.key, { key: c.key, text: c.text, source: 'ai', struck: 0, listed: 1, blocked: 0, createdAt: t, lastAt: t });
+    }
+  }
+  return [...m.values()];
+}
+
+/** v0.19 这次嫁接模型列出的套路沉淀上墙：已有的 +1 次（划掉的保持划掉），新的加上。返回新上墙的条数 */
+export async function depositCliches(list: unknown, d: LinganDB = db, now = Date.now()): Promise<number> {
+  const cands = wallCandidates(list);
+  if (!cands.length) return 0;
+  let added = 0;
+  await d.transaction('rw', d.cliches, async () => {
+    for (const c of cands) {
+      const row = await d.cliches.where('key').equals(c.key).first();
+      if (row) await d.cliches.update(row.id!, { listed: (row.listed || 0) + 1, lastAt: now });
+      else {
+        await d.cliches.add({ key: c.key, text: c.text, source: 'ai', struck: 0, listed: 1, blocked: 0, createdAt: now, lastAt: now });
+        added++;
+      }
+    }
+  });
+  return added;
+}
+
+/** v0.19 本地校验拦下了这些套路：给墙上对应条目记一次「拦下」 */
+export async function markBlocked(keys: string[], d: LinganDB = db) {
+  const list = [...new Set(keys)];
+  if (!list.length) return;
+  await d.transaction('rw', d.cliches, async () => {
+    await d.cliches
+      .where('key')
+      .anyOf(list)
+      .modify((c: Cliche) => {
+        c.blocked = (c.blocked || 0) + 1;
+      });
+  });
+}
+
+export type AddClicheResult = { status: 'added' | 'restored' | 'exists' | 'invalid'; text: string };
+/** v0.19 我手动加一个讨厌的词 / 梗。已在墙上但被划掉的：恢复；已在墙上的：不重复 */
+export async function addUserCliche(raw: string, d: LinganDB = db, now = Date.now()): Promise<AddClicheResult> {
+  const text = cleanText(raw);
+  const key = clicheKey(text);
+  if (!validKey(key)) return { status: 'invalid', text };
+  return d.transaction('rw', d.cliches, async () => {
+    const row = await d.cliches.where('key').equals(key).first();
+    if (row) {
+      if (row.struck) {
+        await d.cliches.update(row.id!, { struck: 0, lastAt: now });
+        return { status: 'restored' as const, text: row.text };
+      }
+      return { status: 'exists' as const, text: row.text };
+    }
+    await d.cliches.add({ key, text, source: 'user', struck: 0, listed: 0, blocked: 0, createdAt: now, lastAt: now });
+    return { status: 'added' as const, text };
+  });
+}
+
+/** v0.19 划掉（误伤，不再禁用）/ 恢复 */
+export async function strikeCliche(id: number, struck: boolean, d: LinganDB = db) {
+  await d.cliches.update(id, { struck: struck ? 1 : 0 });
 }
 
 export const db = new LinganDB();
@@ -166,7 +253,8 @@ export async function restoreItem(s: ItemSnapshot, d: LinganDB = db): Promise<nu
 
 /** 清空所有穗、新枝、原图（连同每日一穗记录） */
 export async function clearAll(d: LinganDB = db) {
-  await d.transaction('rw', [d.items, d.developments, d.images, d.daily, d.ftidx], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.images, d.daily, d.ftidx, d.cliches], async () => {
+    await d.cliches.clear();
     await d.items.clear();
     await d.developments.clear();
     await d.images.clear();
@@ -254,6 +342,8 @@ export interface Backup {
   exportedAt: number;
   items: Item[];
   developments: Development[];
+  /** v0.19 套路墙（旧备份没有，导入时按新枝里的套路重建） */
+  cliches?: Cliche[];
 }
 
 /** 导出：原图从 images 表拼回 image（data URL），缩略图不导出（导入后重新生成）。备份格式与 v0.12 兼容 */
@@ -272,7 +362,8 @@ export async function exportAll(d: LinganDB = db): Promise<Backup> {
     items.push(out);
   }
   const developments = await d.developments.toArray();
-  return { app: 'lingan', version: 1, exportedAt: Date.now(), items, developments };
+  const cliches = (await d.cliches.toArray()).map(({ id: _id, ...c }) => (void _id, c as Cliche));
+  return { app: 'lingan', version: 1, exportedAt: Date.now(), items, developments, cliches };
 }
 
 /** Merge import: items are re-added with new ids; developments are remapped. Returns counts. */
@@ -287,7 +378,7 @@ export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: 
   let imgs = 0;
   const noCount: number[] = [];
   const added: Development[] = [];
-  await d.transaction('rw', [d.items, d.developments, d.images], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.images, d.cliches], async () => {
     for (const it of bk.items) {
       if (!it || typeof it.title !== 'string' || !it.type) continue;
       const { id, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _todo, thumbFail: _f, hasImage: _hi, ...rest } = it;
@@ -322,6 +413,29 @@ export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: 
         const st = stats.get(nid);
         await d.items.update(nid, st ? { graftCount: st.count, graftedAt: st.last } : { graftCount: 0 });
       }
+    }
+    // v0.19 套路墙：备份里有就按 key 合并（我加的 / 划掉的状态带过来），旧备份没有就从导入的新枝里重建
+    const incoming: Cliche[] = Array.isArray(bk.cliches)
+      ? bk.cliches
+          .map((c) => {
+            const text = cleanText(c?.text);
+            const key = clicheKey(c?.key || text) || clicheKey(text);
+            const t = typeof c?.lastAt === 'number' ? c.lastAt : Date.now();
+            return { key, text: text || key, source: c?.source === 'user' ? 'user' : 'ai', struck: c?.struck ? 1 : 0, listed: Number(c?.listed) || 0, blocked: Number(c?.blocked) || 0, createdAt: typeof c?.createdAt === 'number' ? c.createdAt : t, lastAt: t } as Cliche;
+          })
+          .filter((c) => validKey(c.key))
+      : clichesFromDevs(added);
+    for (const c of incoming) {
+      const row = await d.cliches.where('key').equals(c.key).first();
+      if (!row) await d.cliches.add(c);
+      else
+        await d.cliches.update(row.id!, {
+          listed: Math.max(row.listed || 0, c.listed),
+          blocked: Math.max(row.blocked || 0, c.blocked),
+          lastAt: Math.max(row.lastAt, c.lastAt),
+          ...(c.source === 'user' ? { source: 'user' as const } : {}),
+          ...(c.struck && !row.struck ? { struck: 1 as const } : {}),
+        });
     }
   });
   if (imgs) notifyImage();
