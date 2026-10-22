@@ -9,7 +9,8 @@ import { staggerDelay } from '../lib/motion';
 import { throwbacks } from '../lib/memory';
 import { itemHasImage } from '../lib/imagestore';
 import { useThumbSrc } from '../lib/useImage';
-import { activeMonths, displayTitle, groupByWeek, matchBranch, matchItem, monthGrid, shortDate, tagCounts } from '../lib/studio';
+import { activeMonths, displayTitle, groupByWeek, monthGrid, tagCounts } from '../lib/studio';
+import { SearchView } from './Search';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 
@@ -32,10 +33,10 @@ declare global {
 }
 
 export function Library() {
-  const { openItem, openCapture, toast, developFrom, desktop, go } = useApp();
+  const { openItem, openCapture, toast, developFrom, desktop } = useApp();
   const items = useLiveQuery(() => db.items.orderBy('createdAt').reverse().toArray(), []);
   const devs = useLiveQuery(() => db.developments.toArray(), []);
-  const [q, setQ] = useState('');
+  const q = '';
   const [searching, setSearching] = useState(false);
   const [type, setType] = useState<ItemType | 'all'>('all');
   const [tag, setTag] = useState<string | null>(null);
@@ -50,14 +51,26 @@ export function Library() {
 
   const filtered = useMemo(() => {
     if (!items) return [];
-    return items.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)) && matchItem(i, q));
-  }, [items, q, type, tag]);
+    return items.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)));
+  }, [items, type, tag]);
   const typeN = useMemo(() => {
     const m = new Map<ItemType, number>();
     for (const i of items || []) m.set(i.type, (m.get(i.type) || 0) + 1);
     return m;
   }, [items]);
-  const branchHits = useMemo(() => (q.trim() && devs ? devs.filter((d) => matchBranch(d, q)) : []), [devs, q]);
+  // v0.17 秒搜：桌面按 / 或 Ctrl+K 打开搜索
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+      if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') || (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey)) {
+        e.preventDefault();
+        setSearching(true);
+      }
+    };
+    window.addEventListener('keydown', on);
+    return () => window.removeEventListener('keydown', on);
+  }, []);
   // 示例不是你拾的：不进「一周前 / 那年今天」
   const backs = useMemo(() => (items ? throwbacks(items.filter((i) => !i.sample)) : []), [items]);
 
@@ -96,8 +109,9 @@ export function Library() {
   }
 
   if (!items) return <Loading />;
+  if (searching && devs) return <SearchView items={items} devs={devs} onClose={() => setSearching(false)} />;
   const own = items.length - nSamples;
-  const filtering = !!q.trim() || type !== 'all' || !!tag;
+  const filtering = type !== 'all' || !!tag;
 
   if (items.length === 0) {
     return (
@@ -158,28 +172,12 @@ export function Library() {
                 </button>,
               ])}
             </div>
-            <button
-              className={`search-toggle${searching ? ' on' : ''}`}
-              onClick={() => {
-                if (searching) setQ('');
-                setSearching((s) => !s);
-              }}
-            >
-              {searching ? '取消' : '搜索'}
+            <button className="search-toggle" onClick={() => setSearching(true)} title="搜索（/ 或 Ctrl+K）">
+              搜索
             </button>
           </div>
         }
       />
-      {searching && (
-        <div className="search">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="找一找：标题、作者、句子、标签" aria-label="搜索" autoFocus />
-          {q && (
-            <button className="btn text" onClick={() => setQ('')} aria-label="清除搜索">
-              清除
-            </button>
-          )}
-        </div>
-      )}
       <div className="chips scroll filter-row" role="toolbar" aria-label="类型">
         <button className={`chip${type === 'all' ? ' on' : ''}`} onClick={() => setType('all')}>
           全部 <span className="n">({items.length})</span>
@@ -235,7 +233,6 @@ export function Library() {
         </div>
       )}
 
-      {q.trim() && <div className="label result-head">穗 ({filtered.length})</div>}
       {filtered.length === 0 ? (
         <div className="empty small">
           <p className="meta-text">没找到这一穗。</p>
@@ -254,19 +251,6 @@ export function Library() {
           cellStyle={cellStyle}
           render={(it) => <ItemCard item={it} onOpen={openItem} q={q || undefined} />}
         />
-      )}
-      {q.trim() && (
-        <section className="branch-hits">
-          <div className="label result-head">新枝 ({branchHits.length})</div>
-          {branchHits.slice(0, 20).map((d) => (
-            <button key={d.id} className="trow branch-hit" onClick={() => go('branches')}>
-              <span className="tc tc-title">
-                <Hits text={d.idea.title.replace(/^《|》$/g, '')} q={q} />
-              </span>
-              <span className="tc tc-date num">{shortDate(d.createdAt)}</span>
-            </button>
-          ))}
-        </section>
       )}
       <TagCloud items={items} onPick={setTag} active={tag} />
     </section>
