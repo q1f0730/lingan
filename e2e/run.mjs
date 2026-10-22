@@ -409,6 +409,8 @@ async function run(name, viewport) {
   await pg.click('.nav-btn:has-text("设置")');
   await brand(pg, name);
   await pg.click('.phase-seg button:has-text("夜晚")');
+  // 换配色要经过 设置 → usePhase 的 effect → 写 dataset 两拍渲染，等它落定再读（之前是立即读，偶发读到旧值）
+  await pg.waitForFunction(() => document.documentElement.dataset.phase === 'night', null, { timeout: 3000 }).catch(() => {});
   const sky = await pg.evaluate(() => [document.documentElement.dataset.phase, document.documentElement.dataset.sky]);
   if (sky[0] !== 'night' || sky[1] !== 'dark') errs.push(`[${name}] night phase not applied: ${sky}`);
   await pg.screenshot({ path: `${out}/${name}-5-settings-dark.png`, fullPage: true });
@@ -667,6 +669,185 @@ async function daily() {
   if (d3 && ![...d3.old, ...d3.combo].every((id) => left.some((x) => x.id === id))) errs.push('[daily] card still points at cleared samples');
   if (outside) console.log(`daily: blocked ${outside} outside requests`);
   await ctx.close();
+}
+
+// v0.15 搬去 Obsidian：设置里导出 ZIP → 解析包核对仓库结构、YAML 头、图片、双链；示例默认不导、勾选后导；安卓桥（模拟）走分块 + 分享
+function readZipBuf(buf) {
+  const u = new Uint8Array(buf);
+  const v = new DataView(u.buffer, u.byteOffset, u.byteLength);
+  let e = -1;
+  for (let i = u.length - 22; i >= 0; i--) if (v.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('zip: no EOCD');
+  const n = v.getUint16(e + 10, true);
+  let p = v.getUint32(e + 16, true);
+  const dec = new TextDecoder();
+  const out = new Map();
+  for (let k = 0; k < n; k++) {
+    if (v.getUint32(p, true) !== 0x02014b50) throw new Error('zip: bad central dir');
+    const flags = v.getUint16(p + 8, true);
+    const size = v.getUint32(p + 20, true);
+    const nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true);
+    const lho = v.getUint32(p + 42, true);
+    const name = dec.decode(u.subarray(p + 46, p + 46 + nl));
+    if (!(flags & 0x800)) throw new Error('zip: name not flagged UTF-8 ' + name);
+    const st = lho + 30 + v.getUint16(lho + 26, true) + v.getUint16(lho + 28, true);
+    out.set(name, u.slice(st, st + size));
+    p += 46 + nl + xl + cl;
+  }
+  return out;
+}
+function vaultCheck(tag, files, { ownIds, sampleIds, imageId, includeSamples, devTitle }) {
+  const dec = new TextDecoder();
+  const text = (p) => dec.decode(files.get(p));
+  const paths = [...files.keys()];
+  if (!files.has('拾穗索引.md')) errs.push(`[${tag}] index note missing`);
+  if (!files.has('.obsidian/app.json')) errs.push(`[${tag}] .obsidian/app.json missing`);
+  const notes = paths.filter((p) => p.endsWith('.md'));
+  const ids = new Map();
+  for (const p of notes) {
+    const md = text(p);
+    if (!md.startsWith('---\n')) { errs.push(`[${tag}] ${p} has no front matter`); continue; }
+    const fm = md.slice(4, md.indexOf('\n---\n', 4));
+    const gid = fm.match(/^glean_id: (\d+)$/m);
+    const type = fm.match(/^类型: "(.+)"$/m)?.[1];
+    if (!type) errs.push(`[${tag}] ${p} no 类型`);
+    if (gid && type !== '新枝' && type !== '索引') {
+      ids.set(Number(gid[1]), p);
+      for (const k of ['类型', '作者', '年份', '标签', '来源', '记录时间']) if (!new RegExp(`^${k}:`, 'm').test(fm)) errs.push(`[${tag}] ${p} missing ${k}`);
+      if (!p.startsWith(type + '/')) errs.push(`[${tag}] ${p} not in its type folder ${type}`);
+      if (!/^记录时间: "\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d"$/m.test(fm)) errs.push(`[${tag}] ${p} bad 记录时间`);
+    }
+    // 每条双链 / 嵌入都落在真实文件上
+    for (const m of md.matchAll(/!?\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g)) if (!files.has(m[1]) && !files.has(m[1] + '.md')) errs.push(`[${tag}] ${p} dangling [[${m[1]}]]`);
+  }
+  const want = includeSamples ? [...ownIds, ...sampleIds] : ownIds;
+  const got = [...ids.keys()].sort((a, b) => a - b);
+  if (JSON.stringify(got) !== JSON.stringify([...want].sort((a, b) => a - b))) errs.push(`[${tag}] exported ears ${got} != ${[...want].sort((a, b) => a - b)}`);
+  const att = paths.find((p) => p.startsWith(`attachments/glean-${imageId}.`));
+  if (!att) errs.push(`[${tag}] image attachment missing`);
+  else {
+    const bytes = files.get(att);
+    const isImg = (bytes[0] === 0xff && bytes[1] === 0xd8) || (bytes[0] === 0x89 && bytes[1] === 0x50);
+    if (!isImg || bytes.length < 200) errs.push(`[${tag}] attachment is not an image (${bytes.length} bytes)`);
+    const imgNote = ids.get(imageId);
+    if (imgNote && !text(imgNote).includes(`![[${att}]]`)) errs.push(`[${tag}] image note does not embed ${att}`);
+  }
+  const branch = notes.find((p) => p.startsWith('新枝/') && text(p).includes(`标题: ${JSON.stringify(devTitle)}`));
+  if (!branch) errs.push(`[${tag}] branch note ${devTitle} missing`);
+  else {
+    const md = text(branch);
+    const src = [...md.slice(0, md.indexOf('\n---\n', 4)).matchAll(/^ {2}- "\[\[([^\]|]+)\|/gm)].map((m) => m[1]);
+    const ownNotes = ownIds.map((id) => ids.get(id)?.replace(/\.md$/, ''));
+    if (src.filter((x) => ownNotes.includes(x)).length < 2) errs.push(`[${tag}] branch 来源穗 should link 2 own ears: ${src}`);
+    if (!includeSamples && !md.includes('示例穗，未导出')) errs.push(`[${tag}] branch should name the unexported sample as text`);
+    if (!md.includes('## 因为这几穗')) errs.push(`[${tag}] branch has no source section`);
+  }
+  return { notes: notes.length, ears: ids.size };
+}
+async function obsidian() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[obsidian] pageerror ${e.message}`));
+  pg.on('dialog', (d) => d.accept());
+  await pg.goto(base);
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  for (const t of ['外婆家的缝纫机声 #声音', '车窗上的雾气画', '凌晨四点的早餐铺 #城市']) {
+    await pg.fill('.quick-input', t);
+    await pg.press('.quick-input', 'Enter');
+    await pg.waitForSelector(`.card:has-text("${t.replace(/ #.*/, '')}")`);
+  }
+  // 一张真图：走拾穗表单的选图
+  const png = await pg.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 240; c.height = 160;
+    const g = c.getContext('2d');
+    g.fillStyle = '#c9a227'; g.fillRect(0, 0, 240, 160);
+    g.fillStyle = '#5b3a1e'; g.fillRect(30, 40, 180, 80);
+    return c.toDataURL('image/png').split(',')[1];
+  });
+  await pg.click('.nav-add');
+  await pg.setInputFiles('.capture input[type=file]', { name: 'field.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+  await pg.waitForTimeout(400);
+  await pg.fill('.capture .field.big input', '麦田/傍晚: 一角');
+  await pg.click('.capture button[type=submit]');
+  await pg.waitForSelector('.card:has-text("麦田")');
+  const items = await dbItems(pg);
+  const own = items.filter((x) => !x.sample);
+  const samples = items.filter((x) => x.sample);
+  const imageItem = own.find((x) => x.type === 'image');
+  if (own.length !== 4 || !imageItem) errs.push(`[obsidian] setup expected 4 own incl. image, got ${JSON.stringify(own)}`);
+  // 一根混合来源的新枝（2 件自己的 + 1 件示例）直接写库
+  const DEV = '缝纫机与雾气';
+  await pg.evaluate(({ ids, title }) => new Promise((res, rej) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const tx = r.result.transaction('developments', 'readwrite');
+      tx.objectStore('developments').add({ itemIds: ids, jump: 0.6, source: 'offline', evidence: 'ok', createdAt: Date.now(), idea: { title, bridge: '同一种细小的重复', idea: '把缝纫机的节奏画在车窗雾气上', cliches: [], refs: [1, 2, 3], evidence: 'ok' } });
+      tx.oncomplete = () => { r.result.close(); res(null); };
+      tx.onerror = () => rej(tx.error);
+    };
+    r.onerror = () => rej(r.error);
+  }), { ids: [own[0].id, own[1].id, samples[0].id], title: DEV });
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('.obsidian-panel');
+  await brand(pg, 'obsidian');
+  if (await pg.locator('.obsidian-share').count()) errs.push('[obsidian] android buttons shown on web');
+  if (await pg.locator('.obsidian-samples').isChecked()) errs.push('[obsidian] samples should be unchecked by default');
+  await pg.locator('.obsidian-panel').scrollIntoViewIfNeeded();
+  await pg.screenshot({ path: `${out}/obsidian-settings.png` });
+  const t0 = Date.now();
+  const [dl] = await Promise.all([pg.waitForEvent('download'), pg.click('.obsidian-export')]);
+  const ms = Date.now() - t0;
+  if (!/^glean-obsidian-\d{4}-\d\d-\d\d\.zip$/.test(dl.suggestedFilename())) errs.push(`[obsidian] zip name ${dl.suggestedFilename()}`);
+  await pg.waitForSelector('.toast:has-text("已导出 4 穗")', { timeout: 4000 }).catch(() => errs.push('[obsidian] toast missing'));
+  const z1 = readZipBuf(fs.readFileSync(await dl.path()));
+  const ctxIds = { ownIds: own.map((x) => x.id), sampleIds: samples.map((x) => x.id), imageId: imageItem?.id, devTitle: DEV };
+  const r1 = vaultCheck('obsidian', z1, { ...ctxIds, includeSamples: false });
+  fs.writeFileSync(`${out}/obsidian-vault.zip`, fs.readFileSync(await dl.path()));
+  // 勾上「包含示例穗」：示例也在，且标着 示例: true
+  await pg.check('.obsidian-samples');
+  const [dl2] = await Promise.all([pg.waitForEvent('download'), pg.click('.obsidian-export')]);
+  const z2 = readZipBuf(fs.readFileSync(await dl2.path()));
+  const r2 = vaultCheck('obsidian+samples', z2, { ...ctxIds, includeSamples: true });
+  const sampleNote = [...z2.keys()].find((p) => p.endsWith('.md') && new TextDecoder().decode(z2.get(p)).includes('示例: true'));
+  if (!sampleNote) errs.push('[obsidian] sample notes not marked 示例: true');
+  console.log(`obsidian: ${r1.ears} ears / ${r1.notes} notes (samples on: ${r2.ears} / ${r2.notes}), ${z1.size} files, export ${ms}ms`);
+  await ctx.close();
+
+  // 安卓：注入模拟的 LinganFiles 原生桥，界面换成「分享 / 存到下载」，ZIP 分块交给原生层
+  const actx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  await actx.addInitScript(() => {
+    const log = { begin: [], chunks: [], share: [], save: [] };
+    window.__files = log;
+    window.LinganFiles = {
+      begin: (n) => (log.begin.push(n), log.chunks = [], true),
+      append: (c) => (log.chunks.push(c), true),
+      share: (mime, title) => (log.share.push([mime, title]), true),
+      saveDownloads: (mime) => (log.save.push(mime), '下载/' + log.begin[log.begin.length - 1]),
+    };
+  });
+  const ap = await actx.newPage();
+  ap.on('pageerror', (e) => errs.push(`[obsidian-android] pageerror ${e.message}`));
+  await ap.goto(base);
+  await ap.click('text=先放点示例');
+  await ap.waitForSelector('.card[data-sample="1"]');
+  await ap.fill('.quick-input', '安卓上拾的一穗');
+  await ap.press('.quick-input', 'Enter');
+  await ap.waitForSelector('.card:has-text("安卓上拾的一穗")');
+  await ap.click('.nav-btn:has-text("设置")');
+  if (await ap.locator('.obsidian-export').count()) errs.push('[obsidian-android] desktop button shown on android');
+  await ap.click('.obsidian-share');
+  await ap.waitForSelector('.toast:has-text("已导出 1 穗")', { timeout: 4000 }).catch(() => errs.push('[obsidian-android] share toast missing'));
+  const a1 = await ap.evaluate(() => window.__files);
+  if (a1.share.length !== 1 || a1.share[0][0] !== 'application/zip') errs.push(`[obsidian-android] share not called ${JSON.stringify(a1.share)}`);
+  const az = readZipBuf(Buffer.concat(a1.chunks.map((c) => Buffer.from(c, 'base64'))));
+  if (![...az.keys()].some((p) => p.startsWith('想法/') || p.startsWith('文案/') || p.startsWith('链接/'))) errs.push(`[obsidian-android] shared zip lacks the ear: ${[...az.keys()]}`);
+  await ap.click('.obsidian-downloads');
+  await ap.waitForSelector('.toast:has-text("下载/glean-obsidian-")', { timeout: 4000 }).catch(() => errs.push('[obsidian-android] downloads toast missing'));
+  if ((await ap.evaluate(() => window.__files.save.length)) !== 1) errs.push('[obsidian-android] saveDownloads not called');
+  await ap.screenshot({ path: `${out}/obsidian-android.png` });
+  await actx.close();
 }
 
 // v0.12 兼容旧数据：先在同源页面用 v0.11 的库结构（Dexie version 1 = IndexedDB 10）写入旧新枝，再打开 App
@@ -974,6 +1155,8 @@ try {
     await perf();
     throw Object.assign(new Error('perf only'), { only: true });
   }
+  await obsidian();
+  if (process.env.E2E_ONLY === 'obsidian') throw Object.assign(new Error('obsidian only'), { only: true });
   await legacy();
   await daily();
   if (process.env.E2E_ONLY === 'daily') throw Object.assign(new Error('daily only'), { only: true });
