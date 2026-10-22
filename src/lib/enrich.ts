@@ -1,5 +1,6 @@
 import { caption, embed } from './ai';
 import { db, normalizeTags } from './db';
+import { getOriginalDataUrl, itemHasImage } from './imagestore';
 import { itemText } from './similarity';
 import { aiReady, embedConfig, type Settings } from './settings';
 
@@ -8,9 +9,11 @@ export async function enrichItem(id: number, s: Settings, force = false): Promis
   const it = await db.items.get(id);
   if (!it) return null;
   const errs: string[] = [];
-  if (it.image && s.autoCaption && aiReady(s) && s.chat.visionModel && (force || !it.caption)) {
+  if (itemHasImage(it) && s.autoCaption && aiReady(s) && s.chat.visionModel && (force || !it.caption)) {
     try {
-      const cap = await caption(s, it.image);
+      const img = await getOriginalDataUrl(db, id);
+      if (!img) throw new Error('原图不见了');
+      const cap = await caption(s, img);
       const m = cap.match(/标签[:：]\s*(.+)$/m);
       const extraTags = m ? normalizeTags(m[1]) : [];
       const capText = cap.replace(/标签[:：].*$/m, '').trim();
