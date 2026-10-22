@@ -1,8 +1,28 @@
+import { memo } from 'react';
 import { formatWhen } from '../lib/quick';
+import { itemHasImage } from '../lib/imagestore';
+import { useThumbSrc } from '../lib/useImage';
 import { AsciiImage } from './AsciiDevelop';
 import { TYPE_LABEL, type Item } from '../lib/types';
 
-export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: Item) => void; compact?: boolean }) {
+/** 卡片上的图：只读缩略图，挂载时才建 objectURL，卸载即回收 */
+function CardImage({ item }: { item: Item }) {
+  const src = useThumbSrc(item);
+  const ratio = item.thumbW && item.thumbH ? item.thumbW / item.thumbH : undefined;
+  return (
+    <div className="card-imgwrap">
+      {src ? (
+        <AsciiImage className="card-img" id={item.id} src={src} alt={item.title} playKey={`img:${item.id}`} ratio={ratio} />
+      ) : (
+        <div className="card-img" style={{ aspectRatio: String(ratio || 4 / 3) }} aria-hidden />
+      )}
+    </div>
+  );
+}
+
+export const ItemCard = memo(ItemCardImpl);
+
+function ItemCardImpl({ item, onOpen, compact }: { item: Item; onOpen?: (i: Item) => void; compact?: boolean }) {
   return (
     <article
       className={`card card-${item.type}${compact ? ' compact' : ''}`}
@@ -16,11 +36,7 @@ export function ItemCard({ item, onOpen, compact }: { item: Item; onOpen?: (i: I
         }
       }}
     >
-      {item.image && (
-        <div className="card-imgwrap">
-          <AsciiImage className="card-img" id={item.id} src={item.image} alt={item.title} />
-        </div>
-      )}
+      {itemHasImage(item) && <CardImage item={item} />}
       <div className="card-meta">
         <span className="type-badge">{TYPE_LABEL[item.type]}</span>
         <time className="card-when" dateTime={new Date(item.createdAt).toISOString()}>
