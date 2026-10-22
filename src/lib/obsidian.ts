@@ -4,6 +4,7 @@
 //   拾穗索引.md                 索引页：按类型列出每一穗、全部新枝
 //   音乐/ 电影/ 图片/ 文案/ 链接/ 想法/   每穗一个 .md，YAML 头：类型、作者、年份、标签、来源、记录时间…
 //   新枝/                       每根新枝一个 .md，用 [[双链]] 指回它的来源穗
+//   套路墙.md                   v0.19 我的套路墙：在墙上的 / 划掉的（有条目才导出）
 //   attachments/                原图（glean-<id>.jpg 等），笔记里用 ![[attachments/…]] 嵌入
 //   .obsidian/app.json          让 Obsidian 以后新贴的图也放进 attachments/
 //
@@ -13,10 +14,12 @@ import { sourceIds } from './provenance';
 import { dataUrlToBlob } from './imagestore';
 import { makeZip, type ZipEntry } from './zip';
 import { TYPE_LABEL, TYPE_ORDER, type Development, type Item, type ItemType } from './types';
+import { sortWall, type Cliche } from './wall';
 
 export const INDEX_NOTE = '拾穗索引';
 export const BRANCH_DIR = '新枝';
 export const ATTACH_DIR = 'attachments';
+export const WALL_NOTE = '套路墙';
 const NAME_MAX = 60;
 
 export interface VaultImage {
@@ -32,6 +35,8 @@ export interface VaultInput {
   /** 是否带上示例穗（默认不带） */
   includeSamples?: boolean;
   now?: number;
+  /** v0.19 套路墙 */
+  cliches?: Cliche[];
 }
 
 export interface VaultStats {
@@ -39,6 +44,8 @@ export interface VaultStats {
   branches: number;
   images: number;
   skippedSamples: number;
+  /** v0.19 墙上（没划掉）的条数；没有墙时不出现 */
+  cliches?: number;
 }
 
 export interface Vault {
@@ -337,6 +344,33 @@ export function buildVault(input: VaultInput): Vault {
     idx.push('');
   }
   if (!items.length && !devs.length) idx.push('（穗仓是空的）', '');
+  // v0.19 套路墙：在墙上的（嫁接时全部禁用）+ 划掉的（误伤，不再禁用）
+  const wall = sortWall(input.cliches || []);
+  const wallOn = wall.filter((c) => !c.struck);
+  const wallOff = wall.filter((c) => c.struck);
+  if (wall.length) {
+    idx.push(`## 套路墙（${wallOn.length}）`, '', `- ${wikilink(WALL_NOTE, '套路墙')}：嫁接时禁用的套路、我讨厌的词和梗`, '');
+    const src = (c: Cliche) => (c.source === 'user' ? '我加的' : `模型列过 ${c.listed} 次`);
+    const w: string[] = [
+      frontmatter([
+        ['类型', '套路墙'],
+        ['导出时间', localStamp(now)],
+        ['在墙上', wallOn.length],
+        ['划掉的', wallOff.length],
+      ]),
+      '# 套路墙',
+      '',
+      '每次嫁接时模型列出的套路自动上墙，加上我自己讨厌的词和梗；以后的嫁接全部禁用。',
+      '',
+      `## 在墙上（${wallOn.length}）`,
+      '',
+      ...(wallOn.length ? wallOn.map((c) => `- ${bodyText(c.text)} · ${src(c)} · 拦下 ${c.blocked || 0} 次`) : ['（空）']),
+      '',
+    ];
+    if (wallOff.length) w.push(`## 划掉的（${wallOff.length}）`, '', ...wallOff.map((c) => `- ~~${bodyText(c.text)}~~ · ${src(c)}`), '');
+    w.push(`← ${wikilink(INDEX_NOTE, '拾穗索引')}`, '');
+    files.push({ path: `${WALL_NOTE}.md`, data: w.join('\n'), mtime: now });
+  }
   files.unshift({ path: `${INDEX_NOTE}.md`, data: idx.join('\n'), mtime: now });
 
   files.push({
@@ -345,7 +379,7 @@ export function buildVault(input: VaultInput): Vault {
     mtime: now,
   });
 
-  return { files, stats: { items: items.length, branches: devs.length, images: imageCount, skippedSamples } };
+  return { files, stats: { items: items.length, branches: devs.length, images: imageCount, skippedSamples, ...(wall.length ? { cliches: wallOn.length } : {}) } };
 }
 
 export function vaultZipName(now = Date.now()): string {
@@ -358,6 +392,7 @@ export async function exportObsidianZip(
     items: { toArray(): Promise<Item[]> };
     developments: { toArray(): Promise<Development[]> };
     images: { get(id: number): Promise<{ blob: Blob } | undefined> };
+    cliches?: { toArray(): Promise<Cliche[]> };
   },
   opts: { includeSamples?: boolean; now?: number } = {},
 ): Promise<{ zip: Uint8Array; stats: VaultStats }> {
@@ -378,6 +413,7 @@ export async function exportObsidianZip(
     }
     if (blob) images.set(it.id, { bytes: new Uint8Array(await blob.arrayBuffer()), mime: blob.type || 'image/jpeg' });
   }
-  const v = buildVault({ items, developments, images, includeSamples: opts.includeSamples, now });
+  const cliches = d.cliches ? await d.cliches.toArray() : [];
+  const v = buildVault({ items, developments, images, includeSamples: opts.includeSamples, now, cliches });
   return { zip: makeZip(v.files, now), stats: v.stats };
 }
