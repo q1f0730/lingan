@@ -19,7 +19,7 @@ export function emptyDraft(type: ItemType = 'idea'): Draft {
   return { type, title: '', creator: '', year: '', content: '', url: '', image: undefined, why: '', tags: [] };
 }
 
-export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Draft; onSave: (d: Draft) => void; onCancel: () => void; saving?: boolean }) {
+export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDelete }: { initial: Draft; onSave: (d: Draft) => void; onCancel: () => void; saving?: boolean; editing?: boolean; onDelete?: () => void }) {
   const [d, setD] = useState<Draft>(initial);
   const [tagText, setTagText] = useState(initial.tags.join(' '));
   const [err, setErr] = useState('');
@@ -93,8 +93,9 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
   }
 
   return (
-    <form className="capture" onSubmit={submit}>
-      <div className="chips" role="radiogroup" aria-label="类型">
+    <form className={`capture${editing ? ' editing' : ''}`} onSubmit={submit}>
+      <div className="field-label label">类型</div>
+      <div className="chips type-chips" role="radiogroup" aria-label="类型">
         {TYPE_ORDER.map((t) => (
           <button type="button" key={t} role="radio" aria-checked={d.type === t} className={`chip${d.type === t ? ' on' : ''}`} onClick={() => set('type', t)}>
             {TYPE_LABEL[t]}
@@ -102,7 +103,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
         ))}
       </div>
       <label className="field big">
-        <span className="label">此刻戳到你的是什么？</span>
+        <span className="label">{editing ? '标题' : '此刻戳到你的是什么'}</span>
         <input
           autoFocus
           value={d.title}
@@ -117,7 +118,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
       </label>
       {sniff && (
         <div className={`sniff${sniff === "fail" ? " warn" : ""}`}>
-          {sniff === 'busy' ? '◌ 正在读取链接…' : sniff === 'ok' ? '✓ 已从链接读取标题和封面' : '× 读不到这个网页的信息，已保存链接，其余请手填'}
+          {sniff === 'busy' ? '正在读取链接…' : sniff === 'ok' ? '已从链接读取标题和封面' : '读不到这个网页的信息，已保存链接，其余请手填'}
         </div>
       )}
       <div className="row2">
@@ -139,7 +140,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
           <span className="label">链接</span>
           <div className="inline">
             <input value={d.url || ''} onChange={(e) => set('url', e.target.value)} placeholder="https://" inputMode="url" />
-            <button type="button" className="btn ghost small" disabled={!d.url || sniff === 'busy'} onClick={() => recognize(/^https?:/i.test(d.url || '') ? d.url! : 'https://' + d.url)}>
+            <button type="button" className="btn text" disabled={!d.url || sniff === 'busy'} onClick={() => recognize(/^https?:/i.test(d.url || '') ? d.url! : 'https://' + d.url)}>
               识别
             </button>
           </div>
@@ -155,26 +156,31 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
           {d.image ? (
             <div className="img-preview">
               <img src={d.image} alt="预览" />
-              <button type="button" className="btn ghost small" onClick={() => set('image', undefined)}>
-                移除
-              </button>
+              <span className="img-acts">
+                <button type="button" className="btn text" onClick={() => fileRef.current?.click()} disabled={imgBusy}>
+                  换一张
+                </button>
+                <button type="button" className="btn text faint" onClick={() => set('image', undefined)}>
+                  移除
+                </button>
+              </span>
             </div>
           ) : (
-            <button type="button" className="btn ghost" onClick={() => fileRef.current?.click()} disabled={imgBusy}>
-              {imgBusy ? '处理中…' : '＋ 选择图片'}
+            <button type="button" className="btn text" onClick={() => fileRef.current?.click()} disabled={imgBusy}>
+              {imgBusy ? '处理中…' : '选一张图'}
             </button>
           )}
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
         </div>
       </div>
       {!more && (
-        <button type="button" className="btn ghost small more-toggle" onClick={() => setMore(true)}>
-          ＋ 为什么打动我 / 标签（可选）
+        <button type="button" className="btn text faint more-toggle" onClick={() => setMore(true)}>
+          为什么收 / 标签（可选）
         </button>
       )}
       {more && (<>
       <label className="field why">
-        <span className="label">为什么打动我 · 最重要的一句</span>
+        <span className="label">为什么收 · 最重要的一句</span>
         <input value={d.why || ''} onChange={(e) => set('why', e.target.value)} placeholder="AI 靠这句话认识你的口味" maxLength={200} />
       </label>
       <label className="field">
@@ -183,14 +189,19 @@ export function CaptureForm({ initial, onSave, onCancel, saving }: { initial: Dr
       </label>
       </>)}
       {err && <div className="error">{err}</div>}
-      <div className="actions">
-        <button type="button" className="btn ghost" onClick={onCancel}>
+      <div className="actions form-actions">
+        <button type="submit" className="btn primary" disabled={saving || imgBusy}>
+          {saving ? '保存中…' : editing ? '保存' : '拾'}
+        </button>
+        <button type="button" className="btn text faint" onClick={onCancel}>
           取消
         </button>
-        <button type="submit" className="btn primary" disabled={saving || imgBusy}>
-          {saving ? '保存中…' : '拾进穗仓'}
-        </button>
       </div>
+      {editing && onDelete && (
+        <button type="button" className="btn text faint danger delete-ear" onClick={onDelete}>
+          删除这一穗
+        </button>
+      )}
     </form>
   );
 }
