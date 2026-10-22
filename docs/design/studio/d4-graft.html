@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 桌面端嫁接结果「嫁接 (4)」(1440px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            'glean-black': '#000000',
+            'glean-white': '#FFFFFF',
+            'glean-grey': '#7E7E7E',
+            'glean-lightgrey': '#C6C6C6',
+            'glean-tile': '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    input::placeholder {
+      color: #7E7E7E;
+    }
+    .custom-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 16px;
+    }
+  </style>
+</head>
+<body class="bg-glean-white text-glean-black min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+
+  <!-- TOP NAVIGATION BAR (IDENTICAL TO D1) -->
+  <header class="w-full bg-glean-white border-b-0 sticky top-0 z-50">
+    <div class="w-full px-[40px] h-[64px] flex items-center justify-between">
+      <!-- Logo left -->
+      <a href="#" class="text-[20px] font-semibold tracking-tight text-glean-black hover:opacity-80 transition-opacity">
+        拾穗 · GLEAN
+      </a>
+
+      <!-- Centered tiny text nav -->
+      <nav class="flex items-center space-x-[28px] text-[12px] font-medium tracking-[0.06em]">
+        <a href="#" class="text-glean-grey hover:text-glean-black transition-colors">穗仓</a>
+        <a href="#" class="text-glean-black pb-[3px] border-b border-black">嫁接</a>
+        <a href="#" class="text-glean-grey hover:text-glean-black transition-colors">新枝</a>
+        <a href="#" class="text-glean-grey hover:text-glean-black transition-colors">口味</a>
+        <a href="#" class="text-glean-grey hover:text-glean-black transition-colors">设置</a>
+      </nav>
+
+      <!-- Right quick-capture input (320px wide with 1px black underline) -->
+      <div class="w-[320px] flex items-center pb-[4px] border-b border-black">
+        <input 
+          type="text" 
+          placeholder="随手拾一穗 →" 
+          class="w-full bg-transparent text-[12px] text-glean-black outline-none tracking-[0.04em]"
+        />
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN PAGE CONTENT (1440px DESKTOP CONTAINER WITH 40px SIDE MARGINS) -->
+  <main class="w-full px-[40px] pt-[140px] pb-[120px] flex-grow">
+    
+    <!-- HEADER SECTION -->
+    <div class="mb-[64px]">
+      <h1 class="text-[96px] md:text-[112px] font-semibold tracking-[-0.04em] leading-[1.0] text-glean-black mb-[16px]">
+        嫁接 (4)
+      </h1>
+      <p class="text-[12px] text-glean-grey tracking-[0.08em] font-normal">
+        本次嫁接 · 10/22 · 每次 3 根新枝
+      </p>
+    </div>
+
+    <!-- 12-COLUMN ARCHITECTURAL GRID -->
+    <div class="custom-grid w-full items-start">
+
+      <!-- LEFT COLUMN: 3 OF 12 COLUMNS (选中的穗) -->
+      <section class="col-span-3 pr-[16px]">
+        <!-- Column header -->
+        <div class="text-[12px] text-glean-grey font-medium tracking-[0.1em] mb-[20px]">
+          选中的穗
+        </div>
+
+        <!-- Vertical stack of 4 selected 穗 with 10px gaps -->
+        <div class="flex flex-col space-y-[10px]">
+          
+          <!-- (a) Photo tile 4:5: 凌晨四点的便利店 -->
+          <div class="relative w-full aspect-[4/5] overflow-hidden bg-glean-tile group">
+            <img 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxc1u3YZIcbxmfZMQ3WeabmXZYvnVaGIFqPL9Pe6Lon9ccHsZBLtdqw6J8F8RIaTqLf0mkGbhk5uCb9dTdNbAfq3NMTI7q8oFbOcdd7ZomKD83Od2M8JciZGz4Z0LbuBFNauH6znMA74UAo5bNTayMzfknZOH9UoWTOEcmyArVv03RsM7oMZU5bDL2e9fwiaduzdK8nfXgIG9bVyau_H6yCIWY4pZ7qH3ezRDBDpDM_rAP7llzVqSx4YUwZF0zEbKU9KarnSStmg4" 
+              alt="凌晨四点的便利店" 
+              class="w-full h-full object-cover block"
+            />
+            <!-- Dark bottom scrim for legibility -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent flex flex-col justify-end p-[16px]">
+              <div class="text-white text-[15px] font-medium leading-snug tracking-tight">
+                凌晨四点的便利店
+              </div>
+              <div class="text-white/70 text-[11px] tracking-[0.04em] mt-[3px]">
+                照片 · 10/03
+              </div>
+            </div>
+          </div>
+
+          <!-- (b) Light grey text tile 3:2: 把外卖小票上的备注收集成一本诗集 -->
+          <div class="w-full aspect-[3/2] bg-glean-tile p-[18px] flex flex-col justify-between">
+            <p class="text-[17px] font-normal leading-[1.4] text-glean-black tracking-tight">
+              “把外卖小票上的备注收集成一本诗集。”
+            </p>
+            <div class="text-[11px] text-glean-grey tracking-[0.04em]">
+              想法 · 10/05
+            </div>
+          </div>
+
+          <!-- (c) Photo tile 4:5: Avril 14th (Piano in morning light) -->
+          <div class="relative w-full aspect-[4/5] overflow-hidden bg-glean-tile group">
+            <img 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBT5jh7fXPB9C3BcoqZrnVPZ6XqSrjRCP0tJ7JdzpmNwEZZLV5HBZxq-fYFz7-Y78gmN_FBR_Zy8PXbH_n7xjetFE3SvyBLH1slvZWDmqlBdhrkDRXkrCPjVtt7wDgE9f0dvI6q7fHi5buA1tqJTZFwJjn2LJdSNwRzT6897eCgXJ6lb0DmOru-rXuQW4oMYEXRqc_D6_qxGhI2loAFZlJNTRn5bhET_klzqoSC6lbptvokfTY2vlwFKMxQX3MKFH04CeyBjQzkAKM" 
+              alt="Avril 14th" 
+              class="w-full h-full object-cover block"
+            />
+            <!-- Dark bottom scrim -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent flex flex-col justify-end p-[16px]">
+              <div class="text-white text-[15px] font-medium leading-snug tracking-tight">
+                Avril 14th
+              </div>
+              <div class="text-white/70 text-[11px] tracking-[0.04em] mt-[3px]">
+                歌 · Aphex Twin
+              </div>
+            </div>
+          </div>
+
+          <!-- (d) Light grey text tile 3:2: 收集图书馆借阅卡上陌生人的名字 -->
+          <div class="w-full aspect-[3/2] bg-glean-tile p-[18px] flex flex-col justify-between">
+            <p class="text-[17px] font-normal leading-[1.4] text-glean-black tracking-tight">
+              “收集图书馆借阅卡上陌生人的名字。”
+            </p>
+            <div class="text-[11px] text-glean-grey tracking-[0.04em]">
+              想法 · 09/08
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Button under the stack: tiny black square button '换一批穗' -->
+        <div class="mt-[20px]">
+          <button class="bg-glean-black text-white text-[12px] font-normal px-[16px] py-[8px] hover:bg-neutral-800 transition-colors tracking-[0.04em]">
+            换一批穗
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT AREA: 8 OF 12 COLUMNS, STARTING AT COLUMN 5 (新枝 (3)) -->
+      <section class="col-start-5 col-span-8">
+        <!-- Area header -->
+        <div class="text-[12px] text-glean-grey font-medium tracking-[0.1em] mb-[20px]">
+          新枝 (3)
+        </div>
+
+        <!-- THREE NEW BRANCHES SIDE BY SIDE as three equal columns separated only by white space (no borders, no cards, no backgrounds) -->
+        <div class="grid grid-cols-3 gap-x-[48px] items-start">
+          
+          <!-- BRANCH 01: 夜班歌单 -->
+          <article class="flex flex-col">
+            <!-- Huge thin numeral about 64px weight 300 -->
+            <span class="text-[64px] font-[300] leading-none text-glean-black tracking-tight mb-[24px]">
+              01
+            </span>
+            <!-- 24px semibold title -->
+            <h2 class="text-[24px] font-semibold text-glean-black tracking-tight leading-snug mb-[16px]">
+              夜班歌单
+            </h2>
+            <!-- 16px body paragraph -->
+            <p class="text-[16px] font-normal text-glean-black leading-[1.65] tracking-normal mb-[32px] text-justify">
+              把便利店凌晨的收银小票当成歌单：小票上每一件商品，对应一首不超过两分钟的钢琴小品。
+            </p>
+            <!-- Source label & items -->
+            <div class="mb-[36px]">
+              <div class="text-[11px] text-glean-grey tracking-[0.06em] mb-[6px]">
+                因为这几穗
+              </div>
+              <div class="text-[12px] text-glean-black leading-[1.6] font-normal tracking-normal">
+                凌晨四点的便利店 / Avril 14th / 把外卖小票上的备注收集成一本诗集
+              </div>
+            </div>
+            <!-- Text-only actions on one line spaced 24px -->
+            <div class="flex items-center space-x-[24px] text-[13px] tracking-[0.04em]">
+              <button class="text-glean-black font-medium hover:underline">留下</button>
+              <button class="text-glean-grey hover:text-glean-black transition-colors">再接一次</button>
+              <button class="text-glean-lightgrey hover:text-glean-grey transition-colors">不要</button>
+            </div>
+          </article>
+
+          <!-- BRANCH 02: 陌生人诗选 -->
+          <article class="flex flex-col">
+            <!-- Huge thin numeral about 64px weight 300 -->
+            <span class="text-[64px] font-[300] leading-none text-glean-black tracking-tight mb-[24px]">
+              02
+            </span>
+            <!-- 24px semibold title -->
+            <h2 class="text-[24px] font-semibold text-glean-black tracking-tight leading-snug mb-[16px]">
+              陌生人诗选
+            </h2>
+            <!-- 16px body paragraph -->
+            <p class="text-[16px] font-normal text-glean-black leading-[1.65] tracking-normal mb-[32px] text-justify">
+              用借阅卡上陌生人的名字给外卖备注署名，排成一本匿名诗集：每首诗只有一句，作者都是真实存在过的读者。
+            </p>
+            <!-- Source label & items -->
+            <div class="mb-[36px]">
+              <div class="text-[11px] text-glean-grey tracking-[0.06em] mb-[6px]">
+                因为这几穗
+              </div>
+              <div class="text-[12px] text-glean-black leading-[1.6] font-normal tracking-normal">
+                收集图书馆借阅卡上陌生人的名字 / 把外卖小票上的备注收集成一本诗集
+              </div>
+            </div>
+            <!-- Text-only actions on one line spaced 24px -->
+            <div class="flex items-center space-x-[24px] text-[13px] tracking-[0.04em]">
+              <button class="text-glean-black font-medium hover:underline">留下</button>
+              <button class="text-glean-grey hover:text-glean-black transition-colors">再接一次</button>
+              <button class="text-glean-lightgrey hover:text-glean-grey transition-colors">不要</button>
+            </div>
+          </article>
+
+          <!-- BRANCH 03: 四点钟 -->
+          <article class="flex flex-col">
+            <!-- Huge thin numeral about 64px weight 300 -->
+            <span class="text-[64px] font-[300] leading-none text-glean-black tracking-tight mb-[24px]">
+              03
+            </span>
+            <!-- 24px semibold title -->
+            <h2 class="text-[24px] font-semibold text-glean-black tracking-tight leading-snug mb-[16px]">
+              四点钟
+            </h2>
+            <!-- 16px body paragraph -->
+            <p class="text-[16px] font-normal text-glean-black leading-[1.65] tracking-normal mb-[32px] text-justify">
+              每周挑一天凌晨四点出门，录 30 秒环境声，再拍一张同一时刻的照片，攒满一年做成一张唱片的封套与曲目。
+            </p>
+            <!-- Source label & items -->
+            <div class="mb-[36px]">
+              <div class="text-[11px] text-glean-grey tracking-[0.06em] mb-[6px]">
+                因为这几穗
+              </div>
+              <div class="text-[12px] text-glean-black leading-[1.6] font-normal tracking-normal">
+                凌晨四点的便利店 / Avril 14th
+              </div>
+            </div>
+            <!-- Text-only actions on one line spaced 24px -->
+            <div class="flex items-center space-x-[24px] text-[13px] tracking-[0.04em]">
+              <button class="text-glean-black font-medium hover:underline">留下</button>
+              <button class="text-glean-grey hover:text-glean-black transition-colors">再接一次</button>
+              <button class="text-glean-lightgrey hover:text-glean-grey transition-colors">不要</button>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full px-[40px] py-[32px]">
+    <div class="text-[10px] text-glean-grey tracking-[0.1em] font-normal">
+      © 2026 Q1f730
+    </div>
+  </footer>
+
+</body>
+</html>
