@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-[#FFFFFF]" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 漫游</title>
+<!-- Typography: Inter for Latin / Numerals, Noto Sans SC for Chinese -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-container": "#1a1c1c",
+            "surface-tint": "#5e5e5e",
+            "on-surface-variant": "#4c4546",
+            "on-error": "#ffffff",
+            "tertiary": "#000000",
+            "on-tertiary-fixed": "#1a1c1c",
+            "on-secondary-container": "#646464",
+            "error": "#ba1a1a",
+            "surface-bright": "#f9f9f9",
+            "primary-fixed": "#e2e2e2",
+            "on-primary-fixed-variant": "#474747",
+            "tertiary-fixed": "#e3e2e2",
+            "inverse-surface": "#2f3131",
+            "outline-variant": "#cfc4c5",
+            "surface-container-low": "#f3f3f3",
+            "on-background": "#1a1c1c",
+            "surface": "#f9f9f9",
+            "secondary-fixed": "#e3e2e2",
+            "on-tertiary-container": "#838484",
+            "surface-container-highest": "#e2e2e2",
+            "surface-dim": "#dadada",
+            "primary-container": "#1b1b1b",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#848484",
+            "on-primary": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary-fixed-dim": "#c6c6c6",
+            "on-primary-fixed": "#1b1b1b",
+            "secondary": "#5e5e5e",
+            "inverse-on-surface": "#f1f1f1",
+            "surface-container-high": "#e8e8e8",
+            "surface-container": "#eeeeee",
+            "background": "#f9f9f9",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary": "#ffffff",
+            "secondary-fixed-dim": "#c7c6c6",
+            "outline": "#7e7576",
+            "primary": "#000000",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "surface-variant": "#e2e2e2",
+            "on-error-container": "#93000a",
+            "inverse-primary": "#c6c6c6",
+            "secondary-container": "#e3e2e2",
+            "on-surface": "#1a1c1c",
+            "on-secondary-fixed": "#1b1c1c",
+            "on-tertiary-fixed-variant": "#464747",
+            "on-secondary-fixed-variant": "#464747"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "none": "0px",
+            "sm": "0px",
+            "md": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "0px"
+          },
+          "spacing": {
+            "space-sm": "8px",
+            "space-xs": "4px",
+            "space-lg": "20px",
+            "margin": "10px",
+            "space-md": "10px",
+            "gutter": "10px",
+            "space-xl": "30px"
+          },
+          "fontFamily": {
+            "headline-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "sans-serif"],
+            "body-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-mono-caps": ["Inter", "Noto Sans SC", "sans-serif"]
+          },
+          "fontSize": {
+            "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+            "display-hero-zh": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "label-micro": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+            "display-hero": ["56px", { "lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+            "headline-sm": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-mono-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "500" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    ::selection {
+      background: #000000;
+      color: #FFFFFF;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-surface-container-lowest text-primary flex flex-col selection:bg-primary selection:text-surface-container-lowest">
+<!-- TOP NAVIGATION BAR (1440px desktop calibrated) -->
+<header class="w-full h-16 border-0 bg-surface-container-lowest sticky top-0 z-50">
+<div class="max-w-[1440px] mx-auto px-10 h-full flex items-center justify-between">
+<!-- Logo: 拾穗 · GLEAN -->
+<div class="flex items-center">
+<a class="text-headline-sm font-headline-sm font-semibold tracking-tight text-primary hover:opacity-80" href="#">
+          拾穗 · GLEAN
+        </a>
+</div>
+<!-- Center Nav Links: 穗仓 (Active), 嫁接, 新枝, 口味, 设置 -->
+<nav class="flex items-center space-x-9">
+<a class="text-[12px] font-medium tracking-wide text-primary underline underline-offset-4 decoration-1 decoration-primary" href="#">
+          穗仓
+        </a>
+<a class="text-[12px] font-medium tracking-wide text-[#7E7E7E] hover:text-primary transition-none" href="#">
+          嫁接
+        </a>
+<a class="text-[12px] font-medium tracking-wide text-[#7E7E7E] hover:text-primary transition-none" href="#">
+          新枝
+        </a>
+<a class="text-[12px] font-medium tracking-wide text-[#7E7E7E] hover:text-primary transition-none" href="#">
+          口味
+        </a>
+<a class="text-[12px] font-medium tracking-wide text-[#7E7E7E] hover:text-primary transition-none" href="#">
+          设置
+        </a>
+</nav>
+<!-- Right: 320px quick-capture input -->
+<div class="w-[320px] flex items-center">
+<div class="w-full relative">
+<input class="w-full bg-transparent border-0 border-b border-primary pb-1 pt-0 px-0 text-[12px] font-normal tracking-wide text-primary placeholder-[#7E7E7E] focus:outline-none focus:ring-0 focus:border-primary" placeholder="随手拾一穗 →" type="text"/>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN -->
+<main class="w-full px-10 flex-1 flex flex-col">
+<section class="pt-[140px] pb-10 flex items-end justify-between select-none">
+<h1 class="text-[96px] leading-none font-semibold tracking-[-0.04em] text-black">漫游 (20)</h1>
+<div class="flex items-center gap-3 text-[12px] tracking-wider pb-3"><span class="text-[#C6C6C6]">网格</span><span class="text-[#C6C6C6]">|</span><span class="text-[#C6C6C6]">列表</span><span class="text-[#C6C6C6]">|</span><span class="text-black font-medium underline underline-offset-[6px] decoration-1">漫游</span></div>
+</section>
+<section class="flex justify-between items-start pb-16">
+<div class="relative" style="width:1060px;height:1200px"><figure class="absolute" style="left:30px;top:20px;width:300px"><div class="overflow-hidden" style="height:200px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" class="w-full h-full object-cover" alt="轮渡上的雾"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">01 轮渡上的雾</figcaption></figure><figure class="absolute" style="left:540px;top:0px;width:320px"><div class="overflow-hidden" style="height:213px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1VNEkLPApRT2dQX1op0NyFcM1bZ3Wb1flttLMHNs6ZLxYDwcuq2hA5hv5m6C7Mrm0XXoFtc7YEP_ED7laokNuVr0YjdCyfGi5D8QwliBG7Yty90-4KUAiaJlKxmXe6c9j_D3LLWHjVLQI7eWSKv3KSVyODK4u98e85qmxxewgpFd8SecCh-nflYNXZ79Sfc-RDOs45VQFBNXgyd02zLaJmieCcwNLkydiFGzfyw6arSk1mhClS41HzL9PE" class="w-full h-full object-cover" alt="aqua"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">08 aqua</figcaption></figure><figure class="absolute" style="left:80px;top:300px;width:220px"><div class="overflow-hidden" style="height:275px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1VwRjAApBlw0cvYV3mNMlQzujVjYPgk5WXPj28qCa_Ru-cY-MzE_uAnqQYpqHML3FRqlygqu2YpLhZGoUdNrNY48FBokjg6of-mFxlEynN8YFHbEDlwLmaZ_CRqH4fJ745Jo6tFsclKRVmPXJs6zUDwvgpNzGB3Et7qxTGfIUE9yt34hm1nrteJ5CsRO_LsfMS_2RgB30QiKmDr4Sq9aXdTCBz4_BFJkBzMEPv_FZEI-1XlZowcKhx5TA" class="w-full h-full object-cover" alt="《完美的日子》"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">02 《完美的日子》</figcaption></figure><figure class="absolute" style="left:400px;top:290px;width:260px"><div class="overflow-hidden outline outline-1 outline-black outline-offset-4" style="height:347px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ" class="w-full h-full object-cover" alt="旧书店堆到天花板的书脊"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">07 旧书店堆到天花板的书脊</figcaption></figure><figure class="absolute" style="left:740px;top:330px;width:270px"><div class="overflow-hidden" style="height:169px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1Ujc58Kd3tmvLG_j_dwXSDedhzAbAAyw3VeFfe04RwrX94ZPkRh5rjG4_E1KJzwG05Rvta9HmCJlbmDkv3ockZqkWVOPDArg7ho_oxgMYQP7rjeCUW56S_HHuP_JMfBtYTGj-6u6H6oCk7ZdM_Cev0qCYSTbHQzXyNd-88ijf1RpWFH4wu9thnz0k4oE9ajkBK_4u8zGY5zGLA_qM9-KS6-X_WYD_YbJ8J4yOYlTBU0QkjEvyTLGY-USA" class="w-full h-full object-cover" alt="凌晨四点的便利店"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">11 凌晨四点的便利店</figcaption></figure><figure class="absolute" style="left:220px;top:700px;width:300px"><div class="overflow-hidden" style="height:225px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1Vi-LhX-l8RD3zrf3It4rRe_YiL3BWt5MnmjjywiB3w_5kVgyD0MEdV50ibhvu8lkDzfOT6JhH7AEmJ-Tyw565Mpw2MlbfuJG1YtErrlaPD5WmZqsM6Xw3iL_8GvfOUOUMpubG2-I6dK3oDbsSBh3GWqupWhQqb4NSg8sXCg617wEEp0c3XDas90mE052bZcXnJ97GO6BRBPprkvvM0sfXXH1IJ_PHrCWMTss8GxWSBBjx30DAjaDi8yQ" class="w-full h-full object-cover" alt="Re: Stacks"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">03 Re: Stacks</figcaption></figure><figure class="absolute" style="left:560px;top:700px;width:200px"><div class="overflow-hidden" style="height:267px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1VIxP_AS_m2Q0g_Ne7PJQkOCurfb6jpWH2Pprj9MF9rE2TC5uWot9QJSKNdmEDINXzXLQgu6YFk0hbb40-KG2BvUCvrHOtbxbjakFe-uV0jhUHXY5GNRGV3quQDwEtTrp1B_I1iE15ELfUiU8G-std6vy3aisMqbZZsW1xcme9aKGqvLvXAitWXdMaQUTB9mdOyEfoqI2XCCXulrwyp310CK10kRPl6AbNPDy-IJixWQ04od9zVPwsWFQ" class="w-full h-full object-cover" alt="《一一》"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">09 《一一》</figcaption></figure><figure class="absolute" style="left:800px;top:760px;width:240px"><div class="overflow-hidden" style="height:180px"><img src="https://lh3.googleusercontent.com/aida/AEtjO1WN0ylFqkm7jsSvUoJj9JM71JOKd8goswqJQ0vIlLTcRjjZTxU1z-AKqFy6IIeqywSJUBgWsHve2zE5dcisODtZqR7k0ZL0d_VHxqU8tepRymK3Xl0Rtwin1Sf2sGwXvzysmFAC37n0feg_ywFXzv31mDTE18yw6pzFwNU1gL4O6u3JB48Ihm4pHas3erP-swYil4tvGf2GcCs9rzx0qUVfq0i2SyfDd8dPP0HqxfehjhRakVbpdeNznLg" class="w-full h-full object-cover" alt="Avril 14th"/></div><figcaption class="mt-2 text-[10px] text-black tracking-[0.02em]">12 Avril 14th</figcaption></figure><div class="absolute bg-[#F3F3F3] p-4 flex flex-col justify-between" style="left:360px;top:50px;width:150px;height:150px"><p class="text-[13px] font-medium leading-snug text-black">“记忆中的形象一旦被词语固定住，就给抹掉了。”</p><p class="text-[10px] text-[#7E7E7E]">04 · 卡尔维诺《看不见的城市》</p></div><div class="absolute bg-[#F3F3F3] p-4 flex flex-col justify-between" style="left:900px;top:40px;width:150px;height:150px"><p class="text-[13px] font-medium leading-snug text-black">“给楼道里每一盏声控灯起一个名字”</p><p class="text-[10px] text-[#7E7E7E]">05 · 想法 · 10/17</p></div><div class="absolute bg-[#F3F3F3] p-4 flex flex-col justify-between" style="left:860px;top:560px;width:150px;height:150px"><p class="text-[13px] font-medium leading-snug text-black">“把外卖小票上的备注收集成一本诗集”</p><p class="text-[10px] text-[#7E7E7E]">10 · 想法 · 10/05</p></div><div class="absolute bg-[#F3F3F3] p-4 flex flex-col justify-between" style="left:20px;top:640px;width:150px;height:150px"><p class="text-[13px] font-medium leading-snug text-black">Radio Garden · 转动地球收听各地电台</p><p class="text-[10px] text-[#7E7E7E]">06 · radio.garden</p></div><div class="absolute bg-[#F3F3F3] p-4 flex flex-col justify-between" style="left:560px;top:1010px;width:150px;height:150px"><p class="text-[13px] font-medium leading-snug text-black">“在每张旧车票背面写下当天的天气”</p><p class="text-[10px] text-[#7E7E7E]">15 · 想法 · 09/23</p></div><div class="absolute bg-[#F3F3F3] p-4 flex flex-col justify-between" style="left:820px;top:990px;width:150px;height:150px"><p class="text-[13px] font-medium leading-snug text-black">“收集图书馆借阅卡上陌生人的名字”</p><p class="text-[10px] text-[#7E7E7E]">20 · 想法 · 09/08</p></div><div class="absolute bg-[#F3F3F3] p-4 flex flex-col justify-between" style="left:40px;top:860px;width:150px;height:150px"><p class="text-[13px] font-medium leading-snug text-black">《海街日记》</p><p class="text-[10px] text-[#7E7E7E]">19 · 是枝裕和 · 09/11</p></div>
+<p class="absolute left-0 bottom-0 text-[11px] text-[#7E7E7E]">拖动画布漫游 · 滚轮缩放 · 双击打开</p></div>
+<aside class="w-[230px] pt-1"><p class="text-[12px] text-[#7E7E7E] pb-3 border-b border-black mb-3">索引 (20)</p><ol class="text-[12px]"><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">01</span><span class="truncate">轮渡上的雾</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">02</span><span class="truncate">《完美的日子》</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">03</span><span class="truncate">Re: Stacks</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">04</span><span class="truncate">看不见的城市</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">05</span><span class="truncate">声控灯起名</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">06</span><span class="truncate">Radio Garden</span></li><li class="flex gap-3 py-[5px] text-black font-medium"><span class="w-5 tabular-nums text-black">07</span><span class="truncate">旧书店堆到天花板的书脊</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">08</span><span class="truncate">aqua</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">09</span><span class="truncate">《一一》</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">10</span><span class="truncate">外卖小票诗集</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">11</span><span class="truncate">凌晨四点的便利店</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">12</span><span class="truncate">Avril 14th</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">13</span><span class="truncate">《东京物语》</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">14</span><span class="truncate">观看先于言语</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">15</span><span class="truncate">车票天气</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">16</span><span class="truncate">Cabinet</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">17</span><span class="truncate">晾衣绳上的白床单</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">18</span><span class="truncate">Gymnopédie No.1</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">19</span><span class="truncate">《海街日记》</span></li><li class="flex gap-3 py-[5px] text-[#7E7E7E]"><span class="w-5 tabular-nums text-[#C6C6C6]">20</span><span class="truncate">借阅卡上的名字</span></li></ol></aside>
+</section>
+</main>
+<footer class="px-10 py-8 text-[10px] tracking-[0.1em] text-[#7E7E7E]">© 2026 Q1f730</footer>
+</body></html>
