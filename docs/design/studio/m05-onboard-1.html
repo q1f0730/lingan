@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN - Onboarding</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-error": "#ffffff",
+            "secondary": "#5e5e5e",
+            "primary": "#000000",
+            "on-primary-container": "#848484",
+            "primary-fixed": "#e2e2e2",
+            "secondary-container": "#e3e2e2",
+            "on-primary-fixed": "#1b1b1b",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#c6c6c6",
+            "tertiary-container": "#1a1c1c",
+            "secondary-fixed-dim": "#c7c6c6",
+            "on-surface": "#1a1c1c",
+            "error-container": "#ffdad6",
+            "on-surface-variant": "#4c4546",
+            "inverse-on-surface": "#f1f1f1",
+            "on-secondary-container": "#646464",
+            "surface": "#ffffff",
+            "surface-variant": "#e2e2e2",
+            "surface-container-lowest": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-container-low": "#f3f3f3",
+            "surface-bright": "#f9f9f9",
+            "surface-container": "#eeeeee",
+            "outline-variant": "#cfc4c5",
+            "inverse-surface": "#2f3131",
+            "primary-container": "#1b1b1b",
+            "surface-container-highest": "#e2e2e2",
+            "on-secondary-fixed": "#1b1c1c",
+            "error": "#ba1a1a",
+            "inverse-primary": "#c6c6c6",
+            "background": "#ffffff",
+            "tertiary": "#000000",
+            "surface-dim": "#dadada",
+            "surface-container-high": "#e8e8e8",
+            "on-tertiary-fixed-variant": "#464747",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "secondary-fixed": "#e3e2e2",
+            "on-primary-fixed-variant": "#474747",
+            "tertiary-fixed": "#e3e2e2",
+            "outline": "#7e7576",
+            "on-tertiary-fixed": "#1a1c1c",
+            "surface-tint": "#5e5e5e",
+            "on-secondary-fixed-variant": "#464747",
+            "on-background": "#1a1c1c",
+            "on-tertiary-container": "#838484"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "0px"
+          },
+          "spacing": {
+            "space-xl": "30px",
+            "margin": "10px",
+            "space-md": "10px",
+            "space-sm": "8px",
+            "space-lg": "20px",
+            "space-xs": "4px",
+            "gutter": "10px"
+          },
+          "fontFamily": {
+            "label-mono-caps": ["Inter", "monospace"],
+            "label-micro": ["Inter", "sans-serif"],
+            "headline-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "sans-serif"],
+            "display-hero": ["Inter", "sans-serif"]
+          },
+          "fontSize": {
+            "label-mono-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.12em", "fontWeight": "500" }],
+            "label-micro": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+            "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "display-hero-zh": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "display-hero": ["56px", { "lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-surface text-primary antialiased selection:bg-primary selection:text-white min-h-screen flex justify-center items-start">
+<!-- Mobile Viewport Frame (390px) -->
+<main class="w-[390px] min-h-screen bg-surface flex flex-col justify-between px-[16px] pt-4 pb-8 relative box-border">
+<!-- Top Area: Header & Main Narrative -->
+<div class="w-full flex flex-col">
+<!-- Top Bar: Semantic Shell Rule enforces suppression of bottom-nav on onboarding; TopAppBar adapted for linear first-run flow -->
+<header class="flex justify-between items-center w-full h-12">
+<h1 class="text-headline-sm font-headline-sm font-semibold tracking-tight text-primary">
+          拾穗 · GLEAN
+        </h1>
+<button class="text-body-sm font-body-sm text-outline hover:text-primary transition-none border-0 bg-transparent p-0" type="button">
+          跳过
+        </button>
+</header>
+<!-- Step Counter -->
+<div class="mt-8">
+<span class="text-[12px] leading-[14px] font-medium tracking-[0.2em] font-mono text-outline block">
+          01 / 03
+        </span>
+</div>
+<!-- Display Headline -->
+<h2 class="text-[56px] leading-none font-semibold tracking-[-0.04em] text-primary mt-3">
+        拾穗
+      </h2>
+<!-- Lead Sentence -->
+<p class="text-[24px] leading-tight font-semibold text-primary mt-4 tracking-[-0.02em]">
+        把零碎的喜欢拾起来，让它们自己长出新东西。
+      </p>
+<!-- 2-Column Photo Strip: 4:5 Aspect Ratio, 10px Gap -->
+<div class="grid grid-cols-2 gap-[10px] w-full mt-6">
+<div class="relative w-full aspect-[4/5] bg-surface-container overflow-hidden">
+<img alt="Ferry railing leading into dense atmospheric sea fog" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks"/>
+</div>
+<div class="relative w-full aspect-[4/5] bg-surface-container overflow-hidden">
+<img alt="Narrow used bookshop stacked floor to ceiling with vintage books" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WdLRBvzN58aVGQwGMfP_QR9J2UCBy6fFQmhIV_Gz0Be4vJGtYCSuQLRtMlTWaBzwqLm7oh0Xf47ayvuu9R_T1LwqrcZphTDJrYv7NgX61fLdMz2AHalnX6v6w9FM-sV-y3N653iska1IkYivgB9A8RmeNQAzjMGKhWMGVpk2GjPGZZraxOgv0-_ulpuURS-pg71lju0NmcBTH75sAOd3PPkYp9XlzunaXbgFuCcIzNbbPyBDvY1h3uNQ"/>
+</div>
+</div>
+<!-- Description Body -->
+<p class="text-body-lg font-body-lg text-outline leading-relaxed mt-6">
+        照片、电影、歌、摘抄、链接、一闪而过的想法，都叫一穗。拾够了，让它们互相嫁接。
+      </p>
+</div>
+<!-- Bottom Interactive Block -->
+<div class="w-full flex flex-col items-center mt-10">
+<!-- Action Primary Button -->
+<button class="w-full h-12 bg-primary text-on-primary text-[15px] font-medium tracking-wide flex items-center justify-center border-0 active:opacity-70 transition-none" type="button">
+        开始
+      </button>
+<!-- Three-dash Progress Indicator -->
+<div aria-label="Step indicator" class="flex items-center gap-[6px] mt-6">
+<span class="w-[28px] h-[1px] bg-primary block"></span>
+<span class="w-[28px] h-[1px] bg-[#DADADA] block"></span>
+<span class="w-[28px] h-[1px] bg-[#DADADA] block"></span>
+</div>
+<!-- Copyright Notice -->
+<div class="mt-4">
+<span class="text-[10px] leading-[12px] font-mono tracking-wider text-outline block">
+          © 2026 Q1f730
+        </span>
+</div>
+</div>
+</main>
+</body></html>
