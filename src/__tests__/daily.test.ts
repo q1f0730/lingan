@@ -155,7 +155,7 @@ describe('Dexie v3 → v4 迁移', () => {
     v3.close();
     const d = new LinganDB(name);
     await d.open();
-    expect(d.verno).toBe(5); // v0.17 起是 5（秒搜索引表）
+    expect(d.verno).toBe(6); // v0.18 起是 6（嫁接次数）
     expect(await d.items.count()).toBe(5);
     expect(await d.developments.count()).toBe(2);
     const got = await d.items.bulkGet(ids);
