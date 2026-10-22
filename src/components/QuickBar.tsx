@@ -6,6 +6,7 @@ import { clipMemory, parseQuick, readClipboard, shouldOffer, type QuickDraft } f
 import type { Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
 import { frameNo } from './ItemCard';
+import { onQuickFocus } from '../lib/desktop';
 
 /** Save a quick draft, then fill link metadata + AI enrichment in the background. */
 export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) => void): Promise<number> {
@@ -54,6 +55,20 @@ export function QuickBar() {
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<number | null>(null);
   const [why, setWhy] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let off = () => {};
+    let dead = false;
+    onQuickFocus(() => inputRef.current?.focus()).then((f) => {
+      if (dead) f();
+      else off = f;
+    });
+    return () => {
+      dead = true;
+      off();
+    };
+  }, []);
 
   async function save() {
     const d = parseQuick(text);
@@ -92,6 +107,7 @@ export function QuickBar() {
         </span>
         <input
           className="quick-input"
+          ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
