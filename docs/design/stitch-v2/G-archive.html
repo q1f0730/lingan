@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>灵感暗房 · 灵感库</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Noto+Serif+SC:wght@400;600;700&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline": "#8e706a",
+            "surface-tint": "#b42810",
+            "surface-dim": "#ded9d1",
+            "tertiary-container": "#706b67",
+            "on-primary-fixed": "#3f0400",
+            "on-tertiary-container": "#f4ede8",
+            "tertiary-fixed-dim": "#ccc5c1",
+            "tertiary": "#57534f",
+            "inverse-surface": "#32302a",
+            "on-background": "#1d1c16",
+            "inverse-primary": "#ffb4a5",
+            "surface-container": "#f2ede4",
+            "background": "#fef9f0",
+            "surface-container-low": "#f8f3ea",
+            "secondary-fixed": "#e8e1dd",
+            "inverse-on-surface": "#f5f0e7",
+            "on-secondary-fixed-variant": "#494643",
+            "error-container": "#ffdad6",
+            "secondary-container": "#e8e1dd",
+            "on-error-container": "#93000a",
+            "surface-container-lowest": "#ffffff",
+            "secondary-fixed-dim": "#cbc5c2",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#e7e2d9",
+            "on-tertiary": "#ffffff",
+            "on-surface": "#1d1c16",
+            "on-tertiary-fixed-variant": "#4a4643",
+            "on-surface-variant": "#5a413b",
+            "error": "#ba1a1a",
+            "primary-fixed-dim": "#ffb4a5",
+            "outline-variant": "#e3beb7",
+            "surface-variant": "#e7e2d9",
+            "on-primary": "#ffffff",
+            "surface-bright": "#fef9f0",
+            "tertiary-fixed": "#e8e1dc",
+            "secondary": "#615e5b",
+            "on-error": "#ffffff",
+            "surface-container-high": "#ece8df",
+            "primary": "#a51c05",
+            "primary-container": "#c8361d",
+            "on-tertiary-fixed": "#1e1b18",
+            "surface": "#fef9f0",
+            "on-secondary-fixed": "#1d1b19",
+            "on-primary-container": "#ffeae6",
+            "primary-fixed": "#ffdad3",
+            "on-secondary-container": "#676461",
+            "on-primary-fixed-variant": "#8f1200"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter-desktop": "1.5rem",
+            "margin-desktop": "2.5rem",
+            "space-xl": "2rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "margin": "1rem",
+            "gutter": "0.75rem",
+            "space-sm": "0.5rem"
+          },
+          "fontFamily": {
+            "label-code-sm": ["JetBrains Mono"],
+            "headline-xl": ["Noto Serif SC", "Noto Serif"],
+            "headline-sm": ["Noto Serif SC", "Noto Serif"],
+            "headline-lg-mobile": ["Noto Serif SC", "Noto Serif"],
+            "body-lg": ["\"Source Sans 3\""],
+            "headline-lg": ["Noto Serif SC", "Noto Serif"],
+            "headline-xl-mobile": ["Noto Serif SC", "Noto Serif"],
+            "body-sm": ["\"Source Sans 3\""],
+            "label-editorial": ["Noto Serif SC", "Noto Serif"],
+            "body-md": ["\"Source Sans 3\""],
+            "label-code-lg": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "label-code-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+            "headline-xl": ["36px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "headline-lg": ["26px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "headline-xl-mobile": ["28px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-editorial": ["11px", { "lineHeight": "14px", "letterSpacing": "0.15em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "label-code-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "0.04em", "fontWeight": "500" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    /* Hide scrollbars while preserving full scrollability */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Paper and stamp tactile effects */
+    .rubber-stamp-red {
+      color: #c8361d;
+      border: 1px dashed #c8361d;
+      transform: rotate(-3deg);
+      display: inline-block;
+    }
+    .rubber-stamp-dark {
+      color: #57534f;
+      border: 1px solid #706b67;
+      transform: rotate(1.5deg);
+      display: inline-block;
+    }
+    .sprocket-hole {
+      width: 6px;
+      height: 9px;
+      background-color: #fef9f0;
+      border: 1px solid #141210;
+    }
+    .ruled-paper {
+      background-image: repeating-linear-gradient(transparent, transparent 19px, #ded9d1 19px, #ded9d1 20px);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#141210] flex justify-center items-center min-h-screen p-0 sm:p-4 select-none antialiased">
+<!-- Physical Mobile Viewport 390x844 Frame -->
+<div class="relative w-[390px] h-[844px] bg-background text-on-surface overflow-hidden flex flex-col border border-outline-variant shadow-2xl">
+<!-- Top Brass Frame & Mechanical Rivet Plate (Catalogue Drawer Face) -->
+<header class="w-full bg-surface-container-high border-b border-outline-variant shrink-0 z-30">
+<!-- TopAppBar Shared Component Blueprint Execution -->
+<div class="bg-surface text-primary border-b border-outline-variant flex justify-between items-center w-full px-4 py-2.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="camera">camera</span>
+<span class="font-label-code-sm text-label-code-sm tracking-widest text-on-surface">灵感暗房 · ROLL #04 / 36 EXP</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-code-sm text-[10px] text-tertiary">Q1f730</span>
+<span class="material-symbols-outlined text-[10px] text-primary" data-icon="fiber_manual_record" style="font-variation-settings: 'FILL' 1;">fiber_manual_record</span>
+</div>
+</div>
+<!-- Brass Catalogue Drawer Plaque & Collision Trigger -->
+<div class="px-3.5 py-2.5 bg-gradient-to-b from-[#e7e0d3] to-[#ded4c3] border-b border-[#c8bea9] flex items-center justify-between relative">
+<!-- Screw rivets -->
+<span class="absolute top-1.5 left-2 w-1.5 h-1.5 rounded-full bg-[#826e4e] border border-[#52442d] inline-block"></span>
+<span class="absolute bottom-1.5 left-2 w-1.5 h-1.5 rounded-full bg-[#826e4e] border border-[#52442d] inline-block"></span>
+<div class="pl-3 flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-label-code-sm text-[10px] bg-[#9e7d47] text-white px-1 py-0.2 tracking-wider font-semibold">DRAWER № 04</span>
+<span class="font-headline-sm text-[13px] text-on-surface font-semibold tracking-wide">灵感底片卷</span>
+</div>
+<span class="font-label-code-sm text-[9px] text-[#6b5839] tracking-widest uppercase">LINGAN ARCHIVE · BRASS TRAY</span>
+</div>
+<!-- Prominent Safelight Red Collision Trigger Button -->
+<button class="bg-primary-container text-on-primary-container hover:bg-[#141210] hover:text-white transition-colors duration-150 border border-[#141210] px-2.5 py-1.5 flex items-center gap-1.5 shadow-none active:scale-95">
+<span class="material-symbols-outlined text-[14px]" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-label-code-sm text-[10px] tracking-wider font-bold">显影 COLLIDE</span>
+</button>
+<span class="absolute top-1.5 right-2 w-1.5 h-1.5 rounded-full bg-[#826e4e] border border-[#52442d] inline-block"></span>
+<span class="absolute bottom-1.5 right-2 w-1.5 h-1.5 rounded-full bg-[#826e4e] border border-[#52442d] inline-block"></span>
+</div>
+<!-- Quick-Capture Bar (Inserted Typewriter Index Slip Slot) -->
+<div class="px-3.5 py-2 bg-surface-container border-b border-outline-variant flex items-center gap-2">
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant flex items-center px-2.5 py-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary mr-2" data-icon="edit_note">edit_note</span>
+<input class="w-full bg-transparent p-0 border-0 focus:ring-0 font-body-sm text-[12px] text-on-surface placeholder:text-secondary placeholder:font-body-sm outline-none" placeholder="记一笔… 记录此刻触动的光影、台词或旋律" type="text"/>
+</div>
+<button class="bg-surface-container-highest border border-outline-variant w-8 h-8 flex items-center justify-center text-on-surface active:bg-primary-fixed">
+<span class="material-symbols-outlined text-[18px]" data-icon="photo_camera">photo_camera</span>
+</button>
+</div>
+<!-- Physical Manila Stepped Divider Tabs -->
+<div class="px-2 pt-2 bg-surface-container-low flex items-end gap-1 overflow-x-auto no-scrollbar border-b border-on-surface">
+<!-- Active Tab: All -->
+<div class="shrink-0 bg-background border-t-2 border-l border-r border-t-primary border-l-on-surface border-r-on-surface px-2.5 py-1 -mb-[1px] bg-[#fef9f0] z-10 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+<span class="font-headline-sm text-[11px] font-bold text-primary">全部 (36)</span>
+</div>
+<!-- Inactive Tab: Photo -->
+<div class="shrink-0 bg-surface-container-high border-t border-l border-r border-outline-variant px-2.5 py-1 text-secondary hover:text-on-surface cursor-pointer">
+<span class="font-label-editorial text-[11px]">图片 (12)</span>
+</div>
+<!-- Inactive Tab: Film -->
+<div class="shrink-0 bg-surface-container-high border-t border-l border-r border-outline-variant px-2.5 py-1 text-secondary hover:text-on-surface cursor-pointer">
+<span class="font-label-editorial text-[11px]">电影 (8)</span>
+</div>
+<!-- Inactive Tab: Music -->
+<div class="shrink-0 bg-surface-container-high border-t border-l border-r border-outline-variant px-2.5 py-1 text-secondary hover:text-on-surface cursor-pointer">
+<span class="font-label-editorial text-[11px]">音乐 (5)</span>
+</div>
+<!-- Inactive Tab: Quote -->
+<div class="shrink-0 bg-surface-container-high border-t border-l border-r border-outline-variant px-2.5 py-1 text-secondary hover:text-on-surface cursor-pointer">
+<span class="font-label-editorial text-[11px]">文案 (6)</span>
+</div>
+<!-- Inactive Tab: Idea -->
+<div class="shrink-0 bg-surface-container-high border-t border-l border-r border-outline-variant px-2.5 py-1 text-secondary hover:text-on-surface cursor-pointer">
+<span class="font-label-editorial text-[11px]">想法 (3)</span>
+</div>
+<!-- Inactive Tab: Link -->
+<div class="shrink-0 bg-surface-container-high border-t border-l border-r border-outline-variant px-2.5 py-1 text-secondary hover:text-on-surface cursor-pointer">
+<span class="font-label-editorial text-[11px]">链接 (2)</span>
+</div>
+</div>
+</header>
+<!-- Main Drawer Tray: Layered Index Catalogue Cards (Angle & Stack Tactility) -->
+<main class="flex-1 overflow-y-auto px-3.5 pt-3 pb-24 space-y-3.5 bg-[#eae4d8] relative">
+<!-- Depth Indication Layer: Physical Index Drawer Card Slats -->
+<!-- CARD 1: PHOTO / SILVER GELATIN PRINT -->
+<article class="bg-[#fcf7ee] border border-[#141210] relative shadow-[1px_2px_0px_#141210]">
+<!-- Top index band & frame stamp -->
+<div class="px-2.5 py-1 border-b border-[#141210] bg-[#efe8db] flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="bg-primary text-white font-label-code-sm text-[9px] px-1 py-0.2 tracking-wider">图片 PHOTO</span>
+<span class="font-label-code-sm text-[11px] font-bold text-on-surface">№ 024</span>
+</div>
+<!-- Rubber ink date stamp -->
+<div class="rubber-stamp-red px-1 text-[10px] font-label-code-sm font-bold">
+            今天 22:18
+          </div>
+</div>
+<div class="p-3">
+<div class="flex gap-2.5">
+<!-- Archival photo thumbnail with optical border -->
+<div class="w-24 h-24 shrink-0 bg-[#2A2724] border border-[#141210] p-1 flex flex-col justify-between">
+<img class="w-full h-18 object-cover grayscale contrast-125 border border-outline-variant" data-alt="A moody high-contrast monochrome contact print photograph of the Cologne Cathedral spires pierced by rain mist, captured on silver gelatin film with deep tactile grain, archival shadows, and sharp architectural silhouette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9RoP2pjrvekegGV2FdlRLxgfruyYrtCGMq_YGWw30WfvUBjuSYJfbAaeIm4xMZ3AS0zCbCdCFTM1fmcC08UKUP5XbfS1Z9-XrUZ9Ti1y93p3HKw3MISScNOZNZ57d_U8VRg6wr4SrBspuhCTwvRQGivopVx2BYnF9lrr1wdCYxkKgZGPr5guUVkPN_CsVuYxn3IZPJ9fa-Y5T_Aj64PkkOoD_q0Kfyb4VAh1ortzIpn8OSBLJUGu6xNIxGOcsymQ6-c4qMgcE-RE"/>
+<span class="font-label-code-sm text-[8px] text-[#e8e1dd] text-center tracking-tighter">AGFA APX 400</span>
+</div>
+<!-- Typewriter & Curatorial Notes -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h2 class="font-headline-sm text-[14px] text-on-surface font-bold leading-tight">雨天科隆大教堂尖顶阴影</h2>
+<p class="font-body-sm text-[11px] text-secondary mt-1 leading-snug">
+                  双塔刺破阴霾天际，银盐重度颗粒感在湿冷漫反射光线下呈现出雕塑般硬朗质感。光圈 f/5.6，1/125s。
+                </p>
+</div>
+<div class="flex items-center gap-1.5 mt-2">
+<span class="font-label-code-sm text-[9px] border border-outline-variant px-1 bg-surface-container">#阴影</span>
+<span class="font-label-code-sm text-[9px] border border-outline-variant px-1 bg-surface-container">#哥特建筑</span>
+<span class="font-label-code-sm text-[9px] text-primary ml-auto font-bold">[ 查看原版 ]</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- CARD 2: FILM / 王家卫 (Film Sprocket & Dialogue Excerpt) -->
+<article class="bg-[#24211e] text-[#f4efe6] border border-[#141210] relative shadow-[1px_2px_0px_#141210]">
+<!-- 35mm Film Sprocket Edge Header -->
+<div class="h-4 bg-[#141210] flex items-center justify-between px-2 border-b border-[#3d3834]">
+<div class="sprocket-hole"></div>
+<span class="font-label-code-sm text-[8px] text-[#9e7d47] tracking-widest">KODAK 5279 · EXP 18A</span>
+<div class="sprocket-hole"></div>
+<span class="font-label-code-sm text-[8px] text-[#9e7d47] tracking-widest">EASTMAN FILM</span>
+<div class="sprocket-hole"></div>
+</div>
+<div class="p-3">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-1.5">
+<span class="bg-[#9e7d47] text-[#141210] font-label-code-sm text-[9px] px-1 py-0.2 font-bold">电影 FILM</span>
+<span class="font-label-code-sm text-[11px] text-[#ffdad3] font-bold">№ 025</span>
+</div>
+<!-- Sepia Rubber Stamp -->
+<span class="rubber-stamp-dark text-[10px] font-label-code-sm px-1 text-[#ded9d1] border-[#ded9d1]">
+              10/19 STAMP
+            </span>
+</div>
+<h2 class="font-headline-sm text-[14px] text-[#fef9f0] font-bold mt-2">《花样年华》(2000) · 王家卫</h2>
+<div class="mt-2 pl-2.5 border-l-2 border-primary bg-[#2e2a26] py-1.5 pr-2">
+<p class="font-headline-sm text-[12px] italic text-[#f4efe6] leading-relaxed">
+              “如果多一张船票，你会不会跟我一起走？”
+            </p>
+</div>
+<div class="mt-2.5 flex items-center justify-between text-[#cbc5c2]">
+<span class="font-label-code-sm text-[10px]">摄影：杜可风 / 李屏宾 · 狭窄走廊旗袍拖沓声</span>
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="theaters">theaters</span>
+</div>
+</div>
+<!-- 35mm Film Sprocket Edge Footer -->
+<div class="h-4 bg-[#141210] flex items-center justify-between px-2 border-t border-[#3d3834]">
+<div class="sprocket-hole"></div>
+<div class="sprocket-hole"></div>
+<div class="sprocket-hole"></div>
+<div class="sprocket-hole"></div>
+</div>
+</article>
+<!-- CARD 3: MUSIC / RADIOHEAD (Vinyl Groove & Acoustic Note) -->
+<article class="bg-[#f5f0e6] border border-[#141210] relative shadow-[1px_2px_0px_#141210]">
+<div class="px-2.5 py-1 border-b border-[#141210] bg-[#e8e0d1] flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="bg-[#57534f] text-white font-label-code-sm text-[9px] px-1 py-0.2">音乐 VINYL</span>
+<span class="font-label-code-sm text-[11px] font-bold text-on-surface">№ 026</span>
+</div>
+<div class="rubber-stamp-dark px-1 text-[10px] font-label-code-sm">
+            10/17 REC
+          </div>
+</div>
+<div class="p-3">
+<div class="flex items-start justify-between">
+<div>
+<h2 class="font-headline-sm text-[14px] text-on-surface font-bold">Subterranean Homesick Alien</h2>
+<p class="font-label-code-sm text-[11px] text-tertiary">Radiohead · OK Computer (1997)</p>
+</div>
+<!-- Vinyl Groove Icon Badge -->
+<div class="w-8 h-8 rounded-full border border-on-surface bg-[#141210] flex items-center justify-center text-surface shrink-0">
+<span class="material-symbols-outlined text-[18px] text-[#e8e1dc]" data-icon="album">album</span>
+</div>
+</div>
+<p class="font-body-sm text-[11px] text-secondary mt-2 leading-relaxed">
+            33⅓ RPM。电颤琴与反向混响吉他交织出的失重孤独感。适合深夜独步穿过空无一人的天桥时聆听。
+          </p>
+<div class="mt-2 pt-2 border-t border-dashed border-[#ded9d1] flex items-center justify-between font-label-code-sm text-[10px] text-tertiary">
+<span>[ 04:27 / 44.1kHz FLAC ]</span>
+<span class="text-primary font-bold">COLLIDE WITH №024 ✦</span>
+</div>
+</div>
+</article>
+<!-- CARD 4: QUOTE / ROLAND BARTHES (Typewriter Paper Card) -->
+<article class="bg-[#fffdf9] border border-[#141210] relative shadow-[1px_2px_0px_#141210]">
+<div class="px-2.5 py-1 border-b border-[#141210] bg-[#f0e9dc] flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="bg-[#141210] text-white font-label-code-sm text-[9px] px-1 py-0.2">文案 QUOTE</span>
+<span class="font-label-code-sm text-[11px] font-bold text-on-surface">№ 027</span>
+</div>
+<div class="rubber-stamp-red px-1 text-[10px] font-label-code-sm font-bold">
+            10/12 ARCHIVE
+          </div>
+</div>
+<div class="p-3">
+<div class="flex items-center gap-2 mb-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="format_quote">format_quote</span>
+<h2 class="font-headline-sm text-[13px] text-on-surface font-bold">罗兰·巴特《明室》随笔</h2>
+</div>
+<div class="bg-surface-container-low p-2 border-l-2 border-[#141210]">
+<p class="font-headline-sm text-[12px] text-on-surface leading-relaxed">
+              “我们在暗处洗印回忆，直到它在红光下显影清晰。刺点（Punctum）正是那穿透画面、击中我的不可言喻之物。”
+            </p>
+</div>
+<div class="mt-2 flex items-center justify-between font-label-code-sm text-[10px] text-secondary">
+<span>来源：法国原版摄影美学批注</span>
+<span class="text-on-surface font-semibold">[ 摘录批注 ]</span>
+</div>
+</div>
+</article>
+<!-- CARD 5: IDEA / SHORT FILM STORYBOARD (Ruled Notebook Line Texture) -->
+<article class="bg-[#faf5eb] border border-[#141210] relative ruled-paper shadow-[1px_2px_0px_#141210]">
+<div class="px-2.5 py-1 border-b border-[#141210] bg-[#e6dfcf] flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="bg-[#a51c05] text-white font-label-code-sm text-[9px] px-1 py-0.2">想法 IDEA</span>
+<span class="font-label-code-sm text-[11px] font-bold text-on-surface">№ 028</span>
+</div>
+<div class="rubber-stamp-dark px-1 text-[10px] font-label-code-sm font-bold">
+            10/08 STAMP
+          </div>
+</div>
+<div class="p-3">
+<h2 class="font-headline-sm text-[13px] text-on-surface font-bold">雨夜霓虹招牌与湿沥青反光短片分镜</h2>
+<p class="font-body-sm text-[11px] text-on-surface-variant mt-1.5 leading-5 font-medium">
+            镜头从地面湿漉沥青水洼倒影开始，慢速横摇。红绿霓虹灯晕染在雨水涟漪中，随后一双皮鞋踩碎倒影。低机位手持摄影，快门速度 1/48。
+          </p>
+<div class="mt-2.5 flex items-center gap-2">
+<span class="font-label-code-sm text-[9px] bg-[#e7e2d9] border border-[#57534f] px-1 text-on-surface">#分镜</span>
+<span class="font-label-code-sm text-[9px] bg-[#e7e2d9] border border-[#57534f] px-1 text-on-surface">#夜戏</span>
+<span class="font-label-code-sm text-[9px] text-primary ml-auto font-bold">[ 展开手稿 + ]</span>
+</div>
+</div>
+</article>
+<!-- CARD 6: LINK / MOMA ARCHIVE (Paperclip & Monospace URL) -->
+<article class="bg-[#f3ede2] border border-[#141210] relative shadow-[1px_2px_0px_#141210]">
+<!-- Paperclip physical simulation illusion in top-right -->
+<div class="absolute -top-2 right-4 w-3.5 h-7 border-2 border-[#706b67] rounded-full z-20 pointer-events-none bg-transparent"></div>
+<div class="px-2.5 py-1 border-b border-[#141210] bg-[#e1d9ca] flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="bg-[#615e5b] text-white font-label-code-sm text-[9px] px-1 py-0.2">链接 LINK</span>
+<span class="font-label-code-sm text-[11px] font-bold text-on-surface">№ 029</span>
+</div>
+<div class="rubber-stamp-dark px-1 text-[10px] font-label-code-sm">
+            09/28 MOMA
+          </div>
+</div>
+<div class="p-3">
+<h2 class="font-headline-sm text-[13px] text-on-surface font-bold leading-tight">
+            MoMA 馆藏：1970年代日本激进摄影选集 (Provoke Era)
+          </h2>
+<p class="font-body-sm text-[11px] text-secondary mt-1">
+            中平卓马、森山大道与高梨丰的粗颗粒、晃动、失焦（Are, Bure, Boke）反美学美学宣言文献库。
+          </p>
+<div class="mt-2 bg-[#2a2724] text-[#f4efe6] px-2 py-1 flex items-center justify-between border border-[#141210]">
+<span class="font-label-code-sm text-[10px] truncate max-w-[240px]">moma.org/collection/provoke</span>
+<span class="material-symbols-outlined text-[14px] text-primary-fixed" data-icon="open_in_new">open_in_new</span>
+</div>
+</div>
+</article>
+<!-- Bottom Drawer Pull Stopper / End of Index Margin -->
+<div class="py-4 text-center">
+<span class="font-label-code-sm text-[10px] text-secondary tracking-widest">— END OF DRAWER № 04 · PULL FOR ARCHIVE ROLL #03 —</span>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Executed strictly from Shared Components JSON Blueprint) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-2 max-w-md mx-auto bg-surface-container-low border-t border-outline-variant shadow-none">
+<!-- Tab 1: 灵感库 (Active Destination) -->
+<a class="flex flex-col items-center justify-center text-primary border-b-2 border-primary pb-1 pt-1 transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="auto_stories" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="font-label-code-sm text-label-code-sm mt-0.5">灵感库</span>
+</a>
+<!-- Tab 2: 显影 -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+<span class="font-label-code-sm text-label-code-sm mt-0.5">显影</span>
+</a>
+<!-- Tab 3: 记录 -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="add_box">add_box</span>
+<span class="font-label-code-sm text-label-code-sm mt-0.5">记录</span>
+</a>
+<!-- Tab 4: 画像 -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="person_pin">person_pin</span>
+<span class="font-label-code-sm text-label-code-sm mt-0.5">画像</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a class="flex flex-col items-center justify-center text-secondary pt-1 hover:text-primary transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="font-label-code-sm text-label-code-sm mt-0.5">设置</span>
+</a>
+</nav>
+</div>
+</body></html>
