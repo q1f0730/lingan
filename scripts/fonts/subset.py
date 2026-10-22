@@ -29,11 +29,18 @@ SLICE = 380
 CJK = re.compile(r'[\u3400-\u9fff]')
 
 
+# Content files (the ~80-entry sample pool): only their *rare* characters go into the always-loaded first slice;
+# the common ones stay in the on-demand slices so the first slice doesn't balloon. (v0.14)
+CONTENT = {'samples.ts'}
+
+
 def ui_chars():
     s = set()
+    common = set((sets / 'common.txt').read_text(encoding='utf-8'))
     for p in (root / 'src').rglob('*'):
         if p.suffix in ('.ts', '.tsx', '.css') and '__tests__' not in p.parts:
-            s.update(CJK.findall(p.read_text(encoding='utf-8')))
+            found = CJK.findall(p.read_text(encoding='utf-8'))
+            s.update(c for c in found if p.name not in CONTENT or c not in common)
     return s
 
 
