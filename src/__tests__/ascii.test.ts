@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emptyFrames, gridFor, lumToChar, lumToText, RAMP, revealedCount, revealTimes, rng } from '../lib/ascii';
+import { inkOnPaper, sproutFrames, gridFor, lumToChar, lumToText, RAMP, revealedCount, revealTimes, rng } from '../lib/ascii';
 
 describe('ascii 显影', () => {
   it('亮度映射到字符：暗=密，亮=空白，越界安全', () => {
@@ -38,12 +38,27 @@ describe('ascii 显影', () => {
     const s = lumToText([0, 1, 1, 0], 2, 2);
     expect(s).toBe('@ \n @');
   });
-  it('空状态帧：逐帧增多，最后一帧显出实心', () => {
-    const f = emptyFrames();
+  it('空状态：麦子自下而上长出来，最后一帧是完整的穗', () => {
+    const f = sproutFrames();
     expect(f.length).toBe(9);
     expect(f[0].split('\n').length).toBe(7);
-    expect(f[8]).toContain('@');
+    expect(f[0].trim()).toBe('');
+    expect(f[8]).toContain('#');
     const ink = (s: string) => s.replace(/[\s\n]/g, '').length;
-    expect(ink(f[8])).toBeGreaterThan(ink(f[0]) - 1);
+    for (let i = 1; i < f.length; i++) expect(ink(f[i])).toBeGreaterThanOrEqual(ink(f[i - 1]));
+  });
+  it('图片字符用自身颜色，但在纸上读得出', () => {
+    const parse = (s: string) => s.match(/\d+/g)!.map(Number);
+    const lum = ([r, g, b]: number[]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    // 浅纸：白色被压暗到 0.58 以下；本来就暗的颜色不变
+    expect(lum(parse(inkOnPaper(255, 255, 255, false)))).toBeLessThanOrEqual(0.59);
+    expect(inkOnPaper(40, 80, 30, false)).toBe('rgb(40,80,30)');
+    // 色相保留：红仍然是红
+    const [r, g, b] = parse(inkOnPaper(255, 120, 100, false));
+    expect(r).toBeGreaterThan(g);
+    expect(r).toBeGreaterThan(b);
+    // 深纸：黑色被提亮
+    expect(lum(parse(inkOnPaper(0, 0, 0, true)))).toBeGreaterThan(0.4);
+    expect(lum(parse(inkOnPaper(20, 30, 40, true)))).toBeGreaterThanOrEqual(0.44);
   });
 });
