@@ -1,15 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AsciiLoader, SeedBurst } from '../components/AsciiDevelop';
-import { IdeaCard } from '../components/IdeaCard';
+import { GraftGrowing } from '../components/GraftGrowing';
+import { GraftTrail, IdeaCard } from '../components/IdeaCard';
 import { ItemCard } from '../components/ItemCard';
 import { PageTitle } from '../components/PageTitle';
 import { db } from '../lib/db';
-import { developOffline, developWithAI } from '../lib/develop';
+import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
 import { aiReady } from '../lib/settings';
 import { daySeed, mulberry32, pickItems } from '../lib/similarity';
 import { useApp } from '../lib/store';
-import type { Development, Idea, Item } from '../lib/types';
+import type { Development, GraftBatch, Item } from '../lib/types';
 
 const TASTE_KEY = 'lingan.taste.ai';
 
@@ -18,12 +19,14 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const { settings, toast, openItem, go } = useApp();
   const items = useLiveQuery(() => db.items.toArray(), []);
   const nBranches = useLiveQuery(() => db.developments.count(), []);
-  const [count, setCount] = useState<2 | 3>(2);
+  const [count, setCount] = useState<2 | 3 | 4>(2);
   const [jump, setJump] = useState(0.8);
   const [theme, setTheme] = useState('');
   const [picked, setPicked] = useState<Item[] | null>(null);
-  const [result, setResult] = useState<{ idea: Idea; source: 'ai' | 'offline'; id?: number } | null>(null);
+  const [result, setResult] = useState<{ run: GraftResult; ids: number[]; batch: GraftBatch; names: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<GraftProgress | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const [burst, setBurst] = useState(0);
 
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
@@ -44,7 +47,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
           const extra = pickItems([sel[0], ...rest], 2, jump).filter((x) => x !== sel[0]);
           full = [sel[0], ...(extra.length ? [extra[0]] : [])];
         }
-        setCount(full.length >= 3 ? 3 : 2);
+        setCount(full.length >= 4 ? 4 : full.length >= 3 ? 3 : 2);
         setPicked(full);
         setResult(null);
       }
@@ -81,25 +84,58 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   }
 
   async function develop(sel: Item[]) {
-    if (sel.length < 2) return;
+    if (sel.length < 2 || busy) return;
     setBusy(true);
     setResult(null);
-    let idea: Idea;
-    let source: 'ai' | 'offline' = 'offline';
+    setProgress({ stage: 'map' });
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    const th = theme.trim() || undefined;
+    const quiet = document.documentElement.dataset.motion === 'off';
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, quiet ? 0 : ms));
+    let run: GraftResult;
     try {
       if (aiReady(settings)) {
-        idea = await developWithAI(settings, sel, { theme: theme.trim() || undefined, taste: localStorage.getItem(TASTE_KEY) || undefined });
-        source = 'ai';
+        run = await graftWithAI(settings, sel, { theme: th, taste: localStorage.getItem(TASTE_KEY) || undefined, signal: ctrl.signal, onProgress: setProgress });
+        if (run.partial) toast('第二步没跑完，用第一步的种子直接收拢了三根', 'err');
       } else {
-        idea = developOffline(sel, { theme: theme.trim() || undefined });
+        // 离线也走四步；给麦子一点点长的时间（减少动态效果时不等）
+        run = graftOffline(sel, { theme: th });
+        await wait(700);
+        if (ctrl.signal.aborted) throw new Error('已取消');
+        setProgress({ stage: 'defix' });
+        await wait(700);
       }
     } catch (e) {
+      if (ctrl.signal.aborted) {
+        setBusy(false);
+        setProgress(null);
+        toast('停下了，这次没有嫁接');
+        return;
+      }
       toast((e instanceof Error ? e.message : String(e)) + '，已改用离线嫁接', 'err');
-      idea = developOffline(sel, { theme: theme.trim() || undefined });
+      run = graftOffline(sel, { theme: th });
     }
-    const dev: Development = { itemIds: sel.map((s) => s.id!), theme: theme.trim() || undefined, jump, idea, source, createdAt: Date.now() };
-    const id = await db.developments.add(dev);
-    setResult({ idea, source, id });
+    if (ctrl.signal.aborted) {
+      setBusy(false);
+      setProgress(null);
+      return;
+    }
+    const now = Date.now();
+    const bid = `g${now.toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+    const size = run.branches.length;
+    const devs: Development[] = run.branches.map((idea, index) => ({
+      itemIds: sel.map((s) => s.id!),
+      theme: th,
+      jump,
+      idea,
+      source: run.source,
+      batch: index === 0 ? { id: bid, index, size, tensions: run.tensions, seeds: run.seeds, pattern: run.pattern, calls: run.calls } : { id: bid, index, size },
+      createdAt: now + index,
+    }));
+    const ids = (await db.developments.bulkAdd(devs, { allKeys: true })) as number[];
+    setResult({ run, ids, batch: devs[0].batch!, names: sel.map((s) => s.title) });
+    setProgress(null);
     setBusy(false);
   }
 
@@ -153,8 +189,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
             <div className="ctrl">
               <span className="label">几穗</span>
               <div className="seg">
-                {[2, 3].map((n) => (
-                  <button key={n} className={count === n ? 'on' : ''} onClick={() => setCount(n as 2 | 3)} disabled={n === 3 && items.length < 3}>
+                {[2, 3, 4].map((n) => (
+                  <button key={n} className={count === n ? 'on' : ''} onClick={() => setCount(n as 2 | 3 | 4)} disabled={items.length < n}>
                     {n}
                   </button>
                 ))}
@@ -204,13 +240,13 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                   }}
                   disabled={busy || shown.length < 2}
                 >
-                  {busy ? '正在嫁接…' : '嫁接'}
+                  {busy ? '正在嫁接…' : '嫁接 · 长三根'}
                 </button>
                 {burst > 0 && <SeedBurst key={burst} />}
               </div>
               {!aiReady(settings) && (
                 <p className="hint">
-                  还没配置 AI，现在是离线嫁接（用斜策略给出结构提示）。
+                  还没配置 AI，现在是离线嫁接：同样四步、同样三根，用八种变形法和斜策略给出结构提示。
                   <button className="link" onClick={() => go('settings')}>
                     去设置免费模型
                   </button>
@@ -219,15 +255,38 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
             </div>
           )}
 
-          {busy && <AsciiLoader text="新枝正在长" />}
-          {result && <IdeaCard key={result.id} animate idea={result.idea} source={result.source} devId={result.id} />}
+          {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} onCancel={() => abortRef.current?.abort()} />}
           {result && (
-            <p className="after-note">
-              已留在新枝里{nBranches ? `（共 ${nBranches} 根）` : ''}。
-              <button className="link" onClick={() => go('branches')}>
-                去看看
-              </button>
-            </p>
+            <>
+              <div className="three-head">
+                <span className="kicker">一次三枝 · {result.run.source === 'ai' ? 'AI 嫁接' : '离线嫁接'}</span>
+                <span className="three-sub">三根新枝，变形法各不相同。挑一根，今天就动手。</span>
+              </div>
+              <div className="three">
+                {result.run.branches.map((b, i) => (
+                  <IdeaCard key={result.ids[i]} animate idea={b} source={result.run.source} devId={result.ids[i]} index={i} hideCliches />
+                ))}
+              </div>
+              {result.run.branches[0]?.cliches.length > 0 && (
+                <div className="paper cliches-row">
+                  <span className="label">剪掉的旧枝（三根都避开的套路）</span>
+                  <div className="tags">
+                    {result.run.branches[0].cliches.map((c, i) => (
+                      <s key={i} className="tag">
+                        {c}
+                      </s>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <GraftTrail batch={result.batch} names={result.names} />
+              <p className="after-note">
+                三根都留在新枝里{nBranches ? `（共 ${nBranches} 根）` : ''}。
+                <button className="link" onClick={() => go('branches')}>
+                  去看看
+                </button>
+              </p>
+            </>
           )}
         </>
       )}
