@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾穗 · GLEAN — 新枝列表 (1440px)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        background: '#FFFFFF',
+        foreground: '#000000',
+        secondary: '#7E7E7E',
+        faint: '#C6C6C6',
+        tile: '#F3F3F3',
+      },
+      fontFamily: {
+        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+      }
+    }
+  }
+}
+</script>
+<style>
+  body {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+  }
+  * {
+    border-radius: 0px !important;
+    box-shadow: none !important;
+  }
+</style>
+</head>
+<body class="bg-background text-foreground min-h-screen flex flex-col justify-between selection:bg-black selection:text-white">
+
+  <!-- TOP NAV BAR (1440px Desktop, Sticky Top) -->
+  <header class="sticky top-0 z-40 bg-white border-b border-transparent w-full">
+    <div class="w-full px-[40px] h-[72px] flex items-center justify-between">
+      <!-- Logo -->
+      <div class="text-[20px] font-semibold tracking-tight text-black flex items-center select-none">
+        拾穗 · GLEAN
+      </div>
+
+      <!-- Center Text Navigation -->
+      <nav class="flex items-center space-x-[36px] text-[13px] tracking-[0.08em]">
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors duration-150">穗仓</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors duration-150">嫁接</a>
+        <a href="#" class="text-black font-medium relative pb-[3px] border-b border-black">新枝</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors duration-150">口味</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors duration-150">设置</a>
+      </nav>
+
+      <!-- Right Quick Capture -->
+      <div class="w-[320px]">
+        <div class="relative w-full border-b border-black pb-[6px]">
+          <input 
+            type="text" 
+            placeholder="随手拾一穗 →" 
+            class="w-full bg-transparent text-[13px] tracking-[0.04em] text-black placeholder-[#7E7E7E] focus:outline-none"
+          />
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER (Full 1440 desktop width between 40px margins) -->
+  <main class="w-full px-[40px] pt-[140px] pb-[160px] flex-1">
+    
+    <!-- HEADLINE SECTION -->
+    <div class="flex items-baseline justify-between mb-[64px]">
+      <h1 class="text-[108px] font-semibold leading-none tracking-[-0.04em] text-black select-none">
+        新枝 (12)
+      </h1>
+
+      <!-- Tiny Toggle Right -->
+      <div class="flex items-center space-x-[24px] text-[12px] tracking-[0.06em]">
+        <span class="text-black font-medium border-b border-black pb-[2px] cursor-pointer">全部</span>
+        <span class="text-[#7E7E7E] hover:text-black transition-colors cursor-pointer">留下的 (5)</span>
+        <span class="text-[#7E7E7E] hover:text-black transition-colors cursor-pointer">不要的</span>
+      </div>
+    </div>
+
+    <!-- BUNDLES LIST -->
+    <div class="space-y-[88px]">
+
+      <!-- BUNDLE 4 -->
+      <section class="w-full">
+        <!-- Label row + rule -->
+        <div class="w-full">
+          <div class="flex items-baseline justify-between text-[12px] tracking-[0.08em] pb-[10px]">
+            <span class="text-[#7E7E7E]">第 4 捆 · 10月22日 · 来自 4 穗</span>
+            <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors">再接一次 →</a>
+          </div>
+          <div class="w-full h-[1px] bg-black"></div>
+        </div>
+
+        <!-- 3 Branches side by side -->
+        <div class="grid grid-cols-3 gap-[40px] pt-[28px]">
+          <!-- Branch 01 -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">01</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">夜班歌单</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">把便利店凌晨的收银小票当成歌单：小票上每一件商品，对应一首不超过两分钟的钢琴小品。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] tracking-[0.06em] text-[#7E7E7E]">未处理</span>
+            </div>
+          </div>
+
+          <!-- Branch 02 -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">02</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">陌生人诗选</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">用借阅卡上陌生人的名字给外卖备注署名，排成一本匿名诗集：每首诗只有一句，作者都是真实存在过的读者。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] tracking-[0.06em] text-[#7E7E7E]">未处理</span>
+            </div>
+          </div>
+
+          <!-- Branch 03 -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">03</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">四点钟</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">每周挑一天凌晨四点出门，录 30 秒环境声，再拍一张同一时刻的照片，攒满一年做成一张唱片的封套与曲目。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] tracking-[0.06em] text-[#7E7E7E]">未处理</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BUNDLE 3 -->
+      <section class="w-full">
+        <!-- Label row + rule -->
+        <div class="w-full">
+          <div class="flex items-baseline justify-between text-[12px] tracking-[0.08em] pb-[10px]">
+            <span class="text-[#7E7E7E]">第 3 捆 · 10月20日 · 来自 3 穗</span>
+            <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors">再接一次 →</a>
+          </div>
+          <div class="w-full h-[1px] bg-black"></div>
+        </div>
+
+        <!-- 3 Branches side by side -->
+        <div class="grid grid-cols-3 gap-[40px] pt-[28px]">
+          <!-- Branch 01 (已留下) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">01</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">楼道电台</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">给每盏声控灯配一个频道，夜里有人经过，只播这一层住户拾过的歌。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] font-medium tracking-[0.06em] text-black">已留下</span>
+            </div>
+          </div>
+
+          <!-- Branch 02 (已留下) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">02</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">渡轮上的平山</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">用《完美的日子》的节奏拍一组通勤短片：每天同一时刻、同一段栏杆，只拍清晨的雾。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] font-medium tracking-[0.06em] text-black">已留下</span>
+            </div>
+          </div>
+
+          <!-- Branch 03 (未处理) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">03</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">说出来就消失的书店</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">一本只有照片的城市笔记：每拍一家旧书店，就删掉一句描述它的话。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] tracking-[0.06em] text-[#7E7E7E]">未处理</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BUNDLE 2 -->
+      <section class="w-full">
+        <!-- Label row + rule -->
+        <div class="w-full">
+          <div class="flex items-baseline justify-between text-[12px] tracking-[0.08em] pb-[10px]">
+            <span class="text-[#7E7E7E]">第 2 捆 · 10月15日 · 来自 3 穗</span>
+            <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors">再接一次 →</a>
+          </div>
+          <div class="w-full h-[1px] bg-black"></div>
+        </div>
+
+        <!-- 3 Branches side by side -->
+        <div class="grid grid-cols-3 gap-[40px] pt-[28px]">
+          <!-- Branch 01 (已留下) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">01</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">车票天气志</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">按日期将每张旧车票背面写下的当日天气归档，连缀成一本不可预测的城市气候编年史。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] font-medium tracking-[0.06em] text-black">已留下</span>
+            </div>
+          </div>
+
+          <!-- Branch 02 (未处理) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">02</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">海街的晾衣绳</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">借是枝裕和镜头里海风吹起白床单的质感，记录老小区午后不同楼层间挂出的织物。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] tracking-[0.06em] text-[#7E7E7E]">未处理</span>
+            </div>
+          </div>
+
+          <!-- Branch 03 (不要了 - light grey title and state) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-[#C6C6C6] mb-[16px]">03</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-[#C6C6C6] mb-[10px]">一张唱片的书店</h2>
+              <p class="text-[14px] leading-relaxed text-[#C6C6C6] line-clamp-1">整间店只放同一张钢琴黑胶唱片循环播放，读者进店只能选一本书安静读完。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] tracking-[0.06em] text-[#C6C6C6]">不要了</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BUNDLE 1 -->
+      <section class="w-full">
+        <!-- Label row + rule -->
+        <div class="w-full">
+          <div class="flex items-baseline justify-between text-[12px] tracking-[0.08em] pb-[10px]">
+            <span class="text-[#7E7E7E]">第 1 捆 · 10月08日 · 来自 4 穗</span>
+            <a href="#" class="text-[#7E7E7E] hover:text-black transition-colors">再接一次 →</a>
+          </div>
+          <div class="w-full h-[1px] bg-black"></div>
+        </div>
+
+        <!-- 3 Branches side by side -->
+        <div class="grid grid-cols-3 gap-[40px] pt-[28px]">
+          <!-- Branch 01 (已留下) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">01</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">声音地图</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">连接世界各地收音机电台与深夜走道声响，标记那些不被注意的清冷音频片段。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] font-medium tracking-[0.06em] text-black">已留下</span>
+            </div>
+          </div>
+
+          <!-- Branch 02 (已留下) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-black mb-[16px]">02</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-black mb-[10px]">窗的索引</h2>
+              <p class="text-[14px] leading-relaxed text-[#7E7E7E] line-clamp-1">整理所有夜晚亮着灯的方窗与雨天车窗上的水痕，给每个窗口附上一句台北公寓里的对话。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] font-medium tracking-[0.06em] text-black">已留下</span>
+            </div>
+          </div>
+
+          <!-- Branch 03 (不要了 - light grey title and state) -->
+          <div class="flex flex-col justify-between pr-[16px]">
+            <div>
+              <div class="text-[40px] font-light leading-none tracking-tight text-[#C6C6C6] mb-[16px]">03</div>
+              <h2 class="text-[20px] font-semibold leading-snug text-[#C6C6C6] mb-[10px]">便利店诗会</h2>
+              <p class="text-[14px] leading-relaxed text-[#C6C6C6] line-clamp-1">凌晨四点把货架上的日用品条形码拼成十四行诗，拍下给正在理货的店员看。</p>
+            </div>
+            <div class="pt-[28px]">
+              <span class="text-[12px] tracking-[0.06em] text-[#C6C6C6]">不要了</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full px-[40px] pb-[40px]">
+    <div class="text-[10px] tracking-[0.1em] text-[#7E7E7E]">
+      © 2026 Q1f730
+    </div>
+  </footer>
+
+</body>
+</html>
