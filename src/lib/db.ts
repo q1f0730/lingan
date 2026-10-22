@@ -1,12 +1,15 @@
 import Dexie, { type Table } from 'dexie';
+import { DAILY_COMBO, pickDaily, pickStillValid, todayKey } from './daily';
 import { migrateDevelopment } from './provenance';
+import { drawSamples, sampleTimes } from './samples';
 import { blobToDataUrl, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
-import type { Development, Item, StoredImage } from './types';
+import type { DailyPick, Development, Item, StoredImage } from './types';
 
 export class LinganDB extends Dexie {
   items!: Table<Item, number>;
   developments!: Table<Development, number>;
   images!: Table<StoredImage, number>;
+  daily!: Table<DailyPick, string>;
   constructor(name = 'lingan') {
     super(name);
     this.version(1).stores({
@@ -28,6 +31,27 @@ export class LinganDB extends Dexie {
     this.version(3)
       .stores({ items: '++id, type, createdAt, updatedAt, *tags, thumbTodo', images: '&itemId' })
       .upgrade((tx) => migrateInlineImages(tx.table('items'), tx.table('images')).then(() => undefined));
+    // v0.14 每日一穗 + 示例池：items 加 sample（一键清示例）与 touchedAt（很久没碰）索引；daily 表存每天定下来的内容。
+    // 迁移：按已有新枝补上每件穗最后一次被拿去嫁接的时间（不动正文）
+    this.version(4)
+      .stores({ items: '++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt', daily: '&day' })
+      .upgrade(async (tx) => {
+        const last = new Map<number, number>();
+        await tx
+          .table('developments')
+          .toCollection()
+          .each((d: Development) => {
+            for (const id of d.itemIds || []) if (id > 0 && (last.get(id) || 0) < d.createdAt) last.set(id, d.createdAt);
+          });
+        if (!last.size) return;
+        await tx
+          .table('items')
+          .toCollection()
+          .modify((it: Item) => {
+            const t = it.id != null ? last.get(it.id) : undefined;
+            if (t && t > (it.touchedAt || 0)) it.touchedAt = t;
+          });
+      });
   }
 }
 
@@ -80,7 +104,7 @@ export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>
 /** 改一件穗。patch 里带了 image 键：字符串 = 换原图，空 = 删图；不带 = 不动图 */
 export async function updateItem(id: number, patch: Partial<Item>, d: LinganDB = db) {
   const { image, ...rest } = patch;
-  const p: Partial<Item> = { ...rest, updatedAt: Date.now() };
+  const p: Partial<Item> = { ...rest, updatedAt: Date.now(), touchedAt: Date.now() };
   if (patch.tags) p.tags = normalizeTags(patch.tags);
   delete p.thumb;
   delete p.thumbTodo;
@@ -100,12 +124,70 @@ export async function deleteItem(id: number, d: LinganDB = db) {
   });
 }
 
-/** 清空所有穗、新枝、原图 */
+/** 清空所有穗、新枝、原图（连同每日一穗记录） */
 export async function clearAll(d: LinganDB = db) {
-  await d.transaction('rw', [d.items, d.developments, d.images], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.images, d.daily], async () => {
     await d.items.clear();
     await d.developments.clear();
     await d.images.clear();
+    await d.daily.clear();
+  });
+}
+
+/** v0.14 碰了一下（打开详情 / 拿去嫁接）：只记 touchedAt，不算「修改」 */
+export async function touchItems(ids: number[], d: LinganDB = db, now = Date.now()) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return;
+  await d.transaction('rw', d.items, async () => {
+    for (const id of list) await d.items.update(id, { touchedAt: now });
+  });
+}
+
+/** v0.14 从示例池随机抽 n 条放进穗仓（打上 sample 标记），返回新 id */
+export async function addSamples(n = 10, d: LinganDB = db, rand: () => number = Math.random, now = Date.now()): Promise<number[]> {
+  const picks = drawSamples(n, rand);
+  const times = sampleTimes(picks.length, now, rand);
+  const rows: Item[] = picks.map((s, i) => ({ ...s, tags: normalizeTags(s.tags), sample: 1, createdAt: times[i], updatedAt: times[i] }));
+  return (await d.items.bulkAdd(rows, { allKeys: true })) as number[];
+}
+
+/** v0.14 一键清掉示例：只删示例穗（和只由示例长出的新枝），用户自己的穗与新枝一条不动 */
+export async function clearSamples(d: LinganDB = db): Promise<{ items: number; developments: number }> {
+  let items = 0;
+  let developments = 0;
+  await d.transaction('rw', [d.items, d.developments, d.images, d.daily], async () => {
+    const ids = (await d.items.where('sample').equals(1).primaryKeys()) as number[];
+    if (!ids.length) return;
+    const gone = new Set(ids);
+    await d.items.bulkDelete(ids);
+    await d.images.bulkDelete(ids);
+    items = ids.length;
+    const devIds = (await d.developments.toArray()).filter((dv) => dv.itemIds.length > 0 && dv.itemIds.every((x) => gone.has(x) || x < 0)).map((dv) => dv.id!);
+    await d.developments.bulkDelete(devIds);
+    developments = devIds.length;
+    // 今天的每日一穗里有示例的话，下次打开重算
+    await d.daily.clear();
+  });
+  return { items, developments };
+}
+
+/** v0.14 今天的每日一穗：有就读（同一天不变），没有 / 里面的穗被删了就按日期种子算一次并存下。穗不够 4 件返回 null */
+export async function ensureDaily(items: Item[], d: LinganDB = db, now = Date.now()): Promise<DailyPick | null> {
+  if (items.filter((i) => i.id != null).length < DAILY_COMBO) return null;
+  const day = todayKey(now);
+  return d.transaction('rw', [d.daily, d.developments], async () => {
+    const rec = await d.daily.get(day);
+    if (rec && pickStillValid(rec, items)) return rec;
+    const devs = (await d.developments.toArray()).map((x) => ({ itemIds: x.itemIds, createdAt: x.createdAt }));
+    const prev = await d.daily.where('day').below(day).last();
+    const p = pickDaily({ items, devs, day, prev });
+    if (!p) return null;
+    const out: DailyPick = { ...p, createdAt: now };
+    await d.daily.put(out);
+    // 只留最近 60 天的记录
+    const cutoff = todayKey(now - 60 * 86400000);
+    await d.daily.where('day').below(cutoff).delete();
+    return out;
   });
 }
 
