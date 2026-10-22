@@ -59,6 +59,8 @@ export interface Idea {
   evidence?: 'ok' | 'weak' | 'legacy';
   /** 证据不足时的原因（给人看） */
   evidenceNote?: string;
+  /** v0.19 套路墙：这一根原本撞了墙。replaced = 用别的种子重长了这一根；scrubbed = 把撞到的字删掉了 */
+  wall?: 'replaced' | 'scrubbed';
 }
 
 /** 四步嫁接的中间产物：张力与种子（可展开看） */
