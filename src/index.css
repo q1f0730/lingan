@@ -601,3 +601,6 @@ html[data-sky='dark'] .mention.on, html[data-sky='dark'] .sprig.on { background:
 .hrow-weak { margin: 0 0 0 8px; }
 .idea-weak { outline: 1px dashed var(--gold-2); outline-offset: -7px; }
 .idea-weak .idea-title { color: var(--ink-soft); }
+
+/* v0.13 虚拟滚动：格子绝对定位，容器不再用 CSS 多列（视觉不变） */
+.masonry.virtual { columns: auto; }
