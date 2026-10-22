@@ -8,13 +8,15 @@ const STEPS = [
 ];
 
 /** 嫁接中（m24 / d12）：四步纯文字，细体序号；完成的标「完成」，进行中的标「进行中」，没有进度条、没有百分比 */
-export function GraftGrowing({ stage, retry, recheck, onCancel }: { stage: GraftStage; retry?: RetryInfo | null; recheck?: boolean; onCancel?: () => void }) {
+export function GraftGrowing({ stage, retry, recheck, wall, onCancel }: { stage: GraftStage; retry?: RetryInfo | null; recheck?: boolean; wall?: boolean; onCancel?: () => void }) {
   const still = (typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) || document.documentElement.dataset.motion === 'off';
   const active = stage === 'map' ? [0, 1] : stage === 'defix' ? [2, 3] : [];
   const doneUpTo = stage === 'map' ? -1 : stage === 'defix' ? 1 : 3;
   const line = retry
     ? `${retry.reason}，${Math.max(1, Math.ceil(retry.waitMs / 1000))} 秒后再试一次`
-    : recheck
+    : wall
+      ? '有一根撞了套路墙，让它重写一次'
+      : recheck
       ? '有一根说不清从哪几穗长出来，让它重长一次'
       : stage === 'map'
         ? '这几穗正在互相认识'
@@ -22,7 +24,7 @@ export function GraftGrowing({ stage, retry, recheck, onCancel }: { stage: Graft
           ? '三根新枝正在长'
           : '长好了';
   return (
-    <section className="growing" role="status" aria-live="polite" data-stage={stage} data-still={still ? '1' : '0'} data-recheck={recheck ? '1' : undefined}>
+    <section className="growing" role="status" aria-live="polite" data-stage={stage} data-still={still ? '1' : '0'} data-recheck={recheck ? '1' : undefined} data-wall={wall ? '1' : undefined}>
       <ol className="grow-steps">
         {STEPS.map((s, i) => {
           const st = i <= doneUpTo ? 'done' : active.includes(i) ? 'on' : '';
