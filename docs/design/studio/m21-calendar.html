@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 收集月历</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "tertiary-fixed-dim": "#c6c6c6",
+            "on-surface-variant": "#4c4546",
+            "on-tertiary-container": "#838484",
+            "primary-fixed-dim": "#c6c6c6",
+            "outline": "#7e7576",
+            "on-primary": "#ffffff",
+            "tertiary-fixed": "#e3e2e2",
+            "primary-container": "#1b1b1b",
+            "secondary-fixed": "#e3e2e2",
+            "secondary": "#5e5e5e",
+            "on-tertiary-fixed-variant": "#464747",
+            "secondary-fixed-dim": "#c7c6c6",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "surface": "#ffffff",
+            "on-background": "#1a1c1c",
+            "tertiary": "#000000",
+            "surface-container-low": "#f3f3f3",
+            "on-error-container": "#93000a",
+            "outline-variant": "#cfc4c5",
+            "on-secondary-fixed-variant": "#464747",
+            "on-primary-fixed": "#1b1b1b",
+            "inverse-surface": "#2f3131",
+            "background": "#ffffff",
+            "on-primary-fixed-variant": "#474747",
+            "surface-dim": "#dadada",
+            "on-tertiary": "#ffffff",
+            "on-surface": "#000000",
+            "on-tertiary-fixed": "#1a1c1c",
+            "surface-tint": "#5e5e5e",
+            "secondary-container": "#e3e2e2",
+            "surface-container-lowest": "#ffffff",
+            "inverse-on-surface": "#f1f1f1",
+            "surface-variant": "#e2e2e2",
+            "surface-container-high": "#e8e8e8",
+            "surface-bright": "#ffffff",
+            "on-error": "#ffffff",
+            "on-primary-container": "#848484",
+            "primary": "#000000",
+            "on-secondary-fixed": "#1b1c1c",
+            "on-secondary-container": "#646464",
+            "surface-container-highest": "#e2e2e2",
+            "on-secondary": "#ffffff",
+            "inverse-primary": "#c6c6c6",
+            "tertiary-container": "#1a1c1c",
+            "primary-fixed": "#e2e2e2",
+            "surface-container": "#eeeeee"
+          },
+          borderRadius: {
+            DEFAULT: "0px",
+            none: "0px",
+            sm: "0px",
+            md: "0px",
+            lg: "0px",
+            xl: "0px",
+            full: "0px"
+          },
+          spacing: {
+            "space-lg": "20px",
+            "space-sm": "8px",
+            "space-xl": "30px",
+            "space-md": "10px",
+            gutter: "10px",
+            margin: "16px",
+            "space-xs": "4px"
+          },
+          fontFamily: {
+            "body-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "Inter", "sans-serif"],
+            "label-mono-caps": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "body-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-lg": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"]
+          },
+          fontSize: {
+            "body-lg": ["15px", { lineHeight: "22px", letterSpacing: "-0.01em", fontWeight: "400" }],
+            "display-hero-zh": ["48px", { lineHeight: "52px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "label-mono-caps": ["11px", { lineHeight: "14px", letterSpacing: "0.12em", fontWeight: "500" }],
+            "label-micro": ["10px", { lineHeight: "12px", letterSpacing: "0.08em", fontWeight: "500" }],
+            "body-sm": ["13px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+            "headline-lg": ["32px", { lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "600" }],
+            "display-hero": ["56px", { lineHeight: "56px", letterSpacing: "-0.04em", fontWeight: "700" }],
+            "headline-sm": ["20px", { lineHeight: "24px", letterSpacing: "-0.02em", fontWeight: "600" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      box-shadow: none !important;
+    }
+    body {
+      background-color: #f9f9f9;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-[#f9f9f9] flex justify-center min-h-screen">
+<main class="w-[390px] min-h-screen bg-white relative flex flex-col px-[16px] pb-[120px] select-none">
+<!-- 1. Top bar -->
+<header class="w-full flex items-center justify-between pt-[16px] mb-[28px] bg-white">
+<div class="text-[20px] font-semibold tracking-[-0.02em] text-black">
+        拾穗 · GLEAN
+      </div>
+<button class="text-[12px] font-normal text-[#7E7E7E] cursor-pointer hover:text-black transition-none">
+        设置
+      </button>
+</header>
+<!-- 2. Screen Header -->
+<section class="flex flex-col">
+<div class="text-[12px] font-normal text-[#7E7E7E] tracking-widest mb-[6px]">
+        收集月历
+      </div>
+<h1 class="text-[56px] font-semibold tracking-[-0.04em] leading-none text-black mb-[20px]">
+        十月 (10)
+      </h1>
+<!-- Month navigation text row -->
+<nav class="flex items-center justify-between text-[12px] mb-[16px]">
+<button class="text-[#7E7E7E] cursor-pointer hover:text-black transition-none">
+          ← 九月
+        </button>
+<span class="text-[#C6C6C6] cursor-default">
+          十一月 →
+        </span>
+</nav>
+</section>
+<!-- 3. Month Calendar Grid (October 2026) -->
+<section class="w-full">
+<!-- Weekday Headers -->
+<div class="grid grid-cols-7 gap-[2px] mb-[8px] text-center text-[11px] text-[#7E7E7E] font-normal">
+<div>一</div>
+<div>二</div>
+<div>三</div>
+<div>四</div>
+<div>五</div>
+<div>六</div>
+<div>日</div>
+</div>
+<!-- Days Grid (Strict 7 Columns, 2px Gaps, Square Cells) -->
+<div class="grid grid-cols-7 gap-[2px] w-full">
+<!-- Oct 1 2026 starts on Thursday -> Mon, Tue, Wed are blank -->
+<div class="aspect-square bg-transparent"></div>
+<div class="aspect-square bg-transparent"></div>
+<div class="aspect-square bg-transparent"></div>
+<!-- 1: Past day, no glean -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">1</div>
+<!-- 2 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">2</div>
+<!-- 3 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">3</div>
+<!-- 4 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">4</div>
+<!-- 5: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">5</div>
+<!-- 6 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">6</div>
+<!-- 7 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">7</div>
+<!-- 8 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">8</div>
+<!-- 9: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">9</div>
+<!-- 10 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">10</div>
+<!-- 11 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">11</div>
+<!-- 12: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">12</div>
+<!-- 13 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">13</div>
+<!-- 14: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">14</div>
+<!-- 15 -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">15</div>
+<!-- 16: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">16</div>
+<!-- 17: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">17</div>
+<!-- 18: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">18</div>
+<!-- 19: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">19</div>
+<!-- 20: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white">20</div>
+<!-- 21: Gleaned (Black) -->
+<div class="aspect-square bg-black flex items-center justify-center text-[13px] font-medium text-white ring-1 ring-black">21</div>
+<!-- 22: Today (Underline beneath text) -->
+<div class="aspect-square bg-[#F3F3F3] flex items-center justify-center text-[13px] text-[#7E7E7E]">
+<span class="border-b border-black text-black pb-[1px] leading-tight">22</span>
+</div>
+<!-- 23: Future days -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">23</div>
+<!-- 24 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">24</div>
+<!-- 25 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">25</div>
+<!-- 26 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">26</div>
+<!-- 27 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">27</div>
+<!-- 28 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">28</div>
+<!-- 29 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">29</div>
+<!-- 30 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">30</div>
+<!-- 31 -->
+<div class="aspect-square bg-white flex items-center justify-center text-[13px] text-[#C6C6C6]">31</div>
+<!-- Filler for complete grid visual balance -->
+<div class="aspect-square bg-transparent"></div>
+</div>
+</section>
+<!-- 4. Legend Row -->
+<section class="flex items-center gap-[16px] mt-[16px] mb-[28px]">
+<div class="flex items-center gap-[6px]">
+<div class="w-[10px] h-[10px] bg-black"></div>
+<span class="text-[11px] text-[#7E7E7E]">有 1 穗</span>
+</div>
+<div class="flex items-center gap-[6px]">
+<div class="w-[10px] h-[10px] bg-[#E5E5E5]"></div>
+<span class="text-[11px] text-[#7E7E7E]">没拾</span>
+</div>
+</section>
+<!-- 5. Selected-Day Detail -->
+<section class="border-t border-black">
+<div class="text-[12px] text-[#7E7E7E] font-normal mb-[12px] mt-[16px]">
+        10/21 · 1 穗
+      </div>
+<!-- Single Saved Glean Entry Card -->
+<article class="flex items-center bg-[#F3F3F3] p-[10px] gap-[12px]">
+<img alt="Ferry deck railing vanishing into fog" class="w-[44px] h-[44px] object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks"/>
+<div class="flex flex-col justify-center">
+<h2 class="text-[15px] font-semibold text-black mb-[2px] leading-tight">
+            轮渡上的雾
+          </h2>
+<div class="text-[12px] text-[#7E7E7E] leading-none">
+            照片 · 07:12
+          </div>
+</div>
+</article>
+</section>
+<!-- 6. Footer -->
+<footer class="text-center text-[11px] text-[#7E7E7E] my-[40px]">
+      © 2026 Q1f730
+    </footer>
+<!-- 7. Fixed Bottom Navigation & Persistent Quick Capture -->
+<aside class="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-white z-50">
+<!-- Quick Capture Row -->
+<div class="border-t border-black px-[16px] py-[12px] bg-white flex items-center justify-between">
+<span class="text-[14px] text-[#7E7E7E]">随手拾一穗</span>
+<button class="text-[14px] font-semibold text-black bg-transparent p-0 border-0 cursor-pointer hover:opacity-70 transition-none">
+          拾
+        </button>
+</div>
+<!-- Bottom Text-Only Nav Row -->
+<nav class="flex items-center justify-between px-[16px] py-[12px] bg-white text-[12px] font-medium pb-[calc(12px+env(safe-area-inset-bottom))]">
+<button class="text-[#7E7E7E] bg-transparent border-0 p-0 cursor-pointer hover:text-black transition-none">
+          穗仓
+        </button>
+<button class="text-[#7E7E7E] bg-transparent border-0 p-0 cursor-pointer hover:text-black transition-none">
+          嫁接
+        </button>
+<button class="text-[#7E7E7E] bg-transparent border-0 p-0 cursor-pointer hover:text-black transition-none">
+          新枝
+        </button>
+<button class="text-black border-b border-black pb-[1px] bg-transparent p-0 cursor-pointer">
+          口味
+        </button>
+<button class="text-[#7E7E7E] bg-transparent border-0 p-0 cursor-pointer hover:text-black transition-none">
+          设置
+        </button>
+</nav>
+</aside>
+</main>
+</body></html>
