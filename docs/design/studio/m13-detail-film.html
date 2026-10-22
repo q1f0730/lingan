@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>拾穗 · GLEAN — 穗详情 · 电影《完美的日子》</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-primary-container": "#848484",
+            "on-background": "#1a1c1c",
+            "on-surface": "#1a1c1c",
+            "inverse-on-surface": "#f1f1f1",
+            "on-error-container": "#93000a",
+            "tertiary-fixed-dim": "#c6c6c6",
+            "background": "#ffffff",
+            "tertiary-container": "#1a1c1c",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#838484",
+            "on-primary-fixed-variant": "#474747",
+            "error": "#ba1a1a",
+            "surface-tint": "#5e5e5e",
+            "surface-bright": "#f9f9f9",
+            "on-error": "#ffffff",
+            "primary": "#000000",
+            "inverse-primary": "#c6c6c6",
+            "surface-container-highest": "#e2e2e2",
+            "primary-container": "#1b1b1b",
+            "on-secondary-fixed": "#1b1c1c",
+            "inverse-surface": "#2f3131",
+            "outline-variant": "#cfc4c5",
+            "surface-container-low": "#f3f3f3",
+            "on-secondary-container": "#646464",
+            "surface": "#ffffff",
+            "on-primary-fixed": "#1b1b1b",
+            "surface-variant": "#e2e2e2",
+            "on-tertiary-fixed-variant": "#464747",
+            "surface-container-high": "#e8e8e8",
+            "secondary-fixed": "#e3e2e2",
+            "on-surface-variant": "#4c4546",
+            "on-secondary-fixed-variant": "#464747",
+            "on-tertiary-fixed": "#1a1c1c",
+            "error-container": "#ffdad6",
+            "secondary-fixed-dim": "#c7c6c6",
+            "secondary": "#5e5e5e",
+            "secondary-container": "#e3e2e2",
+            "tertiary": "#000000",
+            "on-tertiary": "#ffffff",
+            "primary-fixed-dim": "#c6c6c6",
+            "on-primary": "#ffffff",
+            "tertiary-fixed": "#e3e2e2",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#eeeeee",
+            "outline": "#7e7576",
+            "primary-fixed": "#e2e2e2",
+            "surface-dim": "#dadada"
+          },
+          borderRadius: {
+            "DEFAULT": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "0px"
+          },
+          spacing: {
+            "space-xs": "4px",
+            "space-xl": "30px",
+            "space-sm": "8px",
+            "gutter": "10px",
+            "space-md": "10px",
+            "space-lg": "20px",
+            "margin": "10px"
+          },
+          fontFamily: {
+            "label-mono-caps": ["Inter", "Noto Sans SC", "sans-serif"],
+            "label-micro": ["Inter", "Noto Sans SC", "sans-serif"],
+            "display-hero-zh": ["Noto Sans SC", "sans-serif"],
+            "body-sm": ["Noto Sans SC", "Inter", "sans-serif"],
+            "headline-sm": ["Inter", "Noto Sans SC", "sans-serif"],
+            "headline-lg": ["Noto Sans SC", "Inter", "sans-serif"],
+            "body-lg": ["Noto Sans SC", "Inter", "sans-serif"],
+            "display-hero": ["Inter", "Noto Sans SC", "sans-serif"]
+          },
+          fontSize: {
+            "label-mono-caps": [
+              "11px",
+              {
+                "lineHeight": "14px",
+                "letterSpacing": "0.12em",
+                "fontWeight": "500"
+              }
+            ],
+            "label-micro": [
+              "10px",
+              {
+                "lineHeight": "12px",
+                "letterSpacing": "0.08em",
+                "fontWeight": "500"
+              }
+            ],
+            "display-hero-zh": [
+              "48px",
+              {
+                "lineHeight": "52px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "700"
+              }
+            ],
+            "body-sm": [
+              "13px",
+              {
+                "lineHeight": "18px",
+                "letterSpacing": "0em",
+                "fontWeight": "400"
+              }
+            ],
+            "headline-sm": [
+              "20px",
+              {
+                "lineHeight": "24px",
+                "letterSpacing": "-0.02em",
+                "fontWeight": "600"
+              }
+            ],
+            "headline-lg": [
+              "32px",
+              {
+                "lineHeight": "36px",
+                "letterSpacing": "-0.03em",
+                "fontWeight": "600"
+              }
+            ],
+            "body-lg": [
+              "15px",
+              {
+                "lineHeight": "22px",
+                "letterSpacing": "-0.01em",
+                "fontWeight": "400"
+              }
+            ],
+            "display-hero": [
+              "56px",
+              {
+                "lineHeight": "56px",
+                "letterSpacing": "-0.04em",
+                "fontWeight": "700"
+              }
+            ]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    * {
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      box-shadow: none !important;
+    }
+    body {
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="flex justify-center items-start min-h-screen text-on-surface">
+<!-- Mobile Screen Container: 390px fixed width -->
+<div class="w-[390px] min-h-screen bg-surface relative flex flex-col justify-between pb-[92px]">
+<!-- Top Action / Header Bar -->
+<header class="w-full h-11 px-4 flex items-center justify-between bg-surface z-20">
+<button class="text-[13px] font-normal text-primary tracking-tight bg-transparent border-0 p-0 cursor-pointer select-none active:opacity-60 transition-none" type="button">
+        返回
+      </button>
+<button class="text-[13px] font-normal text-primary tracking-tight bg-transparent border-0 p-0 cursor-pointer select-none active:opacity-60 transition-none" type="button">
+        编辑
+      </button>
+</header>
+<!-- Main Content Area -->
+<main class="w-full flex-1">
+<!-- Hero Photograph: Full-bleed 16:9 -->
+<section class="w-full aspect-[16/9] overflow-hidden bg-surface-container-high">
+<img alt="完美的日子 剧照" class="w-full h-full object-cover block" src="https://lh3.googleusercontent.com/aida/AEtjO1WIdVZRaOLGzNs3Aq7rWGyo0BUB51eCihOTXRp-V3J9tSfvFEiNUKKqFlg23ZjSzl3kQn9mLAb9w0MnymoCXaABZG4Z5WHbzD5I463MCUSqQZvBcXbQSw1kg9YUPOawjGCAaojd6TJDFIeOJn2KWzlxEISFbaeiV87S-aDWXFoPHGUTyJ9YNJlAa5NTOGkAOySgLUR79CedjhKwlMzt7NpYGiktN-MAMwF_LheMlBQFy0dWwkJUZ54p1bA"/>
+</section>
+<!-- Editorial Typography & Metadata Section -->
+<section class="px-4">
+<!-- Category & Index Label -->
+<div class="pt-4 pb-1">
+<span class="text-[11px] font-label-mono-caps text-outline tracking-wider block">
+            电影 · 02 / 10
+          </span>
+</div>
+<!-- Main Title -->
+<h1 class="text-[32px] leading-tight font-semibold tracking-[-0.02em] text-primary">
+          完美的日子
+        </h1>
+<!-- Subtitle / English Title -->
+<p class="text-[15px] leading-snug font-normal text-outline pb-5">
+          Perfect Days
+        </p>
+<!-- 2-Column Tabular Metadata (No dividing lines) -->
+<div class="grid grid-cols-[52px_1fr] gap-y-2 text-left">
+<div class="text-[12px] font-normal text-outline leading-tight">导演</div>
+<div class="text-[13px] font-normal text-primary leading-tight">维姆·文德斯</div>
+<div class="text-[12px] font-normal text-outline leading-tight">年份</div>
+<div class="text-[13px] font-normal text-primary leading-tight font-label-mono-caps">2023</div>
+<div class="text-[12px] font-normal text-outline leading-tight">链接</div>
+<div class="text-[13px] font-normal leading-tight">
+<span class="text-outline underline underline-offset-2 decoration-1 break-all cursor-pointer">movie.douban.com/subject/…</span>
+</div>
+<div class="text-[12px] font-normal text-outline leading-tight">拾于</div>
+<div class="text-[13px] font-normal text-primary leading-tight font-label-mono-caps">2026/10/20 22:41</div>
+<div class="text-[12px] font-normal text-outline leading-tight">标签</div>
+<div class="text-[13px] font-normal text-primary leading-tight tracking-tight">#清晨  #重复</div>
+</div>
+<!-- Section: 为什么收 -->
+<div class="pt-4">
+<div class="text-[11px] font-medium text-outline pb-1.5 tracking-tight">
+            为什么收
+          </div>
+<p class="text-[15px] text-primary font-normal leading-relaxed text-justify">
+            每天同一时间、同一套动作，他却每天都在看新的东西。想学这种重复。
+          </p>
+</div>
+<!-- Section: 长进了这些新枝 -->
+<div class="pt-5">
+<div class="text-[11px] font-medium text-outline pb-1.5 tracking-tight">
+            长进了这些新枝
+          </div>
+<div>
+<a class="text-[15px] text-primary font-normal underline decoration-1 underline-offset-4 cursor-pointer hover:opacity-70 transition-none inline-block" href="#">
+              渡轮上的平山
+            </a>
+</div>
+</div>
+<!-- Action Row -->
+<div class="pt-6 pb-8 flex items-center">
+<button class="text-[14px] font-medium text-primary bg-transparent border-0 p-0 cursor-pointer hover:opacity-70 transition-none select-none" type="button">
+            打开链接
+          </button>
+<button class="text-[14px] font-medium text-primary bg-transparent border-0 p-0 ml-6 cursor-pointer hover:opacity-70 transition-none select-none" type="button">
+            拿去嫁接
+          </button>
+<button class="text-[14px] font-normal text-[#C6C6C6] bg-transparent border-0 p-0 ml-6 cursor-pointer hover:text-primary transition-none select-none" type="button">
+            删除
+          </button>
+</div>
+<!-- Footnote Copyright -->
+<div class="w-full text-center pb-8">
+<span class="text-[11px] font-label-mono-caps text-outline tracking-wider">
+            © 2026 Q1f730
+          </span>
+</div>
+</section>
+</main>
+<!-- Persistent Bottom Bar Cluster (Strictly 390px Docked) -->
+<div class="fixed bottom-0 w-[390px] bg-surface z-50 select-none">
+<!-- Quick-capture line separated only by a 1px black hairline border-t -->
+<div class="w-full h-10 px-4 border-t border-black flex items-center justify-between bg-surface">
+<span class="text-[13px] text-outline font-normal">
+          随手拾一穗
+        </span>
+<button class="text-[13px] text-primary font-medium bg-transparent border-0 p-0 cursor-pointer hover:opacity-70 transition-none" type="button">
+          拾
+        </button>
+</div>
+<!-- Bottom Navigation Bar (5 words, text only, no icons) -->
+<nav class="w-full h-12 px-4 flex items-center justify-between bg-surface pb-1">
+<!-- 穗仓: Active state with 1px black underline -->
+<a class="flex flex-col items-center justify-center cursor-pointer" href="#">
+<span class="text-[13px] font-medium text-primary underline underline-offset-4 decoration-1">
+            穗仓
+          </span>
+</a>
+<!-- 嫁接: Inactive -->
+<a class="flex flex-col items-center justify-center cursor-pointer" href="#">
+<span class="text-[13px] font-normal text-outline hover:text-primary transition-none">
+            嫁接
+          </span>
+</a>
+<!-- 新枝: Inactive -->
+<a class="flex flex-col items-center justify-center cursor-pointer" href="#">
+<span class="text-[13px] font-normal text-outline hover:text-primary transition-none">
+            新枝
+          </span>
+</a>
+<!-- 口味: Inactive -->
+<a class="flex flex-col items-center justify-center cursor-pointer" href="#">
+<span class="text-[13px] font-normal text-outline hover:text-primary transition-none">
+            口味
+          </span>
+</a>
+<!-- 设置: Inactive -->
+<a class="flex flex-col items-center justify-center cursor-pointer" href="#">
+<span class="text-[13px] font-normal text-outline hover:text-primary transition-none">
+            设置
+          </span>
+</a>
+</nav>
+</div>
+</div>
+</body></html>
