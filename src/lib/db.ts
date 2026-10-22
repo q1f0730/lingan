@@ -124,6 +124,25 @@ export async function deleteItem(id: number, d: LinganDB = db) {
   });
 }
 
+/** v0.16 删除可撤销：删之前把行和原图拍个快照，撤销时原样放回（同一个 id，新枝的来源不断） */
+export interface ItemSnapshot {
+  item: Item;
+  image?: StoredImage;
+}
+export async function snapshotItem(id: number, d: LinganDB = db): Promise<ItemSnapshot | null> {
+  const item = await d.items.get(id);
+  if (!item) return null;
+  const image = await d.images.get(id);
+  return { item, ...(image ? { image } : {}) };
+}
+export async function restoreItem(s: ItemSnapshot, d: LinganDB = db): Promise<number> {
+  await d.transaction('rw', d.items, d.images, async () => {
+    await d.items.put(s.item);
+    if (s.image) await d.images.put(s.image);
+  });
+  return s.item.id!;
+}
+
 /** 清空所有穗、新枝、原图（连同每日一穗记录） */
 export async function clearAll(d: LinganDB = db) {
   await d.transaction('rw', [d.items, d.developments, d.images, d.daily], async () => {
