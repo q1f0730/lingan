@@ -9,6 +9,18 @@ fn show_quick(app: &tauri::AppHandle) {
   let _ = app.emit("quick-focus", ());
 }
 
+/// v0.16 tray: open the main window on a given view (穗仓 / 今日一穗 / 设置)
+#[cfg(desktop)]
+fn show_view(app: &tauri::AppHandle, view: &str) {
+  use tauri::{Emitter, Manager};
+  if let Some(w) = app.get_webview_window("main") {
+    let _ = w.unminimize();
+    let _ = w.show();
+    let _ = w.set_focus();
+  }
+  let _ = app.emit("glean-go", view.to_string());
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   let builder = tauri::Builder::default()
@@ -42,17 +54,25 @@ pub fn run() {
     .setup(|app| {
       #[cfg(desktop)]
       {
-        use tauri::menu::{Menu, MenuItem};
+        use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
         use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-        let quick = MenuItem::with_id(app, "quick", "速记  Ctrl+Shift+L", true, None::<&str>)?;
-        let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-        let menu = Menu::with_items(app, &[&quick, &quit])?;
+        let quick = MenuItem::with_id(app, "quick", "随手拾一穗\tCtrl+Shift+L", true, None::<&str>)?;
+        let library = MenuItem::with_id(app, "library", "打开穗仓", true, None::<&str>)?;
+        let daily = MenuItem::with_id(app, "daily", "今日一穗", true, None::<&str>)?;
+        let settings = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
+        let quit = MenuItem::with_id(app, "quit", "退出拾穗", true, None::<&str>)?;
+        let sep1 = PredefinedMenuItem::separator(app)?;
+        let sep2 = PredefinedMenuItem::separator(app)?;
+        let menu = Menu::with_items(app, &[&quick, &sep1, &library, &daily, &sep2, &settings, &quit])?;
         let mut tray = TrayIconBuilder::new()
           .tooltip("拾穗 Glean")
           .menu(&menu)
           .show_menu_on_left_click(false)
           .on_menu_event(|app, e| match e.id().as_ref() {
             "quick" => show_quick(app),
+            "library" => show_view(app, "library"),
+            "daily" => show_view(app, "daily"),
+            "settings" => show_view(app, "settings"),
             "quit" => app.exit(0),
             _ => {}
           })
