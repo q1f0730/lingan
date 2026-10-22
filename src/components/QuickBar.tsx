@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { addItem, db, normalizeTags } from '../lib/db';
+import { addItem, db, normalizeTags, updateItem } from '../lib/db';
+import { itemHasImage } from '../lib/imagestore';
 import { enrichItem } from '../lib/enrich';
 import { fetchLinkMeta } from '../lib/linkmeta';
 import { clipMemory, parseQuick, readClipboard, shouldOffer, type QuickDraft } from '../lib/quick';
@@ -23,8 +24,9 @@ export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) =
             creator: cur.creator || m.siteName || '',
             year: cur.year || m.year || '',
             content: cur.content || m.description || '',
-            image: cur.image || m.imageData,
           });
+          // 链接封面：原图进 images 表，后台做缩略图
+          if (!itemHasImage(cur) && m.imageData) await updateItem(id, { image: m.imageData });
         }
       } catch {
         /* link kept as is */
