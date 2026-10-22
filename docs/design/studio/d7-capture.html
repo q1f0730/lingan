@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 随手拾一穗 (展开态)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+          },
+          colors: {
+            surface: '#FFFFFF',
+            primary: '#000000',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            tile: '#F3F3F3',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .cursor-blink {
+      display: inline-block;
+      width: 1px;
+      height: 1.25em;
+      background-color: #000000;
+      vertical-align: text-bottom;
+      animation: blink 1s step-start infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body class="relative min-h-screen bg-white text-black selection:bg-black selection:text-white">
+
+  <!-- TOP NAV BAR (Sticky/Fixed, identical to d1) -->
+  <header class="fixed top-0 left-0 right-0 z-50 h-[72px] bg-white border-b border-black/5 px-10 flex items-center justify-between">
+    <!-- Brand Logo -->
+    <div class="text-[20px] font-semibold tracking-tight text-black flex items-center">
+      <span>拾穗 · GLEAN</span>
+    </div>
+
+    <!-- Centered Navigation -->
+    <nav class="flex items-center space-x-8 text-[12px] font-medium tracking-widest uppercase">
+      <a href="#" class="text-black border-b border-black pb-0.5">穗仓</a>
+      <a href="#" class="text-[#7E7E7E] hover:text-black transition-none">嫁接</a>
+      <a href="#" class="text-[#7E7E7E] hover:text-black transition-none">新枝</a>
+      <a href="#" class="text-[#7E7E7E] hover:text-black transition-none">口味</a>
+      <a href="#" class="text-[#7E7E7E] hover:text-black transition-none">设置</a>
+    </nav>
+
+    <!-- Top-Right Quick-Capture Input (Focused State: 2px black underline) -->
+    <div class="w-[320px] relative">
+      <div class="w-full flex items-center justify-between text-[13px] text-black pb-1.5 border-b-2 border-black">
+        <span class="font-normal text-black">随手拾一穗</span>
+        <span class="text-black">→</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- BACKGROUND CONTENT (Dimmed with 60% white overlay) -->
+  <div class="pt-[212px] px-10 pb-20 select-none pointer-events-none">
+    
+    <!-- Headline & Controls Row -->
+    <div class="flex items-baseline justify-between mb-12">
+      <h1 class="text-[110px] font-semibold tracking-[-0.04em] leading-none text-black">
+        穗仓 (20)
+      </h1>
+      <div class="text-[12px] tracking-wider text-[#7E7E7E] space-x-2">
+        <span class="text-black font-medium">网格</span>
+        <span class="text-[#C6C6C6]">|</span>
+        <span class="text-[#7E7E7E]">列表</span>
+      </div>
+    </div>
+
+    <!-- 12-Column Grid of 穗 -->
+    <div class="grid grid-cols-3 gap-4">
+      
+      <!-- Card 1: 轮渡上的雾 (Photo) -->
+      <div class="relative aspect-[4/5] bg-black overflow-hidden group">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" alt="轮渡上的雾" class="w-full h-full object-cover grayscale brightness-90">
+        <div class="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/30 to-transparent text-white">
+          <div class="text-[18px] font-medium leading-snug mb-1">轮渡上的雾</div>
+          <div class="text-[12px] text-white/70 tracking-wider">照片 · 10/21</div>
+        </div>
+      </div>
+
+      <!-- Card 2: 完美的日子 (Photo) -->
+      <div class="relative aspect-[4/5] bg-black overflow-hidden group">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1WIdVZRaOLGzNs3Aq7rWGyo0BUB51eCihOTXRp-V3J9tSfvFEiNUKKqFlg23ZjSzl3kQn9mLAb9w0MnymoCXaABZG4Z5WHbzD5I463MCUSqQZvBcXbQSw1kg9YUPOawjGCAaojd6TJDFIeOJn2KWzlxEISFbaeiV87S-aDWXFoPHGUTyJ9YNJlAa5NTOGkAOySgLUR79CedjhKwlMzt7NpYGiktN-MAMwF_LheMlBQFy0dWwkJUZ54p1bA" alt="完美的日子" class="w-full h-full object-cover">
+        <div class="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/30 to-transparent text-white">
+          <div class="text-[18px] font-medium leading-snug mb-1">完美的日子</div>
+          <div class="text-[12px] text-white/70 tracking-wider">电影 · 10/20</div>
+        </div>
+      </div>
+
+      <!-- Card 3: Re: Stacks (Photo) -->
+      <div class="relative aspect-[4/5] bg-black overflow-hidden group">
+        <img src="https://lh3.googleusercontent.com/aida/AEtjO1VtN8VP_yx7Akt0rP-RFy_hL4k7YtEnFDmv1BZWDQeKxsmOriyFF_sWMhmw7k33iY2D2hqS-omsa_gPZZ2dMeRFqxzqxUmu9jFdKy3vyGcByh0uPUmkzFp5tLWHvUMr_2XX8gRALB9Nygadnya7LTemK5xx09PEGJJHiRIe2LxDmsa4O7B-JFP7j7ajrSVm0BjM_H8Vb0EtlEfPlaZV-T-RjKF2PGmnohoAxkmc8uarpfv_BqhT7N4ktWw" alt="Re: Stacks" class="w-full h-full object-cover">
+        <div class="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/30 to-transparent text-white">
+          <div class="text-[18px] font-medium leading-snug mb-1">Re: Stacks</div>
+          <div class="text-[12px] text-white/70 tracking-wider">歌 · 10/19</div>
+        </div>
+      </div>
+
+      <!-- Card 4: 记忆中的形象 (Quote) -->
+      <div class="relative aspect-[4/5] bg-[#F3F3F3] p-10 flex flex-col justify-between">
+        <div class="text-[26px] font-medium leading-[1.35] tracking-tight text-black">
+          “记忆中的形象一旦被词语固定住，就给抹掉了。”
+        </div>
+        <div>
+          <div class="text-[12px] text-[#7E7E7E] mb-1">卡尔维诺《看不见的城市》</div>
+          <div class="text-[12px] text-[#C6C6C6] tracking-wider">摘抄 · 10/18</div>
+        </div>
+      </div>
+
+      <!-- Card 5: 声控灯 (Thought) -->
+      <div class="relative aspect-[4/5] bg-[#F3F3F3] p-10 flex flex-col justify-between">
+        <div class="text-[26px] font-medium leading-[1.35] tracking-tight text-black">
+          “给楼道里每一盏声控灯起一个名字。”
+        </div>
+        <div>
+          <div class="text-[12px] text-[#C6C6C6] tracking-wider">想法 · 10/17</div>
+        </div>
+      </div>
+
+      <!-- Card 6: Radio Garden (Link) -->
+      <div class="relative aspect-[4/5] bg-[#F3F3F3] p-10 flex flex-col justify-between">
+        <div>
+          <div class="text-[24px] font-medium leading-snug text-black mb-3">
+            Radio Garden · 转动地球收听各地电台
+          </div>
+          <div class="text-[14px] text-[#7E7E7E] underline underline-offset-4 decoration-[#C6C6C6]">
+            radio.garden
+          </div>
+        </div>
+        <div>
+          <div class="text-[12px] text-[#C6C6C6] tracking-wider">链接 · 10/16</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Background Footer -->
+    <div class="mt-24 text-[10px] text-[#7E7E7E] tracking-[0.1em]">
+      © 2026 Q1F730
+    </div>
+  </div>
+
+  <!-- 60% WHITE OVERLAY ON TOP OF BACKGROUND -->
+  <div class="fixed inset-0 top-[72px] bg-white/60 backdrop-blur-[1px] z-20 pointer-events-none"></div>
+
+  <!-- QUICK CAPTURE EXPANDED PANEL (Anchored to the right edge under nav, 560px wide, white bg, 1px black border, square corners, no shadow) -->
+  <div class="fixed top-[72px] right-10 w-[560px] bg-white border border-black z-30 p-8 flex flex-col">
+    
+    <!-- 1. Multi-line Text Input with Black Blinking Cursor -->
+    <div class="mb-6">
+      <div class="text-[22px] font-medium leading-[1.4] tracking-tight text-black">
+        下雨天公交车窗上的水痕，像一张城市地图<span class="cursor-blink ml-0.5"></span>
+      </div>
+    </div>
+
+    <!-- 2. Dashed 1px Grey Drop Zone (160px tall) -->
+    <div class="w-full h-[160px] border border-dashed border-[#C6C6C6] bg-white flex flex-col items-center justify-center text-center px-4 mb-6">
+      <div class="text-[14px] text-[#7E7E7E] tracking-tight mb-1.5 font-normal">
+        拖入图片、链接或文字　或　粘贴
+      </div>
+      <div class="text-[12px] text-[#C6C6C6] tracking-wider">
+        也可以 Ctrl+V
+      </div>
+    </div>
+
+    <!-- 3. Attached Items (Two dropped items) -->
+    <div class="space-y-3 mb-6">
+      
+      <!-- Item A: Thumbnail photo of rainy bus window (1:1 thumbnail) -->
+      <div class="flex items-center justify-between p-2.5 bg-[#F3F3F3]">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-12 h-12 bg-black flex-shrink-0 overflow-hidden">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIutSGNKdx_D12muEoMjZbXcsQ1qheKSxUwVLe87wInxCPTKcs3ZSAn10y2AzODcZQO8ICQkB0wRgaA5-VT_pLwJFXKqgKlS3L-LHFX5pr-oa3-LmfQmPdxcYN35paw0LCSVJmipcuuXWzlqnlMKUSbdV1aBStLaNejqUtmZJaEbhMeEzjxjO4_w2dXbBBa6O_sGseJwNOFsrzvDISmdPoieZvuHECs5cS4WYLml9goAGgnaALDzcVuTHscSVa4vo64VyRUTIRqLA" alt="雨天车窗缩略图" class="w-full h-full object-cover">
+          </div>
+          <div class="text-[13px] text-black">
+            IMG_2041.jpg <span class="text-[#7E7E7E]">· 2.1 MB</span>
+          </div>
+        </div>
+        <button class="text-[12px] text-[#7E7E7E] hover:text-black tracking-wider transition-none">
+          移除
+        </button>
+      </div>
+
+      <!-- Item B: Link Row -->
+      <div class="flex items-center justify-between px-3.5 py-3 bg-[#F3F3F3]">
+        <div class="text-[13px] text-black">
+          <span class="font-medium">sfmoma.org/exhibitions</span>
+          <span class="text-[#7E7E7E] ml-2">· 自动识别为 链接</span>
+        </div>
+        <button class="text-[12px] text-[#7E7E7E] hover:text-black tracking-wider transition-none">
+          移除
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 4. Metadata: Type Chips & Tag Field -->
+    <div class="space-y-4 mb-8 pt-2 border-t border-[#F3F3F3]">
+      
+      <!-- Type Chips Row (Plain text toggles: 想法 black underlined, others grey) -->
+      <div class="flex items-center justify-between text-[13px]">
+        <span class="text-[12px] text-[#7E7E7E] tracking-wider">类型</span>
+        <div class="flex items-center space-x-4">
+          <button class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">照片</button>
+          <button class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">摘抄</button>
+          <button class="text-black font-medium border-b border-black pb-0.5">想法</button>
+          <button class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">链接</button>
+          <button class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">歌</button>
+          <button class="text-[#7E7E7E] hover:text-black transition-none pb-0.5">电影</button>
+        </div>
+      </div>
+
+      <!-- Tag Field with typed '雨 · 城市' -->
+      <div class="flex items-center justify-between text-[13px] pt-1">
+        <span class="text-[12px] text-[#7E7E7E] tracking-wider">标签</span>
+        <div class="text-black font-normal border-b border-black/20 pb-0.5 px-1 min-w-[120px] text-right">
+          雨 · 城市
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 5. Bottom Controls Row -->
+    <div class="flex items-center justify-between pt-4 border-t border-black/10">
+      <!-- Shortcut hint bottom-left -->
+      <div class="text-[11px] text-[#7E7E7E] tracking-wider">
+        Esc 收起 · ⌘/Ctrl+Enter 拾
+      </div>
+
+      <!-- Actions bottom-right -->
+      <div class="flex items-center space-x-5">
+        <button class="text-[13px] text-[#7E7E7E] hover:text-black tracking-wider transition-none">
+          取消
+        </button>
+        <button class="px-5 py-2.5 bg-black text-white text-[13px] font-medium tracking-wider hover:bg-neutral-800 transition-none">
+          拾 ↵
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
