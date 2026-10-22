@@ -1,7 +1,7 @@
 [package]
 name = "lingan"
 version = "0.1.0"
-description = "Lingan inspiration darkroom"
+description = "Glean (拾穗) — a personal inspiration gleaner"
 authors = ["Q1f730"]
 license = ""
 repository = ""
