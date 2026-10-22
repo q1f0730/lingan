@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=390, user-scalable=no, initial-scale=1.0">
+  <title>拾穗 · GLEAN — 空穗仓 (390px)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background-color: #FFFFFF;
+      color: #000000;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .mobile-container {
+      width: 390px;
+      min-height: 100vh;
+      background: #FFFFFF;
+      position: relative;
+      padding-bottom: 110px;
+    }
+    .display-headline {
+      font-size: 56px;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      line-height: 1.0;
+    }
+    .tile-4-5 {
+      aspect-ratio: 4 / 5;
+    }
+  </style>
+<style id="glean-fix">/* Q1f730 · STYLE.md: Inter + Noto Sans SC only, 0 radius */ .font-mono,[class*="mono"],code,kbd,samp{font-family:"Inter","Noto Sans SC","PingFang SC",sans-serif!important;font-variant-numeric:tabular-nums}</style>
+</head>
+<body class="bg-neutral-100 flex justify-center items-start">
+  <div class="mobile-container bg-white flex flex-col justify-between">
+    <!-- Top Nav & Main Content -->
+    <div>
+      <!-- Top Bar -->
+      <header class="w-full h-14 px-4 flex items-center justify-between border-b border-transparent">
+        <div class="text-[20px] font-semibold tracking-tight text-black">拾穗 · GLEAN</div>
+        <button class="text-[12px] font-medium text-[#7E7E7E] hover:text-black tracking-wider transition-none">设置</button>
+      </header>
+
+      <!-- Main Body -->
+      <main class="px-4 pt-6">
+        <!-- Huge Display Headline -->
+        <h1 class="display-headline text-black mb-3">穗仓 (0)</h1>
+
+        <!-- Explanatory line -->
+        <p class="text-[15px] text-[#7E7E7E] leading-relaxed mb-6 font-normal">
+          还没有拾过一穗。下面三穗是示例，不算数，拾第一穗后可以清掉。
+        </p>
+
+        <!-- Subheader Row -->
+        <div class="flex items-center justify-between pb-3 pt-1">
+          <div class="text-[12px] text-[#7E7E7E] tracking-wider font-medium">示例 (3)</div>
+          <button class="text-[12px] font-medium text-black border-b border-black pb-[1px] hover:opacity-70 transition-none">清掉示例</button>
+        </div>
+
+        <!-- 2-Column Grid (10px gaps, 4:5 ratio) -->
+        <div class="grid grid-cols-2 gap-[10px] mt-1">
+          
+          <!-- Tile A: Photo -->
+          <div class="tile-4-5 relative overflow-hidden bg-black select-none">
+            <!-- 示例 Label -->
+            <div class="absolute top-2 left-2 z-20 bg-white px-1.5 py-0.5 text-[10px] font-medium text-black tracking-widest uppercase">
+              示例
+            </div>
+            <!-- Image -->
+            <img 
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFRUH3640OJehAzCo5BqvDr39Aemm1lD2Cnt7v6wZg3H0uS6it6N9mtAtfejCEGRUi9OKotPdBwrQXqTg_8aJZ7L3msmXDtai1bMiwAq5dDiqG0a7xhhZoFX7kkXYBq37Tf_jSa52G0PGP9KAoKjHb_JZSXZp7UzVp0DbGi84WUsuLtcTekaEDywvf50B5bUZ1jGDjGKFhBQX6dSZnGXzN4q_sZixPl_2SnWTXAUgfDNKm5bX8FivB4b2JICEoLwUVqKG9zcHVr-0" 
+              alt="雨里的斑马线" 
+              class="w-full h-full object-cover block"
+            />
+            <!-- Scrim Gradient -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
+            <!-- Caption -->
+            <div class="absolute bottom-2.5 left-2.5 right-2.5 z-10 text-white">
+              <div class="text-[14px] font-semibold leading-tight tracking-tight">雨里的斑马线</div>
+              <div class="text-[11px] text-white/80 font-normal mt-0.5 tracking-tight">照片 · 示例</div>
+            </div>
+          </div>
+
+          <!-- Tile B: Quote -->
+          <div class="tile-4-5 relative p-3 bg-[#F3F3F3] flex flex-col justify-between select-none">
+            <!-- 示例 Label -->
+            <div class="inline-block self-start bg-white px-1.5 py-0.5 text-[10px] font-medium text-black tracking-widest uppercase">
+              示例
+            </div>
+            <!-- Content -->
+            <div class="my-auto pr-1">
+              <p class="text-[15px] font-semibold text-black leading-snug tracking-tight">
+                “慢一点，看清楚。”
+              </p>
+            </div>
+            <!-- Caption -->
+            <div class="text-[11px] text-[#7E7E7E] font-normal tracking-tight">
+              想法 · 示例
+            </div>
+          </div>
+
+          <!-- Tile C: Link -->
+          <div class="tile-4-5 relative p-3 bg-[#F3F3F3] flex flex-col justify-between select-none">
+            <!-- 示例 Label -->
+            <div class="inline-block self-start bg-white px-1.5 py-0.5 text-[10px] font-medium text-black tracking-widest uppercase">
+              示例
+            </div>
+            <!-- Content -->
+            <div class="my-auto pr-1">
+              <p class="text-[13px] font-semibold text-black leading-snug tracking-tight">
+                Library of Babel · 收录所有可能的书页
+              </p>
+              <div class="text-[11px] text-[#7E7E7E] mt-1 font-mono tracking-tight underline underline-offset-2">
+                libraryofbabel.info
+              </div>
+            </div>
+            <!-- Caption -->
+            <div class="text-[11px] text-[#7E7E7E] font-normal tracking-tight">
+              链接 · 示例
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Hint Under Grid -->
+        <p class="text-[15px] text-[#7E7E7E] leading-relaxed mt-6 mb-8 font-normal">
+          复制一个链接、拍一张照片，或者在下面写一句话。
+        </p>
+
+        <!-- Footer -->
+        <div class="text-[11px] text-[#C6C6C6] font-mono tracking-wider pt-2 pb-6">
+          © 2026 Q1f730
+        </div>
+      </main>
+    </div>
+
+    <!-- Pinned Bottom Bars -->
+    <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-[390px] bg-white z-50">
+      <!-- Quick Capture Line with 1px black hairline above -->
+      <div class="border-t border-black px-4 h-12 flex items-center justify-between bg-white">
+        <input 
+          type="text" 
+          placeholder="随手拾一穗" 
+          class="w-full bg-transparent text-[14px] text-black placeholder-[#7E7E7E] outline-none border-none py-1 pr-3 font-normal"
+        />
+        <button class="text-[14px] font-semibold text-black px-1.5 py-1 hover:opacity-70 transition-none tracking-widest shrink-0">
+          拾
+        </button>
+      </div>
+
+      <!-- Bottom Nav (5 words text-only, no icons, 穗仓 active with 1px underline) -->
+      <nav class="border-t border-[#F0F0F0] px-4 h-12 flex items-center justify-between bg-white text-[12px] font-medium tracking-wider">
+        <a href="#" class="text-black border-b border-black pb-0.5">穗仓</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black">嫁接</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black">新枝</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black">口味</a>
+        <a href="#" class="text-[#7E7E7E] hover:text-black">设置</a>
+      </nav>
+    </div>
+  </div>
+</body>
+</html>
