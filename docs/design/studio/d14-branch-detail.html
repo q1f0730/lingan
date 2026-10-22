@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>拾穗 · GLEAN — 新枝详情 · 楼道电台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            surface: "#FFFFFF",
+            primary: "#000000",
+            secondary: "#7E7E7E",
+            faint: "#C6C6C6",
+            tile: "#F3F3F3",
+            line: "#E5E5E5"
+          },
+          fontFamily: {
+            sans: ["Inter", "Noto Sans SC", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    ::placeholder {
+      color: #7E7E7E;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="bg-surface text-primary min-h-screen flex flex-col selection:bg-primary selection:text-surface">
+
+  <!-- TOP NAVIGATION BAR (IDENTICAL TO d1 DESKTOP SCREENS) -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#EBEBEB]">
+    <div class="max-w-[1440px] mx-auto h-[64px] px-[40px] flex items-center justify-between">
+      <!-- Logo Left -->
+      <div class="flex items-center">
+        <a href="#" class="text-[20px] font-semibold tracking-tight text-primary select-none">
+          拾穗 · GLEAN
+        </a>
+      </div>
+
+      <!-- Centered Text-Only Nav -->
+      <nav class="flex items-center gap-[32px] text-[12px] font-medium tracking-[0.08em]">
+        <a href="#" class="text-secondary hover:text-primary transition-none pb-[2px]">穗仓</a>
+        <a href="#" class="text-secondary hover:text-primary transition-none pb-[2px]">嫁接</a>
+        <a href="#" class="text-primary border-b border-primary pb-[2px]">新枝</a>
+        <a href="#" class="text-secondary hover:text-primary transition-none pb-[2px]">口味</a>
+        <a href="#" class="text-secondary hover:text-primary transition-none pb-[2px]">设置</a>
+      </nav>
+
+      <!-- Right Quick Capture Input (320px width, 1px bottom border only) -->
+      <div class="w-[320px]">
+        <div class="border-b border-black pb-1 flex items-center justify-between">
+          <input 
+            type="text" 
+            placeholder="随手拾一穗 →" 
+            class="w-full bg-transparent border-0 p-0 text-[12px] font-medium tracking-[0.05em] text-primary focus:ring-0 focus:outline-none placeholder-secondary"
+          />
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CANVAS (1440px full desktop layout) -->
+  <main class="w-full max-w-[1440px] mx-auto px-[40px] pt-[204px] pb-[96px] flex-1">
+
+    <!-- Top Tiny Grey Breadcrumb -->
+    <div class="mb-[36px]">
+      <span class="text-[12px] font-medium tracking-[0.1em] text-secondary uppercase">
+        新枝 / 第 3 捆 / 01
+      </span>
+    </div>
+
+    <!-- Huge Display Headline Block: Numeral 01 + Title 楼道电台 -->
+    <div class="flex items-baseline gap-[24px] mb-[72px]">
+      <!-- 01 in 120px weight 300 -->
+      <span class="text-[120px] font-[300] leading-none tracking-[-0.04em] text-primary select-none">
+        01
+      </span>
+      <!-- 楼道电台 96px semibold -->
+      <h1 class="text-[96px] font-[600] leading-none tracking-[-0.04em] text-primary">
+        楼道电台
+      </h1>
+    </div>
+
+    <!-- 12-COLUMN GRID SYSTEM (16px gutters) -->
+    <div class="grid grid-cols-12 gap-[16px] items-start">
+
+      <!-- LEFT 7 COLUMNS (Cols 1 to 7): Idea Expansion & Steps -->
+      <div class="col-span-7 pr-[24px]">
+
+        <!-- Idea expanded in 20px body text across three short paragraphs -->
+        <div class="space-y-[28px] text-[20px] leading-[1.65] font-[400] text-primary tracking-[-0.01em]">
+          <p>
+            给每一盏声控灯配一个频道。夜里有人经过，灯亮，只播这一层住户拾过的歌。
+          </p>
+          <p>
+            每层一个频道，频道名就是你给那盏灯起的名字。歌单来自住户自己愿意公开的穗。
+          </p>
+          <p class="text-secondary">
+            第一步可以很小：先只做你家这一层，用一个蓝牙音箱和一张纸条。
+          </p>
+        </div>
+
+        <!-- Section: 可以先做的三件事 -->
+        <div class="mt-[64px] pt-[48px] border-t border-[#EEEEEE]">
+          <div class="text-[12px] font-medium tracking-[0.12em] text-secondary mb-[28px] uppercase">
+            可以先做的三件事
+          </div>
+
+          <!-- Numbered no-line list 01 02 03 in 16px -->
+          <div class="space-y-[20px]">
+            <div class="flex items-baseline gap-[16px] text-[16px] leading-[1.6] text-primary">
+              <span class="text-[14px] font-[500] text-secondary tracking-wider select-none w-[24px]">01</span>
+              <span>晚上上楼时，记下三楼那盏灯是第几声脚步亮起的，给它起个代号写在便签上。</span>
+            </div>
+
+            <div class="flex items-baseline gap-[16px] text-[16px] leading-[1.6] text-primary">
+              <span class="text-[14px] font-[500] text-secondary tracking-wider select-none w-[24px]">02</span>
+              <span>挑一首只有钢琴与白噪音的歌，放进门边常驻的微型蓝牙设备，设为感应播放。</span>
+            </div>
+
+            <div class="flex items-baseline gap-[16px] text-[16px] leading-[1.6] text-primary">
+              <span class="text-[14px] font-[500] text-secondary tracking-wider select-none w-[24px]">03</span>
+              <span>在开关盒旁贴一张名片大小的纸，留一行字：「三楼电台，今晚播 Bon Iver」。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM ACTIONS ROW -->
+        <div class="mt-[72px] pt-[32px] border-t border-black flex items-center justify-between">
+          <div class="flex items-center gap-[32px] text-[13px] font-medium tracking-[0.06em]">
+            <button type="button" class="text-primary border-b border-primary pb-[2px] cursor-pointer bg-transparent border-t-0 border-l-0 border-r-0 p-0 font-medium">
+              已留下
+            </button>
+            <button type="button" class="text-secondary hover:text-primary transition-none cursor-pointer bg-transparent border-0 p-0 font-normal">
+              再接一次
+            </button>
+            <button type="button" class="text-faint hover:text-secondary transition-none cursor-pointer bg-transparent border-0 p-0 font-normal">
+              不要
+            </button>
+          </div>
+
+          <!-- Black square button '导出为笔记' -->
+          <button type="button" class="bg-primary text-white text-[12px] font-medium tracking-[0.08em] px-[24px] py-[14px] cursor-pointer hover:bg-black/90 active:opacity-80 transition-none border-0">
+            导出为笔记
+          </button>
+        </div>
+
+      </div>
+
+      <!-- SPACER COLUMN 8 (col-span-1 intentionally blank to maintain Swiss grid rhythm) -->
+      <div class="col-span-1"></div>
+
+      <!-- RIGHT 4 COLUMNS (Cols 9 to 12): Source 穗 Stacked Tiles -->
+      <div class="col-span-4">
+        <!-- Tiny grey label '因为这几穗 (3)' -->
+        <div class="text-[12px] font-medium tracking-[0.12em] text-secondary mb-[18px] uppercase">
+          因为这几穗 (3)
+        </div>
+
+        <!-- Stacked tiles with 10px gaps -->
+        <div class="space-y-[10px]">
+
+          <!-- 1. #F3F3F3 text tile: “给楼道里每一盏声控灯起一个名字” 想法 · 10/17 -->
+          <div class="bg-[#F3F3F3] p-[20px] flex flex-col justify-between min-h-[148px]">
+            <div>
+              <div class="text-[11px] font-medium tracking-[0.08em] text-secondary mb-[8px]">
+                想法 · 10/17
+              </div>
+              <div class="text-[15px] font-[500] leading-[1.45] text-primary tracking-tight">
+                “给楼道里每一盏声控灯起一个名字”
+              </div>
+            </div>
+            <div class="pt-[16px]">
+              <a href="#" class="text-[11px] font-medium tracking-[0.06em] text-secondary hover:text-primary transition-none">
+                查看原穗 →
+              </a>
+            </div>
+          </div>
+
+          <!-- 2. #F3F3F3 link tile: Radio Garden · 转动地球收听各地电台 radio.garden · 10/16 -->
+          <div class="bg-[#F3F3F3] p-[20px] flex flex-col justify-between min-h-[148px]">
+            <div>
+              <div class="text-[11px] font-medium tracking-[0.08em] text-secondary mb-[8px]">
+                链接 · 10/16
+              </div>
+              <div class="text-[15px] font-[500] leading-[1.45] text-primary tracking-tight mb-[4px]">
+                Radio Garden · 转动地球收听各地电台
+              </div>
+              <div class="text-[12px] font-normal text-secondary underline underline-offset-2">
+                radio.garden
+              </div>
+            </div>
+            <div class="pt-[16px]">
+              <a href="#" class="text-[11px] font-medium tracking-[0.06em] text-secondary hover:text-primary transition-none">
+                查看原穗 →
+              </a>
+            </div>
+          </div>
+
+          <!-- 3. 4:5 photo tile: snowy cabin with glowing window at night (IMAGE_37 / IMAGE_53) with white caption -->
+          <div class="relative aspect-[4/5] w-full bg-black overflow-hidden group">
+            <img 
+              src="https://lh3.googleusercontent.com/aida/AEtjO1VtN8VP_yx7Akt0rP-RFy_hL4k7YtEnFDmv1BZWDQeKxsmOriyFF_sWMhmw7k33iY2D2hqS-omsa_gPZZ2dMeRFqxzqxUmu9jFdKy3vyGcByh0uPUmkzFp5tLWHvUMr_2XX8gRALB9Nygadnya7LTemK5xx09PEGJJHiRIe2LxDmsa4O7B-JFP7j7ajrSVm0BjM_H8Vb0EtlEfPlaZV-T-RjKF2PGmnohoAxkmc8uarpfv_BqhT7N4ktWw" 
+              alt="Re: Stacks - Snowy cabin with glowing window at night" 
+              class="w-full h-full object-cover block"
+            />
+            <!-- Gradient / scrim overlay at bottom for crisp caption legibility -->
+            <div class="absolute inset-x-0 bottom-0 pt-24 pb-[20px] px-[20px] bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end">
+              <div class="text-[15px] font-[600] leading-tight text-white tracking-tight mb-[4px]">
+                Re: Stacks
+              </div>
+              <div class="text-[11px] font-medium text-white/80 tracking-wider mb-[12px]">
+                歌 · Bon Iver
+              </div>
+              <div>
+                <a href="#" class="text-[11px] font-medium tracking-[0.06em] text-white/90 hover:text-white underline underline-offset-2 transition-none">
+                  查看原穗 →
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full max-w-[1440px] mx-auto px-[40px] pb-[40px]">
+    <div class="pt-[24px] border-t border-[#F0F0F0] flex items-center justify-between">
+      <div class="text-[10px] font-normal tracking-[0.1em] text-faint select-none">
+        © 2026 Q1f730
+      </div>
+      <div class="text-[10px] font-normal tracking-[0.1em] text-faint uppercase select-none">
+        
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
