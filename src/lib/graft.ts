@@ -3,6 +3,7 @@
 // 为适应智谱免费模型限流：四步压成 2 次调用（A+B 一次、C+D 一次），每次带重试与退避。
 // 没配 key / 调用失败时，离线同样走四步，确定性地出 3 根变形法两两不同的新枝。
 import { AIError, chat, parseJSONLoose } from './ai';
+import { graftCount, modeBrief, modeDef, oppositeWords, vibeOf, vibeWords, type GraftMode } from './modes';
 import { pickOblique } from './oblique';
 import { checkRefs, evidenceClean, evidenceIds, minEvidence, padRefs, weakNote, type RefCheck } from './provenance';
 import type { Settings } from './settings';
@@ -101,8 +102,11 @@ function idList(refs: number[], ids: number[]): string {
   return refs.map((r) => `#${ids[r - 1] ?? r}`).join('、');
 }
 
-function context(items: Item[], opts: { theme?: string; oblique: string; taste?: string }) {
+type Ctx = { theme?: string; oblique: string; taste?: string; mode?: GraftMode };
+
+function context(items: Item[], opts: Ctx) {
   return [
+    modeBrief(opts.mode, items),
     opts.theme ? `创作方向：${opts.theme}` : '创作方向：没有指定，自由嫁接。',
     `斜策略（作为额外约束）：${opts.oblique}`,
     opts.taste ? `我的口味（参考，不要复述）：${opts.taste.slice(0, 400)}` : '',
@@ -120,24 +124,27 @@ const SYS_HEAD = [
   FORBIDDEN,
 ].join('\n');
 
-export function buildMapPrompt(items: Item[], opts: { theme?: string; oblique: string; taste?: string }): { system: string; user: string } {
+export function buildMapPrompt(items: Item[], opts: Ctx): { system: string; user: string } {
   const k = minRefs(items.length);
   const system = [
     SYS_HEAD,
     '这一次只做 PHASE A 和 PHASE B，不要写完整创意，不要排序。',
+    opts.mode ? `这次按「${modeDef(opts.mode)?.name}」接法抽的穗（规则与要求见用户消息开头），张力和种子都要照这个接法的要求来。` : '',
     'PHASE A — MAP：找出 4 个素材之间的张力或意外的桥（结构、节奏、情绪、材料、动作上的同构或冲突，而不是表面题材相似），每个标出依据的素材 ID。',
     `PHASE B — DIVERGE：写 8 粒一句话种子（每粒不超过 45 字）。8 种变形法每种恰好用一次：`,
     ...TRANSFORMS.map((t) => `- ${t.id}（${t.name}）：${t.hint}`),
     `每粒种子至少引用 ${k} 件素材 ID（写方括号里 # 后面的数字，#12 就写 12；不许写不存在的 ID）。`,
     '只输出一个 JSON 对象：',
     '{"tensions":[{"text":"张力（40字内）","refs":[素材ID,素材ID]}],"seeds":[{"t":"invert","text":"一句话种子","refs":[素材ID,素材ID,素材ID]}]}',
-  ].join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
   return { system, user: context(items, opts) };
 }
 
 export function buildConvergePrompt(
   items: Item[],
-  opts: { theme?: string; oblique: string; taste?: string },
+  opts: Ctx,
   tensions: GraftTension[],
   seeds: GraftSeed[],
   recheck?: string,
@@ -148,6 +155,7 @@ export function buildConvergePrompt(
     SYS_HEAD,
     '这一次做 PHASE C 和 PHASE D。',
     `PHASE C — DEFIX：看下面 8 粒种子，用一句话指出它们重复的结构、场景、语气或动词（pattern）；把最相像的 3 粒换成落在完全不同语义区域的新种子。新种子沿用被换掉那粒的变形法，仍至少引用 ${k} 件素材 ID。`,
+    opts.mode ? `三根新枝都必须满足「${modeDef(opts.mode)?.name}」接法的要求（见用户消息开头）。` : '',
     'PHASE D — CONVERGE：从换过之后的 8 粒里，选 3 粒彼此最不一样、且变形法两两不同的，各长成一根新枝。挑选标准：证据扎实、在这一批里新、对我有用、做得出来、忠于这些素材。',
     '每根新枝给出：seed（种子编号 1-8）、title（12 字内，不要冒号）、idea（100-180 字，具体到画面 / 声音 / 结构）、form（形式，如短片 / 歌 / 海报 / 装置 / 文案 / 游戏）、refs（这根新枝真正用到的素材 ID，至少 ${k} 个，只能是上面方括号里的数字）、unlike（它和另外两根哪里不同，40 字内）、experiment（我 20 分钟内就能完成的一个小实验）。',
     'idea 正文里用到哪件素材，就点出它的名字（如《花样年华》），方便我对照。说不出依据的新枝宁可不写。',
@@ -389,10 +397,36 @@ function seedText(t: string, a: Item, b: Item, c: Item | undefined, alt: boolean
   }
 }
 
-function tensionTexts(items: Item[]): GraftTension[] {
+/** v0.18 离线：每种接法第一条张力说清这一组为什么这样抽 */
+export function modeTension(mode: GraftMode, items: Item[]): GraftTension {
+  const all = items.map((_, i) => i + 1);
+  const [a, b] = items;
+  switch (mode) {
+    case 'near':
+      return { text: `${q(a)}和${q(b)}气质很近：要找的是它们之间最细的那一点不同。`, refs: [1, 2] };
+    case 'far':
+      return { text: `${q(a)}和${q(b)}几乎不搭：桥不在题材上，在节奏和动作上。`, refs: [1, 2] };
+    case 'neglected':
+      return { text: `这几穗很少被接（${items.map((it) => `${q(it)} ${graftCount(it)} 次`).join('、')}）：先看它们被忽略的那一点。`, refs: all };
+    case 'cross': {
+      const ts = [...new Set(items.map((i) => TYPE_LABEL[i.type]))];
+      return { text: `${ts.length} 种媒介：${ts.join('、')}。每根新枝都要跨过至少两种，形式也不能是其中任何一种。`, refs: all };
+    }
+    case 'anti': {
+      const v = vibeOf(a);
+      const w = vibeWords(v);
+      return {
+        text: w.length ? `${q(a)}是「${w.join('、')}」的，把它的反面「${oppositeWords(v).join('、')}」接上去，不调和。` : `以${q(a)}为锚，把它的反面接上去，不调和成中间态。`,
+        refs: [1, ...(items.length > 1 ? [2] : [])],
+      };
+    }
+  }
+}
+
+function tensionTexts(items: Item[], mode?: GraftMode): GraftTension[] {
   const n = items.length;
-  const out: GraftTension[] = [];
-  for (let i = 0; i < 4; i++) {
+  const out: GraftTension[] = mode ? [modeTension(mode, items)] : [];
+  for (let i = 0; out.length < 4; i++) {
     const ai = i % n;
     const bi = (i + 1) % n;
     const a = items[ai];
@@ -417,7 +451,7 @@ function seedFor(t: string, i: number, items: Item[], alt: boolean): GraftSeed {
 }
 
 /** 从一粒种子长成一根新枝（离线 / 兜底） */
-export function branchFromSeed(seed: GraftSeed, items: Item[], oblique: string, k: number, theme?: string): Idea {
+export function branchFromSeed(seed: GraftSeed, items: Item[], oblique: string, k: number, theme?: string, mode?: GraftMode): Idea {
   const t = T_BY_ID.get(seed.transform);
   // 溯源：正文就是用这几穗拼出来的，所以补到至少 3 穗，并且三穗都写进正文
   const refs = padRefs(seed.refs, items.length);
@@ -427,6 +461,7 @@ export function branchFromSeed(seed: GraftSeed, items: Item[], oblique: string, 
     seed.text,
     `做成${form}：取${q(a)}的结构、${q(b)}的情绪${c ? `、${q(c)}的材质` : ''}。`,
     t ? `这一根的变形是「${t.name}」——${t.hint}。` : '',
+    modeLine(mode, items),
     `约束：${oblique}。`,
     theme ? `方向：${theme}。` : '',
   ]
@@ -446,7 +481,22 @@ export function branchFromSeed(seed: GraftSeed, items: Item[], oblique: string, 
   };
 }
 
+/** v0.18 离线新枝里的一句接法说明 */
+function modeLine(mode: GraftMode | undefined, items: Item[]): string {
+  const m = modeDef(mode);
+  if (!m) return '';
+  if (mode === 'anti') {
+    const w = vibeWords(vibeOf(items[0]));
+    return w.length ? `接法「反氛围」：锚是${q(items[0])}的「${w.join('、')}」，这一根往「${oppositeWords(vibeOf(items[0])).join('、')}」长。` : `接法「反氛围」：以${q(items[0])}为锚，往它的反面长。`;
+  }
+  if (mode === 'cross') return `接法「跨媒介」：${[...new Set(items.map((i) => TYPE_LABEL[i.type]))].join(' × ')}，最后的形式不用其中任何一种。`;
+  if (mode === 'neglected') return `接法「被冷落」：这几穗平时很少被接，这一根只靠它们被忽略的细节。`;
+  return `接法「${m.name}」：${m.ask}`;
+}
+
 export interface GraftResult {
+  /** v0.18 用了哪种接法 */
+  mode?: GraftMode;
   branches: Idea[];
   tensions: GraftTension[];
   seeds: GraftSeed[];
@@ -462,12 +512,12 @@ export interface GraftResult {
 }
 
 /** 离线四步：张力 → 8 种变形各一粒 → 换掉最相像的 3 粒 → 收拢 3 根变形法两两不同的 */
-export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number } = {}): GraftResult {
+export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number; mode?: GraftMode } = {}): GraftResult {
   const rand = opts.rand || Math.random;
   if (!items.length) throw new Error('没有穗');
   const list = items.length === 1 ? [items[0], items[0]] : items;
   const oblique = pickOblique(rand);
-  const tensions = tensionTexts(list);
+  const tensions = tensionTexts(list, opts.mode);
   // 随机一个起点，让同一组穗多次离线嫁接不完全一样
   const off = Math.floor(rand() * list.length);
   const rot = [...list.slice(off), ...list.slice(0, off)];
@@ -482,12 +532,14 @@ export function graftOffline(items: Item[], opts: { theme?: string; rand?: () =>
     .map(([, i]) => i);
   seeds = seeds.map((s, i) => (worst.includes(i) ? { ...remap(seedFor(s.transform, i, rot, true)), replaced: true } : s));
   // CONVERGE：随机起点 + 贪心最不相像
-  const first = Math.floor(rand() * seeds.length);
+  // v0.18：有接法时，第一根固定走这个接法最合适的变形（跨媒介 → 换媒介，反氛围 → 反转 …）
+  const pref = opts.mode ? seeds.findIndex((s) => s.transform === modeDef(opts.mode)?.transform) : -1;
+  const first = pref >= 0 ? pref : Math.floor(rand() * seeds.length);
   const rest = localConverge(seeds, 2, [first], [seeds[first].transform]);
   const chosen = [first, ...rest];
-  const branches = chosen.map((i, k) => branchFromSeed(seeds[i], list, oblique, k, opts.theme));
+  const branches = chosen.map((i, k) => branchFromSeed(seeds[i], list, oblique, k, opts.theme, opts.mode));
   const fin = finishBranches(branches, seeds, chosen);
-  return { branches: fin.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0 };
+  return { mode: opts.mode, branches: fin.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0 };
 }
 
 /** 给模型的「上一次哪里不对」 */
@@ -557,6 +609,7 @@ export async function graftWithAI(
   opts: {
     theme?: string;
     taste?: string;
+    mode?: GraftMode;
     rand?: () => number;
     signal?: AbortSignal;
     onProgress?: (p: GraftProgress) => void;
@@ -564,7 +617,7 @@ export async function graftWithAI(
   } = {},
 ): Promise<GraftResult> {
   const oblique = pickOblique(opts.rand);
-  const ctx = { theme: opts.theme, oblique, taste: opts.taste };
+  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode };
   const temp = Math.max(0.2, Math.min(1.3, s.temperature || 1));
   let calls = 0;
   const rOpts = (stage: GraftStage) => ({
@@ -622,12 +675,12 @@ export async function graftWithAI(
     }
     opts.onProgress?.({ stage: 'done' });
     const weak = conv.branches.filter((b) => b.evidence === 'weak').length;
-    return { branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak };
+    return { mode: opts.mode, branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak };
   } catch (e) {
     if (opts.signal?.aborted) throw e;
     // 第二步没跑完：用第一步的 8 粒种子本地收拢
     const conv = normalizeConverge({}, map.seeds, items, oblique);
     opts.onProgress?.({ stage: 'done' });
-    return { branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true };
+    return { mode: opts.mode, branches: conv.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true };
   }
 }
