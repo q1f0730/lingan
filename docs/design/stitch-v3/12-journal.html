@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · Glean - 穗仓</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&amp;family=Noto+Serif+SC:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error-container": "#93000a",
+            "secondary-fixed": "#ffdad7",
+            "background": "#f8f9fa",
+            "error": "#ba1a1a",
+            "on-background": "#191c1d",
+            "surface-dim": "#d9dadb",
+            "on-tertiary": "#ffffff",
+            "surface-tint": "#4f5f7a",
+            "on-secondary": "#ffffff",
+            "surface-variant": "#e1e3e4",
+            "secondary-fixed-dim": "#ffb3ad",
+            "secondary": "#9b1d20",
+            "tertiary": "#000817",
+            "primary-fixed-dim": "#b7c7e7",
+            "on-surface-variant": "#44474d",
+            "surface-container-low": "#f3f4f5",
+            "inverse-primary": "#b7c7e7",
+            "surface-bright": "#f8f9fa",
+            "on-tertiary-fixed-variant": "#3c475a",
+            "on-primary-fixed-variant": "#384761",
+            "on-error": "#ffffff",
+            "surface-container-high": "#e7e8e9",
+            "on-secondary-fixed-variant": "#8e1218",
+            "inverse-surface": "#2e3132",
+            "on-surface": "#191c1d",
+            "on-secondary-fixed": "#410004",
+            "outline": "#75777e",
+            "on-tertiary-container": "#7d889c",
+            "error-container": "#ffdad6",
+            "on-primary": "#ffffff",
+            "inverse-on-surface": "#f0f1f2",
+            "surface-container-lowest": "#ffffff",
+            "surface": "#ffffff",
+            "on-secondary-container": "#69000a",
+            "surface-container-highest": "#e1e3e4",
+            "tertiary-container": "#152031",
+            "primary": "#0f2038",
+            "on-primary-fixed": "#0a1c34",
+            "outline-variant": "#e2e8f0",
+            "primary-fixed": "#d5e3ff",
+            "on-tertiary-fixed": "#111c2c",
+            "tertiary-fixed-dim": "#bcc7dd",
+            "surface-container": "#f8f9fa",
+            "secondary-container": "#ff6660",
+            "tertiary-fixed": "#d8e3fa",
+            "on-primary-container": "#7888a5",
+            "primary-container": "#0f2038"
+          },
+          "borderRadius": {
+            "DEFAULT": "0px",
+            "none": "0px",
+            "sm": "0px",
+            "md": "0px",
+            "lg": "0px",
+            "xl": "0px",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "headline-md": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "headline-sm": ["Hanken Grotesk", "sans-serif"],
+            "body-md": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "citation": ["Hanken Grotesk", "sans-serif"],
+            "body-lg": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "headline-lg": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "label-sm": ["Hanken Grotesk", "sans-serif"],
+            "caption": ["Hanken Grotesk", "sans-serif"],
+            "headline-lg-mobile": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "display-mobile": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "label-md": ["Hanken Grotesk", "sans-serif"],
+            "body-sm": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "display": ["\"Source Serif 4\"", "\"Noto Serif SC\"", "serif"],
+            "mono": ["\"JetBrains Mono\"", "monospace"]
+          },
+          "fontSize": {
+            "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "body-md": ["15px", { "lineHeight": "26px", "fontWeight": "400" }],
+            "citation": ["11px", { "lineHeight": "12px", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "caption": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "display-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "display": ["42px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 19px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Academic custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 3px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f8f9fa;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c5c6ce;
+    }
+    .academic-hairline {
+      border-color: #E2E8F0;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface m-0 p-0 flex justify-center items-start min-h-screen antialiased selection:bg-primary selection:text-white">
+<!-- Mobile Viewport Container: Exactly 390x844 -->
+<main class="w-[390px] h-[844px] max-w-[390px] max-h-[844px] bg-surface-container-lowest relative flex flex-col overflow-hidden shadow-none border-x border-outline-variant">
+<!-- Top Journal Header (TopAppBar Anchor) -->
+<header class="w-full bg-surface-container-lowest border-b border-outline-variant px-4 pt-3 pb-2.5 z-40 shrink-0">
+<!-- Status Row: Journal Volume & Metadata -->
+<div class="flex justify-between items-center text-[10px] tracking-widest text-outline uppercase font-mono mb-1.5 pb-1 border-b border-outline-variant/60">
+<span class="flex items-center gap-1.5 font-semibold text-primary">
+<span class="inline-block w-1.5 h-1.5 bg-secondary"></span>
+          VOL. XXIV · NO. 10
+        </span>
+<span class="text-citation font-citation tracking-wider text-outline font-mono">
+          ID: Q1f730
+        </span>
+</div>
+<!-- Main Masthead -->
+<div class="flex justify-between items-center">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="menu_book">menu_book</span>
+<h1 class="text-headline-sm font-headline-sm font-bold tracking-tight text-primary">
+            拾穗 · Glean
+          </h1>
+</div>
+<div class="flex items-center space-x-2">
+<span class="font-mono text-[10px] text-primary border border-primary px-1.5 py-0.5 font-medium tracking-tight">
+            PEER-REVIEWED
+          </span>
+<span class="text-[11px] font-mono font-bold text-secondary">
+            [ARCHIVE]
+          </span>
+</div>
+</div>
+</header>
+<!-- Always-Visible Quick Capture Input Bar -->
+<section class="px-4 py-2.5 bg-surface-container border-b border-outline-variant shrink-0">
+<form class="flex items-center bg-surface-container-lowest border border-outline-variant focus-within:border-primary transition-colors duration-150" onsubmit="event.preventDefault();">
+<span class="pl-2.5 text-outline flex items-center justify-center">
+<span class="material-symbols-outlined text-[17px] text-outline" data-icon="add_circle">add_circle</span>
+</span>
+<input class="w-full bg-transparent px-2.5 py-1.5 text-body-sm font-body-sm text-on-surface placeholder:text-outline/70 placeholder:font-serif focus:outline-none focus:ring-0 border-none text-[13px]" placeholder="随手拾一穗…" type="text"/>
+<div class="pr-1.5 flex items-center">
+<button class="bg-primary text-white px-2.5 py-1 text-label-sm font-label-sm uppercase hover:bg-tertiary-container transition-colors duration-150 flex items-center gap-1 text-[11px]" title="Index Item" type="submit">
+<span>收录</span>
+<span class="material-symbols-outlined text-[13px]" data-icon="north_east">north_east</span>
+</button>
+</div>
+</form>
+<div class="flex items-center justify-between mt-1.5 px-0.5 text-[10px] font-mono text-outline">
+<span>FIELD SPECIMENS: 6 穗</span>
+<span class="text-secondary font-semibold">SYNCHRONIZED · 100% RAW</span>
+</div>
+</section>
+<!-- Scrollable Manuscript Body: 2-Column Academic Layout -->
+<div class="flex-1 overflow-y-auto px-3.5 py-3 bg-surface-container-lowest divide-y divide-outline-variant">
+<!-- Scientific Section Header -->
+<div class="flex items-baseline justify-between pb-1.5 mb-2.5">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-mono font-bold text-primary tracking-wider uppercase">SEC. 01</span>
+<span class="text-outline-variant">|</span>
+<h2 class="text-label-sm font-label-sm font-bold text-primary tracking-widest uppercase">已采撷样本 (SAMPLES)</h2>
+</div>
+<span class="text-[10px] font-mono text-outline">FIG. 1–6</span>
+</div>
+<!-- Asymmetrical 2-Column Academic Bento Matrix -->
+<div class="grid grid-cols-2 gap-2.5 pt-2 pb-3">
+<!-- ITEM 1 (PHOTO): 图 1 Rain Street (Span Full or Column) -->
+<article class="col-span-2 bg-surface-container-lowest border border-outline-variant p-2 hover:border-primary transition-colors">
+<div class="flex justify-between items-center mb-1 pb-1 border-b border-outline-variant text-[10px] font-mono">
+<span class="font-bold text-primary flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-secondary inline-block"></span>
+              图 1 <span class="text-outline font-normal">/ PHOTO</span>
+</span>
+<span class="text-secondary font-mono font-semibold">今天 09:12</span>
+</div>
+<div class="relative w-full h-[142px] overflow-hidden bg-surface-container mb-2 border border-outline-variant">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover grayscale-[15%] contrast-[1.05]" src="https://lh3.googleusercontent.com/aida/AEtjO1Xsr-NX4Mwz0JBYqZze83Z_DuRQVua-8j-7aUYBIZvDr0Dk74eApMvfQObrFplhAxmVzFCIfRl6fvDca_w-1GYR1xtMCAyWoY2-U2k68Meb8_3jH8uIQWQAf2BExSOAb76R84rLJys3c72b7Xnj724UGaLLDV4HFrtTvRUlA8_ZUzVfyTtUdIG63c3k3gzhx_jKQgY991OhmYIc8gLDrzWmG_mmuP8ePULUZwyYZn1O5oFV_nK_MaIhSVZb"/>
+<div class="absolute bottom-1 right-1 bg-primary/80 backdrop-blur-none text-white font-mono text-[9px] px-1 py-0.5 border border-white/20">
+              SPECIMEN #01
+            </div>
+</div>
+<div class="px-0.5">
+<p class="text-body-sm font-body-sm text-on-surface leading-tight font-medium">
+              雨后的梧桐街<sup class="text-secondary font-mono font-bold ml-0.5">[1]</sup>
+</p>
+<p class="text-[11px] font-body-sm text-outline mt-0.5 line-clamp-1 italic">
+              落叶平铺于湿润的沥青地面，暮色与路灯黄晕微交织。
+            </p>
+</div>
+</article>
+<!-- ITEM 2 (FILM): 图 2 燃烧女子的肖像 -->
+<article class="col-span-1 bg-surface-container border border-outline-variant p-2 flex flex-col justify-between hover:border-primary transition-colors">
+<div>
+<div class="flex justify-between items-center mb-1.5 pb-1 border-b border-outline-variant text-[10px] font-mono">
+<span class="font-bold text-primary">图 2 <span class="text-outline font-normal">/ 影</span></span>
+<sup class="text-secondary font-bold">[2]</sup>
+</div>
+<span class="inline-block text-[9px] font-mono px-1 py-0.2 bg-surface-container-lowest border border-outline-variant text-primary mb-1">
+              CINEMA
+            </span>
+<h3 class="text-body-sm font-body-sm font-semibold text-primary leading-snug">
+              燃烧女子的肖像
+            </h3>
+<p class="text-[11px] font-caption text-on-surface-variant mt-1 font-mono">
+              (2019, 瑟琳·席安玛)
+            </p>
+</div>
+<div class="pt-2 mt-2 border-t border-outline-variant text-[10px] font-mono text-outline">
+            昨 23:40
+          </div>
+</article>
+<!-- ITEM 3 (SONG): 夜空中最亮的星 -->
+<article class="col-span-1 bg-surface-container-lowest border border-outline-variant p-2 flex flex-col justify-between hover:border-primary transition-colors">
+<div>
+<div class="flex justify-between items-center mb-1.5 pb-1 border-b border-outline-variant text-[10px] font-mono">
+<span class="font-bold text-primary">图 3 <span class="text-outline font-normal">/ 声</span></span>
+<sup class="text-secondary font-bold">[3]</sup>
+</div>
+<span class="inline-block text-[9px] font-mono px-1 py-0.2 bg-surface-container-low border border-outline-variant text-secondary font-medium mb-1">
+              ACOUSTIC
+            </span>
+<h3 class="text-body-sm font-body-sm font-semibold text-primary leading-snug">
+              夜空中最亮的星
+            </h3>
+<p class="text-[11px] font-caption text-outline mt-0.5">
+              逃跑计划
+            </p>
+<!-- Acoustic spectrum hairline visualization -->
+<div class="mt-2.5 pt-1 flex items-end gap-[2px] h-5 w-full bg-surface-container px-1 py-0.5 border border-outline-variant/60">
+<div class="w-1 bg-primary h-2"></div>
+<div class="w-1 bg-primary h-4"></div>
+<div class="w-1 bg-secondary h-5"></div>
+<div class="w-1 bg-primary h-3"></div>
+<div class="w-1 bg-primary h-4"></div>
+<div class="w-1 bg-primary h-1"></div>
+<div class="w-1 bg-primary h-3"></div>
+<div class="w-1 bg-primary h-2"></div>
+</div>
+</div>
+<div class="pt-2 mt-2 border-t border-outline-variant text-[10px] font-mono text-outline">
+            昨 21:05
+          </div>
+</article>
+<!-- ITEM 4 (QUOTE): 文案 Academic Excerpt -->
+<article class="col-span-2 bg-surface-container-lowest border border-outline-variant p-2.5 relative pl-3.5 hover:border-primary transition-colors">
+<!-- Academic Citation Bar (Left accent stroke) -->
+<div class="absolute left-0 top-0 bottom-0 w-[3px] bg-primary"></div>
+<div class="flex justify-between items-center mb-1 text-[10px] font-mono">
+<div class="flex items-center gap-1.5">
+<span class="font-bold text-primary uppercase">文案 / EXCERPT</span>
+<span class="text-[9px] text-outline font-mono">[CANON]</span>
+</div>
+<div class="flex items-center gap-1 font-mono text-outline">
+<sup class="text-secondary font-bold text-[11px]">[4]</sup>
+<span>10/19</span>
+</div>
+</div>
+<blockquote class="text-body-sm font-body-sm text-on-surface italic pl-1 border-l-2 border-outline-variant my-1 leading-relaxed">
+            “我们读诗，是因为我们是人类的一员。”
+          </blockquote>
+<p class="text-[10px] font-mono text-outline text-right mt-1">
+            — 死亡诗社 (Dead Poets Society)
+          </p>
+</article>
+<!-- ITEM 5 (IDEA): 想法 Academic Hypothesis -->
+<article class="col-span-1 bg-surface-container border border-outline-variant p-2 flex flex-col justify-between hover:border-primary transition-colors">
+<div>
+<div class="flex justify-between items-center mb-1 pb-1 border-b border-outline-variant text-[10px] font-mono">
+<span class="font-bold text-secondary">想法 / HYPO</span>
+<sup class="text-secondary font-bold">[5]</sup>
+</div>
+<p class="text-body-sm font-body-sm text-primary font-medium leading-snug pt-0.5">
+              把通勤路上听到的对话写成一组短诗。
+            </p>
+<div class="mt-2 text-[10px] font-mono text-outline-variant text-on-surface-variant flex items-center gap-1">
+<span class="w-1 h-1 bg-outline rounded-full"></span>
+<span>Obs. in transit</span>
+</div>
+</div>
+<div class="pt-1.5 mt-2 border-t border-outline-variant text-[10px] font-mono text-outline">
+            10/18
+          </div>
+</article>
+<!-- ITEM 6 (LINK): 链接 Academic Catalog Entry -->
+<article class="col-span-1 bg-surface-container-lowest border border-outline-variant p-2 flex flex-col justify-between hover:border-primary transition-colors">
+<div>
+<div class="flex justify-between items-center mb-1 pb-1 border-b border-outline-variant text-[10px] font-mono">
+<span class="font-bold text-primary">链接 / REF</span>
+<sup class="text-secondary font-bold">[6]</sup>
+</div>
+<h3 class="text-body-sm font-body-sm font-semibold text-primary leading-tight">
+              Are.na · 关于收集的收集
+            </h3>
+<div class="mt-1 flex items-center gap-1 text-[10px] font-mono text-secondary underline decoration-secondary/40">
+<span class="material-symbols-outlined text-[11px]" data-icon="link">link</span>
+<span>are.na</span>
+</div>
+</div>
+<div class="pt-1.5 mt-2 border-t border-outline-variant text-[10px] font-mono text-outline">
+            10/16
+          </div>
+</article>
+</div>
+<!-- Footnote Apparatus (Academic Scholarly Citations) -->
+<footer class="pt-2 pb-4 text-[10px] font-mono text-outline leading-tight space-y-1">
+<div class="w-12 h-[1.5px] bg-primary mb-1.5"></div>
+<p><span class="text-secondary font-bold">[1]</span> 摄影样本于巴黎第十一区街角采撷，微雨，光温 3200K。</p>
+<p><span class="text-secondary font-bold">[2]</span> 法国电影资料馆重映手记；色彩结构与视线拓扑学。</p>
+<p><span class="text-secondary font-bold">[3]</span> 44.1kHz FLAC 原音频波形切片。</p>
+<p><span class="text-secondary font-bold">[4]-[6]</span> 文本及外链经哈希校验无损归档。</p>
+</footer>
+</div>
+<!-- Synthesis Methods Action Bar ('嫁接' Entry Anchor) -->
+<section class="bg-surface-container border-t border-outline-variant px-4 py-2 shrink-0 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] font-mono font-bold text-primary tracking-widest uppercase">SYNTHESIS / 方法</span>
+<span class="text-[11px] font-body-sm text-outline">选定 2 项样本化合为「新枝」</span>
+</div>
+<!-- Academic Methods Button -->
+<button class="bg-primary hover:bg-tertiary text-white border-l-2 border-secondary px-3.5 py-1.5 text-label-sm font-label-sm uppercase flex items-center gap-1.5 transition-colors duration-150 shadow-none">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="alt_route">alt_route</span>
+<span class="font-bold tracking-wider">嫁接 (METHODS)</span>
+</button>
+</section>
+<!-- Bottom Navigation Bar (BottomNavBar Anchor) -->
+<!-- Exactly 5 destinations: 穗仓 (active), 嫁接, 新枝, 口味, 设置 -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-1.5 bg-surface-container-lowest border-t border-outline-variant" style="position: sticky;">
+<!-- Tab 1: 穗仓 (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-secondary font-bold border-t-2 border-secondary pt-1 pb-1 flex-1" href="#granary">
+<span class="material-symbols-outlined text-[20px]" data-icon="local_library">local_library</span>
+<span class="text-label-sm font-label-sm tracking-wider uppercase mt-0.5 text-[10px]">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 pb-1 hover:text-primary transition-colors duration-150 flex-1" href="#graft">
+<span class="material-symbols-outlined text-[20px]" data-icon="alt_route">alt_route</span>
+<span class="text-label-sm font-label-sm tracking-wider uppercase mt-0.5 text-[10px]">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 pb-1 hover:text-primary transition-colors duration-150 flex-1" href="#sprout">
+<span class="material-symbols-outlined text-[20px]" data-icon="eco">eco</span>
+<span class="text-label-sm font-label-sm tracking-wider uppercase mt-0.5 text-[10px]">新枝</span>
+</a>
+<!-- Tab 4: 口味 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 pb-1 hover:text-primary transition-colors duration-150 flex-1" href="#taste">
+<span class="material-symbols-outlined text-[20px]" data-icon="science">science</span>
+<span class="text-label-sm font-label-sm tracking-wider uppercase mt-0.5 text-[10px]">口味</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant pt-1 pb-1 hover:text-primary transition-colors duration-150 flex-1" href="#settings">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="text-label-sm font-label-sm tracking-wider uppercase mt-0.5 text-[10px]">设置</span>
+</a>
+</nav>
+</main>
+</body></html>
