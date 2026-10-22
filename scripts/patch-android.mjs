@@ -1,4 +1,4 @@
-// patch the generated Android project: INTERNET permission + share target (text/image) bridged into the WebView
+// patch the generated Android project: INTERNET permission + share target (text/image) bridged into the WebView + launcher name
 import fs from 'node:fs';
 import path from 'node:path';
 const f = 'src-tauri/gen/android/app/src/main/AndroidManifest.xml';
@@ -22,6 +22,16 @@ if (!m.includes('android.intent.action.SEND')) {
 }
 fs.writeFileSync(f, m);
 console.log(m);
+
+// launcher name: 拾穗 (productName stays ASCII "Glean" for file names)
+const strings = 'src-tauri/gen/android/app/src/main/res/values/strings.xml';
+if (fs.existsSync(strings)) {
+  let x = fs.readFileSync(strings, 'utf8');
+  x = x.replace(/<string name="app_name">[^<]*<\/string>/, '<string name="app_name">拾穗</string>');
+  x = x.replace(/<string name="main_activity_title">[^<]*<\/string>/, '<string name="main_activity_title">拾穗</string>');
+  fs.writeFileSync(strings, x);
+  console.log(x);
+}
 
 // find MainActivity.kt and replace it with a share-aware one
 const root = 'src-tauri/gen/android/app/src/main/java';
