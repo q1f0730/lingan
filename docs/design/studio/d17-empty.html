@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>拾穗 · GLEAN — 空穗仓 (0)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: '#FFFFFF',
+            primary: '#000000',
+            secondary: '#7E7E7E',
+            faint: '#C6C6C6',
+            tile: '#F3F3F3'
+          },
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans SC"', 'sans-serif'],
+            display: ['"Inter"', '"Noto Sans SC"', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="bg-surface text-primary antialiased min-h-screen flex flex-col selection:bg-primary selection:text-white">
+
+  <!-- TOP NAV BAR (Identical to desktop d1-grid) -->
+  <header class="fixed top-0 left-0 w-full z-50 bg-white/95 backdrop-blur-sm border-b border-transparent">
+    <div class="w-full max-w-[1440px] mx-auto px-10 h-16 flex items-center justify-between">
+      <!-- Logo left -->
+      <a href="#" class="text-[20px] font-semibold tracking-tight text-primary select-none flex-shrink-0">
+        拾穗 · GLEAN
+      </a>
+
+      <!-- Centered text navigation -->
+      <nav class="flex items-center space-x-8 text-[12px] font-medium tracking-[0.08em]">
+        <a href="#" class="text-primary border-b border-primary pb-0.5 select-none">穗仓</a>
+        <a href="#" class="text-secondary hover:text-primary transition-none select-none">嫁接</a>
+        <a href="#" class="text-secondary hover:text-primary transition-none select-none">新枝</a>
+        <a href="#" class="text-secondary hover:text-primary transition-none select-none">口味</a>
+        <a href="#" class="text-secondary hover:text-primary transition-none select-none">设置</a>
+      </nav>
+
+      <!-- Right 320px quick-capture underline input -->
+      <div class="w-[320px] flex-shrink-0">
+        <div class="relative w-full border-b border-primary pb-1 flex items-center justify-between">
+          <input 
+            type="text" 
+            placeholder="随手拾一穗 →" 
+            class="w-full bg-transparent border-none p-0 text-[13px] text-primary placeholder-[#7E7E7E] focus:outline-none focus:ring-0"
+          />
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CANVAS (1440px desktop grid) -->
+  <main class="w-full max-w-[1440px] mx-auto px-10 pt-[140px] pb-24 flex-1 flex flex-col">
+    
+    <!-- Huge Display Headline -->
+    <section class="mb-8">
+      <h1 class="text-[104px] font-semibold leading-none tracking-[-0.04em] text-primary select-none">
+        穗仓 (0)
+      </h1>
+    </section>
+
+    <!-- Large 40px semibold sentence spanning 8 columns -->
+    <section class="grid grid-cols-12 gap-4 mb-20">
+      <div class="col-span-12 lg:col-span-8">
+        <p class="text-[40px] font-semibold leading-[1.2] tracking-[-0.025em] text-primary">
+          还没有穗。看到喜欢的，就顺手拾一穗。
+        </p>
+      </div>
+    </section>
+
+    <!-- Three columns describing ways to add (01 / 02 / 03) -->
+    <section class="grid grid-cols-12 gap-4 mb-24">
+      <!-- 01 Column -->
+      <div class="col-span-12 md:col-span-4 pr-6">
+        <div class="text-[64px] font-[300] leading-none tracking-[-0.03em] text-primary mb-4 select-none">
+          01
+        </div>
+        <h2 class="text-[20px] font-semibold text-primary mb-2 tracking-tight">
+          右上角速记
+        </h2>
+        <p class="text-[14px] text-secondary leading-relaxed">
+          打字、粘贴、拖图都行
+        </p>
+      </div>
+
+      <!-- 02 Column -->
+      <div class="col-span-12 md:col-span-4 pr-6">
+        <div class="text-[64px] font-[300] leading-none tracking-[-0.03em] text-primary mb-4 select-none">
+          02
+        </div>
+        <h2 class="text-[20px] font-semibold text-primary mb-2 tracking-tight">
+          全局快捷键
+        </h2>
+        <p class="text-[14px] text-secondary leading-relaxed">
+          在任何地方按 Ctrl+Shift+L
+        </p>
+      </div>
+
+      <!-- 03 Column -->
+      <div class="col-span-12 md:col-span-4 pr-6">
+        <div class="text-[64px] font-[300] leading-none tracking-[-0.03em] text-primary mb-4 select-none">
+          03
+        </div>
+        <h2 class="text-[20px] font-semibold text-primary mb-2 tracking-tight">
+          导入
+        </h2>
+        <p class="text-[14px] text-secondary leading-relaxed">
+          浏览器书签、Markdown、旧备份
+        </p>
+      </div>
+    </section>
+
+    <!-- Sample 穗 Section (50% opacity in standard grid style) -->
+    <section class="pt-8 border-t border-tile">
+      <!-- Tiny grey section label -->
+      <div class="mb-6">
+        <span class="text-[12px] font-medium tracking-[0.08em] text-secondary select-none">
+          或者先放几穗示例看看
+        </span>
+      </div>
+
+      <!-- 3 sample 穗 tiles at 50% opacity -->
+      <div class="grid grid-cols-12 gap-4 mb-8 opacity-50">
+        
+        <!-- Tile 1: 4:5 photo of fog over a ferry railing with caption -->
+        <div class="col-span-12 md:col-span-4 flex flex-col">
+          <div class="w-full aspect-[4/5] bg-tile overflow-hidden relative">
+            <img 
+              src="https://lh3.googleusercontent.com/aida/AEtjO1XWmn52ypzDStTyf3lTN8FF2lF2N0VhiLVQWGGGkxur4pYzJvTb9i_gmosKq58MXIzqD91Qk9XDNRj3i_gXRqGB5cRkaW4DWfQ7qOuSW3v0b2irImUoRfrzmtQ8mlUjZFA33aZIurBjz1t4pMgU5lCyuxaZVhYQCooZLgy49IXG-llnRblrfEY2IulTXmj4y0KjmNDzVOkd-aT8oeG-SsoLr1OEjfn_AZyWLYOJHpCTKJo_mJf87Fwq6ks" 
+              alt="示例 · 轮渡上的雾" 
+              class="w-full h-full object-cover grayscale contrast-125 block"
+            />
+          </div>
+          <div class="pt-3">
+            <span class="text-[12px] font-medium tracking-[0.08em] text-secondary">
+              示例 · 轮渡上的雾
+            </span>
+          </div>
+        </div>
+
+        <!-- Tile 2: #F3F3F3 text tile Calvino quote -->
+        <div class="col-span-12 md:col-span-4 flex flex-col">
+          <div class="w-full aspect-[4/5] bg-tile p-8 flex flex-col justify-between">
+            <p class="text-[22px] font-semibold text-primary leading-[1.4] tracking-[-0.015em]">
+              “记忆中的形象一旦被词语固定住，就给抹掉了。”
+            </p>
+            <div class="text-[13px] text-secondary">
+              卡尔维诺 《看不见的城市》
+            </div>
+          </div>
+          <div class="pt-3">
+            <span class="text-[12px] font-medium tracking-[0.08em] text-secondary">
+              示例 · 摘抄
+            </span>
+          </div>
+        </div>
+
+        <!-- Tile 3: #F3F3F3 text tile Stairwell voice lights -->
+        <div class="col-span-12 md:col-span-4 flex flex-col">
+          <div class="w-full aspect-[4/5] bg-tile p-8 flex flex-col justify-between">
+            <p class="text-[22px] font-semibold text-primary leading-[1.4] tracking-[-0.015em]">
+              “给楼道里每一盏声控灯起一个名字”
+            </p>
+            <div class="text-[13px] text-secondary">
+              夜里爬楼梯时的想法
+            </div>
+          </div>
+          <div class="pt-3">
+            <span class="text-[12px] font-medium tracking-[0.08em] text-secondary">
+              示例 · 想法
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Actions: Black square button + grey hint -->
+      <div class="flex items-center space-x-4 pt-2">
+        <button 
+          type="button" 
+          class="bg-primary text-white text-[13px] font-medium px-6 py-3 tracking-[0.04em] hover:bg-neutral-800 active:opacity-80 transition-none cursor-pointer border-0"
+        >
+          放入示例穗
+        </button>
+        <span class="text-[13px] text-secondary select-none">
+          以后可以一键清除
+        </span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full max-w-[1440px] mx-auto px-10 py-8">
+    <div class="text-[10px] text-secondary tracking-[0.1em] uppercase select-none">
+      © 2026 Q1f730
+    </div>
+  </footer>
+
+</body>
+</html>
