@@ -1,4 +1,4 @@
-import type { PhasePref } from './phases';
+import { themeFromLegacy, type ThemePref } from './theme';
 export interface Provider {
   baseUrl: string;
   apiKey: string;
@@ -10,8 +10,7 @@ export interface Settings {
   preset: string;
   chat: Provider;
   embed: { baseUrl: string; apiKey: string; model: string; sameAsChat: boolean };
-  phase: PhasePref; // 'auto' = 随时间变色
-  fieldStill: boolean; // 麦田静止（省电 / 不喜欢动）
+  theme: ThemePref; // v0.16：跟随系统 | 白 | 黑
   temperature: number;
   autoCaption: boolean;
   autoEmbed: boolean;
@@ -68,8 +67,7 @@ export function defaultSettings(): Settings {
     preset: p.id,
     chat: { ...p.chat, apiKey: '' },
     embed: { baseUrl: '', apiKey: '', model: '', sameAsChat: true },
-    phase: 'auto',
-    fieldStill: false,
+    theme: 'auto',
     temperature: 1.0,
     autoCaption: true,
     autoEmbed: true,
@@ -82,8 +80,9 @@ export function loadSettings(): Settings {
     if (!raw) return defaultSettings();
     const s = JSON.parse(raw);
     const d = defaultSettings();
-    delete s.theme; // v0.10 起由 phase 取代旧的「相纸/暗房」
-    if (!['auto', 'dawn', 'day', 'dusk', 'night'].includes(s.phase)) s.phase = 'auto';
+    s.theme = themeFromLegacy(s); // v0.16：旧的 phase（随时间变色）换成 跟随系统 / 白 / 黑
+    delete s.phase;
+    delete s.fieldStill;
     return { ...d, ...s, chat: { ...d.chat, ...(s.chat || {}) }, embed: { ...d.embed, ...(s.embed || {}) } };
   } catch {
     return defaultSettings();
@@ -103,4 +102,16 @@ export function embedConfig(s: Settings): { baseUrl: string; apiKey: string; mod
   const apiKey = s.embed.sameAsChat ? s.chat.apiKey : s.embed.apiKey;
   if (!s.embed.model || !baseUrl || (!apiKey && s.preset !== 'custom')) return null;
   return { baseUrl, apiKey, model: s.embed.model };
+}
+
+/** 换 AI 服务预设：换了服务就清掉旧 key（同一家保留） */
+export function withPreset(x: Settings, id: string): Settings {
+  const p = PRESETS.find((q) => q.id === id);
+  if (!p) return x;
+  return {
+    ...x,
+    preset: id,
+    chat: { ...x.chat, ...p.chat, apiKey: x.preset === id ? x.chat.apiKey : '' },
+    embed: { ...x.embed, baseUrl: p.embed.baseUrl, model: p.embed.model, sameAsChat: true },
+  };
 }
