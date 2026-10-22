@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>拾穗 · GLEAN</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-surface": "#e1e2e8",
+            "on-secondary": "#003353",
+            "on-tertiary": "#003912",
+            "surface-dim": "#111417",
+            "on-tertiary-container": "#003a13",
+            "tertiary-fixed-dim": "#3ce36a",
+            "on-secondary-fixed": "#001d32",
+            "on-error": "#690005",
+            "surface-container-low": "#191c20",
+            "surface-container-high": "#272a2e",
+            "outline": "#a98a80",
+            "on-primary-container": "#5f1900",
+            "tertiary-container": "#00b149",
+            "surface-container-highest": "#323539",
+            "surface-container": "#1d2024",
+            "surface-tint": "#ffb59d",
+            "surface": "#111417",
+            "inverse-primary": "#ab3500",
+            "secondary-fixed-dim": "#96ccff",
+            "surface-container-lowest": "#0b0e12",
+            "secondary-fixed": "#cee5ff",
+            "primary": "#ffb59d",
+            "on-tertiary-fixed": "#002108",
+            "inverse-on-surface": "#2e3135",
+            "primary-fixed-dim": "#ffb59d",
+            "on-tertiary-fixed-variant": "#00531e",
+            "secondary": "#96ccff",
+            "on-primary": "#5d1900",
+            "on-error-container": "#ffdad6",
+            "on-background": "#e1e2e8",
+            "on-primary-fixed": "#390c00",
+            "secondary-container": "#00a5fe",
+            "background": "#111417",
+            "primary-container": "#ff6b35",
+            "primary-fixed": "#ffdbd0",
+            "tertiary": "#3ce36a",
+            "error-container": "#93000a",
+            "surface-bright": "#36393e",
+            "on-secondary-container": "#00385a",
+            "on-secondary-fixed-variant": "#004a76",
+            "tertiary-fixed": "#69ff87",
+            "error": "#ffb4ab",
+            "surface-variant": "#323539",
+            "on-surface-variant": "#e1bfb5",
+            "outline-variant": "#594139",
+            "on-surface": "#e1e2e8",
+            "on-primary-fixed-variant": "#832600"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-xl": "2.5rem",
+            "margin": "1.5rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem",
+            "margin-mobile": "1rem",
+            "gutter-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "headline-xl": ["Oswald"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Oswald"],
+            "label-station": ["Space Grotesk"],
+            "body-md": ["Plus Jakarta Sans"],
+            "caption-track": ["Plus Jakarta Sans"],
+            "subhead-route": ["Space Grotesk"],
+            "headline-xl-mobile": ["Oswald"],
+            "body-code": ["Space Grotesk"],
+            "headline-lg": ["Oswald"]
+          },
+          "fontSize": {
+            "headline-xl": ["40px", {"lineHeight": "44px", "letterSpacing": "0.02em", "fontWeight": "700"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-sm": ["19px", {"lineHeight": "24px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+            "label-station": ["11px", {"lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "caption-track": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "subhead-route": ["14px", {"lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+            "headline-xl-mobile": ["30px", {"lineHeight": "34px", "letterSpacing": "0.02em", "fontWeight": "700"}],
+            "body-code": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["26px", {"lineHeight": "30px", "letterSpacing": "0.03em", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      width: 390px;
+      height: 844px;
+      margin: 0 auto;
+      overflow: hidden;
+      background-color: #111417;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md flex flex-col justify-between relative selection:bg-primary-container selection:text-white">
+<!-- TOP APP BAR (from Shared Components JSON & Transit Signboard aesthetic) -->
+<header class="bg-surface-container w-full h-14 border-b border-outline-variant flex justify-between items-center px-margin-mobile z-40 shrink-0">
+<div class="flex items-center gap-2">
+<!-- Leading Icon: Subway -->
+<div class="w-8 h-8 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg" data-icon="subway">subway</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface tracking-wider uppercase flex items-center gap-1.5">
+          拾穗 · GLEAN
+        </h1>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Transit Line / Operator Code Badge -->
+<span class="font-label-station text-label-station text-on-surface-variant bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant uppercase">
+        LN·Q1f730
+      </span>
+<!-- Trailing Icon: Search -->
+<button class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-outline-variant flex items-center justify-center text-on-surface active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-lg" data-icon="search">search</span>
+</button>
+</div>
+</header>
+<!-- QUICK-CAPTURE INPUT: Metro card reader/terminal style -->
+<section class="px-margin-mobile pt-3 pb-2 shrink-0 bg-surface-container-lowest border-b border-surface-container-high z-30">
+<div class="flex items-center bg-surface-container border border-surface-variant rounded-lg p-1.5 focus-within:border-on-surface transition-all">
+<div class="flex items-center pl-2 pr-1 text-primary">
+<span class="material-symbols-outlined text-base">input</span>
+</div>
+<input class="bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none w-full text-on-surface text-body-md font-body-md placeholder:text-[#6B7682] py-1 px-1.5" placeholder="随手拾一穗…" type="text"/>
+<button class="bg-primary-container text-on-primary-container hover:brightness-110 active:scale-95 transition-transform px-3 py-1.5 rounded flex items-center gap-1">
+<span class="font-label-station text-label-station uppercase text-white tracking-widest font-bold">INS</span>
+<span class="material-symbols-outlined text-white text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- MAIN SCROLL CANVAS: 6 Collected Items along Metro Transit Track -->
+<main class="flex-1 overflow-y-auto custom-scrollbar px-margin-mobile py-3 relative">
+<!-- Metro Line Wayfinding Trunk System -->
+<div class="relative pl-6">
+<!-- Continuous Left Rail Line Track -->
+<div class="absolute left-2.5 top-3 bottom-8 w-[3px] bg-surface-container-highest rounded-full"></div>
+<!-- ITEM 1: PHOTO / 视觉线 - Line Orange (#FF6B35) -->
+<div class="relative mb-5 group">
+<!-- Station Ring Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-[#111417] border-[3px] border-[#FF6B35] flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-[#FF6B35]"></div>
+</div>
+<!-- Wayfinding Inspiration Card -->
+<div class="bg-surface-container border border-surface-container-highest rounded-lg overflow-hidden border-l-4 border-l-[#FF6B35] shadow-sm">
+<div class="p-2.5">
+<div class="flex justify-between items-center mb-2">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-label-station uppercase tracking-wider bg-[#FF6B35] text-white font-bold">
+                M-01 · 视觉线
+              </span>
+<span class="font-body-code text-caption-track text-on-surface-variant">今天 09:12</span>
+</div>
+<!-- Real photo cropped neatly in transit frame -->
+<div class="w-full h-32 rounded bg-surface-container-high overflow-hidden relative border border-surface-container-highest mb-2">
+<img alt="雨后的梧桐街" class="w-full h-full object-cover brightness-95 contrast-105" src="https://lh3.googleusercontent.com/aida/AEtjO1X8lQcZVcsRWdVa8ZuKfpLEi3mIrXv_BL_jOyKZb40A1jGBRHsLxPqQF_AF6xFC88VpDaAYrbsDnApZQMbEh3D_bTTJEqICOuBrrOZXBGiY5_SFu7nckhIxTt4hbqXRK1eA0kVn27n9sq8ZvP_KcSM-A4hH89uxBeRVwuONVfap1VWPcoR6dySrrbVm1pHYBW2HupdkJqKQ1OVpEZsiKL-M1eV7Rco5PB9WRfqrsZGZ_GH07eIj4z-5gJE"/>
+<div class="absolute bottom-1.5 right-1.5 bg-black/75 px-1.5 py-0.5 rounded text-[9px] font-label-station tracking-widest text-white border border-white/20">
+                1080P · RAW
+              </div>
+</div>
+<div class="flex justify-between items-center">
+<div class="font-headline-sm text-body-lg font-bold text-on-surface tracking-wide">
+                雨后的梧桐街
+              </div>
+<span class="text-[11px] font-label-station text-[#FF6B35] font-bold tracking-wider">STA·01 →</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ITEM 2: FILM / 电影线 - Line Green (#00C853) -->
+<div class="relative mb-5 group">
+<!-- Station Ring Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-[#111417] border-[3px] border-[#00C853] flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-[#00C853]"></div>
+</div>
+<div class="bg-surface-container border border-surface-container-highest rounded-lg p-2.5 border-l-4 border-l-[#00C853]">
+<div class="flex justify-between items-center mb-1.5">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-label-station uppercase tracking-wider bg-[#00C853] text-black font-bold">
+              M-02 · 电影线
+            </span>
+<span class="font-body-code text-caption-track text-on-surface-variant">昨天 23:40</span>
+</div>
+<div class="flex items-start justify-between">
+<div>
+<h2 class="font-headline-sm text-body-lg font-bold text-on-surface">燃烧女子的肖像</h2>
+<p class="font-caption-track text-caption-track text-on-surface-variant mt-0.5">2019, 瑟琳·席安玛</p>
+</div>
+<div class="w-7 h-7 rounded bg-surface-container-high border border-surface-container-highest flex items-center justify-center text-[#00C853]">
+<span class="material-symbols-outlined text-base">movie</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ITEM 3: SONG / 音乐线 - Line Blue (#00A6FF) -->
+<div class="relative mb-5 group">
+<!-- Station Ring Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-[#111417] border-[3px] border-[#00A6FF] flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-[#00A6FF]"></div>
+</div>
+<div class="bg-surface-container border border-surface-container-highest rounded-lg p-2.5 border-l-4 border-l-[#00A6FF]">
+<div class="flex justify-between items-center mb-1.5">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-label-station uppercase tracking-wider bg-[#00A6FF] text-black font-bold">
+              M-03 · 音乐线
+            </span>
+<span class="font-body-code text-caption-track text-on-surface-variant">昨天 21:05</span>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="font-headline-sm text-body-lg font-bold text-on-surface">夜空中最亮的星</div>
+<div class="font-caption-track text-caption-track text-on-surface-variant mt-0.5">逃跑计划</div>
+</div>
+<!-- Soundwave / Frequency bar graph mimics metro track signal -->
+<div class="flex items-end gap-0.5 h-4 px-2 py-0.5 bg-surface-container-high rounded border border-surface-container-highest">
+<span class="w-1 h-3 bg-[#00A6FF] rounded-xs animate-pulse"></span>
+<span class="w-1 h-2 bg-[#00A6FF] rounded-xs"></span>
+<span class="w-1 h-4 bg-[#00A6FF] rounded-xs animate-pulse"></span>
+<span class="w-1 h-1.5 bg-[#00A6FF] rounded-xs"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- ITEM 4: QUOTE / 文案线 - Line Purple (#A855F7) -->
+<div class="relative mb-5 group">
+<!-- Station Ring Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-[#111417] border-[3px] border-[#A855F7] flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-[#A855F7]"></div>
+</div>
+<div class="bg-surface-container border border-surface-container-highest rounded-lg p-2.5 border-l-4 border-l-[#A855F7]">
+<div class="flex justify-between items-center mb-1.5">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-label-station uppercase tracking-wider bg-[#A855F7] text-white font-bold">
+              文案
+            </span>
+<span class="font-body-code text-caption-track text-on-surface-variant">10/19</span>
+</div>
+<div class="border-l-2 border-surface-container-highest pl-2.5 py-1 my-1">
+<p class="font-body-md text-on-surface italic font-medium leading-relaxed">
+              “我们读诗，是因为我们是人类的一员。”
+            </p>
+</div>
+</div>
+</div>
+<!-- ITEM 5: IDEA / 想法线 - Line Yellow (#FFD166 / #EAB308) -->
+<div class="relative mb-5 group">
+<!-- Station Ring Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-[#111417] border-[3px] border-[#EAB308] flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-[#EAB308]"></div>
+</div>
+<div class="bg-surface-container border border-surface-container-highest rounded-lg p-2.5 border-l-4 border-l-[#EAB308]">
+<div class="flex justify-between items-center mb-1.5">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-label-station uppercase tracking-wider bg-[#EAB308] text-black font-bold">
+              想法
+            </span>
+<span class="font-body-code text-caption-track text-on-surface-variant">10/18</span>
+</div>
+<p class="font-body-md text-on-surface font-semibold">
+            把通勤路上听到的对话写成一组短诗
+          </p>
+<div class="mt-2 flex items-center gap-1.5 text-on-surface-variant text-[11px] font-label-station">
+<span class="w-1.5 h-1.5 rounded-full bg-[#EAB308]"></span>
+<span>WAYPOINT · 观察记录</span>
+</div>
+</div>
+</div>
+<!-- ITEM 6: LINK / 链接线 - Line Pink (#FF4D8D) -->
+<div class="relative mb-6 group">
+<!-- Station Ring Node -->
+<div class="absolute -left-6 top-3 w-5 h-5 rounded-full bg-[#111417] border-[3px] border-[#FF4D8D] flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-[#FF4D8D]"></div>
+</div>
+<div class="bg-surface-container border border-surface-container-highest rounded-lg p-2.5 border-l-4 border-l-[#FF4D8D]">
+<div class="flex justify-between items-center mb-1.5">
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-label-station uppercase tracking-wider bg-[#FF4D8D] text-white font-bold">
+              M-06 · 链接线
+            </span>
+<span class="font-body-code text-caption-track text-on-surface-variant">10/16</span>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="font-headline-sm text-body-lg font-bold text-on-surface">
+                Are.na · 关于收集的收集
+              </div>
+<span class="font-body-code text-[11px] text-[#FF4D8D] hover:underline flex items-center gap-1 mt-0.5">
+                are.na <span class="material-symbols-outlined text-xs">arrow_outward</span>
+</span>
+</div>
+<div class="w-7 h-7 rounded bg-surface-container-high border border-surface-container-highest flex items-center justify-center text-[#FF4D8D]">
+<span class="material-symbols-outlined text-base">link</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- '嫁接' ACTION ENTRY: Subway Transfer / Interchange Concourse Terminal -->
+<section class="mt-3 mb-4">
+<div class="bg-surface-container border-2 border-dashed border-primary-container/60 rounded-xl p-3 bg-gradient-to-r from-surface-container to-surface-container-high relative overflow-hidden">
+<!-- Metro Interchange Ring Indicator Decor -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-white flex items-center justify-center shadow-lg">
+<!-- Interlocking transfer interchange symbol -->
+<span class="material-symbols-outlined text-2xl font-bold" data-icon="alt_route">alt_route</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-body-lg font-bold text-on-surface uppercase tracking-wider">嫁接</span>
+<span class="text-[10px] font-label-station text-primary px-1 bg-primary/10 rounded border border-primary/30">TRANSFER</span>
+</div>
+<p class="font-caption-track text-caption-track text-on-surface-variant">
+                交叉汇流选中的多线灵感，生成「新枝」
+              </p>
+</div>
+</div>
+<button class="bg-white text-surface-dim hover:bg-inverse-surface active:scale-95 transition-transform px-3.5 py-1.5 rounded font-headline-sm text-label-station font-bold tracking-wider flex items-center gap-1 shrink-0">
+<span>开始</span>
+<span class="text-xs">→</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (from Shared Components JSON: 5 Tabs) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 border-t border-outline-variant bg-surface-container px-gutter-mobile select-none shrink-0">
+<!-- Tab 1: 穗仓 (ACTIVE - strict match to active navigation styling) -->
+<a class="flex flex-col items-center justify-center text-primary-container font-bold gap-0.5 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="font-label-station text-label-station uppercase tracking-wider">穗仓</span>
+</a>
+<!-- Tab 2: 嫁接 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant gap-0.5 hover:text-on-surface active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="alt_route">alt_route</span>
+<span class="font-label-station text-label-station uppercase tracking-wider">嫁接</span>
+</a>
+<!-- Tab 3: 新枝 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant gap-0.5 hover:text-on-surface active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="nature">nature</span>
+<span class="font-label-station text-label-station uppercase tracking-wider">新枝</span>
+</a>
+<!-- Tab 4: 口味 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant gap-0.5 hover:text-on-surface active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="tune">tune</span>
+<span class="font-label-station text-label-station uppercase tracking-wider">口味</span>
+</a>
+<!-- Tab 5: 设置 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant gap-0.5 hover:text-on-surface active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="settings">settings</span>
+<span class="font-label-station text-label-station uppercase tracking-wider">设置</span>
+</a>
+</nav>
+</body></html>
