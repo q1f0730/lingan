@@ -1,8 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
-import { FogBurst } from '../components/AsciiDevelop';
+import { AsciiLoader, SeedBurst } from '../components/AsciiDevelop';
+import { IdeaCard } from '../components/IdeaCard';
 import { ItemCard } from '../components/ItemCard';
-import { DecodeText, TypeReveal } from '../components/Motion';
+import { PageTitle } from '../components/PageTitle';
 import { db } from '../lib/db';
 import { developOffline, developWithAI } from '../lib/develop';
 import { aiReady } from '../lib/settings';
@@ -12,31 +13,22 @@ import type { Development, Idea, Item } from '../lib/types';
 
 const TASTE_KEY = 'lingan.taste.ai';
 
+/** 嫁接：把两三穗相距很远的东西接在一起，长出一根新枝 */
 export function Develop({ preset, clearPreset }: { preset: number[] | null; clearPreset: () => void }) {
   const { settings, toast, openItem, go } = useApp();
   const items = useLiveQuery(() => db.items.toArray(), []);
-  const history = useLiveQuery(() => db.developments.orderBy('createdAt').reverse().limit(50).toArray(), []);
+  const nBranches = useLiveQuery(() => db.developments.count(), []);
   const [count, setCount] = useState<2 | 3>(2);
   const [jump, setJump] = useState(0.8);
   const [theme, setTheme] = useState('');
   const [picked, setPicked] = useState<Item[] | null>(null);
   const [result, setResult] = useState<{ idea: Idea; source: 'ai' | 'offline'; id?: number } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [showStarred, setShowStarred] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [fog, setFog] = useState(0);
-
-  useEffect(() => {
-    if (!busy) return;
-    const t0 = Date.now();
-    setElapsed(0);
-    const h = setInterval(() => setElapsed(Date.now() - t0), 100);
-    return () => clearInterval(h);
-  }, [busy]);
+  const [burst, setBurst] = useState(0);
 
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
 
-  // daily negatives: same pair all day
+  // 今日两穗：一整天都是同一对
   const daily = useMemo(() => {
     if (!items || items.length < 2) return null;
     return pickItems(items, 2, 0.9, mulberry32(daySeed()));
@@ -60,7 +52,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     }
   }, [preset, items, byId, clearPreset, jump]);
 
-  // keep picked items fresh (edited / deleted)
+  // 被编辑 / 删除时保持同步
   useEffect(() => {
     if (picked && items) {
       const fresh = picked.map((p) => byId.get(p.id!)).filter(Boolean) as Item[];
@@ -68,7 +60,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     }
   }, [items, byId, picked]);
 
-  if (!items) return <div className="loading mono">冲洗中…</div>;
+  if (!items) return <AsciiLoader />;
 
   function shuffle() {
     if (!items || items.length < 2) return;
@@ -102,7 +94,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
         idea = developOffline(sel, { theme: theme.trim() || undefined });
       }
     } catch (e) {
-      toast((e instanceof Error ? e.message : String(e)) + '，已改用离线显影', 'err');
+      toast((e instanceof Error ? e.message : String(e)) + '，已改用离线嫁接', 'err');
       idea = developOffline(sel, { theme: theme.trim() || undefined });
     }
     const dev: Development = { itemIds: sel.map((s) => s.id!), theme: theme.trim() || undefined, jump, idea, source, createdAt: Date.now() };
@@ -112,48 +104,54 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   }
 
   const shown = picked || null;
-  const list = (history || []).filter((h) => !showStarred || h.starred);
 
   return (
     <section className="view">
-      <header className="view-head">
-        <div>
-          <div className="kicker mono">SAFELIGHT ON · 显影室</div>
-          <h1>显影</h1>
-        </div>
-      </header>
+      <PageTitle title="嫁接" whisper="Graft two far-apart things, see what grows" />
 
       {items.length < 2 ? (
-        <div className="empty">
-          <h2>底片不够</h2>
-          <p>至少需要 2 件素材才能碰撞。</p>
+        <div className="paper empty">
+          <h2>穗还不够</h2>
+          <p>至少要拾 2 穗，才能嫁接。</p>
           <button className="btn primary" onClick={() => go('library')}>
-            去收集
+            去拾穗
           </button>
         </div>
       ) : (
         <>
           {!shown && daily && (
-            <div className="daily">
-              <div className="kicker mono">今日底片 · {new Date().toLocaleDateString('zh-CN')}</div>
-              <div className="negatives">
-                {daily.map((it) => (
-                  <div key={it.id} className="negative">
+            <div className="paper daily">
+              <div className="kicker">今日两穗 · {new Date().getMonth() + 1}月{new Date().getDate()}日</div>
+              <div className="pair">
+                {daily.map((it, i) => [
+                  i > 0 && (
+                    <span key={'x' + i} className="pair-x" aria-hidden>
+                      ×
+                    </span>
+                  ),
+                  <div key={it.id} className="pair-item">
                     <ItemCard item={it} compact onOpen={openItem} />
-                  </div>
-                ))}
+                  </div>,
+                ])}
               </div>
               <div className="actions">
-                <button className="btn primary" onClick={() => { setPicked(daily); develop(daily); }} disabled={busy}>
-                  显影今日底片
+                <button
+                  className="btn primary"
+                  onClick={() => {
+                    setPicked(daily);
+                    develop(daily);
+                  }}
+                  disabled={busy}
+                >
+                  嫁接今日两穗
                 </button>
               </div>
             </div>
           )}
 
-          <div className="controls">
+          <div className="paper controls">
             <div className="ctrl">
-              <span className="label mono">底片数</span>
+              <span className="label">几穗</span>
               <div className="seg">
                 {[2, 3].map((n) => (
                   <button key={n} className={count === n ? 'on' : ''} onClick={() => setCount(n as 2 | 3)} disabled={n === 3 && items.length < 3}>
@@ -163,61 +161,56 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
               </div>
             </div>
             <label className="ctrl grow">
-              <span className="label mono">跳跃度 {Math.round(jump * 100)}%</span>
+              <span className="label">跳跃度 {Math.round(jump * 100)}%</span>
               <input type="range" min={0} max={1} step={0.05} value={jump} onChange={(e) => setJump(parseFloat(e.target.value))} aria-label="跳跃度" />
-              <span className="range-ends mono">
+              <span className="range-ends">
                 <span>相近</span>
                 <span>八竿子打不着</span>
               </span>
             </label>
             <label className="ctrl grow">
-              <span className="label mono">方向（可空）</span>
+              <span className="label">往哪个方向长（可空）</span>
               <input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="例如：一首歌的 MV / 毕业作品 / 一条文案" maxLength={80} />
             </label>
             <button className="btn" onClick={shuffle}>
-              {shown ? '重新抽底片' : '抽取底片'}
+              {shown ? '重新抽穗' : '抽几穗'}
             </button>
           </div>
 
           {shown && (
-            <div className="collide darkroom">
-              <div className="darkroom-head mono">
-                <span>▲ {shown.length === 3 ? 'TRIPLE' : 'DUAL'} EMULSION</span>
-                <span>35MM NEGATIVE</span>
-                <span>SAFELIGHT: 620NM</span>
-              </div>
-              <div className="negatives">
-                {shown.map((it, i) => (
-                  <div key={it.id} className="negative">
+            <div className="paper graft">
+              <div className="kicker">要接在一起的 {shown.length} 穗</div>
+              <div className="pair">
+                {shown.map((it, i) => [
+                  i > 0 && (
+                    <span key={'x' + i} className="pair-x" aria-hidden>
+                      ×
+                    </span>
+                  ),
+                  <div key={it.id} className="pair-item">
                     <ItemCard item={it} compact onOpen={openItem} />
-                    <button className="swap mono" onClick={() => replaceOne(i)} disabled={busy}>
-                      ↻ 换一张
+                    <button className="swap" onClick={() => replaceOne(i)} disabled={busy}>
+                      ↻ 换一穗
                     </button>
-                  </div>
-                ))}
+                  </div>,
+                ])}
               </div>
-              <div className="exposure mono">
-                <span>
-                  <i className="sq" /> EXPOSURE TIME
-                </span>
-                <span className="timer">{String(Math.floor(elapsed / 60000)).padStart(2, '0')}:{String(Math.floor((elapsed / 1000) % 60)).padStart(2, '0')}.{Math.floor((elapsed % 1000) / 100)}s</span>
-              </div>
-              <div className="develop-wrap">
+              <div className="graft-wrap">
                 <button
-                  className="develop-btn mono"
+                  className="btn primary big graft-btn"
                   onClick={() => {
-                    setFog(Date.now());
+                    setBurst(Date.now());
                     develop(shown);
                   }}
                   disabled={busy || shown.length < 2}
                 >
-                  {busy ? <span className="develop-anim">[ 显影中 DEVELOPING… ]</span> : '[ 显影 COLLIDE & DEVELOP ]'}
+                  {busy ? '正在嫁接…' : '嫁接'}
                 </button>
-                {fog > 0 && <FogBurst key={fog} />}
+                {burst > 0 && <SeedBurst key={burst} />}
               </div>
               {!aiReady(settings) && (
                 <p className="hint">
-                  还没配置 AI，现在是离线显影（基于斜策略的结构提示）。
+                  还没配置 AI，现在是离线嫁接（用斜策略给出结构提示）。
                   <button className="link" onClick={() => go('settings')}>
                     去设置免费模型
                   </button>
@@ -226,131 +219,18 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
             </div>
           )}
 
-          {busy && <div className="tray"><div className="tray-paper" /></div>}
+          {busy && <AsciiLoader text="新枝正在长" />}
           {result && <IdeaCard key={result.id} animate idea={result.idea} source={result.source} devId={result.id} />}
+          {result && (
+            <p className="after-note">
+              已留在新枝里{nBranches ? `（共 ${nBranches} 根）` : ''}。
+              <button className="link" onClick={() => go('branches')}>
+                去看看
+              </button>
+            </p>
+          )}
         </>
       )}
-
-      {history && history.length > 0 && (
-        <div className="history">
-          <div className="history-head">
-            <div className="kicker mono">显影记录 · {history.length}</div>
-            <button className={`chip${showStarred ? ' on' : ''}`} onClick={() => setShowStarred((x) => !x)}>
-              ★ 只看收藏
-            </button>
-          </div>
-          {list.map((h) => (
-            <HistoryRow key={h.id} dev={h} byId={byId} />
-          ))}
-        </div>
-      )}
     </section>
-  );
-}
-
-export function IdeaCard({ idea, source, devId, animate }: { idea: Idea; source: 'ai' | 'offline'; devId?: number; animate?: boolean }) {
-  const { toast } = useApp();
-  const dev = useLiveQuery(() => (devId ? db.developments.get(devId) : undefined), [devId]);
-  const srcItems = useLiveQuery(async () => (dev ? (await db.items.bulkGet(dev.itemIds)).filter(Boolean) : []), [dev?.id]);
-  async function copy() {
-    const t = `${idea.title}\n\n${idea.bridge}\n\n${idea.idea}${idea.form ? `\n\n形式：${idea.form}` : ''}${idea.firstStep ? `\n第一步：${idea.firstStep}` : ''}`;
-    try {
-      await navigator.clipboard.writeText(t);
-      toast('已复制');
-    } catch {
-      toast('复制失败，请长按选择文字', 'err');
-    }
-  }
-  return (
-    <article className="idea">
-      <div className="idea-meta mono">
-        <span>[ 显影成果 · № DEV-{String(devId ?? 0).padStart(2, '0')} ]</span>
-        <span className="idea-src">{source === 'ai' ? 'AI EMULSION' : 'OFFLINE'}</span>
-      </div>
-      <h2 className="idea-title">{animate ? <DecodeText text={`《${idea.title.replace(/^《|》$/g, '')}》`} /> : `《${idea.title.replace(/^《|》$/g, '')}》`}</h2>
-      {idea.form && <div className="idea-form mono">FORM · {idea.form}</div>}
-      {idea.bridge && (
-        <div className="idea-bridge">
-          <div className="label mono red">THE CREATIVE BRIDGE // 灵感对撞</div>
-          {idea.bridge}
-        </div>
-      )}
-      <div className="label mono">CREATIVE DIRECTION // 创意</div>
-      {animate ? <TypeReveal className="idea-body" text={idea.idea} /> : <p className="idea-body">{idea.idea}</p>}
-      {idea.firstStep && (
-        <p className="idea-step">
-          <span className="mono">第一步 →</span> {idea.firstStep}
-        </p>
-      )}
-      {idea.oblique && <p className="idea-oblique mono">斜策略：{idea.oblique}</p>}
-      {srcItems && srcItems.length > 0 && (
-        <div className="provenance">
-          <span className="label mono">SOURCE NEGATIVES // 来自你的底片</span>
-          <div className="tags">
-            {srcItems.map((it) => (
-              <span key={it!.id} className="tag">
-                № {String(it!.id).padStart(3, '0')} {it!.title}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-      {idea.cliches.length > 0 && (
-        <div className="cliches">
-          <div className="label mono red">⊘ BANNED CLICHÉS // 已禁用的套路</div>
-          <ul>
-            {idea.cliches.map((c, i) => (
-              <li key={i}>
-                <s>{c}</s>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <div className="actions">
-        <button className="btn ghost small" onClick={copy}>
-          复制
-        </button>
-        {devId && (
-          <button className="btn ghost small" onClick={() => db.developments.update(devId, { starred: !dev?.starred })}>
-            {dev?.starred ? '★ 已收藏' : '☆ 收藏'}
-          </button>
-        )}
-      </div>
-    </article>
-  );
-}
-
-function HistoryRow({ dev, byId }: { dev: Development; byId: Map<number, Item> }) {
-  const [open, setOpen] = useState(false);
-  const { toast } = useApp();
-  const names = dev.itemIds.map((id) => byId.get(id)?.title || '（已删除）');
-  return (
-    <div className="hrow">
-      <button className="hrow-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className="mono dim">{new Date(dev.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-        <span className="hrow-title">
-          {dev.starred ? '★ ' : ''}
-          {dev.idea.title}
-        </span>
-        <span className="hrow-src dim">{names.join(' × ')}</span>
-      </button>
-      {open && (
-        <div className="hrow-body">
-          <IdeaCard idea={dev.idea} source={dev.source} devId={dev.id} />
-          <button
-            className="btn ghost small danger"
-            onClick={async () => {
-              if (confirm('删除这条显影记录？')) {
-                await db.developments.delete(dev.id!);
-                toast('已删除');
-              }
-            }}
-          >
-            删除记录
-          </button>
-        </div>
-      )}
-    </div>
   );
 }
