@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full bg-black">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>拾穗 · GLEAN — 新枝 MANIFESTO</title>
+  <!-- Google Fonts: Inter & Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      border-radius: 0px !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+    }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #000000;
+      color: #FFFFFF;
+    }
+    ::selection {
+      background-color: #FFFFFF;
+      color: #000000;
+    }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col justify-between selection:bg-white selection:text-black">
+
+  <!-- 1440px Desktop Container -->
+  <div class="w-full max-w-[1440px] mx-auto min-h-screen flex flex-col justify-between px-12 py-10 relative">
+
+    <!-- Top Navigation -->
+    <header class="w-full flex items-center justify-between z-20">
+      <!-- Logo Left -->
+      <div class="w-1/4">
+        <a href="#" class="text-[20px] font-semibold tracking-tight text-white hover:opacity-80 transition-none">
+          拾穗 · GLEAN
+        </a>
+      </div>
+
+      <!-- Centered Tiny Navigation (5 items) -->
+      <nav class="flex items-center justify-center space-x-10 text-[11px] font-medium tracking-[0.16em] uppercase text-[#8E8E8E]">
+        <a href="#" class="hover:text-white transition-none">穗仓</a>
+        <a href="#" class="hover:text-white transition-none">嫁接</a>
+        <a href="#" class="text-white underline underline-offset-8 decoration-1">新枝</a>
+        <a href="#" class="hover:text-white transition-none">口味</a>
+        <a href="#" class="hover:text-white transition-none">设置</a>
+      </nav>
+
+      <!-- Right Tiny Action -->
+      <div class="w-1/4 flex justify-end">
+        <a href="#" class="text-[11px] font-medium tracking-[0.14em] text-[#8E8E8E] hover:text-white transition-none">
+          随手拾一穗 →
+        </a>
+      </div>
+    </header>
+
+    <!-- Center: 新枝 MANIFESTO View -->
+    <main class="flex-grow flex flex-col items-center justify-center text-center my-auto py-16 px-4">
+      
+      <!-- Tiny Meta Label -->
+      <div class="mb-8">
+        <span class="text-[11px] font-medium tracking-[0.25em] text-[#8E8E8E] uppercase">
+          新枝 01 / 03
+        </span>
+      </div>
+
+      <!-- Massive Centered Manifesto Statement -->
+      <div class="max-w-[1020px] mx-auto mb-10">
+        <h1 class="font-['Noto_Sans_SC'] text-[64px] font-bold leading-[1.15] tracking-[-0.03em] text-white">
+          给每一盏声控灯配一个频道。夜里有人经过，<span class="font-light text-white/85">只播这一层</span>住户拾过的歌。
+        </h1>
+      </div>
+
+      <!-- Source attribution '因为这几穗' -->
+      <div class="flex flex-wrap items-center justify-center gap-2 text-[13px] tracking-tight mb-12">
+        <span class="text-[#8E8E8E] font-normal">因为这几穗</span>
+        <span class="text-[#8E8E8E]/50">·</span>
+        <span class="text-white font-normal">给楼道里每一盏声控灯起一个名字</span>
+        <span class="text-[#8E8E8E]/50">/</span>
+        <span class="text-white font-normal">Radio Garden</span>
+        <span class="text-[#8E8E8E]/50">/</span>
+        <span class="text-white font-normal">Re: Stacks</span>
+      </div>
+
+      <!-- Actions: 留下 / 再接一次 / 下一根 → -->
+      <div class="flex items-center space-x-8 text-[11px] font-medium tracking-[0.18em]">
+        <button class="text-white hover:opacity-60 transition-none pb-0.5">
+          留下
+        </button>
+        <button class="text-[#8E8E8E] hover:text-white transition-none pb-0.5">
+          再接一次
+        </button>
+        <button class="text-white hover:opacity-60 transition-none pb-0.5 flex items-center gap-1">
+          下一根 →
+        </button>
+      </div>
+
+    </main>
+
+    <!-- Bottom Section: Thin hairline rule & Pager Footer -->
+    <footer class="w-full pt-6">
+      <div class="w-full h-[1px] bg-white/20 mb-6"></div>
+      <div class="flex items-center justify-between text-[11px] font-medium tracking-[0.16em]">
+        <div class="text-[#8E8E8E]">
+          © 2026 Q1f730
+        </div>
+        <div class="flex items-center space-x-4">
+          <span class="text-white underline underline-offset-4 decoration-1 cursor-pointer">01</span>
+          <span class="text-[#8E8E8E] hover:text-white cursor-pointer transition-none">02</span>
+          <span class="text-[#8E8E8E] hover:text-white cursor-pointer transition-none">03</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>
