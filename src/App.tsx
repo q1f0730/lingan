@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CaptureForm, emptyDraft, type Draft } from './components/CaptureForm';
 import { ClipOffer, QuickBar, QuickWindow } from './components/QuickBar';
 import { ConfirmLayer, type ConfirmReq } from './components/Confirm';
@@ -15,20 +15,34 @@ import { Ctx, type ConfirmOpts, type View } from './lib/store';
 import { resolveTheme, type Theme } from './lib/theme';
 import { TYPE_LABEL, type Item } from './lib/types';
 import { shortDate } from './lib/studio';
-import { Branches } from './views/Branches';
-import { Develop } from './views/Develop';
 import { Library } from './views/Library';
 import { Onboarding, needsOnboarding } from './views/Onboarding';
-import { SettingsView } from './views/SettingsView';
-import { Taste } from './views/Taste';
+import { Loading } from './components/DisplayTitle';
 
-const NAV: Array<{ v: View; label: string }> = [
-  { v: 'library', label: '穗仓' },
-  { v: 'develop', label: '嫁接' },
-  { v: 'branches', label: '新枝' },
-  { v: 'taste', label: '口味' },
-  { v: 'settings', label: '设置' },
-];
+// v0.20：首屏只需要穗仓；其余四页拆成单独的包，首屏画完后空闲时预取（点过去时通常已经在内存里）。
+// 省下的首包体积抵掉 Framer Motion 带来的增量，冷启动不变慢。
+const loadDevelop = () => import('./views/Develop');
+const loadBranches = () => import('./views/Branches');
+const loadTaste = () => import('./views/Taste');
+const loadSettings_ = () => import('./views/SettingsView');
+const Develop = lazy(() => loadDevelop().then((m) => ({ default: m.Develop })));
+const Branches = lazy(() => loadBranches().then((m) => ({ default: m.Branches })));
+const Taste = lazy(() => loadTaste().then((m) => ({ default: m.Taste })));
+const SettingsView = lazy(() => loadSettings_().then((m) => ({ default: m.SettingsView })));
+export function prefetchViews() {
+  void loadDevelop();
+  void loadBranches();
+  void loadTaste();
+  void loadSettings_();
+}
+import { MotionRoot } from './components/rw/MotionRoot';
+import { NAV, NavBar } from './components/rw/NavBar';
+import { Toasts, type ToastT } from './components/rw/Toasts';
+import { ThemeToggle } from './components/rw/ThemeToggle';
+import { IconSearch } from './components/rw/icons';
+
+/** 打开穗仓里的秒搜（侧栏 / 顶栏的搜索按钮、Ctrl+K 都走这里） */
+export const SEARCH_EVENT = 'glean:search';
 
 function useMedia(q: string): boolean {
   const get = () => typeof window !== 'undefined' && !!window.matchMedia?.(q).matches;
@@ -64,14 +78,6 @@ function useOnline(): boolean {
   return on;
 }
 
-interface ToastT {
-  id: number;
-  msg: string;
-  kind: 'ok' | 'err';
-  action?: { label: string; run: () => void };
-  ms: number;
-}
-
 export default function App() {
   const [view, setView] = useState<View>('library');
   const [settings, setSettingsState] = useState<Settings>(loadSettings);
@@ -95,7 +101,7 @@ export default function App() {
   }, [motion]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#000000' : '#ffffff');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#17161a' : '#f7f5f1');
   }, [theme]);
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -136,6 +142,11 @@ export default function App() {
   const go = useCallback((v: View) => {
     setDetail(null);
     setView(v);
+  }, []);
+  const openSearch = useCallback(() => {
+    setDetail(null);
+    setView('library');
+    setTimeout(() => window.dispatchEvent(new Event(SEARCH_EVENT)), 0);
   }, []);
 
   const ctx = useMemo(
@@ -208,10 +219,18 @@ export default function App() {
         e.preventDefault();
         openCapture();
       }
+      // 侧栏标着的 Alt+1…4 / Alt+, 切页
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        const hit = NAV.find((n) => n.key === e.key || (n.key !== ',' && e.code === 'Digit' + n.key) || (n.key === ',' && e.code === 'Comma'));
+        if (hit) {
+          e.preventDefault();
+          go(hit.v);
+        }
+      }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [capture, detail, confirmReq, openCapture]);
+  }, [capture, detail, confirmReq, openCapture, go]);
 
   async function onSave(d: Draft) {
     setSaving(true);
@@ -258,57 +277,89 @@ export default function App() {
     toast('已删掉 1 穗', 'ok', snap ? { label: '撤销', run: () => void restoreItem(snap).then(() => toast('已放回穗仓')) } : undefined);
   }
 
-  const nav = (
-    <nav className="nav" aria-label="主导航">
-      {NAV.map((n) => (
-        <button key={n.v} className={`nav-btn${view === n.v ? ' on' : ''}`} onClick={() => go(n.v)} aria-current={view === n.v ? 'page' : undefined}>
-          {n.label}
-        </button>
-      ))}
-    </nav>
-  );
-
   if (onboard) return (
     <Ctx.Provider value={ctx}>
-      <Onboarding onDone={() => setOnboard(false)} />
+      <MotionRoot level={motion}>
+        <Onboarding onDone={() => setOnboard(false)} />
+      </MotionRoot>
     </Ctx.Provider>
   );
 
   return (
     <Ctx.Provider value={ctx}>
+      <MotionRoot level={motion}>
       <div className={`app${desktop ? ' is-desktop' : ' is-mobile'}`}>
-        {!online && (
-          <div className="offline-bar" role="status">
-            离线 · 拾穗照常保存，嫁接会改用离线方式
-          </div>
-        )}
-        <header className="topbar">
-          <button className="logo" onClick={() => go('library')} aria-label="拾穗 · GLEAN，回到穗仓">
-            拾穗 · GLEAN
-          </button>
-          {desktop ? (
-            <>
-              {nav}
-              <QuickBar where="top" />
-            </>
-          ) : (
-            <button className={`top-settings${view === 'settings' ? ' on' : ''}`} onClick={() => go('settings')}>
-              设置
+        {desktop && (
+          <aside className="sidebar" aria-label="侧栏">
+            <button className="logo" onClick={() => go('library')} aria-label="拾穗 · GLEAN，回到穗仓">
+              <span className="logo-mark" aria-hidden>
+                拾
+              </span>
+              <span className="logo-text">
+                拾穗 <span className="logo-en">GLEAN</span>
+              </span>
             </button>
+            <NavBar view={view} go={go} layout="side" />
+            <button className="side-search" onClick={openSearch}>
+              <IconSearch size={17} />
+              <span>搜索</span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <div className="side-foot">
+              <div className="side-theme">
+                <span className="meta-text">{theme === 'dark' ? '黑' : '白'}</span>
+                <ThemeToggle dark={theme === 'dark'} onChange={(d) => setSettings({ ...settings, theme: d ? 'dark' : 'light' })} />
+              </div>
+              <p className="side-tip meta-text">
+                按 <kbd>N</kbd> 展开速记，<kbd>Ctrl Shift L</kbd> 在任何程序里唤出
+              </p>
+            </div>
+          </aside>
+        )}
+        <div className="shell">
+          {!online && (
+            <div className="offline-bar" role="status">
+              <span className="offline-dot" aria-hidden />
+              离线 · 拾穗照常保存，嫁接会改用离线方式
+            </div>
           )}
-        </header>
-        <main className="main">
-          {view === 'library' && <Library />}
-          {view === 'develop' && <Develop preset={preset} clearPreset={() => setPreset(null)} />}
-          {view === 'branches' && <Branches />}
-          {view === 'taste' && <Taste />}
-          {view === 'settings' && <SettingsView />}
-        </main>
-        <footer className="colophon">© 2026 Q1f730</footer>
+          <header className="topbar">
+            {desktop ? (
+              <>
+                <QuickBar where="top" />
+                <span className="topbar-hint meta-text">回车即存 · 链接自动认出歌和电影</span>
+              </>
+            ) : (
+              <>
+                <button className="logo" onClick={() => go('library')} aria-label="拾穗 · GLEAN，回到穗仓">
+                  <span className="logo-mark" aria-hidden>
+                    拾
+                  </span>
+                  <span className="logo-text">
+                    拾穗 <span className="logo-en">GLEAN</span>
+                  </span>
+                </button>
+                <button className="top-search" onClick={openSearch} aria-label="搜索">
+                  <IconSearch size={19} />
+                </button>
+              </>
+            )}
+          </header>
+          <main className="main">
+            <Suspense fallback={<Loading />}>
+              {view === 'library' && <Library />}
+              {view === 'develop' && <Develop preset={preset} clearPreset={() => setPreset(null)} />}
+              {view === 'branches' && <Branches />}
+              {view === 'taste' && <Taste />}
+              {view === 'settings' && <SettingsView />}
+            </Suspense>
+          </main>
+          <footer className="colophon">© 2026 Q1f730</footer>
+        </div>
         {!desktop && (
           <div className="dock">
             <QuickBar where="dock" />
-            {nav}
+            <NavBar view={view} go={go} layout="dock" />
           </div>
         )}
 
@@ -355,26 +406,9 @@ export default function App() {
         {!capture && !detail && <ClipOffer />}
         <ConfirmLayer req={confirmReq} onDone={() => setConfirmReq(null)} />
 
-        <div className="toasts" role="status" aria-live="polite">
-          {toasts.map((t) => (
-            <div key={t.id} className={`toast ${t.kind}${t.action ? ' has-action' : ''}`} style={{ ['--ms' as string]: `${t.ms}ms` }}>
-              <span className="toast-msg">{t.msg}</span>
-              {t.action && (
-                <button
-                  className="toast-act"
-                  onClick={() => {
-                    t.action!.run();
-                    setToasts((x) => x.filter((y) => y.id !== t.id));
-                  }}
-                >
-                  {t.action.label}
-                </button>
-              )}
-              {t.action && <i className="toast-timer" aria-hidden />}
-            </div>
-          ))}
-        </div>
+        <Toasts toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
       </div>
+      </MotionRoot>
     </Ctx.Provider>
   );
 
