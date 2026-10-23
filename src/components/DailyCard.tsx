@@ -4,6 +4,7 @@ import { daysUntouched, todayKey } from '../lib/daily';
 import { db, ensureDaily } from '../lib/db';
 import { useApp } from '../lib/store';
 import type { DailyPick, Item } from '../lib/types';
+import { DailyStack } from './rw/DailyStack';
 
 const FOLD_KEY = 'glean.daily.folded';
 
@@ -82,6 +83,7 @@ export function DailyCard({ items }: { items: Item[] }) {
   const untouched = (n: number) => (n > 0 ? `${n} 天没碰` : '今天碰过');
   return (
     <section className="daily-ear" data-day={pick.day} aria-label="每日一穗">
+      <DailyStack items={old} onOpen={openItem} />
       <div className="daily-head">
         <span className="label">每日一穗 · {String(d.getMonth() + 1).padStart(2, '0')}/{String(d.getDate()).padStart(2, '0')}</span>
         <span className="daily-acts">
