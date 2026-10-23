@@ -1,3 +1,4 @@
+import { Seg } from '../components/rw/Seg';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
@@ -233,27 +234,20 @@ export function SettingsView() {
             <h2 className="sec-title">外观</h2>
             <div className="kv-row">
               <span className="label">主题</span>
-              <div className="seg theme-seg">
-                {THEME_ORDER.map((p, i) => [
-                  i > 0 && (
-                    <span key={'s' + p} className="sep" aria-hidden>
-                      |
-                    </span>
-                  ),
-                  <button
-                    key={p}
-                    className={settings.theme === p ? 'on' : ''}
-                    onClick={() => {
-                      setS((x) => ({ ...x, theme: p }));
-                      setSettings({ ...settings, theme: p });
-                    }}
-                  >
-                    {THEME_LABEL[p]}
-                  </button>,
-                ])}
-              </div>
+              <Seg
+                id="theme"
+                className="seg theme-seg"
+                role="radiogroup"
+                label="主题"
+                value={settings.theme}
+                options={THEME_ORDER.map((p) => [p, THEME_LABEL[p]] as [typeof p, string])}
+                onPick={(p) => {
+                  setS((x) => ({ ...x, theme: p }));
+                  setSettings({ ...settings, theme: p });
+                }}
+              />
             </div>
-            <p className="hint meta-text">只有黑、白两套。跟随系统时随手机 / 电脑的深色模式切换。系统开启「减少动态效果」时，淡入与放大全部关闭。</p>
+            <p className="hint meta-text">只有黑、白两套。跟随系统时随手机 / 电脑的深色模式切换。系统开启「减少动态效果」时，弹簧、淡入、流光这些动效全部关闭。</p>
           </section>
 
           <section className="set-sec" id="set-data">
