@@ -92,10 +92,10 @@ function useMeasure(onBatch: (changes: Array<[string, number, number]>) => void)
   }, [flush, getOb]);
 }
 
-/** 读当前断点下的列参数，和 index.css 的 .masonry 规则一致（v0.16 Studio：手机 2 列、桌面 ≥1024px 3 列，间距 10px，图块 4:5） */
+/** 读当前断点下的列参数（v0.20 Rewamp：手机 2 列、间距 10px；桌面 ≥1024px 主区按宽度 3–4 列、间距 14px；图块 4:5 圆角） */
 function gridParams(_el: HTMLElement | null) {
   const desktop = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1024px)').matches;
-  return desktop ? { maxCols: 3, minCol: 200, gapX: 10, gapY: 10 } : { maxCols: 2, minCol: 120, gapX: 10, gapY: 10 };
+  return desktop ? { maxCols: 4, minCol: 210, gapX: 14, gapY: 14 } : { maxCols: 2, minCol: 120, gapX: 10, gapY: 10 };
 }
 
 /** 瀑布 / 双列虚拟滚动 */
