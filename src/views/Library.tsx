@@ -13,6 +13,9 @@ import { activeMonths, displayTitle, groupByWeek, monthGrid, tagCounts } from '.
 import { SearchView } from './Search';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
+import { Seg } from '../components/rw/Seg';
+import { WordReveal } from '../components/rw/WordReveal';
+import { IconSearch } from '../components/rw/icons';
 
 type LibView = 'grid' | 'list' | 'timeline' | 'calendar';
 const VIEWS: Array<[LibView, string]> = [
@@ -68,8 +71,13 @@ export function Library() {
         setSearching(true);
       }
     };
+    const open = () => setSearching(true);
     window.addEventListener('keydown', on);
-    return () => window.removeEventListener('keydown', on);
+    window.addEventListener('glean:search', open);
+    return () => {
+      window.removeEventListener('keydown', on);
+      window.removeEventListener('glean:search', open);
+    };
   }, []);
   // 示例不是你拾的：不进「一周前 / 那年今天」
   const backs = useMemo(() => (items ? throwbacks(items.filter((i) => !i.sample)) : []), [items]);
@@ -80,6 +88,7 @@ export function Library() {
     requestAnimationFrame(() => {
       if (window.__gleanReady) return;
       window.__gleanReady = performance.now();
+      window.dispatchEvent(new Event('glean:ready'));
       try {
         performance.mark('glean:ready', { detail: { items: items.length } });
       } catch {
@@ -118,13 +127,13 @@ export function Library() {
       <section className="view library empty-lib">
         <DisplayTitle title="穗仓" count={0} />
         <div className="empty">
-          <h2 className="lead">穗仓还是空的</h2>
+          <WordReveal className="lead" text="穗仓还是空的" />
           <p className="meta-text">看到喜欢的，就顺手拾一穗：一首歌、一部电影、一张图、一句话。</p>
           <ol className="steps3">
             <li>
               <span className="numeral">01</span>
               <b>随手拾</b>
-              <span>{desktop ? '顶栏右侧，回车即存' : '底部「随手拾一穗」，回车即存'}</span>
+              <span>{desktop ? '顶栏的「随手拾一穗」，回车即存' : '底部「随手拾一穗」，回车即存'}</span>
             </li>
             <li>
               <span className="numeral">02</span>
@@ -150,51 +159,7 @@ export function Library() {
     );
   }
 
-  const title = tag ? `#${tag}` : '穗仓';
-  const count = tag ? filtered.length : own > 0 || nSamples === 0 ? own : 0;
-  return (
-    <section className="view library">
-      <DisplayTitle
-        title={title}
-        count={count}
-        extra={nSamples > 0 ? <span className="title-note">示例 ({nSamples}) 不计数</span> : null}
-        aside={
-          <div className="page-tools">
-            <div className="view-switch" role="tablist" aria-label="视图">
-              {VIEWS.map(([k, label], i) => [
-                i > 0 && (
-                  <span key={'s' + k} className="sep" aria-hidden>
-                    |
-                  </span>
-                ),
-                <button key={k} role="tab" aria-selected={lv === k} className={lv === k ? 'on' : ''} onClick={() => pickView(k)}>
-                  {label}
-                </button>,
-              ])}
-            </div>
-            <button className="search-toggle" onClick={() => setSearching(true)} title="搜索（/ 或 Ctrl+K）">
-              搜索
-            </button>
-          </div>
-        }
-      />
-      <div className="chips scroll filter-row" role="toolbar" aria-label="类型">
-        <button className={`chip${type === 'all' ? ' on' : ''}`} onClick={() => setType('all')}>
-          全部 <span className="n">({items.length})</span>
-        </button>
-        {TYPE_ORDER.filter((t) => typeN.get(t)).map((t) => (
-          <button key={t} className={`chip${type === t ? ' on' : ''}`} onClick={() => setType(type === t ? 'all' : t)}>
-            {TYPE_LABEL[t]} <span className="n">({typeN.get(t)})</span>
-          </button>
-        ))}
-        {tag && (
-          <button className="chip on tag-chip" onClick={() => setTag(null)}>
-            #{tag} ✕
-          </button>
-        )}
-      </div>
-
-      {!filtering && (
+  const notesEl = !filtering ? (
         <div className="lib-notes">
           <DailyCard items={items} />
           {nSamples > 0 && (
@@ -231,8 +196,44 @@ export function Library() {
             </div>
           ))}
         </div>
-      )}
+      ) : null;
+  const title = tag ? `#${tag}` : '穗仓';
+  const count = tag ? filtered.length : own > 0 || nSamples === 0 ? own : 0;
+  return (
+    <section className="view library">
+      <DisplayTitle
+        title={title}
+        count={count}
+        extra={nSamples > 0 ? <span className="title-note">示例 ({nSamples}) 不计数</span> : null}
+        aside={
+          <div className="page-tools">
+            <Seg id="libview" className="view-switch" label="视图" value={lv} options={VIEWS} onPick={pickView} />
+            <button className="search-toggle" onClick={() => setSearching(true)} title="搜索（/ 或 Ctrl+K）">
+              <IconSearch size={16} />
+              <span>搜索</span>
+            </button>
+          </div>
+        }
+      />
+      <div className="lib-layout">
+        <div className="lib-main">
+      <div className="chips scroll filter-row" role="toolbar" aria-label="类型">
+        <button className={`chip${type === 'all' ? ' on' : ''}`} onClick={() => setType('all')}>
+          全部 <span className="n">({items.length})</span>
+        </button>
+        {TYPE_ORDER.filter((t) => typeN.get(t)).map((t) => (
+          <button key={t} className={`chip${type === t ? ' on' : ''}`} onClick={() => setType(type === t ? 'all' : t)}>
+            {TYPE_LABEL[t]} <span className="n">({typeN.get(t)})</span>
+          </button>
+        ))}
+        {tag && (
+          <button className="chip on tag-chip" onClick={() => setTag(null)}>
+            #{tag} ✕
+          </button>
+        )}
+      </div>
 
+          {!desktop && notesEl}
       {filtered.length === 0 ? (
         <div className="empty small">
           <p className="meta-text">没找到这一穗。</p>
@@ -252,7 +253,16 @@ export function Library() {
           render={(it) => <ItemCard item={it} onOpen={openItem} q={q || undefined} />}
         />
       )}
-      <TagCloud items={items} onPick={setTag} active={tag} />
+        </div>
+        {desktop ? (
+          <aside className="lib-rail" aria-label="今天">
+            {notesEl}
+            <TagCloud items={items} onPick={setTag} active={tag} />
+          </aside>
+        ) : (
+          <TagCloud items={items} onPick={setTag} active={tag} />
+        )}
+      </div>
     </section>
   );
 }
