@@ -14,25 +14,27 @@ b.newContext = async (opts = {}) => {
   if (!onboard) await c.addInitScript(() => { try { localStorage.setItem('glean.onboarded', '1'); } catch { /* svg doc */ } });
   return c;
 };
-// v0.16 Studio：旧的暖纸 / 麦田 / ASCII / 衬线 一律不该再出现；无圆角、无阴影
+// v0.20 Rewamp：旧的暖纸 / 麦田 / ASCII / 衬线 / 暗房一律不该再出现；卡片、按钮、弹层是 Rewamp 的圆角浮起语言；导航带图标
 async function studio(pg, tag) {
   const r = await pg.evaluate(() => {
-    const out = { canvas: document.querySelectorAll('canvas').length, svgInView: document.querySelectorAll('.app svg, .view svg').length, old: [], theme: document.documentElement.dataset.theme };
+    const out = { canvas: document.querySelectorAll('canvas').length, old: [], theme: document.documentElement.dataset.theme };
     for (const sel of ['.field-canvas', '.wheatfield', '.ascii-wrap', '.paper', '.whisper', '.grow-wheat', '.seed-burst', '.ripple']) if (document.querySelector(sel)) out.old.push(sel);
-    const bad = [];
-    for (const el of document.querySelectorAll('.btn, .card, .chip, .sheet, .confirm, .toast, input, .sprig, .trow')) {
-      const cs = getComputedStyle(el);
-      if (parseFloat(cs.borderTopLeftRadius) > 0 || (cs.boxShadow && cs.boxShadow !== 'none')) bad.push(el.className);
+    // 圆角：卡片 / 弹层 / toast / 主按钮 / 速记胶囊 都必须是圆角（Studio 的 0 圆角已作废）
+    const square = [];
+    for (const el of document.querySelectorAll('.card, .sheet, .confirm, .toast, .btn.primary, .quick-bar, .chip')) {
+      if (!(parseFloat(getComputedStyle(el).borderTopLeftRadius) >= 8)) square.push(el.className);
     }
-    out.round = bad.slice(0, 3);
+    out.square = square.slice(0, 3);
+    // 导航：每一项都有图标（svg）+ 中文
+    out.navNoIcon = [...document.querySelectorAll('.nav-btn')].filter((b) => !b.querySelector('svg') || !b.textContent.trim()).length;
     const ff = getComputedStyle(document.body).fontFamily;
     out.font = /Glean Inter/.test(ff) && /Glean Sans/.test(ff) && !/Serif|Cormorant|Mono/.test(ff);
     return out;
   });
   if (r.canvas) errs.push(`[${tag}] canvas still on page (${r.canvas})`);
-  if (r.svgInView) errs.push(`[${tag}] decorative svg icons in view (${r.svgInView})`);
   if (r.old.length) errs.push(`[${tag}] old-style elements: ${r.old.join(',')}`);
-  if (r.round.length) errs.push(`[${tag}] rounded corners / shadows on ${r.round.join(' | ')}`);
+  if (r.square.length) errs.push(`[${tag}] square corners on ${r.square.join(' | ')}`);
+  if (r.navNoIcon) errs.push(`[${tag}] ${r.navNoIcon} nav items without icon/label`);
   if (!r.font) errs.push(`[${tag}] body font is not Inter + 思源黑体`);
   if (!['light', 'dark'].includes(r.theme)) errs.push(`[${tag}] data-theme missing ${r.theme}`);
 }
@@ -228,10 +230,10 @@ async function run(name, viewport) {
   await pg.waitForSelector('text=穗仓还是空的');
   await brand(pg, name);
   await studio(pg, name);
-  // v0.16 布局：桌面 ≥1024 顶栏导航 + 顶栏右侧速记、没有底部固定栏；手机底部 速记 + 文字导航
-  const lay = await pg.evaluate(() => ({ topNav: !!document.querySelector('.topbar .nav'), topQuick: !!document.querySelector('.topbar .quick-input'), dock: !!document.querySelector('.dock'), dockNav: document.querySelectorAll('.dock .nav-btn').length, navIcons: document.querySelectorAll('.nav svg, .nav img').length }));
-  if (viewport.width >= 1024 ? !(lay.topNav && lay.topQuick && !lay.dock) : !(lay.dock && lay.dockNav === 5 && !lay.topNav)) errs.push(`[${name}] layout wrong ${JSON.stringify(lay)}`);
-  if (lay.navIcons) errs.push(`[${name}] nav should be text only`);
+  // v0.20 布局：桌面 ≥1024 左侧栏导航 + 顶栏速记胶囊、没有底部固定栏；手机底部 速记胶囊 + 图标导航胶囊、没有侧栏
+  const lay = await pg.evaluate(() => ({ sideNav: document.querySelectorAll('.sidebar .nav-btn').length, topQuick: !!document.querySelector('.topbar .quick-input'), dock: !!document.querySelector('.dock'), dockNav: document.querySelectorAll('.dock .nav-btn').length, dockQuick: !!document.querySelector('.dock .quick-input'), navIcons: document.querySelectorAll('.nav-btn svg').length }));
+  if (viewport.width >= 1024 ? !(lay.sideNav === 5 && lay.topQuick && !lay.dock) : !(lay.dock && lay.dockNav === 5 && lay.dockQuick && !lay.sideNav)) errs.push(`[${name}] layout wrong ${JSON.stringify(lay)}`);
+  if (lay.navIcons !== 5) errs.push(`[${name}] nav should have 5 icons, got ${lay.navIcons}`);
   const title0 = await pg.locator('.page-title').innerText();
   if (title0.replace(/\s+/g, '') !== '穗仓(0)') errs.push(`[${name}] empty title should be 穗仓 (0), got ${title0}`);
   // 字体自托管：不从任何外部域名拉字体
@@ -335,7 +337,7 @@ async function run(name, viewport) {
   if (!(await pg.locator(`.sq-items .sq-row[data-item-id="${A.id}"] mark.hit`).count())) errs.push(`[${name}] search hit not highlighted for #${A.id}`);
   if (h1.branches !== 0) errs.push(`[${name}] 新枝 (n) section wrong ${h1.branches}`);
   const markBg = await pg.locator('.sq-results mark.hit').first().evaluate((e) => getComputedStyle(e).backgroundColor);
-  if (!['rgb(0, 0, 0)', 'rgb(255, 255, 255)'].includes(markBg)) errs.push(`[${name}] hit should be reversed black/white, got ${markBg}`);
+  if (markBg !== 'rgb(212, 203, 229)') errs.push(`[${name}] hit should be highlighted with the lilac accent, got ${markBg}`);
   await pg.screenshot({ path: `${out}/${name}-1c-search.png` });
   // 刚用速记存的那一穗已经进了索引（增量）：搜得到、而且索引表里有它的行
   await sqType(pg, '速记测试');
@@ -559,7 +561,9 @@ async function run(name, viewport) {
   await pg.click('.manifesto-toggle');
   await pg.waitForSelector('.manifesto .mf-text');
   const mf = await pg.evaluate(() => { const m = document.querySelector('.manifesto'); return { bg: getComputedStyle(m).backgroundColor, fg: getComputedStyle(m).color, text: m.querySelector('.mf-text').textContent, pages: m.querySelectorAll('.mf-pages button').length }; });
-  if (mf.bg !== 'rgb(0, 0, 0)' || mf.fg !== 'rgb(255, 255, 255)' || !mf.text || mf.pages < 1) errs.push(`[${name}] manifesto wrong ${JSON.stringify(mf)}`);
+  // v0.20：宣言是一张深墨色大卡（#1f1c24 底、暖白字），页面其余部分保持当前主题
+  const appTheme = await pg.evaluate(() => document.querySelector('.app')?.getAttribute('data-theme'));
+  if (mf.bg !== 'rgb(31, 28, 36)' || mf.fg !== 'rgb(247, 245, 241)' || !mf.text || mf.pages < 1 || appTheme === 'dark') errs.push(`[${name}] manifesto wrong ${JSON.stringify(mf)} app=${appTheme}`);
   await pg.screenshot({ path: `${out}/${name}-3e-manifesto.png` });
   await pg.click('.view-switch button:has-text("列表")');
   // v0.17 搜索也覆盖新枝：搜新枝标题里的两个字 → 「新枝 (n)」与按规则数出来的一致 → 点开直达那一根
@@ -631,7 +635,7 @@ async function run(name, viewport) {
   // 换主题要经过 设置 → effect → 写 dataset 两拍渲染，等它落定再读
   await pg.waitForFunction(() => document.documentElement.dataset.theme === 'dark', null, { timeout: 3000 }).catch(() => {});
   const sky = await pg.evaluate(() => [document.documentElement.dataset.theme, getComputedStyle(document.body).backgroundColor]);
-  if (sky[0] !== 'dark' || sky[1] !== 'rgb(0, 0, 0)') errs.push(`[${name}] dark theme not applied: ${sky}`);
+  if (sky[0] !== 'dark' || sky[1] !== 'rgb(23, 22, 26)') errs.push(`[${name}] dark theme not applied: ${sky}`);
   await pg.screenshot({ path: `${out}/${name}-5-settings-dark.png`, fullPage: true });
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.screenshot({ path: `${out}/${name}-6-library-dark.png`, fullPage: true });
@@ -1596,7 +1600,7 @@ async function perfSearch(ctx) {
     const r = await sqTime(pg, q);
     const exp = raw.filter((x) => e2eMatch(itemSearchText(x), e2eTerms(q))).length;
     if (r.n !== exp) errs.push(`[perf-search] ${q}: ${r.n} results, expected ${exp}`);
-    if (!r.marks || r.markText !== q || !['rgb(0, 0, 0)', 'rgb(255, 255, 255)'].includes(r.markBg)) errs.push(`[perf-search] ${q}: highlight wrong ${JSON.stringify(r)}`);
+    if (!r.marks || r.markText !== q || r.markBg !== 'rgb(212, 203, 229)') errs.push(`[perf-search] ${q}: highlight wrong ${JSON.stringify(r)}`);
     runs.push(r);
   }
   await pg.screenshot({ path: `${out}/perf-search-1000.png` });
