@@ -1,41 +1,99 @@
-/* 拾穗 · Glean — v0.16 Studio：白纸黑字的编辑部目录。
-   规范见 docs/design/studio/STYLE.md：只有黑白灰；0 圆角、0 阴影、0 描边卡片、0 装饰图标；
-   层级只靠字号反差与留白；表格只有表头下一条 1px 线；动效只有淡入与图片缓慢放大。 */
+/* 拾穗 · Glean — 结构与布局层（v0.16 起），v0.20 Rewamp 起外观由 src/styles/rewamp.css 覆盖。
+   这里保留各视图的网格、虚拟滚动、表格列宽等结构规则与主题 token（暖白 / 暖灰黑 + 淡紫强调）。
+   设计说明见 docs/design/rewamp/COMPONENTS.md。 */
 @import './fonts/fonts.css';
 
 :root,
 [data-theme='light'] {
-  --bg: #ffffff;
-  --fg: #000000;
-  --fg-2: #7e7e7e;
-  --fg-3: #c6c6c6;
-  --tile: #f3f3f3;
-  --hair: #e2e2e2;
-  --scrim: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent 55%);
-  --veil: rgba(255, 255, 255, 0.72);
-  --heat-1: #c6c6c6;
-  --heat-2: #8e8e8e;
-  --heat-3: #4a4a4a;
+  /* v0.20 Rewamp：明亮、安静、温暖。暖白底 + 白色浮起的卡片 + Rewamp 的淡紫强调色 */
+  --bg: #f7f5f1;
+  --surface: #ffffff;
+  --surface-2: #f0ede7;
+  --surface-3: #e8e4dc;
+  --fg: #1d1b18;
+  --fg-2: #6b665e;
+  --fg-3: #a9a49b;
+  --tile: #f0ede7;
+  --hair: rgba(29, 27, 24, 0.08);
+  --line: rgba(29, 27, 24, 0.13);
+  --accent: #d4cbe5;
+  --accent-soft: #eeeaf7;
+  --accent-ink: #4a3f66;
+  --sun: #f6e8d6;
+  --sun-ink: #7a4e1c;
+  --sun-line: rgba(122, 78, 28, 0.12);
+  --sun-line-2: rgba(122, 78, 28, 0.2);
+  --accent-line: rgba(212, 203, 229, 0.6);
+  --accent-mid: #e3dcef;
+  --bg-glass: rgba(247, 245, 241, 0.86);
+  --bg-clear: rgba(247, 245, 241, 0);
+  --sage: #e3ebdf;
+  --sky: #e2ebf3;
+  --rose: #f4e3e1;
+  --danger: #b4423a;
+  --scrim: linear-gradient(to top, rgba(20, 16, 10, 0.62), rgba(20, 16, 10, 0.12) 48%, transparent 70%);
+  --veil: rgba(40, 34, 26, 0.28);
+  --glass: rgba(255, 255, 255, 0.82);
+  --sh-1: 0 1px 2px rgba(40, 30, 12, 0.04), 0 4px 14px -6px rgba(40, 30, 12, 0.1);
+  --sh-2: 0 12px 30px -8px rgba(40, 30, 12, 0.12), 0 4px 12px rgba(40, 30, 12, 0.04);
+  --sh-3: 0 28px 64px -18px rgba(40, 30, 12, 0.24), 0 6px 18px rgba(40, 30, 12, 0.06);
+  --rim: inset 0 1px 1.5px rgba(255, 255, 255, 1), inset 0 -1px 1px rgba(0, 0, 0, 0.03);
+  --heat-1: #e4ddf0;
+  --heat-2: #c7bbdd;
+  --heat-3: #9b8bbb;
+  --heat-4: #5e4f80;
   color-scheme: light;
 }
 [data-theme='dark'] {
-  --bg: #000000;
-  --fg: #ffffff;
-  --fg-2: #8e8e8e;
-  --fg-3: rgba(255, 255, 255, 0.3);
-  --tile: #1b1b1b;
-  --hair: rgba(255, 255, 255, 0.2);
-  --veil: rgba(0, 0, 0, 0.72);
-  --heat-1: #3a3a3a;
-  --heat-2: #6e6e6e;
-  --heat-3: #b4b4b4;
+  /* 黑主题只在用户选「黑」或系统深色时出现：暖灰黑，不是纯黑暗房 */
+  --bg: #17161a;
+  --surface: #211f25;
+  --surface-2: #2a2830;
+  --surface-3: #34313b;
+  --fg: #f3f0ea;
+  --fg-2: #a6a198;
+  --fg-3: #6e6a64;
+  --tile: #2a2830;
+  --hair: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.14);
+  --accent: #d4cbe5;
+  --accent-soft: rgba(212, 203, 229, 0.16);
+  --accent-ink: #e4ddf0;
+  --sun: rgba(246, 232, 214, 0.14);
+  --sun-ink: #f1d4b0;
+  --sun-line: rgba(241, 212, 176, 0.14);
+  --sun-line-2: rgba(241, 212, 176, 0.22);
+  --accent-line: rgba(212, 203, 229, 0.35);
+  --accent-mid: rgba(212, 203, 229, 0.28);
+  --bg-glass: rgba(23, 22, 26, 0.86);
+  --bg-clear: rgba(23, 22, 26, 0);
+  --sage: rgba(205, 225, 196, 0.12);
+  --sky: rgba(200, 220, 240, 0.12);
+  --rose: rgba(244, 210, 205, 0.12);
+  --danger: #ec8a80;
+  --veil: rgba(0, 0, 0, 0.5);
+  --glass: rgba(33, 31, 37, 0.84);
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px -6px rgba(0, 0, 0, 0.5);
+  --sh-2: 0 14px 34px -8px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --sh-3: 0 28px 64px -18px rgba(0, 0, 0, 0.7);
+  --rim: inset 0 1px 1px rgba(255, 255, 255, 0.08), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
+  --heat-1: #3b3646;
+  --heat-2: #5d5470;
+  --heat-3: #8d80a8;
+  --heat-4: #d4cbe5;
   color-scheme: dark;
 }
 :root {
   --font: 'Glean Inter', 'Glean Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
   --edge: 16px;
-  --dock-h: 98px;
+  --dock-h: 136px;
+  --side-w: 248px;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --r-sm: 10px;
+  --r: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
 }
 @media (min-width: 1024px) {
   :root {
@@ -48,8 +106,6 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  border-radius: 0;
-  box-shadow: none;
 }
 html {
   -webkit-text-size-adjust: 100%;
