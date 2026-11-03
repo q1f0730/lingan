@@ -6,8 +6,31 @@ let m = fs.readFileSync(f, 'utf8');
 if (!m.includes('android.permission.INTERNET')) {
   m = m.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application');
 }
-if (!m.includes('android.intent.action.SEND')) {
-  const filter = `<intent-filter>
+// v0.22 极速采集：分享 / 选字菜单改由透明的半屏 QuickActivity 接（不拉起整个 App）；磁贴、通知使用权、常驻通知、小部件
+const perms = ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED'];
+for (const p of perms) if (!m.includes(p)) m = m.replace('<application', `<uses-permission android:name="${p}" />\n    <application`);
+// 让桌面上的 App 对 PackageManager 可见：把来源包名翻成「网易云音乐」这样的名字（只查桌面 App，不要 QUERY_ALL_PACKAGES）
+if (!m.includes('<queries>')) {
+  m = m.replace('<application', `<queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+    <application`);
+}
+if (!m.includes('.QuickActivity')) {
+  m = m.replace('</application>', `    <activity
+            android:name=".QuickActivity"
+            android:exported="true"
+            android:label="拾穗"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:launchMode="standard"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode">
+            <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
@@ -17,8 +40,54 @@ if (!m.includes('android.intent.action.SEND')) {
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
             </intent-filter>
-            </activity>`;
-  m = m.replace('</activity>', filter);
+            <intent-filter android:label="拾穗">
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".GleanMediaListener"
+            android:exported="true"
+            android:label="拾穗 · 正在播放"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".QuickTile"
+            android:exported="true"
+            android:label="拾一穗"
+            android:icon="@drawable/glean_stat"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".MusicTile"
+            android:exported="true"
+            android:label="拾这首歌"
+            android:icon="@drawable/glean_stat"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <receiver android:name=".GleanReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".GleanWidget" android:exported="true" android:label="拾穗">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/glean_widget_info" />
+        </receiver>
+    </application>`);
 }
 // v0.15 导出 ZIP 走 FileProvider 分享：Tauri 模板自带 ${applicationId}.fileprovider（含 cache-path）；没有就补上
 if (!m.includes('androidx.core.content.FileProvider')) {
@@ -53,6 +122,14 @@ if (fs.existsSync(strings)) {
   console.log(x);
 }
 
+// v0.22 资源：状态栏 / 磁贴图标（矢量麦穗）、小部件布局与配色（跟随深浅色）
+const res = 'src-tauri/gen/android/app/src/main/res';
+const put = (p, x) => {
+  fs.mkdirSync(path.dirname(path.join(res, p)), { recursive: true });
+  fs.writeFileSync(path.join(res, p), x);
+};
+for (const [p, x] of Object.entries(androidRes())) put(p, x);
+
 // find MainActivity.kt and replace it with a share-aware one
 const root = 'src-tauri/gen/android/app/src/main/java';
 function find(d) {
@@ -65,196 +142,83 @@ function find(d) {
 const kt = find(root);
 const src = fs.readFileSync(kt, 'utf8');
 const pkg = src.match(/^package\s+([\w.]+)/m)[1];
-fs.writeFileSync(kt, `package ${pkg}
-
-import android.content.ContentValues
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
-import androidx.core.content.FileProvider
-import java.io.File
-import java.io.FileOutputStream
-import android.util.Base64
-import android.webkit.JavascriptInterface
-import android.webkit.WebView
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import java.security.KeyStore
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
-import org.json.JSONObject
-
-class MainActivity : TauriActivity() {
-  @Volatile private var pending: String = ""
-
-  private fun grab(intent: Intent?) {
-    if (intent == null || intent.action != Intent.ACTION_SEND) return
-    try {
-      val o = JSONObject()
-      intent.getStringExtra(Intent.EXTRA_TEXT)?.let { o.put("text", it) }
-      intent.getStringExtra(Intent.EXTRA_SUBJECT)?.let { o.put("subject", it) }
-      val type = intent.type ?: ""
-      if (type.startsWith("image/")) {
-        val uri: Uri? = if (android.os.Build.VERSION.SDK_INT >= 33) intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) else @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_STREAM)
-        if (uri != null) {
-          val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-          if (bytes != null && bytes.size < 12 * 1024 * 1024) {
-            o.put("image", "data:" + type + ";base64," + Base64.encodeToString(bytes, Base64.NO_WRAP))
-          }
-        }
-      }
-      pending = o.toString()
-    } catch (e: Exception) {
-    }
-  }
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    grab(intent)
-  }
-
-  override fun onNewIntent(intent: Intent) {
-    super.onNewIntent(intent)
-    grab(intent)
-  }
-
-  override fun onWebViewCreate(webView: WebView) {
-    super.onWebViewCreate(webView)
-    webView.addJavascriptInterface(object {
-      @JavascriptInterface
-      fun take(): String {
-        val p = pending
-        pending = ""
-        return p
-      }
-    }, "LinganShare")
-    // v0.15 导出到 Obsidian：JS 分块把 ZIP（base64）写进 cache/export/，再走系统分享或存进「下载」
-    webView.addJavascriptInterface(object {
-      private var file: File? = null
-      private var out: FileOutputStream? = null
-
-      private fun close() {
-        try { out?.flush(); out?.close() } catch (e: Exception) {}
-        out = null
-      }
-
-      @JavascriptInterface
-      fun begin(name: String): Boolean {
-        return try {
-          close()
-          val dir = File(cacheDir, "export")
-          dir.mkdirs()
-          dir.listFiles()?.forEach { it.delete() }
-          val safe = name.map { c -> if (c.code < 32 || c.code == 92 || c.code == 34 || "/:*?<>|".indexOf(c) >= 0) '_' else c }.joinToString("")
-          val f = File(dir, safe)
-          file = f
-          out = FileOutputStream(f)
-          true
-        } catch (e: Exception) { false }
-      }
-
-      @JavascriptInterface
-      fun append(b64: String): Boolean {
-        return try {
-          out!!.write(Base64.decode(b64, Base64.NO_WRAP))
-          true
-        } catch (e: Exception) { false }
-      }
-
-      @JavascriptInterface
-      fun share(mime: String, title: String): Boolean {
-        close()
-        val f = file ?: return false
-        return try {
-          val uri = FileProvider.getUriForFile(this@MainActivity, packageName + ".fileprovider", f)
-          val send = Intent(Intent.ACTION_SEND).apply {
-            type = mime
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, f.name)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-          }
-          val chooser = Intent.createChooser(send, title).apply { addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-          runOnUiThread { startActivity(chooser) }
-          true
-        } catch (e: Exception) { false }
-      }
-
-      @JavascriptInterface
-      fun saveDownloads(mime: String): String {
-        close()
-        val f = file ?: return ""
-        return try {
-          if (Build.VERSION.SDK_INT >= 29) {
-            val values = ContentValues().apply {
-              put(MediaStore.MediaColumns.DISPLAY_NAME, f.name)
-              put(MediaStore.MediaColumns.MIME_TYPE, mime)
-              put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-            }
-            val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return ""
-            contentResolver.openOutputStream(uri)?.use { o -> f.inputStream().use { it.copyTo(o) } } ?: return ""
-            "下载/" + f.name
-          } else {
-            val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: return ""
-            dir.mkdirs()
-            val dest = File(dir, f.name)
-            f.copyTo(dest, overwrite = true)
-            dest.absolutePath
-          }
-        } catch (e: Exception) { "" }
-      }
-    }, "LinganFiles")
-    // v0.20 AI 密钥进 Android Keystore：AES-256-GCM 密钥只在系统密钥库里（不可导出），SharedPreferences 只存密文
-    webView.addJavascriptInterface(object {
-      private val alias = "glean_vault_v1"
-      private val prefs by lazy { getSharedPreferences("glean_vault", android.content.Context.MODE_PRIVATE) }
-      private fun ok(name: String) = name == "chat.apiKey" || name == "embed.apiKey"
-      private fun key(): SecretKey {
-        val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        (ks.getKey(alias, null) as? SecretKey)?.let { return it }
-        val kg = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-        kg.init(
-          KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setKeySize(256)
-            .build()
-        )
-        return kg.generateKey()
-      }
-
-      @JavascriptInterface
-      fun get(name: String): String {
-        if (!ok(name)) return ""
-        val v = prefs.getString(name, null) ?: return ""
-        return try {
-          val raw = Base64.decode(v, Base64.NO_WRAP)
-          val c = Cipher.getInstance("AES/GCM/NoPadding")
-          c.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, raw, 0, 12))
-          String(c.doFinal(raw, 12, raw.size - 12), Charsets.UTF_8)
-        } catch (e: Exception) { "\\u0000" }
-      }
-
-      @JavascriptInterface
-      fun set(name: String, value: String): Boolean {
-        if (!ok(name)) return false
-        return try {
-          if (value.isEmpty()) {
-            prefs.edit().remove(name).commit()
-          } else {
-            val c = Cipher.getInstance("AES/GCM/NoPadding")
-            c.init(Cipher.ENCRYPT_MODE, key())
-            val out = c.iv + c.doFinal(value.toByteArray(Charsets.UTF_8))
-            prefs.edit().putString(name, Base64.encodeToString(out, Base64.NO_WRAP)).commit()
-          }
-        } catch (e: Exception) { false }
-      }
-    }, "LinganVault")
-  }
+// v0.22 原生代码放在 scripts/android/*.kt（可单独编译检查），这里换上包名拷进去
+const dir = path.dirname(kt);
+for (const f of fs.readdirSync('scripts/android').filter((x) => x.endsWith('.kt'))) {
+  fs.writeFileSync(path.join(dir, f), fs.readFileSync(path.join('scripts/android', f), 'utf8').replaceAll('__PKG__', pkg));
+  console.log('wrote', path.join(dir, f));
 }
-`);
 console.log('patched', kt);
+
+function androidRes() {
+  const color = (bg, fg, fg2) => `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="glean_widget_bg">${bg}</color>
+    <color name="glean_widget_fg">${fg}</color>
+    <color name="glean_widget_fg2">${fg2}</color>
+</resources>
+`;
+  const btn = (id, text, bold) => `    <TextView
+        android:id="@+id/${id}"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="${text}"
+        android:textColor="@color/${bold ? 'glean_widget_fg' : 'glean_widget_fg2'}"
+        android:textSize="14sp"${bold ? '\n        android:textStyle="bold"' : ''} />
+`;
+  return {
+    'drawable/glean_stat.xml': `<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M11.25,4h1.5v17h-1.5z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,3c1.2,1.2 1.2,3 0,4.2c-1.2,-1.2 -1.2,-3 0,-4.2z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,9.5c-0.4,-1.9 -2.1,-3.1 -4.4,-3c0.4,1.9 2.1,3.1 4.4,3z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,9.5c0.4,-1.9 2.1,-3.1 4.4,-3c-0.4,1.9 -2.1,3.1 -4.4,3z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,13.5c-0.4,-1.9 -2.1,-3.1 -4.4,-3c0.4,1.9 2.1,3.1 4.4,3z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,13.5c0.4,-1.9 2.1,-3.1 4.4,-3c-0.4,1.9 -2.1,3.1 -4.4,3z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,17.5c-0.4,-1.9 -2.1,-3.1 -4.4,-3c0.4,1.9 2.1,3.1 4.4,3z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,17.5c0.4,-1.9 2.1,-3.1 4.4,-3c-0.4,1.9 -2.1,3.1 -4.4,3z" />
+</vector>
+`,
+    'drawable/glean_widget_bg.xml': `<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/glean_widget_bg" />
+    <corners android:radius="22dp" />
+</shape>
+`,
+    'values/glean_colors.xml': color('#F2FFFFFF', '#FF1D1B18', '#FF6B665E'),
+    'values-night/glean_colors.xml': color('#F2211F25', '#FFF3F0EA', '#FFA6A198'),
+    'values/glean_strings.xml': `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="glean_widget_desc">一键拾：文字 / 粘贴 / 正在播放的歌</string>
+</resources>
+`,
+    'layout/glean_widget.xml': `<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gw_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/glean_widget_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="4dp">
+${btn('gw_note', '拾一穗', true)}${btn('gw_paste', '粘贴', false)}${btn('gw_music', '♪ 这首歌', false)}${btn('gw_open', '穗仓', false)}</LinearLayout>
+`,
+    'xml/glean_widget_info.xml': `<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:minResizeWidth="180dp"
+    android:resizeMode="horizontal"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/glean_widget"
+    android:description="@string/glean_widget_desc"
+    android:widgetCategory="home_screen" />
+`,
+  };
+}
