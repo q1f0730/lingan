@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useApp } from '../lib/store';
 import '../styles/sync.css';
+import { LanSync } from './LanSync';
+import { SyncStatus } from './SyncStatus';
 
 const SYNC_KEY = 'glean.sync.v1';
 interface Cfg {
@@ -41,7 +43,18 @@ const when = (t?: number) => {
   return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
+/** v0.32：同步 = 网盘（v0.31）+ 局域网直连 + 同步状态 三块 */
 export function SyncPanel({ version }: { version: string }) {
+  return (
+    <>
+      <DavPanel version={version} />
+      <LanSync version={version} />
+      <SyncStatus version={version} />
+    </>
+  );
+}
+
+function DavPanel({ version }: { version: string }) {
   const [cfg, setCfg] = useState<Cfg | null>(readCfg);
   const [provider, setProvider] = useState<'jianguoyun' | 'custom'>('jianguoyun');
   const [url, setUrl] = useState(PRESETS[0].url);
@@ -146,7 +159,7 @@ export function SyncPanel({ version }: { version: string }) {
   if (cfg?.confirm || code) {
     return (
       <section className="set-sec sync-panel" id="set-sync">
-        <h2 className="sec-title">同步</h2>
+        <h2 className="sec-title">同步 · 网盘</h2>
         <p className="meta-text">这是恢复码，只显示这一次。忘了同步口令时，凭它在新设备上加入。抄下来或打印出来，收在手机以外的地方。</p>
         {code ? (
           <>
@@ -191,7 +204,7 @@ export function SyncPanel({ version }: { version: string }) {
     const ok = cfg.last?.ok !== false;
     return (
       <section className="set-sec sync-panel" id="set-sync">
-        <h2 className="sec-title">同步</h2>
+        <h2 className="sec-title">同步 · 网盘</h2>
         <div className="sync-state">
           <span className="sync-big num">{cfg.lastAt ? when(cfg.lastAt) : '—'}</span>
           <span className="meta-text">
@@ -241,7 +254,7 @@ export function SyncPanel({ version }: { version: string }) {
   const preset = PRESETS.find((p) => p.id === provider)!;
   return (
     <section className="set-sec sync-panel" id="set-sync">
-      <h2 className="sec-title">同步</h2>
+      <h2 className="sec-title">同步 · 网盘</h2>
       <p className="meta-text">手机和电脑经你自己的网盘（WebDAV）同步穗、新枝、作品和原图。上传前先在本机加密，只有知道同步口令或恢复码的设备能解开。</p>
       {step === 'account' ? (
         <>
