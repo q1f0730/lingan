@@ -1,0 +1,409 @@
+{
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 1493,
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 6776,
+    "wallMs": 8045
+  },
+  "storage": {
+    "version": 90,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102224504,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 14,
+    "rows": 1000,
+    "reopenLoadMs": 15,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 17.4,
+        "results": 176,
+        "coreMs": 1.9
+      },
+      {
+        "q": "海边",
+        "ms": 17.1,
+        "results": 178,
+        "coreMs": 0.9
+      },
+      {
+        "q": "钢琴",
+        "ms": 16.7,
+        "results": 172,
+        "coreMs": 0.5
+      },
+      {
+        "q": "夜车",
+        "ms": 17.1,
+        "results": 174,
+        "coreMs": 0.5
+      },
+      {
+        "q": "麦田",
+        "ms": 16.9,
+        "results": 63,
+        "coreMs": 0.5
+      },
+      {
+        "q": "黄昏",
+        "ms": 16.8,
+        "results": 176,
+        "coreMs": 0.3
+      }
+    ],
+    "maxMs": 17.4,
+    "medianMs": 17.1,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 40.7,
+        "results": 176,
+        "coreMs": 1.2
+      },
+      {
+        "q": "便利",
+        "ms": 40.6,
+        "results": 125,
+        "coreMs": 1.7
+      },
+      {
+        "q": "霓虹",
+        "ms": 40.7,
+        "results": 176,
+        "coreMs": 1.5
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 218,
+    "runs": [
+      203,
+      218,
+      220
+    ],
+    "firstThumbsDecodedMedian": 253,
+    "cardsOnFirstScreen": 10
+  },
+  "coldStartCpu4xMs": {
+    "median": 655,
+    "runs": [
+      605,
+      655,
+      660
+    ],
+    "firstThumbsDecodedMedian": 755
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16807,
+    "scrollHeight": 115345,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 4,
+    "objectUrlsCreated": 58
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14410,
+    "scrollHeight": 66356,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 27,
+    "virtual": {
+      "total": 38,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14439,
+    "scrollHeight": 45393,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 58,
+    "maxLiveObjectUrls": 1,
+    "virtual": {
+      "total": 1000,
+      "mounted": 57
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 300,
+    "scrolledPx": 8016,
+    "scrollHeight": 115345,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400,
+  "backup": {
+    "ms": 665,
+    "bytes": 102748605,
+    "items": 1000,
+    "images": 300,
+    "imageMB": 97.5,
+    "heap": {
+      "baseMB": 8.5,
+      "peakMB": 54.8,
+      "deltaMB": 46.2
+    },
+    "badHashes": 0
+  },
+  "restore": {
+    "ms": 952,
+    "heap": {
+      "baseMB": 5.9,
+      "peakMB": 43,
+      "deltaMB": 37
+    },
+    "items": 1000,
+    "images": 300
+  },
+  "interleavedBench": {
+    "note": "InstaBox 同一会话交替测冷启动（1000 穗 / 300 图，ready = 穗仓首屏卡片画出）。v0.22.0 dist = GitHub main 源码构建；v023fat = v0.23 初版（首包 563KB）；v023slim = 最终构建（搜索 / 待理 / 缺为什么 / 多选工具条 / organize / batch 改懒加载，首屏一个 app 块 546KB，db 未拆出）",
+    "r1_7rounds": {
+      "v0.22.0": {
+        "normalMedian": 220,
+        "cpu4xMedian": 678,
+        "normalRuns": [
+          228,
+          220,
+          206,
+          219,
+          215,
+          223,
+          237
+        ],
+        "cpu4xRuns": [
+          704,
+          678,
+          682,
+          661,
+          674,
+          622,
+          735
+        ]
+      },
+      "v023fat": {
+        "normalMedian": 230,
+        "cpu4xMedian": 689,
+        "normalRuns": [
+          245,
+          231,
+          232,
+          226,
+          230,
+          210,
+          224
+        ],
+        "cpu4xRuns": [
+          679,
+          658,
+          770,
+          717,
+          676,
+          689,
+          724
+        ]
+      }
+    },
+    "r2_9rounds": {
+      "v0.22.0": {
+        "normalMedian": 192,
+        "cpu4xMedian": 581,
+        "normalRuns": [
+          185,
+          176,
+          214,
+          195,
+          192,
+          181,
+          186,
+          194,
+          217
+        ],
+        "cpu4xRuns": [
+          581,
+          585,
+          607,
+          574,
+          572,
+          577,
+          560,
+          591,
+          618
+        ]
+      },
+      "v023slim": {
+        "normalMedian": 198,
+        "cpu4xMedian": 598,
+        "normalRuns": [
+          179,
+          201,
+          202,
+          185,
+          192,
+          216,
+          190,
+          198,
+          205
+        ],
+        "cpu4xRuns": [
+          598,
+          578,
+          606,
+          571,
+          619,
+          609,
+          563,
+          587,
+          605
+        ]
+      }
+    },
+    "r3_9rounds_3way": {
+      "v0.22.0": {
+        "normalMedian": 206,
+        "cpu4xMedian": 577,
+        "normalRuns": [
+          205,
+          202,
+          228,
+          207,
+          209,
+          207,
+          206,
+          187,
+          193
+        ],
+        "cpu4xRuns": [
+          553,
+          601,
+          598,
+          577,
+          577,
+          549,
+          604,
+          579,
+          574
+        ]
+      },
+      "v023fat": {
+        "normalMedian": 202,
+        "cpu4xMedian": 614,
+        "normalRuns": [
+          196,
+          252,
+          217,
+          210,
+          223,
+          191,
+          202,
+          198,
+          186
+        ],
+        "cpu4xRuns": [
+          590,
+          607,
+          631,
+          642,
+          635,
+          614,
+          598,
+          572,
+          620
+        ]
+      },
+      "v023slim": {
+        "normalMedian": 206,
+        "cpu4xMedian": 618,
+        "normalRuns": [
+          202,
+          209,
+          208,
+          222,
+          213,
+          202,
+          180,
+          206,
+          183
+        ],
+        "cpu4xRuns": [
+          618,
+          623,
+          625,
+          665,
+          653,
+          594,
+          598,
+          598,
+          536
+        ]
+      }
+    },
+    "conclusion": "普通速度与 v0.22 持平（±3%）；4× 降速慢 2–7%（+11–41ms）。瘦首包（563→546KB）对冷启动无可测影响，差距更可能来自运行时，待 v0.24 查。"
+  },
+  "bundle": {
+    "firstScreenJsKB": {
+      "v0.22.0": "index 523 + 7 个小预载块",
+      "v023fat": "index 563 + db 未拆",
+      "v023slim": "app 546（含 db / Dexie）+ index 门面 0.7 + runtime 0.9"
+    },
+    "lazyChunksKB": {
+      "Search": 16.4,
+      "Inbox": 7.2,
+      "WhyColumn": 3.3,
+      "SelectBar": 2.8,
+      "organize": 4.3,
+      "batch": 2.0
+    }
+  },
+  "backupHeapNote": "perf-backup 的导出堆增长在同一构建上波动 38–51MB（阈值 48MB），最终这次 46.2MB 通过"
+}
