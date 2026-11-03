@@ -8,6 +8,7 @@ import { topAtoms } from '../lib/atoms';
 import { findHits, enforcedKeys } from '../lib/wall';
 import { GraftTrail, IdeaCard } from '../components/IdeaCard';
 import { db, depositCliches, markBlocked, markGrafted } from '../lib/db';
+import { addDevelopments } from '../lib/repo';
 import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
 import { drawForMode, graftCount, isMode, MIN_CROSS_TYPES, MODES, modeDef, modeName, type GraftMode } from '../lib/modes';
 import { MIN_EVIDENCE } from '../lib/provenance';
@@ -303,7 +304,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
           : { id: bid, index, size },
       createdAt: now + index,
     }));
-    const ids = (await db.developments.bulkAdd(devs, { allKeys: true })) as number[];
+    const ids = await addDevelopments(devs);
     // v0.18 记下这几穗又被嫁接了一次（次数 +1、最后时间）
     await markGrafted(sel.map((x) => x.id!), db, now).catch(() => {});
     // v0.19 这次模型列出的套路沉淀上墙；被本地校验拦下的给墙上记一次
