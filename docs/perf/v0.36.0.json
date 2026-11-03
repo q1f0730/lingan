@@ -1,0 +1,87 @@
+{
+  "version": "0.36.0",
+  "date": "2026-11-04",
+  "e2e": {
+    "coldStartMs": 185,
+    "coldStartCpu4xMs": 518,
+    "searchMaxMs": 17.3,
+    "searchMedianMs": 17.1,
+    "backup": {
+      "items": 1000,
+      "images": 300,
+      "ms": 640,
+      "heapDeltaMB": 24.2,
+      "peakMB": 50.5
+    },
+    "restoreMs": 944,
+    "scroll": "masonry/timeline/list 60fps jank 0%"
+  },
+  "interleavedBench": {
+    "script": "/workspace/work/v030/bench5.mjs (painted)",
+    "rounds": 9,
+    "v035": {
+      "normalMedian": 190,
+      "cpu4xMedian": 585,
+      "normalRuns": [
+        206,
+        187,
+        196,
+        187,
+        190,
+        177,
+        208,
+        187,
+        191
+      ],
+      "cpu4xRuns": [
+        614,
+        642,
+        585,
+        585,
+        606,
+        572,
+        629,
+        572,
+        581
+      ]
+    },
+    "v036": {
+      "normalMedian": 194,
+      "cpu4xMedian": 585,
+      "normalRuns": [
+        194,
+        200,
+        190,
+        191,
+        202,
+        194,
+        201,
+        174,
+        192
+      ],
+      "cpu4xRuns": [
+        574,
+        609,
+        562,
+        607,
+        631,
+        585,
+        564,
+        539,
+        617
+      ]
+    },
+    "mannWhitneyU": {
+      "normal": "32/81",
+      "cpu4x": "48/81"
+    },
+    "verdict": "持平（都不显著）"
+  },
+  "size": {
+    "firstJsKB": 566.4,
+    "firstJsGzipKB": 192.2,
+    "firstCssKB": 127.0,
+    "totalAssetsKB": 2226.0,
+    "totalBudgetKB": 2226.6
+  }
+}
