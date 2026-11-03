@@ -1,4 +1,6 @@
+import { m } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { IconEnter } from './rw/icons';
 import { addItem, db, normalizeTags, updateItem } from '../lib/db';
 import { itemHasImage } from '../lib/imagestore';
 import { enrichItem } from '../lib/enrich';
@@ -51,8 +53,33 @@ function splitWhy(raw: string): { why: string; tags: string[] } {
 }
 
 /**
- * 速记「随手拾一穗」（常驻）。手机：底部导航上方整宽，上方 1px 黑线，右侧黑字「拾」；
- * 桌面：顶栏右侧 320px，只有一条下划线。回车即存，存完淡入「已拾」1.2s，可顺手补一句为什么。
+ * 加号 ↔ 光标的形变图标：移植 Rewamp「Morph Search Capsule」里放大镜 ↔ 竖光标的 SVG 形变，
+ * 这里起点换成「+」（拾一穗），聚焦且没字时横线收起、竖线变成会闪的光标。
+ */
+function PlusCaret({ caret }: { caret: boolean }) {
+  return (
+    <svg className="qc-icon" viewBox="0 0 24 24" fill="none" aria-hidden focusable="false">
+      <m.line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" animate={caret ? { scaleX: 0, opacity: 0 } : { scaleX: 1, opacity: 1 }} style={{ transformOrigin: '12px 12px' }} transition={{ type: 'spring', stiffness: 420, damping: 28 }} />
+      <m.line
+        x1="12"
+        y1="5"
+        x2="12"
+        y2="19"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        style={{ transformOrigin: '12px 12px' }}
+        animate={caret ? { scaleY: 1.1, opacity: [1, 1, 0, 0, 1] } : { scaleY: 1, opacity: 1 }}
+        transition={caret ? { opacity: { repeat: Infinity, duration: 1, delay: 0.3, times: [0, 0.45, 0.5, 0.95, 1] }, scaleY: { type: 'spring', stiffness: 380, damping: 26 } } : { duration: 0.15 }}
+      />
+    </svg>
+  );
+}
+
+/**
+ * 速记「随手拾一穗」（常驻）。Rewamp「Morph Search Capsule」移植：白色胶囊、内沿高光、聚焦时轻轻放大（弹簧），
+ * 点下去有一圈涟漪，左边「+」形变成光标。手机浮在底部导航上方；桌面在顶栏左侧，宽 560px。
+ * 回车即存，存完「已拾」淡入 1.2s，可顺手补一句为什么。
  */
 export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   const { settings, toast, openCapture } = useApp();
@@ -61,6 +88,8 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   const [last, setLast] = useState<number | null>(null);
   const [why, setWhy] = useState('');
   const [done, setDone] = useState(0);
+  const [focus, setFocus] = useState(false);
+  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function save() {
@@ -98,10 +127,20 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
     setWhy('');
   }
 
+  function ripple(e: React.PointerEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const id = Date.now() + Math.random();
+    setRipples((x) => [...x.slice(-2), { id, x: e.clientX - r.left, y: e.clientY - r.top }]);
+    setTimeout(() => setRipples((x) => x.filter((y) => y.id !== id)), 600);
+    if (e.target !== inputRef.current) setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
   return (
-    <div className={`quick quick-${where}`}>
+    <div className={`quick quick-${where}${focus ? ' focus' : ''}`}>
       {last && (
-        <div className="quick-after">
+        <m.div className="quick-after" initial={{ opacity: 0, y: 8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 420, damping: 30 }}>
+          <span className="quick-after-k">已拾 · 补一句？</span>
           <input
             className="quick-why"
             value={why}
@@ -125,21 +164,27 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
           <button className="btn text faint" onClick={() => setLast(null)} aria-label="不补充">
             不补
           </button>
-        </div>
+        </m.div>
       )}
-      <div className="quick-bar">
+      <m.div className="quick-bar" onPointerDown={ripple} animate={{ scale: focus ? 1.015 : 1 }} transition={{ type: 'spring', stiffness: 420, damping: 28 }}>
+        {ripples.map((r) => (
+          <m.span key={r.id} className="qc-ripple" style={{ left: r.x - 30, top: r.y - 30 }} initial={{ scale: 0, opacity: 0.7 }} animate={{ scale: 2.8, opacity: 0 }} transition={{ duration: 0.55, ease: 'easeOut' }} aria-hidden />
+        ))}
+        <PlusCaret caret={focus && !text} />
         <input
           className="quick-input"
           ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               save();
             }
           }}
-          placeholder={where === 'top' ? '随手拾一穗 →' : '随手拾一穗'}
+          placeholder={where === 'top' ? '随手拾一穗：一句话、一个链接，回车就存' : '随手拾一穗'}
           aria-label="速记"
           enterKeyHint="done"
           maxLength={4000}
@@ -150,15 +195,15 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
           </span>
         )}
         {text.trim() ? (
-          <button className="btn text strong quick-go" onClick={save} disabled={busy}>
-            拾
+          <button className="btn quick-go" onClick={save} disabled={busy} aria-label="拾（回车）">
+            拾 <IconEnter size={14} />
           </button>
         ) : (
-          <button className="btn text faint quick-more" onClick={openCapture} title="展开速记（N）">
+          <button className="btn quick-more" onClick={openCapture} title="展开速记（N）">
             展开
           </button>
         )}
-      </div>
+      </m.div>
     </div>
   );
 }
