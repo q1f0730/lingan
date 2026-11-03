@@ -30,16 +30,19 @@ let firstWaiters: Array<() => void> = [];
  * 首屏画完、主线程空闲后再订阅全表（类型筛选 / 标签云 / 待理数这些要全量的东西那时才算）。库不超过 HEAD 条时首段就是全部。
  */
 export const HEAD = 60;
+/**
+ * 只有大库才分两段：首段要多跑几条小查询（各自一个事务），1000 穗时比一次 getAll 全表还慢（同会话交替测 4× 降速 +80ms），
+ * 1 万穗时快 ~180ms、5 万穗时快 ~850ms，按测出来的线性外推约 4000 穗打平。库多大看上次全量的条数（localStorage，零成本），
+ * 第一次打开 / 没记过就按小库走。
+ */
+export const BIG = 4000;
+const SIZE_KEY = 'glean.libn';
 export const libraryQuery = () => db.items.orderBy('createdAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt));
 /**
- * 不用 reverse().limit()：倒序 + limit 在 Dexie 里走游标，一条一个来回（60 条 = 60 次往返，4× 降速时比全表 getAll 还慢）。
- * 改成 createdAt 索引上一次 getAllKeys 拿全部主键（按时间升序，只有数字），取最后一截再一次 bulkGet。
+ * 首段：createdAt 索引倒序取 60 条（Dexie 走游标，60 次往返，和库多大无关）。
+ * 试过「getAllKeys 拿全部主键 + bulkGet 最后一截」：5 万穗压力测（两轮、不同会话，仅作参考）冷启动 273 vs 221ms，不如游标。
  */
-export async function headQuery(): Promise<Item[]> {
-  const keys = (await db.items.orderBy('createdAt').primaryKeys()) as number[];
-  const rows = await db.items.bulkGet(keys.slice(-HEAD - 20).reverse());
-  return rows.filter((x): x is Item => !!x && !x.deletedAt).slice(0, HEAD);
-}
+export const headQuery = () => db.items.orderBy('createdAt').reverse().filter((x) => !x.deletedAt).limit(HEAD).toArray();
 
 /** 首段时的计数（全量到了以后为 null）：live = 回收站外的总数，samples = 示例数，inbox = 还在 7 天待理里的 */
 export interface LibMeta {
@@ -72,6 +75,11 @@ function full() {
       value = v;
       meta = null;
       error = null;
+      try {
+        if ((v.length > BIG) !== (Number(localStorage.getItem(SIZE_KEY)) > BIG)) localStorage.setItem(SIZE_KEY, String(v.length));
+      } catch {
+        /* 隐私模式 */
+      }
       headSub?.unsubscribe();
       headSub = null;
       emit();
@@ -88,7 +96,13 @@ function idleThen(fn: () => void) {
 }
 function ensure() {
   if (sub || headSub) return;
-  if (typeof window === 'undefined') return full();
+  let big = false;
+  try {
+    big = Number(localStorage.getItem(SIZE_KEY)) > BIG;
+  } catch {
+    /* 隐私模式 */
+  }
+  if (typeof window === 'undefined' || !big) return full();
   const g = ++gen;
   let n = -1;
   let head: Item[] | undefined;
