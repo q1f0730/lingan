@@ -1,0 +1,257 @@
+{
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 1312,
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 6564,
+    "wallMs": 7831
+  },
+  "storage": {
+    "version": 80,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102224504,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 11,
+    "rows": 1000,
+    "reopenLoadMs": 15,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 18.9,
+        "results": 176,
+        "coreMs": 1.9
+      },
+      {
+        "q": "海边",
+        "ms": 16.8,
+        "results": 178,
+        "coreMs": 1.1
+      },
+      {
+        "q": "钢琴",
+        "ms": 16.8,
+        "results": 172,
+        "coreMs": 0.9
+      },
+      {
+        "q": "夜车",
+        "ms": 17.2,
+        "results": 174,
+        "coreMs": 0.7
+      },
+      {
+        "q": "麦田",
+        "ms": 16.8,
+        "results": 63,
+        "coreMs": 0.4
+      },
+      {
+        "q": "黄昏",
+        "ms": 16.9,
+        "results": 176,
+        "coreMs": 0.5
+      }
+    ],
+    "maxMs": 18.9,
+    "medianMs": 16.9,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 37.7,
+        "results": 176,
+        "coreMs": 1.7
+      },
+      {
+        "q": "便利",
+        "ms": 36.5,
+        "results": 125,
+        "coreMs": 2.8
+      },
+      {
+        "q": "霓虹",
+        "ms": 41.1,
+        "results": 176,
+        "coreMs": 2.4
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 194,
+    "runs": [
+      194,
+      184,
+      196
+    ],
+    "firstThumbsDecodedMedian": 233,
+    "cardsOnFirstScreen": 10
+  },
+  "coldStartCpu4xMs": {
+    "median": 572,
+    "runs": [
+      583,
+      572,
+      564
+    ],
+    "firstThumbsDecodedMedian": 662
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16809,
+    "scrollHeight": 115300,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 4,
+    "objectUrlsCreated": 58
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14402,
+    "scrollHeight": 66311,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 28,
+    "virtual": {
+      "total": 38,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14420,
+    "scrollHeight": 45348,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 58,
+    "maxLiveObjectUrls": 1,
+    "virtual": {
+      "total": 1000,
+      "mounted": 58
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 299,
+    "scrolledPx": 8000,
+    "scrollHeight": 115300,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 24,
+    "maxLiveObjectUrls": 10
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400,
+  "backup": {
+    "ms": 731,
+    "bytes": 102726823,
+    "items": 1000,
+    "images": 300,
+    "imageMB": 97.5,
+    "heap": {
+      "baseMB": 7.5,
+      "peakMB": 46.8,
+      "deltaMB": 39.2
+    },
+    "badHashes": 0
+  },
+  "restore": {
+    "ms": 958,
+    "heap": {
+      "baseMB": 5.7,
+      "peakMB": 43.7,
+      "deltaMB": 37.9
+    },
+    "items": 1000,
+    "images": 300
+  },
+  "interleavedBench": {
+    "note": "InstaBox 同一会话交替测冷启动 7 轮（1000 穗 / 300 图）：v0.21.0 dist（GitHub main 源码构建）vs v0.22.0 dist（最终构建，字体沿用 v0.21 切片）",
+    "v0.21.0": {
+      "normalMedian": 199,
+      "cpu4xMedian": 574,
+      "normalRuns": [
+        207,
+        199,
+        209,
+        188,
+        165,
+        199,
+        194
+      ],
+      "cpu4xRuns": [
+        661,
+        534,
+        542,
+        574,
+        575,
+        598,
+        554
+      ]
+    },
+    "v0.22.0": {
+      "normalMedian": 186,
+      "cpu4xMedian": 571,
+      "normalRuns": [
+        225,
+        177,
+        204,
+        186,
+        222,
+        179,
+        176
+      ],
+      "cpu4xRuns": [
+        588,
+        549,
+        571,
+        568,
+        603,
+        594,
+        545
+      ]
+    },
+    "fontRegenExperiment": "重做字体子集（22 个新字进首片 +5KB）的构建三轮交替测 4× 中位数 596/603/576ms vs v0.21 572/572/544ms，慢约 5%，所以本版不重做字体（新字都已在切片 1–5 里）"
+  }
+}
