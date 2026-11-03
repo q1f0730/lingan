@@ -1,6 +1,7 @@
 // v0.21 回收站：删掉的穗 / 新枝先在这里放 30 天（墓碑 deletedAt），可恢复、可彻底删除；到期启动时自动清掉。
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
+import { withSnapshot } from '../lib/snapshots';
 import { db, listTrash, purgeTrash, TRASH_DAYS, untrashDevelopments, untrashItems } from '../lib/db';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL } from '../lib/types';
@@ -40,7 +41,8 @@ export function TrashPanel() {
   }
   async function purge(r: Row) {
     if (!(await confirm({ title: `彻底删掉「${r.title}」？`, body: r.kind === 'i' ? '连同原图一起删，不能恢复。' : '不能恢复。', ok: '彻底删掉', cancel: '留着', danger: true }))) return;
-    await purgeTrash(r.kind === 'i' ? { items: [r.id] } : { developments: [r.id] });
+    // v0.26 0621：彻底删前拍快照（连这张原图），空间满时拍不成也照删（本来就是在腾地方）
+    await withSnapshot(`彻底删「${r.title}」前`, db, () => purgeTrash(r.kind === 'i' ? { items: [r.id] } : { developments: [r.id] }), { imagesOf: r.kind === 'i' ? [r.id] : [], required: false });
     toast('已彻底删掉');
   }
   async function restoreAll() {
@@ -51,7 +53,7 @@ export function TrashPanel() {
   }
   async function emptyAll() {
     if (!(await confirm({ title: `清空回收站（${rows.length} 件）？`, body: '里面的穗连同原图、新枝都会彻底删掉，不能恢复。', ok: '清空回收站', cancel: '留着', danger: true }))) return;
-    const r = await purgeTrash('all');
+    const { result: r } = await withSnapshot('清空回收站前', db, () => purgeTrash('all'), { imagesOf: trash?.items.map((x) => x.id!) || [], required: false });
     toast(`已彻底删掉 ${r.items + r.developments} 件`);
   }
 
