@@ -14,25 +14,27 @@ b.newContext = async (opts = {}) => {
   if (!onboard) await c.addInitScript(() => { try { localStorage.setItem('glean.onboarded', '1'); } catch { /* svg doc */ } });
   return c;
 };
-// v0.16 Studio：旧的暖纸 / 麦田 / ASCII / 衬线 一律不该再出现；无圆角、无阴影
+// v0.20 Rewamp：旧的暖纸 / 麦田 / ASCII / 衬线 / 暗房一律不该再出现；卡片、按钮、弹层是 Rewamp 的圆角浮起语言；导航带图标
 async function studio(pg, tag) {
   const r = await pg.evaluate(() => {
-    const out = { canvas: document.querySelectorAll('canvas').length, svgInView: document.querySelectorAll('.app svg, .view svg').length, old: [], theme: document.documentElement.dataset.theme };
+    const out = { canvas: document.querySelectorAll('canvas').length, old: [], theme: document.documentElement.dataset.theme };
     for (const sel of ['.field-canvas', '.wheatfield', '.ascii-wrap', '.paper', '.whisper', '.grow-wheat', '.seed-burst', '.ripple']) if (document.querySelector(sel)) out.old.push(sel);
-    const bad = [];
-    for (const el of document.querySelectorAll('.btn, .card, .chip, .sheet, .confirm, .toast, input, .sprig, .trow')) {
-      const cs = getComputedStyle(el);
-      if (parseFloat(cs.borderTopLeftRadius) > 0 || (cs.boxShadow && cs.boxShadow !== 'none')) bad.push(el.className);
+    // 圆角：卡片 / 弹层 / toast / 主按钮 / 速记胶囊 都必须是圆角（Studio 的 0 圆角已作废）
+    const square = [];
+    for (const el of document.querySelectorAll('.card, .sheet, .confirm, .toast, .btn.primary, .quick-bar, .chip')) {
+      if (!(parseFloat(getComputedStyle(el).borderTopLeftRadius) >= 8)) square.push(el.className);
     }
-    out.round = bad.slice(0, 3);
+    out.square = square.slice(0, 3);
+    // 导航：每一项都有图标（svg）+ 中文
+    out.navNoIcon = [...document.querySelectorAll('.nav-btn')].filter((b) => !b.querySelector('svg') || !b.textContent.trim()).length;
     const ff = getComputedStyle(document.body).fontFamily;
     out.font = /Glean Inter/.test(ff) && /Glean Sans/.test(ff) && !/Serif|Cormorant|Mono/.test(ff);
     return out;
   });
   if (r.canvas) errs.push(`[${tag}] canvas still on page (${r.canvas})`);
-  if (r.svgInView) errs.push(`[${tag}] decorative svg icons in view (${r.svgInView})`);
   if (r.old.length) errs.push(`[${tag}] old-style elements: ${r.old.join(',')}`);
-  if (r.round.length) errs.push(`[${tag}] rounded corners / shadows on ${r.round.join(' | ')}`);
+  if (r.square.length) errs.push(`[${tag}] square corners on ${r.square.join(' | ')}`);
+  if (r.navNoIcon) errs.push(`[${tag}] ${r.navNoIcon} nav items without icon/label`);
   if (!r.font) errs.push(`[${tag}] body font is not Inter + 思源黑体`);
   if (!['light', 'dark'].includes(r.theme)) errs.push(`[${tag}] data-theme missing ${r.theme}`);
 }
@@ -228,10 +230,10 @@ async function run(name, viewport) {
   await pg.waitForSelector('text=穗仓还是空的');
   await brand(pg, name);
   await studio(pg, name);
-  // v0.16 布局：桌面 ≥1024 顶栏导航 + 顶栏右侧速记、没有底部固定栏；手机底部 速记 + 文字导航
-  const lay = await pg.evaluate(() => ({ topNav: !!document.querySelector('.topbar .nav'), topQuick: !!document.querySelector('.topbar .quick-input'), dock: !!document.querySelector('.dock'), dockNav: document.querySelectorAll('.dock .nav-btn').length, navIcons: document.querySelectorAll('.nav svg, .nav img').length }));
-  if (viewport.width >= 1024 ? !(lay.topNav && lay.topQuick && !lay.dock) : !(lay.dock && lay.dockNav === 5 && !lay.topNav)) errs.push(`[${name}] layout wrong ${JSON.stringify(lay)}`);
-  if (lay.navIcons) errs.push(`[${name}] nav should be text only`);
+  // v0.20 布局：桌面 ≥1024 左侧栏导航 + 顶栏速记胶囊、没有底部固定栏；手机底部 速记胶囊 + 图标导航胶囊、没有侧栏
+  const lay = await pg.evaluate(() => ({ sideNav: document.querySelectorAll('.sidebar .nav-btn').length, topQuick: !!document.querySelector('.topbar .quick-input'), dock: !!document.querySelector('.dock'), dockNav: document.querySelectorAll('.dock .nav-btn').length, dockQuick: !!document.querySelector('.dock .quick-input'), navIcons: document.querySelectorAll('.nav-btn svg').length }));
+  if (viewport.width >= 1024 ? !(lay.sideNav === 5 && lay.topQuick && !lay.dock) : !(lay.dock && lay.dockNav === 5 && lay.dockQuick && !lay.sideNav)) errs.push(`[${name}] layout wrong ${JSON.stringify(lay)}`);
+  if (lay.navIcons !== 5) errs.push(`[${name}] nav should have 5 icons, got ${lay.navIcons}`);
   const title0 = await pg.locator('.page-title').innerText();
   if (title0.replace(/\s+/g, '') !== '穗仓(0)') errs.push(`[${name}] empty title should be 穗仓 (0), got ${title0}`);
   // 字体自托管：不从任何外部域名拉字体
@@ -335,7 +337,7 @@ async function run(name, viewport) {
   if (!(await pg.locator(`.sq-items .sq-row[data-item-id="${A.id}"] mark.hit`).count())) errs.push(`[${name}] search hit not highlighted for #${A.id}`);
   if (h1.branches !== 0) errs.push(`[${name}] 新枝 (n) section wrong ${h1.branches}`);
   const markBg = await pg.locator('.sq-results mark.hit').first().evaluate((e) => getComputedStyle(e).backgroundColor);
-  if (!['rgb(0, 0, 0)', 'rgb(255, 255, 255)'].includes(markBg)) errs.push(`[${name}] hit should be reversed black/white, got ${markBg}`);
+  if (markBg !== 'rgb(212, 203, 229)') errs.push(`[${name}] hit should be highlighted with the lilac accent, got ${markBg}`);
   await pg.screenshot({ path: `${out}/${name}-1c-search.png` });
   // 刚用速记存的那一穗已经进了索引（增量）：搜得到、而且索引表里有它的行
   await sqType(pg, '速记测试');
@@ -559,7 +561,9 @@ async function run(name, viewport) {
   await pg.click('.manifesto-toggle');
   await pg.waitForSelector('.manifesto .mf-text');
   const mf = await pg.evaluate(() => { const m = document.querySelector('.manifesto'); return { bg: getComputedStyle(m).backgroundColor, fg: getComputedStyle(m).color, text: m.querySelector('.mf-text').textContent, pages: m.querySelectorAll('.mf-pages button').length }; });
-  if (mf.bg !== 'rgb(0, 0, 0)' || mf.fg !== 'rgb(255, 255, 255)' || !mf.text || mf.pages < 1) errs.push(`[${name}] manifesto wrong ${JSON.stringify(mf)}`);
+  // v0.20：宣言是一张深墨色大卡（#1f1c24 底、暖白字），页面其余部分保持当前主题
+  const appTheme = await pg.evaluate(() => document.querySelector('.app')?.getAttribute('data-theme'));
+  if (mf.bg !== 'rgb(31, 28, 36)' || mf.fg !== 'rgb(247, 245, 241)' || !mf.text || mf.pages < 1 || appTheme === 'dark') errs.push(`[${name}] manifesto wrong ${JSON.stringify(mf)} app=${appTheme}`);
   await pg.screenshot({ path: `${out}/${name}-3e-manifesto.png` });
   await pg.click('.view-switch button:has-text("列表")');
   // v0.17 搜索也覆盖新枝：搜新枝标题里的两个字 → 「新枝 (n)」与按规则数出来的一致 → 点开直达那一根
@@ -631,7 +635,7 @@ async function run(name, viewport) {
   // 换主题要经过 设置 → effect → 写 dataset 两拍渲染，等它落定再读
   await pg.waitForFunction(() => document.documentElement.dataset.theme === 'dark', null, { timeout: 3000 }).catch(() => {});
   const sky = await pg.evaluate(() => [document.documentElement.dataset.theme, getComputedStyle(document.body).backgroundColor]);
-  if (sky[0] !== 'dark' || sky[1] !== 'rgb(0, 0, 0)') errs.push(`[${name}] dark theme not applied: ${sky}`);
+  if (sky[0] !== 'dark' || sky[1] !== 'rgb(23, 22, 26)') errs.push(`[${name}] dark theme not applied: ${sky}`);
   await pg.screenshot({ path: `${out}/${name}-5-settings-dark.png`, fullPage: true });
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.screenshot({ path: `${out}/${name}-6-library-dark.png`, fullPage: true });
@@ -735,7 +739,10 @@ async function onboarding() {
       await pg.click('.onboard-done');
       await pg.waitForSelector('text=穗仓还是空的');
       const st = await pg.evaluate(() => JSON.parse(localStorage.getItem('lingan.settings.v1') || '{}'));
-      if (st.preset !== 'zhipu' || st.chat?.apiKey !== 'e2e-onboard-key') errs.push(`[${tag}] onboarding AI choice not saved ${st.preset}`);
+      // v0.20：key 不再放进设置，进钥匙串（浏览器里降级为单独的 glean.vault.v1）
+      const vault = await pg.evaluate(() => JSON.parse(localStorage.getItem('glean.vault.v1') || '{}'));
+      if (st.preset !== 'zhipu' || vault['chat.apiKey'] !== 'e2e-onboard-key') errs.push(`[${tag}] onboarding AI choice not saved ${st.preset}`);
+      if (st.chat?.apiKey) errs.push(`[${tag}] api key must not be stored in settings`);
     }
     await pg.reload();
     await pg.waitForSelector('text=穗仓还是空的');
@@ -1596,7 +1603,7 @@ async function perfSearch(ctx) {
     const r = await sqTime(pg, q);
     const exp = raw.filter((x) => e2eMatch(itemSearchText(x), e2eTerms(q))).length;
     if (r.n !== exp) errs.push(`[perf-search] ${q}: ${r.n} results, expected ${exp}`);
-    if (!r.marks || r.markText !== q || !['rgb(0, 0, 0)', 'rgb(255, 255, 255)'].includes(r.markBg)) errs.push(`[perf-search] ${q}: highlight wrong ${JSON.stringify(r)}`);
+    if (!r.marks || r.markText !== q || r.markBg !== 'rgb(212, 203, 229)') errs.push(`[perf-search] ${q}: highlight wrong ${JSON.stringify(r)}`);
     runs.push(r);
   }
   await pg.screenshot({ path: `${out}/perf-search-1000.png` });
@@ -1744,11 +1751,127 @@ async function perf() {
   fs.writeFileSync(`${out}/perf.json`, JSON.stringify(PERF, null, 2));
 }
 
+// v0.20 安全加固：CSP（与 tauri.conf.json 同一份，vitest 校验一致）、密钥迁移进钥匙串、错误兜底 + 本地日志 + 诊断、安全模式
+const APP_CSP = {
+  'default-src': "'self' ipc: http://ipc.localhost",
+  'script-src': "'self'",
+  'style-src': "'self' 'unsafe-inline'",
+  'img-src': "'self' data: blob: https:",
+  'font-src': "'self' data:",
+  'media-src': "'self' data: blob:",
+  'connect-src': "'self' ipc: http://ipc.localhost",
+  'worker-src': "'self' blob:",
+  'object-src': "'none'",
+  'base-uri': "'self'",
+  'form-action': "'self'",
+  'frame-src': "'none'",
+};
+const cspString = () => Object.entries(APP_CSP).map(([k, v]) => `${k} ${v}`).join('; ');
+async function security() {
+  const tag = 'security';
+  const ctx = await b.newContext({ viewport: { width: 1366, height: 860 }, permissions: ['clipboard-read', 'clipboard-write'] });
+  // 文档响应里加上 CSP（Tauri 里由 tauri.conf.json 注入；这里用 meta 模拟），记录所有违规
+  await ctx.route((u) => u.origin === new URL(base).origin && (u.pathname === '/' || u.pathname.endsWith('.html')), async (route) => {
+    const resp = await route.fetch();
+    const html = (await resp.text()).replace('<head>', `<head><meta http-equiv="Content-Security-Policy" content="${cspString()}">`);
+    await route.fulfill({ response: resp, body: html, headers: { ...resp.headers(), 'content-type': 'text/html' } });
+  });
+  await ctx.addInitScript(() => {
+    window.__cspv = [];
+    document.addEventListener('securitypolicyviolation', (e) => window.__cspv.push(`${e.violatedDirective} ${e.blockedURI}`));
+  });
+  const pg = await ctx.newPage();
+  const expected = /crash probe|e2e-unhandled|The above error occurred|React will try to recreate/;
+  pg.on('pageerror', (e) => !expected.test(e.message) && errs.push(`[${tag}] pageerror ${e.message}`));
+  pg.on('console', (m) => m.type() === 'error' && !expected.test(m.text()) && errs.push(`[${tag}] console ${m.text()}`));
+  const origin = new URL(base).origin;
+  // 旧版：key 明文在设置里 → 首次启动搬走
+  await pg.goto(base);
+  await pg.evaluate((v) => localStorage.setItem('lingan.settings.v1', v), JSON.stringify({ ...JSON.parse(MOCK_SETTINGS(origin)), chat: { ...JSON.parse(MOCK_SETTINGS(origin)).chat, apiKey: 'e2e-legacy-key-123' } }));
+  const auth = [];
+  await mockAI(pg, { delay: 50 });
+  // 后注册的先跑：先记下 Authorization，再交给 mockAI
+  await pg.route('**/mock-ai/v1/chat/completions', (r) => (auth.push(r.request().headers()['authorization'] || ''), r.fallback()));
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  const mig = await pg.evaluate(() => ({ s: localStorage.getItem('lingan.settings.v1') || '', v: JSON.parse(localStorage.getItem('glean.vault.v1') || '{}') }));
+  if (mig.s.includes('e2e-legacy-key-123')) errs.push(`[${tag}] legacy key still in settings after migration`);
+  if (mig.v['chat.apiKey'] !== 'e2e-legacy-key-123') errs.push(`[${tag}] legacy key not migrated to vault`);
+  // 示例 + 打开详情 + 搜索 + AI 嫁接 + 设置：全程 CSP 无违规
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  await pg.locator('.card').first().click();
+  await pg.waitForTimeout(400);
+  await pg.keyboard.press('Escape');
+  await pg.click('.search-toggle').catch(() => {});
+  await pg.fill('.sq-input', '雨').catch(() => {});
+  await pg.waitForTimeout(300);
+  await pg.keyboard.press('Escape');
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls button:has-text("抽几穗")');
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 15000 }).catch(() => errs.push(`[${tag}] AI graft under CSP failed`));
+  if (!auth.length || !auth.every((h) => h === 'Bearer e2e-legacy-key-123')) errs.push(`[${tag}] AI calls should carry migrated key, got ${JSON.stringify(auth.slice(0, 2))}`);
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('#set-diag');
+  const fontsOk = await pg.evaluate(async () => { await document.fonts.ready; return [...document.fonts].some((f) => f.status === 'loaded'); });
+  if (!fontsOk) errs.push(`[${tag}] self-hosted fonts did not load under CSP`);
+  const keyField = await pg.locator('#set-ai input[type="password"]').first().inputValue();
+  if (keyField !== 'e2e-legacy-key-123') errs.push(`[${tag}] settings key field should show vault key`);
+  const vaultLabel = await pg.locator('.diag-vault').innerText();
+  if (!vaultLabel.includes('浏览器')) errs.push(`[${tag}] vault label should say browser fallback, got ${vaultLabel}`);
+  // 改 key → 只进钥匙串
+  await pg.fill('#set-ai input[type="password"]', 'e2e-new-key-456');
+  await pg.click('#set-ai .btn.primary');
+  const after = await pg.evaluate(() => ({ s: localStorage.getItem('lingan.settings.v1') || '', v: JSON.parse(localStorage.getItem('glean.vault.v1') || '{}') }));
+  if (after.s.includes('e2e-new-key-456') || after.v['chat.apiKey'] !== 'e2e-new-key-456') errs.push(`[${tag}] new key should go to vault only`);
+  // 全局兜底：未处理的 Promise 拒绝进本地日志，且脱敏
+  await pg.evaluate(() => { Promise.reject(new Error('e2e-unhandled Bearer sk-abcdefghijklmnop1234')); });
+  await pg.waitForTimeout(200);
+  // 页面级错误边界：口味页抛错 → 只这一页出错，导航还在
+  await pg.evaluate(() => localStorage.setItem('glean.debug.crash', 'taste'));
+  await pg.click('.nav-btn:has-text("口味")');
+  await pg.waitForSelector('.crash-view:has-text("这一页出错了")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] view error boundary not shown`));
+  await pg.screenshot({ path: `${out}/${tag}-crash-view.png` });
+  await pg.evaluate(() => localStorage.removeItem('glean.debug.crash'));
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.waitForSelector('.card', { timeout: 4000 }).catch(() => errs.push(`[${tag}] other views should still work after a view crash`));
+  const log = await pg.evaluate(() => JSON.parse(localStorage.getItem('glean.errlog.v1') || '[]'));
+  if (!log.some((e) => e.src === 'render' && e.view === 'taste')) errs.push(`[${tag}] render error not logged`);
+  if (!log.some((e) => e.src === 'rejection' && e.msg.includes('e2e-unhandled'))) errs.push(`[${tag}] unhandled rejection not logged`);
+  if (JSON.stringify(log).includes('sk-abcdefghijklmnop1234')) errs.push(`[${tag}] error log not scrubbed`);
+  // 设置 → 诊断：复制诊断信息
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('.diag-copy');
+  await pg.click('.diag-copy');
+  await pg.waitForTimeout(300);
+  const diag = await pg.evaluate(() => navigator.clipboard.readText());
+  if (!/拾穗 Glean 诊断信息[\s\S]*版本：v\d+\.\d+\.\d+[\s\S]*库：\d+ 穗[\s\S]*最近错误（[1-9]/.test(diag)) errs.push(`[${tag}] diagnostics text incomplete: ${diag.slice(0, 160)}`);
+  if (/e2e-new-key-456|e2e-legacy-key|sk-abcdefghijklmnop/.test(diag)) errs.push(`[${tag}] diagnostics leaks a key`);
+  await pg.locator('#set-diag').scrollIntoViewIfNeeded();
+  await pg.screenshot({ path: `${out}/${tag}-diag.png` });
+  // 安全模式：进 → 条幅 + 动效关 → 退
+  await pg.click('.diag-safe');
+  await pg.waitForSelector('.safe-bar', { timeout: 5000 }).catch(() => errs.push(`[${tag}] safe mode bar missing`));
+  const sm = await pg.evaluate(() => ({ safe: document.documentElement.dataset.safe, motion: document.documentElement.dataset.motion }));
+  if (sm.safe !== '1' || sm.motion !== 'off') errs.push(`[${tag}] safe mode should disable motion ${JSON.stringify(sm)}`);
+  await pg.click('.safe-exit');
+  await pg.waitForSelector('.view');
+  await pg.waitForTimeout(300);
+  if (await pg.locator('.safe-bar').count()) errs.push(`[${tag}] safe mode should exit`);
+  const v = await pg.evaluate(() => window.__cspv);
+  if (v.length) errs.push(`[${tag}] CSP violations: ${v.slice(0, 5).join(' | ')}`);
+  console.log(`security: csp violations ${v.length}, ai calls ${auth.length}, errlog ${log.length}`);
+  await ctx.close();
+}
+
 try {
   if (process.env.E2E_ONLY === 'perf') {
     await perf();
     throw Object.assign(new Error('perf only'), { only: true });
   }
+  await security();
+  if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await onboarding();
   if (process.env.E2E_ONLY === 'onboarding') throw Object.assign(new Error('onboarding only'), { only: true });
   await obsidian();
