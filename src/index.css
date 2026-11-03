@@ -365,7 +365,7 @@ mark.hit {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg-3);
-  padding: 64px var(--edge) calc(var(--dock-h) + 24px + env(safe-area-inset-bottom));
+  padding: 64px var(--edge) calc(var(--dock-h) + 24px + var(--safe-b));
   text-align: center;
 }
 /* 手机：底部常驻 = 速记栏 + 5 个文字导航 */
@@ -376,7 +376,7 @@ mark.hit {
   bottom: 0;
   z-index: 30;
   background: var(--bg);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-b);
 }
 .dock .nav {
   display: grid;
@@ -1333,6 +1333,15 @@ details[open] summary {
   grid-template-columns: 30% 1fr 52px;
   min-height: 52px;
 }
+/* v0.27：设置里每行的说明（「可以选坚果云 / OneDrive 的同步文件夹…」）在窄屏折行，不截断 */
+.action-table .tc-title,
+.action-table .tc-src {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
 .trow.danger .tc-title {
   color: var(--fg);
 }
@@ -1592,7 +1601,7 @@ details[open] summary {
   overflow-y: auto;
   background: var(--bg);
   border-top: 1px solid var(--fg);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-b);
   animation: g-fade 400ms var(--ease) both;
 }
 .sheet-head {
@@ -1846,7 +1855,7 @@ details[open] summary {
   width: 100%;
   background: var(--bg);
   border-top: 1px solid var(--fg);
-  padding: 24px var(--edge) calc(24px + env(safe-area-inset-bottom));
+  padding: 24px var(--edge) calc(24px + var(--safe-b));
 }
 .confirm-title {
   font-size: 20px;
@@ -1902,7 +1911,7 @@ details[open] summary {
   z-index: 90;
   left: 0;
   right: 0;
-  bottom: calc(var(--dock-h) + env(safe-area-inset-bottom));
+  bottom: calc(var(--dock-h) + var(--safe-b));
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -1965,7 +1974,7 @@ details[open] summary {
   z-index: 85;
   left: 0;
   right: 0;
-  bottom: calc(var(--dock-h) + env(safe-area-inset-bottom));
+  bottom: calc(var(--dock-h) + var(--safe-b));
 }
 .clip-text {
   min-width: 0;
@@ -2906,7 +2915,7 @@ button.heat-cell {
   font-weight: 600;
 }
 .onboard-foot {
-  padding: 24px 0 calc(16px + env(safe-area-inset-bottom));
+  padding: 24px 0 calc(16px + var(--safe-b));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3417,6 +3426,22 @@ button.heat-cell {
   column-gap: 12px;
   align-items: baseline;
 }
+.autobak-table .tc-title,
+.autobak-table .tc-src,
+.snap-table .tc-title,
+.snap-table .tc-src {
+  /* v0.27：手机上快照 / 备份的说明和时间不再截成「…」，长了就折行 */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+.autobak-table .trow,
+.snap-table .trow {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
 .autobak-table .tc-date,
 .snap-table .tc-date {
   display: flex;
@@ -3445,9 +3470,10 @@ button.heat-cell {
   max-width: 320px;
 }
 @media (max-width: 600px) {
+  /* v0.27：手机上文字占满整行，操作按钮放到第三行，长说明不再被挤成两三个字一行 */
   .autobak-table .trow,
   .snap-table .trow {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     row-gap: 2px;
   }
   .autobak-table .tc-src,
@@ -3457,8 +3483,9 @@ button.heat-cell {
   }
   .autobak-table .tc-date,
   .snap-table .tc-date {
-    grid-row: 1 / span 2;
-    grid-column: 2;
-    align-self: center;
+    grid-row: 3;
+    grid-column: 1;
+    justify-content: flex-start;
+    margin-left: -12px;
   }
 }
