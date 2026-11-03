@@ -347,5 +347,8 @@ class MainActivity : TauriActivity() {
         } catch (e: Exception) { false }
       }
     }, "LinganVault")
+    // v0.26 自动备份写进「下载/Glean」+ 应用内下载安装新版（见 GleanSafety.kt）
+    webView.addJavascriptInterface(BackupBridge(this), "LinganBackup")
+    webView.addJavascriptInterface(UpdateBridge(this), "LinganUpdate")
   }
 }
