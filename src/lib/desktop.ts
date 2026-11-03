@@ -27,3 +27,15 @@ export async function onTrayGo(cb: (view: string) => void): Promise<() => void> 
     return () => {};
   }
 }
+
+/** v0.22 托盘「拾正在播放的歌」→ UI 读 SMTC 并存成音乐穗 */
+export const NOWPLAYING_EVENT = 'glean-nowplaying';
+export async function onNowPlaying(cb: () => void): Promise<() => void> {
+  if (!isTauriEnv()) return () => {};
+  try {
+    const { listen } = await import('@tauri-apps/api/event');
+    return await listen(NOWPLAYING_EVENT, cb);
+  } catch {
+    return () => {};
+  }
+}
