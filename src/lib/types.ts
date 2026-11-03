@@ -24,6 +24,8 @@ export interface Item {
   thumbFail?: 1;
   why?: string;
   tags: string[];
+  /** v0.22 拾自哪个 App（「微信读书」「网易云音乐」）：分享 / 选字 / 正在播放时自动记，认不出就没有 */
+  source?: string;
   caption?: string; // AI image caption
   embedding?: number[];
   embedModel?: string;
