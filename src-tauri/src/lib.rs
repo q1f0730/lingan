@@ -9,6 +9,8 @@ mod lancore;
 mod lan;
 #[cfg(desktop)]
 mod entry;
+#[cfg(desktop)]
+mod ocr;
 #[cfg(any(desktop, test))]
 mod entrylogic;
 
@@ -100,6 +102,8 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_clipboard_manager::init())
+    // v0.36 0519 统一通知（前端直接 invoke plugin:notification|notify，不引 npm 包）
+    .plugin(tauri_plugin_notification::init())
     ;
 
   #[cfg(mobile)]
@@ -141,7 +145,10 @@ pub fn run() {
       entry::send_clear,
       entry::open_external,
       entry::clip_peek,
-      entry::clip_image
+      entry::clip_image,
+      entry::dictate,
+      entry::shot_now,
+      ocr::ocr_image
     ]);
 
   #[cfg(desktop)]
@@ -195,13 +202,14 @@ pub fn run() {
         use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
         let quick = MenuItem::with_id(app, "quick", "随手拾一穗", true, None::<&str>)?;
         let song = MenuItem::with_id(app, "nowplaying", "拾正在播放的歌", true, None::<&str>)?;
+        let shot = MenuItem::with_id(app, "shot", "框选截图拾", true, None::<&str>)?;
         let library = MenuItem::with_id(app, "library", "打开穗仓", true, None::<&str>)?;
         let daily = MenuItem::with_id(app, "daily", "今日一穗", true, None::<&str>)?;
         let settings = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
         let quit = MenuItem::with_id(app, "quit", "退出拾穗", true, None::<&str>)?;
         let sep1 = PredefinedMenuItem::separator(app)?;
         let sep2 = PredefinedMenuItem::separator(app)?;
-        let menu = Menu::with_items(app, &[&quick, &song, &sep1, &library, &daily, &sep2, &settings, &quit])?;
+        let menu = Menu::with_items(app, &[&quick, &song, &shot, &sep1, &library, &daily, &sep2, &settings, &quit])?;
         let mut tray = TrayIconBuilder::new()
           .tooltip("拾穗 Glean")
           .menu(&menu)
@@ -216,6 +224,7 @@ pub fn run() {
               }
               let _ = app.emit("glean-nowplaying", ());
             }
+            "shot" => entry::shot_now(app.clone()),
             "library" => show_view(app, "library"),
             "daily" => show_view(app, "daily"),
             "settings" => show_view(app, "settings"),
