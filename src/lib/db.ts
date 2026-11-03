@@ -554,10 +554,24 @@ export async function mergeInto(keepId: number, dropId: number, d: LinganDB = db
     const [keep, drop] = await Promise.all([d.items.get(keepId), d.items.get(dropId)]);
     if (!keep || !drop) return;
     const p = mergedPatch(keep, drop);
-    if (drop.createdAt < keep.createdAt) p.createdAt = drop.createdAt;
+    if (drop.createdAt < keep.createdAt) {
+      p.createdAt = drop.createdAt;
+      p.meets = [...(p.meets || []).filter((t) => t !== drop.createdAt), keep.createdAt].sort((a, b) => a - b);
+    }
     await d.items.update(keepId, p);
     await d.items.update(dropId, { deletedAt: now });
   });
+}
+/** v0.35 0016：带链接的音乐 / 电影以前没有「作品名 + 作者」钥匙，第一次查重前补一遍（dup 是本机字段，不盖章） */
+export async function ensureMediaDup(d: LinganDB = db) {
+  const K = 'glean.dup35';
+  if (localStorage.getItem(K)) return;
+  const rows = await d.items.where('type').anyOf('music', 'film').toArray();
+  for (const it of rows) {
+    const dup = refreshDup(it);
+    if (it.url && !sameValue(dup, it.dup)) await d.items.update(it.id!, { dup });
+  }
+  localStorage.setItem(K, '1');
 }
 /** 老原图补哈希（后台空闲时一次几张）：从 from（itemId）之后往下补，返回补了几张和下一次的起点；next = null 表示补完了 */
 export async function backfillImageDup(d: LinganDB = db, batch = 6, from = 0): Promise<{ done: number; next: number | null }> {
