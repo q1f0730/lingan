@@ -19,6 +19,7 @@ import { clock, timeMark } from '../lib/platforms';
 import { lockReady, useUnlocked } from '../lib/lock';
 import { PinGate } from './PinGate';
 import { fillItem } from '../lib/repo';
+import { EXITS, type Exit } from '../lib/privacy';
 import '../styles/v039.css';
 
 const CREATOR: Record<ItemType, string> = { music: '歌手', film: '导演', image: '来源', text: '作者', link: '来源', idea: '来源' };
@@ -84,6 +85,12 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
     if (!it.locked && !lockReady()) return toast('先在 设置 → 上锁 里设一个 PIN', 'err');
     await updateItem(it.id, { locked: it.locked ? undefined : 1 });
     toast(it.locked ? '解了锁，这一穗恢复正常' : '上锁了：不进分享、花园、Agent 和 AI，平时只显示「上锁的一穗」');
+  }
+  // v0.39 0934 这一穗的出口：AI / Agent / 分享 / 花园 各自开关
+  async function toggleExit(e: Exit) {
+    if (it.id == null) return;
+    const shut = it.shut?.includes(e) ? it.shut.filter((x) => x !== e) : [...(it.shut || []), e];
+    await updateItem(it.id, { shut: shut.length ? shut : undefined });
   }
   async function copy() {
     try {
@@ -441,6 +448,16 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
             删除
           </button>
         </div>
+        {!it.locked && (
+          <p className="detail-exits meta-text">
+            <span>给谁看</span>
+            {EXITS.map(([e, label]) => (
+              <button key={e} className={`btn text exit-${e}${it.shut?.includes(e) ? ' off' : ''}`} aria-pressed={!it.shut?.includes(e)} onClick={() => toggleExit(e)}>
+                {label} {it.shut?.includes(e) ? '关' : '开'}
+              </button>
+            ))}
+          </p>
+        )}
       </div>
     </article>
   );
