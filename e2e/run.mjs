@@ -3123,7 +3123,7 @@ async function ui27() {
   await pg.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: x, clientY: y })); }, [box.x + 20, box.y + 20]);
   await pg.waitForSelector('.ctxmenu.as-sheet', { timeout: 2000 }).catch(() => errs.push(`[${tag}] long press menu`));
   const acts = await pg.locator('.ctxmenu-item').allTextContents();
-  if (acts.join('|') !== '打开|编辑|拿去嫁接|复制文字|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
+  if (acts.join('|') !== '打开|编辑|拿去嫁接|放进嫁接篮|复制文字|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
   await pg.click('.ctx-edit');
   await pg.waitForSelector('.sheet .capture', { timeout: 3000 }).catch(() => errs.push(`[${tag}] menu edit`));
   await pg.click('.sheet .icon-btn');
@@ -3269,7 +3269,164 @@ async function ui27() {
   console.log('ui27: safe area / keyboard / type chip / tag suggest / menus / scroll / inline edit / paste / drop / sync ok');
 }
 
+// v0.28 拾穗动线：0024 行内语法 / 0019 口令 / 0023 去追踪参数 / 0408 待嫁接篮 / 0107 穗束 / 0108 束当嫁接池 / 0112 拼音搜索 / 0402 桌面三栏 / 0404 首启拾第一穗
+async function longPress(pg, sel) {
+  const card = pg.locator(sel).first();
+  await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await pg.waitForTimeout(150);
+  const box = await card.boundingBox();
+  await pg.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: x, clientY: y })); }, [box.x + 20, box.y + 20]);
+  await pg.waitForSelector('.ctxmenu.as-sheet', { timeout: 2000 });
+  await pg.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); el?.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: 'touch', clientX: x, clientY: y })); }, [box.x + 20, box.y + 20]);
+}
+async function v028() {
+  const tag = 'v028';
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  // 0024 / 0019 / 0023：速记条里的行内语法、口令、追踪参数
+  await quickSave(pg, '《重庆森林》 @王家卫 > 雨夜里的霓虹 #夜');
+  await quickSave(pg, '一个人的末班车 http://xhslink.com/a/AbCdEf，复制本条信息，打开【小红书】App查看精彩内容！');
+  await quickSave(pg, 'https://www.bilibili.com/video/BV1xx411c7mD/?spm_id_from=333.1007&vd_source=abc&t=30 好看的片段');
+  await quickSave(pg, '/歌 晴天 @周杰伦');
+  let rows = await dbRaw(pg, 'items');
+  const film = rows.find((x) => x.title === '重庆森林');
+  if (!film || film.type !== 'film' || film.creator !== '王家卫' || film.why !== '雨夜里的霓虹' || film.tags.join() !== '夜') errs.push(`[${tag}] inline syntax ${JSON.stringify(film)}`);
+  const xhs = rows.find((x) => x.url === 'http://xhslink.com/a/AbCdEf');
+  if (!xhs || xhs.title !== '一个人的末班车') errs.push(`[${tag}] share code ${JSON.stringify(xhs && xhs.title)}`);
+  const bili = rows.find((x) => /bilibili/.test(x.url || ''));
+  if (!bili || bili.url !== 'https://www.bilibili.com/video/BV1xx411c7mD/?t=30') errs.push(`[${tag}] tracking params ${bili && bili.url}`);
+  const song = rows.find((x) => x.title === '晴天');
+  if (!song || song.type !== 'music' || song.creator !== '周杰伦') errs.push(`[${tag}] /歌 ${JSON.stringify(song)}`);
+  // 0408 待嫁接篮：长按菜单放进去，满 3 穗能嫁接
+  for (const s of ['重庆森林', '晴天', '一个人的末班车']) {
+    await longPress(pg, `.card:has-text("${s}")`);
+    const lbl = await pg.textContent('.ctx-basket').catch(() => '');
+    if (lbl !== '放进嫁接篮') errs.push(`[${tag}] basket menu label ${lbl}`);
+    await pg.click('.ctx-basket');
+    await pg.waitForTimeout(200);
+  }
+  const bk = await pg.evaluate(() => localStorage.getItem('glean.basket.v1'));
+  if (!bk) errs.push(`[${tag}] basket storage empty`);
+  await pg.waitForSelector('.basket-dock', { timeout: 4000 }).catch(() => errs.push(`[${tag}] basket not shown in dock`));
+  const bn = await pg.textContent('.basket-n').catch(() => '');
+  if (bn !== '3/5') errs.push(`[${tag}] basket count ${bn}`);
+  if (await pg.locator('.basket-graft:disabled').count()) errs.push(`[${tag}] basket graft should be enabled at 3`);
+  const small = await smallTargets(pg);
+  if (small.length) errs.push(`[${tag}] small targets with basket: ${small.slice(0, 5).join('; ')}`);
+  await pg.click('.basket-toggle');
+  await pg.waitForSelector('.basket-list li');
+  if ((await pg.locator('.basket-list li').count()) !== 3) errs.push(`[${tag}] basket list`);
+  await pg.screenshot({ path: `${out}/v028-basket.png` });
+  // 0107 篮子存成穗束
+  await pg.click('.basket-bundle');
+  await pg.fill('.basket-acts .inline-input', '想写的歌');
+  await pg.keyboard.press('Enter');
+  await pg.waitForTimeout(400);
+  rows = await dbRaw(pg, 'items');
+  const nb = rows.filter((x) => (x.bundles || []).includes('想写的歌')).length;
+  if (nb !== 3) errs.push(`[${tag}] bundle from basket ${nb}`);
+  await pg.waitForSelector('.bundle-chip:has-text("想写的歌")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] bundle chip missing`));
+  await pg.click('.bundle-chip:has-text("想写的歌")');
+  await pg.waitForTimeout(300);
+  const shown = await pg.locator('.masonry .card').count();
+  if (shown !== 3) errs.push(`[${tag}] bundle filter shows ${shown}`);
+  await pg.screenshot({ path: `${out}/v028-bundle.png` });
+  // 0108 从这一束里嫁接 → 嫁接页只在束里抽
+  await pg.click('.bundle-graft');
+  await pg.waitForSelector('.pool-pick', { timeout: 4000 }).catch(() => errs.push(`[${tag}] pool picker missing`));
+  if (!(await pg.locator('.pool-chip.on:has-text("想写的歌")').count())) errs.push(`[${tag}] pool should be the bundle`);
+  await pg.screenshot({ path: `${out}/v028-pool.png` });
+  // 篮子一键嫁接：带着这 3 穗进嫁接页，篮子清空
+  await pg.click('.basket-graft');
+  await pg.waitForSelector('.graft .label:has-text("已选 (3)")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] basket graft did not preset 3`));
+  if (await pg.locator('.basket').count()) errs.push(`[${tag}] basket should clear after graft`);
+  // 详情：放进篮 + 穗束一行
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.waitForSelector('.card:has-text("重庆森林")');
+  await pg.click('.card:has-text("重庆森林")');
+  await pg.waitForSelector('.detail .kv-bundles');
+  if (!(await pg.locator('.detail .bundle-go:has-text("想写的歌")').count())) errs.push(`[${tag}] detail bundle chip`);
+  await pg.click('.detail-basket');
+  await pg.waitForTimeout(200);
+  if ((await pg.textContent('.detail-basket')) !== '在篮里 ✓') errs.push(`[${tag}] detail basket toggle`);
+  const smallD = await smallTargets(pg);
+  if (smallD.length) errs.push(`[${tag}] small targets in detail: ${smallD.slice(0, 5).join('; ')}`);
+  await pg.screenshot({ path: `${out}/v028-detail.png` });
+  await pg.click('.detail .bundle-go');
+  await pg.waitForTimeout(400);
+  if (!(await pg.locator('.bundle-chip.on').count())) errs.push(`[${tag}] detail bundle link should filter library`);
+  // 0112 拼音 / 首字母搜索
+  await pg.click('.search-toggle');
+  await sqType(pg, 'wjw');
+  // 拼音字表第一次打字母时才懒加载：等它到
+  await pg.waitForFunction(() => Number(document.querySelector('.sq-count')?.dataset.n) > 0, null, { timeout: 3000 }).catch(() => {});
+  const h1 = await sqHeads(pg);
+  if (h1.items < 1 || !(await pg.locator('.search-view :text("重庆森林")').count())) errs.push(`[${tag}] pinyin initials search ${JSON.stringify(h1)}`);
+  await sqType(pg, 'chongqing');
+  if ((await sqHeads(pg)).items < 1) errs.push(`[${tag}] pinyin full search`);
+  await pg.screenshot({ path: `${out}/v028-pinyin.png` });
+  await ctx.close();
+
+  // 0402 桌面三栏（≥1500px）
+  const dctx = await b.newContext({ viewport: { width: 1680, height: 1000 } });
+  const dp = await dctx.newPage();
+  dp.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await dp.goto(base);
+  await dp.waitForSelector('text=穗仓还是空的');
+  for (const s of ['三栏一号 #夜', '三栏二号', '三栏三号']) await quickSave(dp, s);
+  await dp.click('.card:has-text("三栏二号")');
+  await dp.waitForSelector('.preview-pane .detail', { timeout: 3000 }).catch(() => errs.push(`[${tag}] preview pane missing`));
+  if (await dp.locator('.sheet .detail').count()) errs.push(`[${tag}] single click should not open full detail`);
+  const lay = await dp.evaluate(() => ({ rail: getComputedStyle(document.querySelector('.lib-rail') || document.body).display, pane: Math.round(document.querySelector('.preview-pane')?.getBoundingClientRect().width || 0), right: Math.round(document.querySelector('.preview-pane')?.getBoundingClientRect().right || 0), w: innerWidth }));
+  if (lay.pane < 360 || lay.right !== lay.w || lay.rail !== 'none') errs.push(`[${tag}] pane layout ${JSON.stringify(lay)}`);
+  const t1 = await dp.textContent('.preview-pane .detail-title');
+  await dp.keyboard.press('ArrowRight');
+  await dp.waitForTimeout(300);
+  const t2 = await dp.textContent('.preview-pane .detail-title');
+  if (t1 === t2) errs.push(`[${tag}] arrow should step preview ${t1}`);
+  await dp.screenshot({ path: `${out}/v028-desktop-three.png` });
+  await dp.click('.card:has-text("三栏一号")', { button: 'right' });
+  await dp.click('.ctx-basket');
+  await dp.waitForSelector('.basket-side', { timeout: 4000 }).catch(() => errs.push(`[${tag}] basket not in sidebar`));
+  await dp.dblclick('.card:has-text("三栏三号")');
+  await dp.waitForSelector('.sheet .detail', { timeout: 3000 }).catch(() => errs.push(`[${tag}] dblclick should open full detail`));
+  if (await dp.locator('.preview-pane').count()) errs.push(`[${tag}] pane should close when full detail opens`);
+  await dp.keyboard.press('Escape');
+  await dp.waitForTimeout(300);
+  await dp.click('.card:has-text("三栏一号")');
+  await dp.waitForSelector('.preview-pane');
+  await dp.keyboard.press('Escape');
+  await dp.waitForTimeout(200);
+  if (await dp.locator('.preview-pane').count()) errs.push(`[${tag}] Esc should close preview`);
+  await dp.screenshot({ path: `${out}/v028-desktop-basket.png` });
+  await dctx.close();
+
+  // 0404 首启：第一屏就真的拾第一穗
+  const octx = await b.newContext({ viewport: { width: 390, height: 844 }, onboard: true });
+  const op = await octx.newPage();
+  op.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await op.goto(base);
+  await op.waitForSelector('.onboard-first-input', { timeout: 5000 }).catch(() => errs.push(`[${tag}] onboarding first input missing`));
+  await op.fill('.onboard-first-input', '《花样年华》 @王家卫 > 旗袍和楼梯');
+  await op.waitForSelector('.onboard-first-guess:has-text("电影")', { timeout: 2000 }).catch(() => errs.push(`[${tag}] onboarding guess`));
+  await op.press('.onboard-first-input', 'Enter');
+  await op.waitForSelector('.onboard-first-card:has-text("第 1 穗")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] onboarding first card`));
+  await op.screenshot({ path: `${out}/v028-onboard-first.png` });
+  if ((await op.textContent('.onboard-next')) !== '下一步') errs.push(`[${tag}] onboarding next label`);
+  await op.click('.onboard-skip');
+  await op.waitForSelector('.card:has-text("花样年华")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] first item not in library after onboarding`));
+  await octx.close();
+  console.log('v028: inline syntax / share code / clean url / basket / bundles / pool / pinyin / three-pane / onboarding first ok');
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v028') {
+    await v028();
+    throw Object.assign(new Error('v028 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'ui27') {
     await ui27();
     throw Object.assign(new Error('ui27 only'), { only: true });
@@ -3305,6 +3462,7 @@ try {
   }
   await security();
   await ui27();
+  await v028();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
