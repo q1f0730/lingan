@@ -13,7 +13,7 @@ const CREATOR: Record<ItemType, string> = { music: '歌手', film: '导演', ima
 export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void }) {
   const { toast, go } = useApp();
   const full = useOriginalSrc(it);
-  const grown = useLiveQuery(async () => (it.id != null ? branchesFrom(await db.developments.toArray(), it.id) : []), [it.id]);
+  const grown = useLiveQuery(async () => (it.id != null ? branchesFrom((await db.developments.toArray()).filter((x) => !x.deletedAt), it.id) : []), [it.id]);
   const quote = it.type === 'text' && !!it.content;
   async function copy() {
     try {
