@@ -10,6 +10,7 @@
 // 私密穗（0242）永远不给 Agent；不返回图片原图和向量。
 
 import { outboundOff } from './gate';
+import { exitOpen } from './privacy';
 import type { LinganDB } from './db';
 import type { Item, Development, ItemType } from './types';
 import { parseQuery, searchDocs, toDoc } from './search';
@@ -59,7 +60,7 @@ const iso = (t?: number) => (t ? new Date(t).toISOString() : undefined);
 const cut = (s: string | undefined, n: number) => (s && s.length > n ? s.slice(0, n) + '…' : s || undefined);
 
 export function visible(it: Item): boolean {
-  return !it.deletedAt && !it.private && !it.locked;
+  return !it.deletedAt && !it.private && exitOpen(it, 'agent');
 }
 
 export function itemOut(it: Item, full = false) {
