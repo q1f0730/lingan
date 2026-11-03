@@ -64,6 +64,8 @@ function ItemCardImpl({ item, onOpen, compact, q, selected }: { item: Item; onOp
             <span className="type-badge">{TYPE_LABEL[item.type]}</span>
             {item.polarity === -1 && <span className="flag-mark dislike-mark"> · 讨厌</span>}
             {item.private && <span className="flag-mark private-mark"> · 私密</span>}
+            {item.locked && <span className="flag-mark lock-mark"> · 上锁</span>}
+            {item.metaTodo && <span className="flag-mark todo-mark"> · 待补</span>}
             <span aria-hidden> · </span>
             <time className="card-when" dateTime={new Date(item.createdAt).toISOString()}>
               {formatWhen(item.createdAt)}
