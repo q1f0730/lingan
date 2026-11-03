@@ -26,14 +26,19 @@ function crcTable(): Uint32Array {
 }
 
 export function crc32(data: Uint8Array): number {
+  return crc32Update(0, data);
+}
+
+/** v0.21 分块算 CRC：crc32Update(crc32Update(0, a), b) === crc32(a ++ b) */
+export function crc32Update(prev: number, data: Uint8Array): number {
   const t = crcTable();
-  let c = 0xffffffff;
+  let c = (prev ^ 0xffffffff) >>> 0;
   for (let i = 0; i < data.length; i++) c = t[(c ^ data[i]) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 }
 
 /** 本地时间 → DOS 时间 / 日期 */
-function dosTime(ms: number): { time: number; date: number } {
+export function dosTime(ms: number): { time: number; date: number } {
   const d = new Date(ms);
   const year = Math.max(1980, d.getFullYear());
   return {
