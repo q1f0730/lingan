@@ -11,6 +11,7 @@ import Dexie, { type Table } from 'dexie';
 import { markRawTransaction, type LinganDB } from './db';
 import type { Development, Item, Reject, StoredImage, Work } from './types';
 import type { Cliche } from './wall';
+import { readLocalPrefs, writeLocalPrefs, type LocalPrefs } from './localprefs';
 
 export type SnapKind = 'op' | 'pre-upgrade';
 export interface SnapRow {
@@ -30,11 +31,13 @@ export interface SnapRow {
   /** v0.29 作品（旧快照没有：恢复时不动作品表） */
   works?: Work[];
   images: StoredImage[];
+  /** v0.31 本机偏好（口味原子 / 自写卡 / 出站记录；旧快照没有：恢复时不动） */
+  local?: LocalPrefs;
   meta?: Array<{ k: string; v: unknown }>;
   /** 升级前副本里没复制的内联大原图条数（v0.12 以前的旧库） */
   omittedImages?: number;
 }
-export type SnapInfo = Omit<SnapRow, 'items' | 'developments' | 'cliches' | 'rejects' | 'works' | 'images' | 'meta'>;
+export type SnapInfo = Omit<SnapRow, 'items' | 'developments' | 'cliches' | 'rejects' | 'works' | 'images' | 'meta' | 'local'>;
 
 export const SNAP_DB = 'glean-snap';
 export const KEEP: Record<SnapKind, number> = { op: 10, 'pre-upgrade': 3 };
@@ -54,8 +57,8 @@ export function snapDb(name = SNAP_DB): SnapDB {
 }
 
 function info(r: SnapRow): SnapInfo {
-  const { items: _i, developments: _d, cliches: _c, rejects: _r, works: _w, images: _im, meta: _m, ...rest } = r;
-  void _i, void _d, void _c, void _r, void _w, void _im, void _m;
+  const { items: _i, developments: _d, cliches: _c, rejects: _r, works: _w, images: _im, meta: _m, local: _l, ...rest } = r;
+  void _i, void _d, void _c, void _r, void _w, void _im, void _m, void _l;
   return rest;
 }
 
@@ -86,6 +89,7 @@ export async function takeSnapshot(label: string, d: LinganDB, opts: { imagesOf?
     rejects,
     works,
     images,
+    local: readLocalPrefs(),
   };
   const id = await s.snaps.add(row);
   await prune(s, 'op');
@@ -161,6 +165,7 @@ export async function restoreSnapshot(id: number, d: LinganDB, opts: { s?: SnapD
     if (snap.images.length) await d.images.bulkPut(snap.images);
     await d.daily.clear();
   });
+  if (snap.local) writeLocalPrefs(snap.local);
   return { items: snap.counts.items, developments: snap.counts.developments, undoId };
 }
 
@@ -250,6 +255,7 @@ export function snapshotToBackupJson(snap: SnapRow): string {
     developments: snap.developments,
     cliches: snap.cliches.map(({ id: _id, ...c }) => (void _id, c)),
     ...(snap.works?.length ? { works: snap.works.map(({ id: _id, ...w }) => (void _id, w)) } : {}),
+    ...(snap.local ? { local: snap.local } : {}),
   });
 }
 
