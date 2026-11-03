@@ -18,7 +18,8 @@ import { resolveTheme, type Theme } from './lib/theme';
 import { TYPE_LABEL, type Item } from './lib/types';
 import { shortDate } from './lib/studio';
 import { Library } from './views/Library';
-import { Onboarding, needsOnboarding } from './views/Onboarding';
+import { needsOnboarding } from './lib/onboard';
+const Onboarding = lazy(() => import('./views/Onboarding').then((m) => ({ default: m.Onboarding })));
 import { Loading } from './components/DisplayTitle';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { collectDiagnostics } from './lib/diagcollect';
@@ -41,6 +42,8 @@ const loadDetail = () => import('./components/Detail');
 const Detail = lazy(() => loadDetail().then((m) => ({ default: m.Detail })));
 const DropIn = lazy(() => import('./components/DropIn').then((m) => ({ default: m.DropIn })));
 const CardMenu = lazy(() => import('./components/CardMenu').then((m) => ({ default: m.CardMenu })));
+// v0.28 0408 待嫁接篮：首屏之后才挂
+const Basket = lazy(() => import('./components/Basket'));
 export const IDLE_READY = 'glean:idle-ready';
 export function prefetchViews() {
   void loadDetail();
@@ -111,6 +114,8 @@ export default function App() {
   const [toasts, setToasts] = useState<ToastT[]>([]);
   const [capture, setCapture] = useState<{ draft: Draft; editId?: number; origImage?: string } | null>(null);
   const [detail, setDetail] = useState<Item | null>(null);
+  // v0.28 0402 桌面三栏（≥1500px 的穗仓）：单击在右栏预览，双击 / 「整页」才开整页详情
+  const [preview, setPreview] = useState<Item | null>(null);
   const [seq, setSeq] = useState<number[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [preset, setPreset] = useState<number[] | null>(null);
@@ -132,6 +137,13 @@ export default function App() {
   settingsRef.current = settings;
   const theme = useTheme(settings.theme);
   const desktop = useMedia('(min-width: 1024px)');
+  const wide = useMedia('(min-width: 1500px)');
+  const pane = wide && view === 'library';
+  const paneRef = useRef(pane);
+  paneRef.current = pane;
+  useEffect(() => {
+    if (!pane) setPreview(null);
+  }, [pane]);
   const online = useOnline();
   const safe = useMemo(isSafeMode, []);
   const motion = useMemo(() => (safe ? 'off' : detectMotionLevel()), [safe]);
@@ -285,8 +297,11 @@ export default function App() {
       setTimeout(() => el.classList.remove('was-open'), 1600);
     });
   }, [detail]);
-  const openItem = useCallback((it: Item, list?: number[]) => {
-    setDetail(it);
+  const openItem = useCallback((it: Item, list?: number[], opts?: { full?: boolean }) => {
+    if (paneRef.current && !opts?.full) {
+      setPreview(it);
+      setDetail(null);
+    } else setDetail(it);
     setSeq(list && list.length > 1 ? list : null);
     // v0.14 打开即「碰过」：每日一穗按它找很久没碰的旧穗
     if (it.id != null) void touchItems([it.id]).catch(() => {});
@@ -294,20 +309,22 @@ export default function App() {
   // v0.23 0113 详情页上一穗 / 下一穗：按打开时那个视图的顺序翻（桌面 ← / →，手机左右滑）
   const stepDetail = useCallback(
     async (dir: 1 | -1) => {
-      if (!detail?.id || !seq) return;
-      let i = seq.indexOf(detail.id);
+      const cur = detail || preview;
+      if (!cur?.id || !seq) return;
+      let i = seq.indexOf(cur.id);
       for (let k = 0; k < seq.length; k++) {
         i += dir;
         if (i < 0 || i >= seq.length) return;
         const next = await db.items.get(seq[i]);
         if (next && alive(next)) {
-          setDetail(next);
+          if (detail) setDetail(next);
+          else setPreview(next);
           void touchItems([next.id!]).catch(() => {});
           return;
         }
       }
     },
-    [detail, seq],
+    [detail, preview, seq],
   );
   const developFrom = useCallback((ids: number[]) => {
     setPreset(ids);
@@ -316,6 +333,7 @@ export default function App() {
   }, []);
   const go = useCallback((v: View) => {
     setDetail(null);
+    setPreview(null);
     setView(v);
   }, []);
   const openSearch = useCallback(() => {
@@ -398,6 +416,20 @@ export default function App() {
     };
   }, [toast, confirm]);
 
+  // v0.28 0402 三栏里双击卡片 = 开整页详情
+  useEffect(() => {
+    if (!pane) return;
+    const h = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest?.('[data-item-id]') as HTMLElement | null;
+      if (!el || !el.closest('.main') || el.closest('.search-view')) return;
+      const id = Number(el.dataset.itemId);
+      if (!Number.isFinite(id)) return;
+      void db.items.get(id).then((it) => it && !it.deletedAt && (setPreview(null), setDetail(it)));
+    };
+    document.addEventListener('dblclick', h);
+    return () => document.removeEventListener('dblclick', h);
+  }, [pane]);
+
   // 托盘菜单：打开穗仓 / 今日一穗 / 设置
   useEffect(() => {
     let off = () => {};
@@ -438,7 +470,11 @@ export default function App() {
     const h = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (detail && !capture && !confirmReq && seq && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      if (preview && !detail && !capture && !confirmReq && e.key === 'Escape') {
+        setPreview(null);
+        return;
+      }
+      if ((detail || preview) && !capture && !confirmReq && seq && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.altKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         void stepDetail(e.key === 'ArrowRight' ? 1 : -1);
         return;
@@ -465,7 +501,7 @@ export default function App() {
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [capture, detail, confirmReq, openCapture, go, seq, stepDetail]);
+  }, [capture, detail, preview, confirmReq, openCapture, go, seq, stepDetail]);
 
   async function onSave(d: Draft) {
     setSaving(true);
@@ -516,6 +552,7 @@ export default function App() {
     const id = it.id;
     await trashItems([id]);
     setDetail(null);
+    setPreview((p) => (p?.id === id ? null : p));
     setCapture(null);
     toast('已删掉 1 穗（在回收站）', 'ok', { label: '撤销', run: () => void untrashItems([id]).then(() => toast('已放回穗仓')) });
   }
@@ -523,7 +560,9 @@ export default function App() {
   if (onboard) return (
     <Ctx.Provider value={ctx}>
       <MotionRoot level={motion}>
-        <Onboarding onDone={() => setOnboard(false)} />
+        <Suspense fallback={null}>
+          <Onboarding onDone={() => setOnboard(false)} />
+        </Suspense>
       </MotionRoot>
     </Ctx.Provider>
   );
@@ -531,7 +570,7 @@ export default function App() {
   return (
     <Ctx.Provider value={ctx}>
       <MotionRoot level={motion}>
-      <div className={`app${desktop ? ' is-desktop' : ' is-mobile'}`}>
+      <div className={`app${desktop ? ' is-desktop' : ' is-mobile'}${pane && preview ? ' has-preview' : ''}`}>
         {desktop && (
           <aside className="sidebar" aria-label="侧栏">
             <button className="logo" onClick={() => go('library')} aria-label="拾穗 · GLEAN，回到穗仓">
@@ -548,6 +587,11 @@ export default function App() {
               <span>搜索</span>
               <kbd>Ctrl K</kbd>
             </button>
+            {idle && (
+              <Suspense fallback={null}>
+                <Basket where="side" />
+              </Suspense>
+            )}
             <div className="side-foot">
               <div className="side-theme">
                 <span className="meta-text">{theme === 'dark' ? '黑' : '白'}</span>
@@ -610,8 +654,32 @@ export default function App() {
           </main>
           <footer className="colophon">© 2026 Q1f730</footer>
         </div>
+        {pane && preview && (
+          <aside className="preview-pane" aria-label="预览">
+            <style>{`.main [data-item-id="${preview.id}"]{outline:2px solid var(--fg);outline-offset:2px}`}</style>
+            <header className="preview-head">
+              <span className="label">{`${preview.sample ? '示例 · ' : ''}${TYPE_LABEL[preview.type]} · ${shortDate(preview.createdAt)}`}</span>
+              <span className="preview-acts">
+                <button className="btn text preview-full" onClick={() => (setDetail(preview), setPreview(null))} title="整页打开（双击卡片也行）">
+                  整页
+                </button>
+                <button className="btn text preview-close" onClick={() => setPreview(null)} aria-label="关掉预览（Esc）">
+                  ✕
+                </button>
+              </span>
+            </header>
+            <Suspense fallback={<Loading />}>
+              <Detail key={preview.id} {...detailProps(preview, setPreview)} />
+            </Suspense>
+          </aside>
+        )}
         {!desktop && (
           <div className="dock">
+            {idle && (
+              <Suspense fallback={null}>
+                <Basket where="dock" />
+              </Suspense>
+            )}
             <QuickBar where="dock" />
             <NavBar view={view} go={go} layout="dock" />
           </div>
@@ -636,26 +704,7 @@ export default function App() {
         >
           {detail && (
             <Suspense fallback={<Loading />}>
-            <Detail
-              it={detail}
-              pos={seq && detail.id != null ? { i: seq.indexOf(detail.id), n: seq.length } : undefined}
-              onStep={seq ? (dir: 1 | -1) => void stepDetail(dir) : undefined}
-              onEdit={() => editDetail(detail)}
-              onDelete={() => onDelete(detail)}
-              onDevelop={() => developFrom([detail.id!])}
-              onWhen={async (ts) => {
-                await updateItem(detail.id!, { createdAt: ts });
-                const fresh = await db.items.get(detail.id!);
-                if (fresh) setDetail(fresh);
-                toast('时间已改');
-              }}
-              onReAI={async () => {
-                const err = await enrichItem(detail.id!, settings, true);
-                toast(err ? 'AI 整理失败：' + err : 'AI 已重新整理', err ? 'err' : 'ok');
-                const fresh = await db.items.get(detail.id!);
-                if (fresh) setDetail(fresh);
-              }}
-            />
+            <Detail {...detailProps(detail, setDetail)} />
             </Suspense>
           )}
         </Sheet>
@@ -684,6 +733,29 @@ export default function App() {
       </MotionRoot>
     </Ctx.Provider>
   );
+
+  function detailProps(cur: Item, set: (it: Item) => void) {
+    return {
+      it: cur,
+      pos: seq && cur.id != null ? { i: seq.indexOf(cur.id), n: seq.length } : undefined,
+      onStep: seq ? (dir: 1 | -1) => void stepDetail(dir) : undefined,
+      onEdit: () => void editDetail(cur),
+      onDelete: () => void onDelete(cur),
+      onDevelop: () => developFrom([cur.id!]),
+      onWhen: async (ts: number) => {
+        await updateItem(cur.id!, { createdAt: ts });
+        const fresh = await db.items.get(cur.id!);
+        if (fresh) set(fresh);
+        toast('时间已改');
+      },
+      onReAI: async () => {
+        const err = await enrichItem(cur.id!, settings, true);
+        toast(err ? 'AI 整理失败：' + err : 'AI 已重新整理', err ? 'err' : 'ok');
+        const fresh = await db.items.get(cur.id!);
+        if (fresh) set(fresh);
+      },
+    };
+  }
 
   async function editDetail(it0: Item) {
     // 详情里可能刚改过（加标签 / 留下 / 合并）：编辑前读最新的
