@@ -3,7 +3,6 @@
 // 新枝来源、嫁接次数、套路墙、每日一穗、索引表；最后把升级后的库导出 .glean 再导进空库，结果一样。
 // 以后每加一个 Dexie 版本：在这里加一份 v(N).json（用上一版的 schema 与数据形状），这个套件自动覆盖它。
 import 'fake-indexeddb/auto';
-import fs from 'node:fs';
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
 import { LinganDB } from '../lib/db';
@@ -27,11 +26,11 @@ interface Fixture {
   };
 }
 const LATEST = 8;
-const dir = new URL('./fixtures/dexie/', import.meta.url);
-const fixtures: Fixture[] = (fs.readdirSync(dir) as string[])
-  .filter((f: string) => /^v\d+\.json$/.test(f))
-  .map((f: string) => JSON.parse(fs.readFileSync(new URL(f, dir), 'utf8')) as Fixture)
-  .sort((a: Fixture, b: Fixture) => a.version - b.version);
+// 夹具按原文读进来（vite 的 ?raw），不依赖 node:fs
+const raw = import.meta.glob('./fixtures/dexie/v*.json', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const fixtures: Fixture[] = Object.values(raw)
+  .map((t) => JSON.parse(t) as Fixture)
+  .sort((a, b) => a.version - b.version);
 
 const bytesOf = async (b: Blob) => [...new Uint8Array(await b.arrayBuffer())].join(',');
 const uniq = (p: string) => p + '-' + Math.random().toString(36).slice(2);
