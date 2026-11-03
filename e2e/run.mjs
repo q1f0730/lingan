@@ -3492,6 +3492,8 @@ async function v029() {
   await pg.keyboard.type('\n他站在[[花样');
   await pg.waitForSelector('.ref-pick .ref-opt', { timeout: 3000 }).catch(() => errs.push(`[${tag}] ref picker missing`));
   await pg.keyboard.press('Enter');
+  // 慢机器上回车时弹窗可能还没跟上最后几个字：按框里现在的字去库里挑（异步），等它插进来
+  await pg.waitForFunction(() => /他站在\[\[花样年华\]\]/.test(document.querySelector('.work-text')?.value || ''), null, { timeout: 3000 }).catch(() => {});
   // v0.30：编辑框只显示 [[花样年华]]（uid 藏起来、底层画成 chip），草稿里照样存 [[花样年华|uid]]
   const draft = await pg.inputValue('.work-text');
   if (!/他站在\[\[花样年华\]\]/.test(draft) || /\|[0-9A-Z]{26}/.test(draft)) errs.push(`[${tag}] ref display should hide uid: ${draft.slice(-60)}`);
@@ -3499,11 +3501,16 @@ async function v029() {
   await pg.waitForTimeout(700);
   if (!/他站在\[\[花样年华\|[0-9A-Z]{26}\]\]/.test((await workDb(pg))[0].draft || '')) errs.push(`[${tag}] ref not saved with uid`);
   // 引用是一整块：退格一次整块删掉，再打 [[ 选回来
+  // 离线骨架里可能本来就引用了《花样年华》（素材随机）：数光标前这一处，不看全文
+  const nRef = (v) => (v.match(/\[\[花样年华\]\]/g) || []).length;
+  const beforeBs = await pg.inputValue('.work-text');
   await pg.keyboard.press('Backspace');
-  if (/\[\[花样年华/.test(await pg.inputValue('.work-text'))) errs.push(`[${tag}] backspace should delete whole ref chip`);
+  const afterBs = await pg.inputValue('.work-text');
+  if (!/他站在$/.test(afterBs) || nRef(afterBs) !== nRef(beforeBs) - 1) errs.push(`[${tag}] backspace should delete whole ref chip: ${afterBs.slice(-30)}`);
   await pg.keyboard.type('[[花样');
   await pg.waitForSelector('.ref-pick .ref-opt', { timeout: 3000 }).catch(() => errs.push(`[${tag}] ref picker missing (2)`));
   await pg.keyboard.press('Enter');
+  await pg.waitForFunction(() => /他站在\[\[花样年华\]\]/.test(document.querySelector('.work-text')?.value || ''), null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] ref re-insert`));
   await pg.screenshot({ path: `${out}/v029-draft.png` });
   await pg.click('.work-read');
   await pg.waitForSelector('.work-read-view .md-ref:has-text("花样年华")', { timeout: 2000 }).catch(() => errs.push(`[${tag}] preview ref chip`));
