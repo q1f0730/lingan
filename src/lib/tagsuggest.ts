@@ -58,7 +58,7 @@ export function existingTags(text: string, bare: boolean): string[] {
   return Array.from(text.matchAll(/(^|\s)#([^\s#]{1,24})/g), (m) => m[2]);
 }
 
-// 标签用量：只读索引键，很便宜；缓存 1.5 秒只为了连打几个字时不重复读
+// 标签用量：只读索引键，很便宜；缓存 0.3 秒只为了连打几个字时不重复读（刚存的穗下一次就算进去）
 let cache: { at: number; map: Map<string, number> } | null = null;
 export function countTags(items: Array<{ tags?: string[]; deletedAt?: number }>): Map<string, number> {
   const m = new Map<string, number>();
@@ -66,7 +66,7 @@ export function countTags(items: Array<{ tags?: string[]; deletedAt?: number }>)
   return m;
 }
 export async function loadTagCounts(now = Date.now()): Promise<Map<string, number>> {
-  if (cache && now - cache.at < 1500) return cache.map;
+  if (cache && now - cache.at < 300) return cache.map;
   const { db } = await import('./db');
   // 只读多值索引的键（每个「穗×标签」一条），不把穗本身（含缩略图）读进内存；回收站里的也算，影响可忽略
   const map = new Map<string, number>();
