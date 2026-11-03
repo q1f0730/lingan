@@ -1,5 +1,6 @@
 import type { Settings } from './settings';
 import { embedConfig } from './settings';
+import type { ChatBody, OutKind } from './outbound';
 
 type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -36,7 +37,22 @@ export class AIError extends Error {
   }
 }
 
-async function postJSON(url: string, key: string, body: unknown, timeoutMs = 90000, signal?: AbortSignal): Promise<unknown> {
+async function postJSON(url: string, key: string, body0: ChatBody, timeoutMs = 90000, signal?: AbortSignal, kind: OutKind = 'chat'): Promise<unknown> {
+  // v0.30 发出去前看一眼（可能去掉图片）+ 出站记录（只记域名 / 种类 / 字段类别 / 字节，不记内容）
+  // 出站模块按需加载（ai.ts 在首屏包里，出站逻辑不用跟着进首屏）
+  const { fieldsOf, gateOutbound, hostOf, OutboundCancel, recordOutbound } = await import('./outbound');
+  let body = body0;
+  let stripped = 0;
+  try {
+    const g = await gateOutbound(url, body0, kind);
+    body = g.body;
+    stripped = g.stripped;
+  } catch (e) {
+    if (e instanceof OutboundCancel) throw new AIError(e.message);
+    throw e;
+  }
+  const payload = JSON.stringify(body);
+  const rec = (ok: boolean) => recordOutbound({ at: Date.now(), host: hostOf(url), kind, fields: fieldsOf(body, kind), bytes: payload.length, ok, ...(stripped ? { stripped } : {}) });
   const f = await getFetch();
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -49,11 +65,12 @@ async function postJSON(url: string, key: string, body: unknown, timeoutMs = 900
     res = await f(url, {
       method: 'POST',
       headers: key ? { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` } : { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: payload,
       signal: ctrl.signal,
     });
   } catch (e) {
     clearTimeout(t);
+    rec(false);
     const msg = e instanceof Error ? e.message : String(e);
     if (signal?.aborted) throw new AIError('已取消');
     // v0.20 网络权限收紧：http 只放本机 / 局域网（本地模型），公网必须 https
@@ -61,6 +78,7 @@ async function postJSON(url: string, key: string, body: unknown, timeoutMs = 900
     throw new AIError(msg.includes('abort') ? '请求超时，请检查网络或换个模型' : `网络错误：${msg}`, 0);
   }
   clearTimeout(t);
+  rec(res.ok);
   const text = await res.text();
   if (!res.ok) {
     let detail = text.slice(0, 300);
@@ -81,6 +99,11 @@ async function postJSON(url: string, key: string, body: unknown, timeoutMs = 900
   } catch {
     throw new AIError('接口返回的不是 JSON');
   }
+}
+
+/** 请求里有没有图片（决定出站种类「看图」） */
+function hasImage(b: ChatBody): boolean {
+  return (b.messages || []).some((m) => Array.isArray(m.content) && m.content.some((p) => p.type === 'image_url'));
 }
 
 export type ChatContent = string | Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }>;
@@ -107,7 +130,7 @@ export async function chat(s: Settings, messages: ChatMsg[], opts: { model?: str
     max_tokens: opts.maxTokens ?? 1600,
     ...extra(s),
   };
-  const j = (await postJSON(joinUrl(s.chat.baseUrl, '/chat/completions'), s.chat.apiKey, body, opts.timeoutMs, opts.signal)) as {
+  const j = (await postJSON(joinUrl(s.chat.baseUrl, '/chat/completions'), s.chat.apiKey, body as ChatBody, opts.timeoutMs, opts.signal, hasImage(body as ChatBody) ? 'vision' : 'chat')) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const out = j.choices?.[0]?.message?.content;
@@ -138,7 +161,7 @@ export async function caption(s: Settings, imageDataUrl: string, vocab: string[]
 export async function embed(s: Settings, texts: string[]): Promise<number[][]> {
   const c = embedConfig(s);
   if (!c) throw new AIError('没有配置向量模型');
-  const j = (await postJSON(joinUrl(c.baseUrl, '/embeddings'), c.apiKey, { model: c.model, input: texts })) as {
+  const j = (await postJSON(joinUrl(c.baseUrl, '/embeddings'), c.apiKey, { model: c.model, input: texts }, 90000, undefined, 'embed')) as {
     data?: Array<{ embedding: number[]; index?: number }>;
   };
   if (!j.data || j.data.length !== texts.length) throw new AIError('向量接口返回数量不对');
