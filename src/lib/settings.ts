@@ -1,4 +1,5 @@
 import { themeFromLegacy, type ThemePref } from './theme';
+import { detectBackend, type SecretName, type VaultBackend, type VaultKind } from './vault';
 export interface Provider {
   baseUrl: string;
   apiKey: string;
@@ -74,23 +75,156 @@ export function defaultSettings(): Settings {
   };
 }
 
-export function loadSettings(): Settings {
+// v0.20：密钥另存系统钥匙串。启动时 initSecrets() 读进内存缓存，loadSettings 再合进去；
+// localStorage 里的设置只剩非敏感字段。
+const secrets: Record<SecretName, string> = { 'chat.apiKey': '', 'embed.apiKey': '' };
+let backend: VaultBackend | null = null;
+let keysInSettings = true; // 还没接上持久钥匙串（或只剩内存）时，密钥仍跟旧版一样留在设置里，免得丢
+let writeChain: Promise<unknown> = Promise.resolve();
+
+export function vaultKind(): VaultKind | null {
+  return backend?.kind ?? null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rawSettings(): Record<string, any> | null {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return defaultSettings();
+    if (!raw) return null;
     const s = JSON.parse(raw);
+    return s && typeof s === 'object' ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 去掉密钥后的可持久化设置（导出 / 诊断 / localStorage 都只用这个） */
+export function stripSecrets<T extends { chat?: { apiKey?: string }; embed?: { apiKey?: string } }>(s: T): T {
+  const o = JSON.parse(JSON.stringify(s));
+  if (o.chat) o.chat.apiKey = '';
+  if (o.embed) o.embed.apiKey = '';
+  return o;
+}
+
+/**
+ * 启动时调用一次：选钥匙串后端、把旧版留在 localStorage 的密钥搬进去并清掉、读出缓存。
+ * 失败不抛：退回旧行为（密钥留在设置里），保证不丢 key、不白屏。
+ */
+export async function initSecrets(pick: () => Promise<VaultBackend> = () => detectBackend()): Promise<{ kind: VaultKind; migrated: number }> {
+  let b: VaultBackend;
+  try {
+    b = await pick();
+  } catch {
+    const { memoryBackend } = await import('./vault');
+    b = memoryBackend();
+  }
+  backend = b;
+  const persistent = b.kind !== 'memory';
+  const raw = rawSettings();
+  let migrated = 0;
+  if (!raw) {
+    // 设置被清掉 = 重置：钥匙串里残留的旧密钥也一起清，避免默认服务 + 旧 key 的错配
+    secrets['chat.apiKey'] = '';
+    secrets['embed.apiKey'] = '';
+    if (persistent) for (const n of ['chat.apiKey', 'embed.apiKey'] as SecretName[]) await b.del(n).catch(() => {});
+    keysInSettings = !persistent;
+    return { kind: b.kind, migrated };
+  }
+  const legacy: Record<SecretName, string> = { 'chat.apiKey': String(raw.chat?.apiKey || ''), 'embed.apiKey': String(raw.embed?.apiKey || '') };
+  if (!persistent) {
+    keysInSettings = true;
+    secrets['chat.apiKey'] = legacy['chat.apiKey'];
+    secrets['embed.apiKey'] = legacy['embed.apiKey'];
+    return { kind: b.kind, migrated };
+  }
+  let ok = true;
+  for (const n of ['chat.apiKey', 'embed.apiKey'] as SecretName[]) {
+    if (legacy[n]) {
+      try {
+        await b.set(n, legacy[n]);
+        migrated++;
+      } catch {
+        ok = false;
+      }
+    }
+  }
+  if (!ok) {
+    // 钥匙串写不进去：保持旧行为
+    keysInSettings = true;
+    secrets['chat.apiKey'] = legacy['chat.apiKey'];
+    secrets['embed.apiKey'] = legacy['embed.apiKey'];
+    return { kind: b.kind, migrated: 0 };
+  }
+  keysInSettings = false;
+  for (const n of ['chat.apiKey', 'embed.apiKey'] as SecretName[]) {
+    secrets[n] = legacy[n] || (await b.get(n).catch(() => ''));
+  }
+  if (migrated) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(stripSecrets(raw)));
+    } catch {
+      /* ignore */
+    }
+  }
+  return { kind: b.kind, migrated };
+}
+
+export function loadSettings(): Settings {
+  try {
+    const s = rawSettings();
+    if (!s) return defaultSettings();
     const d = defaultSettings();
     s.theme = themeFromLegacy(s); // v0.16：旧的 phase（随时间变色）换成 跟随系统 / 白 / 黑
     delete s.phase;
     delete s.fieldStill;
-    return { ...d, ...s, chat: { ...d.chat, ...(s.chat || {}) }, embed: { ...d.embed, ...(s.embed || {}) } };
+    const out: Settings = { ...d, ...s, chat: { ...d.chat, ...(s.chat || {}) }, embed: { ...d.embed, ...(s.embed || {}) } };
+    if (!keysInSettings) {
+      out.chat.apiKey = secrets['chat.apiKey'];
+      out.embed.apiKey = secrets['embed.apiKey'];
+    }
+    return out;
   } catch {
     return defaultSettings();
   }
 }
 
 export function saveSettings(s: Settings) {
-  localStorage.setItem(KEY, JSON.stringify(s));
+  if (keysInSettings) {
+    secrets['chat.apiKey'] = s.chat.apiKey;
+    secrets['embed.apiKey'] = s.embed.apiKey;
+    localStorage.setItem(KEY, JSON.stringify(s));
+    return;
+  }
+  localStorage.setItem(KEY, JSON.stringify(stripSecrets(s)));
+  const b = backend;
+  if (!b) return;
+  for (const [n, v] of [['chat.apiKey', s.chat.apiKey], ['embed.apiKey', s.embed.apiKey]] as Array<[SecretName, string]>) {
+    if (secrets[n] === v) continue;
+    secrets[n] = v;
+    // 串行写，保证最后一次输入落盘
+    writeChain = writeChain.then(() => b.set(n, v)).catch(() => {
+      reportVaultError?.();
+    });
+  }
+}
+
+/** 等待未完成的钥匙串写入（测试 / 退出前用） */
+export function flushSecrets(): Promise<unknown> {
+  return writeChain;
+}
+
+let reportVaultError: (() => void) | null = null;
+export function onVaultError(f: () => void) {
+  reportVaultError = f;
+}
+
+/** 测试用：回到未初始化状态 */
+export function _resetSecretsForTest() {
+  secrets['chat.apiKey'] = '';
+  secrets['embed.apiKey'] = '';
+  backend = null;
+  keysInSettings = true;
+  writeChain = Promise.resolve();
 }
 
 export function aiReady(s: Settings): boolean {
