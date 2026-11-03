@@ -4,6 +4,7 @@ import { chat } from '../lib/ai';
 import { db } from '../lib/db';
 import { HeatmapPanel } from '../components/Heatmap';
 import { ClicheWall } from '../components/ClicheWall';
+import { AtomsPanel } from '../components/AtomsPanel';
 import { DislikePanel, RejectsPanel, StylePanel } from '../components/GraftFeedback';
 import { aiVisible } from '../lib/privacy';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
@@ -130,6 +131,8 @@ export function Taste() {
             </div>
           </section>
         )}
+
+        <AtomsPanel items={items} />
 
         <ClicheWall />
 
