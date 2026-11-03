@@ -14,6 +14,7 @@ import { collectDiagnostics } from './lib/diagcollect';
 import { guardUpgrade, markSchema } from './lib/upgradeguard';
 import { PENDING_KEY } from './lib/safewrite';
 import { isTauriEnv } from './lib/desktop';
+import { firstLibraryItems, primeLibraryItems } from './lib/libitems';
 
 // v0.20：全局错误先挂上（之后任何未捕获的错误 / Promise 拒绝都进本地日志），日志脱敏认得当前密钥
 installGlobalErrorHandlers();
@@ -30,6 +31,13 @@ ftShared(db);
 const root = createRoot(document.getElementById('root')!);
 
 function start() {
+  // v0.30：穗仓的全部穗先开查；结果 300ms 内到就等它再画（第一帧直接带卡片，省掉空外壳那一遍布局 + 绘制），
+  // 库很大 / 读得慢就照旧先画外壳。安全模式也一样（首屏就是穗仓）
+  primeLibraryItems();
+  void firstLibraryItems(300).then(boot);
+}
+
+function boot() {
   root.render(
     <StrictMode>
       <ErrorBoundary scope="app" name="app" copyDiag={collectDiagnostics}>
