@@ -122,6 +122,7 @@ async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok', conv = nu
     const user = String(body.messages?.[1]?.content || '');
     log.users.push(user);
     log.systems.push(sys);
+    (log.temps ||= []).push(body.temperature);
     const found = [...user.matchAll(/\[#(\d+) \|[^\]]*\] ([^\n]+)/g)];
     const ids = [...new Set(found.map((m) => Number(m[1])))];
     const titles = found.map((m) => m[2].trim());
@@ -3491,8 +3492,18 @@ async function v029() {
   await pg.keyboard.type('\n他站在[[花样');
   await pg.waitForSelector('.ref-pick .ref-opt', { timeout: 3000 }).catch(() => errs.push(`[${tag}] ref picker missing`));
   await pg.keyboard.press('Enter');
+  // v0.30：编辑框只显示 [[花样年华]]（uid 藏起来、底层画成 chip），草稿里照样存 [[花样年华|uid]]
   const draft = await pg.inputValue('.work-text');
-  if (!/他站在\[\[花样年华\|[0-9A-Z]{26}\]\]/.test(draft)) errs.push(`[${tag}] ref not inserted: ${draft.slice(-60)}`);
+  if (!/他站在\[\[花样年华\]\]/.test(draft) || /\|[0-9A-Z]{26}/.test(draft)) errs.push(`[${tag}] ref display should hide uid: ${draft.slice(-60)}`);
+  if (!(await pg.locator('.work-hl .ref-chip:has-text("花样年华")').count())) errs.push(`[${tag}] ref chip missing in editor`);
+  await pg.waitForTimeout(700);
+  if (!/他站在\[\[花样年华\|[0-9A-Z]{26}\]\]/.test((await workDb(pg))[0].draft || '')) errs.push(`[${tag}] ref not saved with uid`);
+  // 引用是一整块：退格一次整块删掉，再打 [[ 选回来
+  await pg.keyboard.press('Backspace');
+  if (/\[\[花样年华/.test(await pg.inputValue('.work-text'))) errs.push(`[${tag}] backspace should delete whole ref chip`);
+  await pg.keyboard.type('[[花样');
+  await pg.waitForSelector('.ref-pick .ref-opt', { timeout: 3000 }).catch(() => errs.push(`[${tag}] ref picker missing (2)`));
+  await pg.keyboard.press('Enter');
   await pg.screenshot({ path: `${out}/v029-draft.png` });
   await pg.click('.work-read');
   await pg.waitForSelector('.work-read-view .md-ref:has-text("花样年华")', { timeout: 2000 }).catch(() => errs.push(`[${tag}] preview ref chip`));
@@ -3570,13 +3581,171 @@ async function v029() {
   await dp.keyboard.press('Control+End');
   await dp.click('.work-mat-quote');
   await dp.waitForTimeout(200);
-  if (!/\[\[一一\|[0-9A-Z]{26}\]\]/.test(await dp.inputValue('.work-text'))) errs.push(`[${tag}] quote material into draft`);
+  if (!/\[\[一一\]\]/.test(await dp.inputValue('.work-text'))) errs.push(`[${tag}] quote material into draft`);
   await dp.screenshot({ path: `${out}/v029-desktop-story.png` });
   await dctx.close();
   console.log('v029: nav / 立项 / forms / shots+frames / draft refs / preview / board / md export / materials / playlist txt / review check / desktop ok');
 }
 
+// v0.30 嫁接 · 人在环里：约束台（斜策略卡钉住 / 写卡 / 硬约束 / 野一点）→ 用了什么约束、落地追踪 + 结果穗、再嫁接成树、追问；
+// 口味原子 + 导出；问穗仓 + 收成穗；发出去前看一眼（含温度 1.5、挑张力、预览即请求体）+ 出站记录
+async function v030() {
+  const tag = 'v030';
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  await quickSave(pg, '《花样年华》 @王家卫 > 旗袍和楼梯，慢镜头');
+  await quickSave(pg, '/歌 梦二 @梅林茂 > 一直重复的大提琴，慢镜头');
+  await quickSave(pg, '楼梯间的灯一直坏着 > 楼梯和坏掉的灯');
+  await quickSave(pg, '雨夜的便利店 > 下雨天的灯');
+  // 约束台：斜策略卡 → 写一张并钉住；掷一个硬约束；野一点
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls button:has-text("抽几穗")');
+  await pg.waitForSelector('.deck .oblique-text', { timeout: 4000 }).catch(() => errs.push(`[${tag}] oblique card missing`));
+  const c0 = (await pg.textContent('.deck .oblique-text')).trim();
+  await pg.click('.oblique-draw');
+  await pg.waitForTimeout(100);
+  await pg.click('.oblique-write');
+  await pg.fill('.oblique-input', '只用夜里的声音');
+  await pg.click('.oblique-save');
+  if ((await pg.textContent('.deck .oblique-text')).trim() !== '只用夜里的声音') errs.push(`[${tag}] own card not pinned (was ${c0})`);
+  if ((await pg.getAttribute('.oblique-card', 'data-pinned')) !== '1') errs.push(`[${tag}] card should be pinned`);
+  await pg.click('.dice-roll');
+  const dice = (await pg.textContent('.dice-text').catch(() => '')).trim();
+  if (!dice) errs.push(`[${tag}] dice constraint empty`);
+  await pg.click('.deck-wild');
+  if ((await pg.getAttribute('.deck-wild', 'aria-checked')) !== 'true') errs.push(`[${tag}] wild toggle`);
+  await pg.screenshot({ path: `${out}/v030-deck.png` });
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 15000 });
+  const cons = await pg.locator('.three .idea >> nth=0 >> .idea-cons').innerText().catch(() => '');
+  if (!cons.includes('只用夜里的声音') || !cons.includes(dice) || !cons.includes('野一点')) errs.push(`[${tag}] constraints used: ${cons}`);
+  // 钉住的卡下一次还在
+  if ((await pg.textContent('.deck .oblique-text').catch(() => '')).trim() !== '只用夜里的声音') errs.push(`[${tag}] pinned card should stay after graft`);
+  // 0904 落地：标「做成」+ 附结果图
+  const first = pg.locator('.three .idea >> nth=0');
+  await first.locator('.status-seg [data-status="done"]').click();
+  await pg.waitForTimeout(300);
+  let devs = await dbRaw(pg, 'developments');
+  const d0 = devs.find((d) => d.status === 'done');
+  if (!d0) errs.push(`[${tag}] status not saved`);
+  const png = await pngFileJs(pg);
+  const buf = Buffer.from(png.split(',')[1], 'base64');
+  await first.locator('input[aria-label="结果图"]').setInputFiles({ name: 'result.png', mimeType: 'image/png', buffer: buf });
+  await pg.waitForTimeout(1200);
+  const items1 = await dbRaw(pg, 'items');
+  const res = items1.find((x) => (x.tags || []).includes('新枝结果'));
+  if (!res || !res.hasImage) errs.push(`[${tag}] result item missing ${JSON.stringify(res && { t: res.type, h: res.hasImage })}`);
+  devs = await dbRaw(pg, 'developments');
+  if (!(devs.find((d) => d.id === d0?.id)?.resultUids || []).includes(res?.uid)) errs.push(`[${tag}] resultUids not linked`);
+  // v0.24 再嫁接：换一种形式 → 子枝挂在原枝下
+  await first.locator('.regraft-btn[data-kind="reform"]').click();
+  await pg.waitForSelector('.three .idea >> nth=0 >> .idea-children .idea', { timeout: 6000 }).catch(() => errs.push(`[${tag}] child branch not shown under parent`));
+  devs = await dbRaw(pg, 'developments');
+  const kid = devs.find((d) => d.parentUid);
+  if (!kid || kid.regraft !== 'reform' || kid.parentUid !== devs.find((d) => d.id === d0?.id)?.uid) errs.push(`[${tag}] child row ${JSON.stringify(kid && { p: kid.parentUid, r: kid.regraft })}`);
+  // 子枝还能点回原素材
+  if (!(await pg.locator('.three .idea >> nth=0 >> .idea-children .sprig').count())) errs.push(`[${tag}] child has no source sprigs`);
+  // 0204 追问（没连模型 → 离线答）
+  await first.locator('.followup-input >> nth=0').fill('开头怎么写');
+  await first.locator('.followup-go >> nth=0').click();
+  await pg.waitForSelector('.three .idea >> nth=0 >> .followup', { timeout: 4000 }).catch(() => errs.push(`[${tag}] followup missing`));
+  devs = await dbRaw(pg, 'developments');
+  if (!devs.some((d) => (d.followups || []).some((f) => f.q === '开头怎么写'))) errs.push(`[${tag}] followup not saved`);
+  await first.screenshot({ path: `${out}/v030-branch-more.png` });
+  // 新枝页：子枝不当根；按「做成」筛
+  await pg.click('.nav-btn:has-text("新枝")');
+  await pg.waitForSelector('.hrow');
+  const rows = await pg.locator('.hrow').count();
+  if (rows !== 3) errs.push(`[${tag}] branches list should show 3 roots, got ${rows}`);
+  await pg.click('.status-chip[data-status="done"]');
+  if ((await pg.locator('.hrow').count()) !== 1) errs.push(`[${tag}] status filter`);
+  await pg.click('.status-chip[data-status="done"]');
+  // 0205 口味原子（离线）+ 0244 复制提示词
+  await pg.click('.nav-btn:has-text("口味")');
+  await pg.click('.atom-run');
+  await pg.waitForSelector('.atoms .atom', { timeout: 4000 }).catch(() => errs.push(`[${tag}] atoms missing`));
+  const atoms = await pg.locator('.atoms .atom-name').allInnerTexts();
+  if (!atoms.some((a) => /楼梯|慢镜头|灯/.test(a))) errs.push(`[${tag}] atoms ${atoms.join(',')}`);
+  await pg.fill('.atom-add-input', '低保真');
+  await pg.click('.atom-add');
+  const st = await pg.evaluate(() => JSON.parse(localStorage.getItem('glean.taste.atoms') || 'null'));
+  if (!st || st.atoms[0].atom !== '低保真' || !st.atoms[0].mine) errs.push(`[${tag}] atom add ${JSON.stringify(st?.atoms?.[0])}`);
+  await pg.locator('.atoms').screenshot({ path: `${out}/v030-atoms.png` });
+  // 0211 问穗仓（离线：按字面列出）+ 0237 收成穗
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.click('.search-toggle');
+  await pg.click('.sq-ask');
+  await pg.fill('.ask-input', '我收过哪些关于灯的东西？');
+  await pg.click('.ask-go');
+  await pg.waitForSelector('.ask-a .ask-text', { timeout: 4000 }).catch(() => errs.push(`[${tag}] ask answer missing`));
+  const at = await pg.textContent('.ask-a .ask-text').catch(() => '');
+  if (!/找到 2 穗/.test(at || '')) errs.push(`[${tag}] ask offline answer: ${at}`);
+  if ((await pg.locator('.ask-a .ask-ref').count()) !== 2) errs.push(`[${tag}] ask refs`);
+  await pg.screenshot({ path: `${out}/v030-ask.png` });
+  const nBefore = (await dbRaw(pg, 'items')).length;
+  await pg.click('.ask-save');
+  await pg.waitForTimeout(400);
+  const after = await dbRaw(pg, 'items');
+  if (after.length !== nBefore + 1 || after[after.length - 1].source !== '穗仓对话') errs.push(`[${tag}] ask save`);
+  await pg.click('.sq-cancel');
+  await ctx.close();
+
+  // 有模型：发出去前看一眼（每次）→ 预览即请求体、温度 1.5；挑张力；出站记录
+  const c2 = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  const dp = await c2.newPage();
+  dp.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  const origin = new URL(base).origin;
+  await dp.goto(base);
+  await dp.evaluate((v) => { localStorage.setItem('lingan.settings.v1', v); localStorage.setItem('glean.outbound.preview', 'always'); localStorage.setItem('glean.graft.deck', JSON.stringify({ card: '把时间倒过来', pinned: true, wild: true, pick: true })); }, MOCK_SETTINGS(origin));
+  const log = await mockAI(dp, { delay: 60 });
+  await dp.reload();
+  await dp.click('text=先放点示例');
+  await dp.waitForSelector('.card[data-sample="1"]');
+  await dp.click('.nav-btn:has-text("嫁接")');
+  await dp.click('.controls button:has-text("抽几穗")');
+  if ((await dp.textContent('.deck .oblique-text')).trim() !== '把时间倒过来') errs.push(`[${tag}] pinned card should persist`);
+  await dp.click('.graft-btn');
+  await dp.waitForSelector('.out-paper', { timeout: 6000 }).catch(() => errs.push(`[${tag}] outbound preview did not show`));
+  const pv = await dp.textContent('.out-paper .out-text').catch(() => '');
+  const meta = await dp.textContent('.out-paper .out-meta').catch(() => '');
+  if (!pv.includes('PHASE A') || !pv.includes('把时间倒过来')) errs.push(`[${tag}] preview text should be the real prompt`);
+  if (!/温度 1\.5/.test(meta)) errs.push(`[${tag}] preview should show temperature 1.5: ${meta}`);
+  await dp.screenshot({ path: `${out}/v030-preview-desktop.png` });
+  if (log.calls !== 0) errs.push(`[${tag}] request sent before preview ok`);
+  await dp.click('.out-send');
+  // 0201 停在挑张力
+  await dp.waitForSelector('.tension-pick .tension-chip', { timeout: 6000 }).catch(() => errs.push(`[${tag}] tension pick missing`));
+  await dp.screenshot({ path: `${out}/v030-tension-desktop.png` });
+  await dp.click('.tension-chip >> nth=1');
+  await dp.click('.tension-go');
+  await dp.waitForSelector('.out-paper', { timeout: 6000 }).catch(() => errs.push(`[${tag}] second preview missing`));
+  const pv2 = await dp.textContent('.out-paper .out-text').catch(() => '');
+  if (!pv2.includes('我挑的张力')) errs.push(`[${tag}] second preview should carry picked tension`);
+  await dp.click('.out-send');
+  await dp.waitForSelector('.three .idea', { timeout: 15000 }).catch(() => errs.push(`[${tag}] AI graft did not finish`));
+  if (log.temps?.[0] !== 1.5) errs.push(`[${tag}] wild temperature ${JSON.stringify(log.temps)}`);
+  if (!(log.users?.[1] || '').includes('我挑的张力')) errs.push(`[${tag}] picked tension not in request`);
+  if (pv2.trim() !== '' && !pv2.includes((log.users?.[1] || '').slice(0, 60))) errs.push(`[${tag}] preview != request body`);
+  const cons2 = await dp.locator('.three .idea >> nth=0 >> .idea-cons').innerText().catch(() => '');
+  if (!cons2.includes('把时间倒过来') || !cons2.includes('沿着我挑的张力')) errs.push(`[${tag}] AI constraints used: ${cons2}`);
+  // 出站记录：本月这个域名 2 次（文字）
+  await dp.click('.nav-btn:has-text("设置")');
+  await dp.waitForSelector('#set-out .out-row', { timeout: 4000 }).catch(() => errs.push(`[${tag}] outbound log row missing`));
+  const outRow = await dp.locator('#set-out .out-row >> nth=0').innerText().catch(() => '');
+  if (!/127\.0\.0\.1|localhost/.test(outRow) || !/\b2\b/.test(outRow) || !outRow.includes('文字')) errs.push(`[${tag}] outbound summary: ${outRow}`);
+  await dp.locator('#set-out').screenshot({ path: `${out}/v030-outbound-desktop.png` });
+  await c2.close();
+  console.log('v030: deck (pin/write/dice/wild) / constraints used / status+result / regraft tree / followup / branch filter / atoms / ask+save / preview=request (temp 1.5) / tension pick / outbound log ok');
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v030') {
+    await v030();
+    throw Object.assign(new Error('v030 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v029') {
     await v029();
     throw Object.assign(new Error('v029 only'), { only: true });
@@ -3622,6 +3791,7 @@ try {
   await ui27();
   await v028();
   await v029();
+  await v030();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
