@@ -11,8 +11,8 @@ export interface LinkMeta {
   year?: string;
 }
 
-const MUSIC_HOSTS = ['music.163.com', 'y.qq.com', 'open.spotify.com', 'music.apple.com', 'soundcloud.com', 'bandcamp.com', 'kugou.com', 'kuwo.cn', 'music.douban.com', 'xiami.com', 'music.youtube.com'];
-const FILM_HOSTS = ['movie.douban.com', 'imdb.com', 'letterboxd.com', 'themoviedb.org', 'mubi.com'];
+const MUSIC_HOSTS = ['music.163.com', 'y.qq.com', 'open.spotify.com', 'music.apple.com', 'soundcloud.com', 'bandcamp.com', 'kugou.com', 'kuwo.cn', 'music.douban.com', 'xiami.com', 'music.youtube.com', '163cn.tv'];
+const FILM_HOSTS = ['movie.douban.com', 'imdb.com', 'letterboxd.com', 'themoviedb.org', 'mubi.com', 'maoyan.com', 'tmdb.org'];
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|bmp)(\?|#|$)/i;
 
 export function guessType(url: string): ItemType {
@@ -25,6 +25,9 @@ export function guessType(url: string): ItemType {
   if (IMAGE_EXT.test(url)) return 'image';
   if (MUSIC_HOSTS.some((h) => host === h || host.endsWith('.' + h))) return 'music';
   if (FILM_HOSTS.some((h) => host === h || host.endsWith('.' + h))) return 'film';
+  // v0.35 0063 / 0064 / 0803：豆瓣移动版按路径、B 站视频算影像
+  const m = /^(?:m\.douban\.com\/(movie|music)|(?:[\w-]+\.)?bilibili\.com\/video)\//.exec(host + new URL(url).pathname);
+  if (m) return m[1] === 'music' ? 'music' : 'film';
   return 'link';
 }
 
@@ -89,6 +92,7 @@ export function parseHtmlMeta(html: string, url: string): LinkMeta {
 
 import { getFetch } from './ai';
 import { compressImage } from './image';
+import { cleanUrl } from './cleanurl';
 
 const UA = 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
 
@@ -120,19 +124,45 @@ export async function fetchLinkMeta(rawUrl: string): Promise<LinkMeta & { imageD
     const imageData = await fetchImageData(url).catch(() => undefined);
     return { url: rawUrl, type: 'image', imageData, title: decodeURIComponent(url.split('/').pop()?.split('?')[0] || '图片') };
   }
-  // v0.30 0906 出站记录：抓链接只发了链接本身
-  const rec = (ok: boolean) => void import('./outbound').then((o) => o.recordOutbound({ at: Date.now(), host: o.hostOf(url), kind: 'link', fields: ['链接'], bytes: url.length, ok }));
-  const res = await withTimeout((signal) => f(url, { headers: { 'User-Agent': UA, Accept: 'text/html,*/*' }, signal }), 12000).catch((e) => {
-    rec(false);
-    throw e;
-  });
-  rec(res.ok);
-  if (!res.ok) throw new Error(`网页返回 ${res.status}`);
-  const html = await res.text();
-  const m = parseHtmlMeta(html, url);
+  // v0.30 0906 出站记录：抓链接只发了链接本身（v0.35 短链跳转、B 站接口各记一条）
+  const rf = async (u: string, init?: RequestInit) => {
+    const rec = (ok: boolean) => void import('./outbound').then((o) => o.recordOutbound({ at: Date.now(), host: o.hostOf(u), kind: 'link', fields: ['链接'], bytes: u.length, ok }));
+    try {
+      const r = await withTimeout((signal) => f(u, { ...init, signal, maxRedirections: 5 } as RequestInit), 12000);
+      rec(r.ok);
+      return r;
+    } catch (e) {
+      rec(false);
+      throw e;
+    }
+  };
+  // v0.35 0012 短链先跟着跳到真实地址（存展开后的链接）；0803 B 站视频走公开接口
+  const P = await import('./platforms');
+  const hdr = { headers: { 'User-Agent': UA, Accept: 'text/html,*/*' } };
+  let target = url;
+  let expanded: string | undefined;
+  let res: Response | undefined;
+  if (!P.biliId(url)) {
+    res = await rf(url, hdr);
+    const fin = res.url;
+    if (fin && fin !== url && /^https?:/.test(fin)) {
+      target = fin;
+      if (P.isShort(url)) expanded = cleanUrl(fin);
+    }
+  }
+  const out = expanded || rawUrl;
+  const bid = P.biliId(target);
+  const bm = bid ? await P.biliMeta(bid, target, rf) : null;
+  let m: LinkMeta;
+  if (bm) m = bm;
+  else {
+    res ||= await rf(target, hdr);
+    if (!res.ok) throw new Error(`网页返回 ${res.status}`);
+    m = parseHtmlMeta(await res.text(), target);
+  }
   let imageData: string | undefined;
   if (m.image) imageData = await fetchImageData(m.image).catch(() => undefined);
-  return { ...m, url: rawUrl, imageData };
+  return { ...m, url: out, imageData };
 }
 
 async function fetchImageData(url: string): Promise<string> {
