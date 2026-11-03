@@ -5,7 +5,7 @@ import { addItem, db, normalizeTags, updateItem } from '../lib/db';
 import { amendItem, fillItem } from '../lib/repo';
 import { itemHasImage } from '../lib/imagestore';
 import { enrichItem } from '../lib/enrich';
-import { fetchLinkMeta } from '../lib/linkmeta';
+import { fetchLinkMeta, snapOn } from '../lib/linkmeta';
 import { clipMemory, nextType, parseQuick, readClipboard, shouldOffer, type QuickDraft } from '../lib/quick';
 import type { Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
@@ -73,7 +73,7 @@ export function afterAdd(id: number, d: QuickDraft, s: Settings, onErr?: (m: str
   void (async () => {
     if (d.url) {
       try {
-        const m = await fetchLinkMeta(d.url);
+        const m = await fetchLinkMeta(d.url, { snap: snapOn() });
         const cur = await db.items.get(id);
         if (cur) {
           const titleIsUrl = !cur.title || cur.title === d.url;
@@ -85,12 +85,16 @@ export function afterAdd(id: number, d: QuickDraft, s: Settings, onErr?: (m: str
             creator: cur.creator || m.creator || m.siteName || '',
             year: cur.year || m.year || '',
             content: cur.content || m.description || '',
+            // v0.39 0017 正文快照（同一份网页里抽，不多发请求）
+            ...(m.snap && !cur.snap ? { snap: m.snap, snapAt: Date.now() } : {}),
+            ...(cur.metaTodo ? { metaTodo: undefined } : {}),
           });
           // 链接封面：原图进 images 表，后台做缩略图
           if (!itemHasImage(cur) && m.imageData) await updateItem(id, { image: m.imageData });
         }
-      } catch {
-        /* link kept as is */
+      } catch (e) {
+        // v0.39 0054 没读到（断网 / 超时）：打「待补」，联网后自动再试；网页本身说不行的（404、删了）就不再试
+        if (!/网页返回 4|已被删除|无法查看/.test(e instanceof Error ? e.message : '')) await import('../lib/linkretry').then((m) => m.markMetaTodo(id));
       }
     }
     // v0.36 0020 桌面版：图里的字交给系统 OCR（懒加载），进秒搜
