@@ -24,9 +24,10 @@ interface Fixture {
     ftidx?: unknown[];
     cliches?: Cliche[];
     meta?: Array<{ k: string; v: unknown }>;
+    rejects?: Array<Record<string, unknown>>;
   };
 }
-const LATEST = 10;
+const LATEST = 11;
 // 夹具按原文读进来（vite 的 ?raw），不依赖 node:fs
 const raw = import.meta.glob('./fixtures/dexie/v*.json', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const fixtures: Fixture[] = Object.values(raw)
@@ -49,6 +50,7 @@ async function seedFixture(name: string, fx: Fixture) {
   if (fx.data.ftidx) await t('ftidx').bulkAdd(fx.data.ftidx);
   if (fx.data.cliches) await t('cliches').bulkAdd(fx.data.cliches);
   if (fx.data.meta) await t('meta').bulkAdd(fx.data.meta);
+  if (fx.data.rejects) await t('rejects').bulkAdd(fx.data.rejects);
   expect(raw.verno).toBe(fx.version);
   raw.close();
 }
@@ -61,9 +63,9 @@ function expectedImages(fx: Fixture): Map<number, string> {
   return m;
 }
 
-describe('0710 Dexie 迁移回归：v1–v9 夹具库逐个升级到最新', () => {
-  it('夹具齐全：v1 到 v9 每版一份', () => {
-    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+describe('0710 Dexie 迁移回归：v1–v10 夹具库逐个升级到最新', () => {
+  it('夹具齐全：v1 到 v10 每版一份', () => {
+    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(new LinganDB(uniq('probe')).verno).toBe(LATEST);
   });
 
@@ -102,7 +104,7 @@ describe('0710 Dexie 迁移回归：v1–v9 夹具库逐个升级到最新', () 
         expect(Array.isArray(it.dup)).toBe(true);
         if (fx.version >= 9) expect(it.dup).toEqual(src.dup);
         // v0.22 / v0.23 的可选字段原样保留
-        for (const k of ['source', 'tagSugg'] as const) if (src[k] !== undefined) expect(it[k], `item ${src.id}.${k}`).toEqual(src[k]);
+        for (const k of ['source', 'tagSugg', 'bundles', 'polarity', 'private'] as const) if (src[k] !== undefined) expect(it[k], `item ${src.id}.${k}`).toEqual(src[k]);
         if (src.url) expect(it.dup!.some((k) => k.startsWith('u:'))).toBe(true);
       }
       expect(new Set(items.map((x) => x.uid)).size).toBe(items.length);
@@ -145,8 +147,11 @@ describe('0710 Dexie 迁移回归：v1–v9 夹具库逐个升级到最新', () 
       expect(await d.daily.count()).toBe(fx.data.daily?.length || 0);
       expect(await d.ftidx.count()).toBe(fx.data.ftidx?.length || 0);
       expect((await d.meta.get('deviceId'))?.v).toBe(items[0].deviceId);
-      // v0.24：新表 rejects（不要的理由）建好了，空的
-      expect(await d.rejects.count()).toBe(0);
+      // v0.24：新表 rejects（不要的理由）建好了；v10 夹具里的理由原样保留
+      const rj = await d.rejects.orderBy(':id').toArray();
+      expect(rj.map((r) => [r.uid, r.reason, r.title, r.text])).toEqual((fx.data.rejects || []).map((r) => [r.uid, r.reason, r.title, r.text]));
+      // v0.29：新表 works（作品）建好了，空的；升级不动任何旧数据
+      expect(await d.works.count()).toBe(0);
 
       // 升级后的库导出 .glean → 导进空库：一样
       const sink = new BlobSink();
@@ -158,6 +163,7 @@ describe('0710 Dexie 迁移回归：v1–v9 夹具库逐个升级到最新', () 
       expect(copy.map((x) => x.uid).sort()).toEqual(items.map((x) => x.uid).sort());
       expect(await d2.developments.count()).toBe(devs.length);
       expect(await d2.images.count()).toBe(want.size);
+      expect((await d2.rejects.toArray()).map((r) => r.uid).sort()).toEqual(rj.map((r) => r.uid).sort());
       d.close();
     });
   }
