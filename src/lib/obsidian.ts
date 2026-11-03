@@ -223,6 +223,7 @@ export function buildVault(input: VaultInput): Vault {
       ['标签', tags],
       ['tags', tags.map(obsidianTag).filter(Boolean)],
       ['来源', it.url || ''],
+      ['拾自', it.source || undefined],
       ['记录时间', localStamp(it.createdAt)],
       ['修改时间', it.updatedAt && it.updatedAt !== it.createdAt ? localStamp(it.updatedAt) : undefined],
       ['为什么', it.why || undefined],
