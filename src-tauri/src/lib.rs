@@ -1,4 +1,8 @@
 mod smtc;
+#[cfg(desktop)]
+mod apicore;
+#[cfg(desktop)]
+mod api;
 
 /// v0.22 正在播放一键拾（Windows SMTC）；其它平台返回 unsupported，安卓走 MainActivity 的 LinganNowPlaying 桥
 #[tauri::command]
@@ -84,7 +88,29 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_clipboard_manager::init())
-    .invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete, now_playing]);
+    ;
+
+  #[cfg(mobile)]
+  let builder = builder.invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete, now_playing]);
+
+  // v0.25 本地 API / MCP（api_*）+ 自动更新（updater / process 插件）只在桌面版
+  #[cfg(desktop)]
+  let builder = builder
+    .plugin(tauri_plugin_updater::Builder::new().build())
+    .plugin(tauri_plugin_process::init())
+    .invoke_handler(tauri::generate_handler![
+      vault::secret_get,
+      vault::secret_set,
+      vault::secret_delete,
+      now_playing,
+      api::api_start,
+      api::api_stop,
+      api::api_status,
+      api::api_token,
+      api::api_rotate,
+      api::api_respond,
+      api::api_focus
+    ]);
 
   #[cfg(desktop)]
   let builder = builder
@@ -111,6 +137,7 @@ pub fn run() {
     .setup(|app| {
       #[cfg(desktop)]
       {
+        api::init(app.handle());
         use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
         use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
         let quick = MenuItem::with_id(app, "quick", "随手拾一穗\tCtrl+Shift+L", true, None::<&str>)?;
