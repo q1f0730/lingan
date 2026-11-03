@@ -30,3 +30,5 @@ tauri-plugin-clipboard-manager = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-global-shortcut = "2"
+# v0.20：AI 密钥存系统钥匙串（Windows 凭据管理器）；安卓走 MainActivity 里的 Android Keystore 桥
+keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
