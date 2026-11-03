@@ -61,6 +61,8 @@ export interface Item {
   private?: 1;
   /** v0.28 0107 穗束（合集）名字：一穗可属于多个束，束也能当嫁接池（0108）。没加索引，不是 schema 变更 */
   bundles?: string[];
+  /** v0.34 0902 公开花园：标了才会进「生成花园页」（默认私有）；私密穗永远不进。没加索引，不是 schema 变更 */
+  garden?: 1;
   createdAt: number;
   updatedAt: number;
 }
