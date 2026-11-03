@@ -30,6 +30,10 @@ export interface Cliche {
   uid?: string;
   updatedAt?: number;
   deviceId?: string;
+  /** v0.31 HLC：行里最新一次修改 / 新建时 / 改过的字段 → 那次的 HLC（同步字段级合并） */
+  hlc?: string;
+  hc?: string;
+  fh?: Record<string, string>;
 }
 
 export const MAX_CLICHE_LEN = 40;
