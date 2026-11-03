@@ -4,7 +4,8 @@ import { ClipOffer, QuickBar, QuickWindow } from './components/QuickBar';
 import { ConfirmLayer, type ConfirmReq } from './components/Confirm';
 import { Detail } from './components/Detail';
 import { Sheet } from './components/Sheet';
-import { addItem, alive, db, touchItems, trashItems, untrashItems, updateItem } from './lib/db';
+import { addItem, alive, db, inboxEnabled, touchItems, trashItems, untrashItems, updateItem } from './lib/db';
+import { notifyDupe, savedMsg } from './lib/dupnotice';
 import { getOriginalDataUrl } from './lib/imagestore';
 import { enrichItem } from './lib/enrich';
 import { detectMotionLevel } from './lib/motion';
@@ -102,6 +103,7 @@ export default function App() {
   const [toasts, setToasts] = useState<ToastT[]>([]);
   const [capture, setCapture] = useState<{ draft: Draft; editId?: number; origImage?: string } | null>(null);
   const [detail, setDetail] = useState<Item | null>(null);
+  const [seq, setSeq] = useState<number[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [preset, setPreset] = useState<number[] | null>(null);
   const [confirmReq, setConfirmReq] = useState<ConfirmReq | null>(null);
@@ -150,11 +152,30 @@ export default function App() {
   }, []);
 
   const openCapture = useCallback(() => setCapture({ draft: emptyDraft() }), []);
-  const openItem = useCallback((it: Item) => {
+  const openItem = useCallback((it: Item, list?: number[]) => {
     setDetail(it);
+    setSeq(list && list.length > 1 ? list : null);
     // v0.14 打开即「碰过」：每日一穗按它找很久没碰的旧穗
     if (it.id != null) void touchItems([it.id]).catch(() => {});
   }, []);
+  // v0.23 0113 详情页上一穗 / 下一穗：按打开时那个视图的顺序翻（桌面 ← / →，手机左右滑）
+  const stepDetail = useCallback(
+    async (dir: 1 | -1) => {
+      if (!detail?.id || !seq) return;
+      let i = seq.indexOf(detail.id);
+      for (let k = 0; k < seq.length; k++) {
+        i += dir;
+        if (i < 0 || i >= seq.length) return;
+        const next = await db.items.get(seq[i]);
+        if (next && alive(next)) {
+          setDetail(next);
+          void touchItems([next.id!]).catch(() => {});
+          return;
+        }
+      }
+    },
+    [detail, seq],
+  );
   const developFrom = useCallback((ids: number[]) => {
     setPreset(ids);
     setDetail(null);
@@ -183,8 +204,9 @@ export default function App() {
     const pull = async () => {
       const d = shareToDraft(takeShared());
       if (d) {
-        const id = await addItem(d);
-        toast('已拾进穗仓');
+        const id = await addItem(d, db, { inbox: true });
+        toast(savedMsg());
+        void notifyDupe(id, toast);
         enrichItem(id, settingsRef.current).then((err) => {
           if (err) toast('AI 整理失败：' + err, 'err');
         });
@@ -194,7 +216,8 @@ export default function App() {
       if (!alive) return;
       if (r && r.added.length) {
         const one = r.added.length === 1 ? r.added[0].draft : null;
-        toast(one ? `极速拾 · 收进「${one.title.slice(0, 16)}」${one.source ? ' · 来自 ' + one.source : ''}` : `极速拾 · 收进 ${r.added.length} 穗`);
+        toast(one ? `极速拾 · 收进「${one.title.slice(0, 16)}」${one.source ? ' · 来自 ' + one.source : ''}${inboxEnabled() ? ' · 在待理' : ''}` : `极速拾 · 收进 ${r.added.length} 穗${inboxEnabled() ? ' · 在待理' : ''}`);
+        if (one) void notifyDupe(r.added[0].id, toast);
         for (const a of r.added) afterAdd(a.id, a.draft, settingsRef.current, (m) => toast(m, 'err'));
       }
       const go = takeGo();
@@ -208,10 +231,19 @@ export default function App() {
     };
     document.addEventListener('visibilitychange', vis);
     window.addEventListener('focus', vis);
+    // v0.23 后台同步：App 在后台、WebView 还活着时，原生收件箱一有新条目就发 glean:inbox，马上收进来（不等回到前台）
+    let busy = false;
+    const bg = () => {
+      if (busy) return;
+      busy = true;
+      void pull().finally(() => (busy = false));
+    };
+    window.addEventListener('glean:inbox', bg);
     return () => {
       alive = false;
       document.removeEventListener('visibilitychange', vis);
       window.removeEventListener('focus', vis);
+      window.removeEventListener('glean:inbox', bg);
     };
   }, [toast]);
 
@@ -250,11 +282,17 @@ export default function App() {
     };
   }, []);
 
-  // 快捷键：N = 速记展开
+  // 快捷键：N = 速记展开；详情里 ← / → 翻上一穗 / 下一穗
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || capture || detail || confirmReq) return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (detail && !capture && !confirmReq && seq && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        void stepDetail(e.key === 'ArrowRight' ? 1 : -1);
+        return;
+      }
+      if (capture || detail || confirmReq) return;
       if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         openCapture();
@@ -270,7 +308,7 @@ export default function App() {
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [capture, detail, confirmReq, openCapture, go]);
+  }, [capture, detail, confirmReq, openCapture, go, seq, stepDetail]);
 
   async function onSave(d: Draft) {
     setSaving(true);
@@ -281,11 +319,14 @@ export default function App() {
         // 原图在 images 表：只有真的换了 / 删了图才动它（带 image 键），否则不碰
         const imageChanged = (capture.origImage || undefined) !== (d.image || undefined);
         const { image, ...rest } = d;
-        await updateItem(id, { ...rest, ...(imageChanged ? { image: image || undefined, caption: undefined } : {}), embedding: undefined, embedModel: undefined });
+        // v0.23 编辑过 = 整理过：出待理
+        await updateItem(id, { ...rest, ...(imageChanged ? { image: image || undefined, caption: undefined } : {}), embedding: undefined, embedModel: undefined, inbox: undefined });
         toast('已更新');
       } else {
+        // 展开速记里填好再存的：算整理过，直接进穗仓
         id = await addItem(d);
         toast('已拾进穗仓');
+        void notifyDupe(id, toast);
       }
       setCapture(null);
       setDetail(null);
@@ -435,6 +476,8 @@ export default function App() {
           {detail && (
             <Detail
               it={detail}
+              pos={seq && detail.id != null ? { i: seq.indexOf(detail.id), n: seq.length } : undefined}
+              onStep={seq ? (dir: 1 | -1) => void stepDetail(dir) : undefined}
               onEdit={() => editDetail(detail)}
               onDelete={() => onDelete(detail)}
               onDevelop={() => developFrom([detail.id!])}
@@ -465,9 +508,11 @@ export default function App() {
     </Ctx.Provider>
   );
 
-  async function editDetail(it: Item) {
-    const { id, createdAt: _c, updatedAt: _u, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _td, thumbFail: _f, hasImage: _hi, ...rest } = it;
-    void _c, void _u, void _t, void _w, void _h, void _td, void _f, void _hi;
+  async function editDetail(it0: Item) {
+    // 详情里可能刚改过（加标签 / 留下 / 合并）：编辑前读最新的
+    const it = (it0.id != null ? await db.items.get(it0.id) : null) || it0;
+    const { id, createdAt: _c, updatedAt: _u, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _td, thumbFail: _f, hasImage: _hi, dup: _dp, inbox: _ib, ...rest } = it;
+    void _c, void _u, void _t, void _w, void _h, void _td, void _f, void _hi, void _dp, void _ib;
     // 编辑时才把原图读出来给表单预览
     const origImage = id != null && (it.hasImage || it.image) ? await getOriginalDataUrl(db, id) : undefined;
     setCapture({ draft: { ...rest, image: origImage }, editId: id, origImage });
