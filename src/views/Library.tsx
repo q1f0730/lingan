@@ -7,7 +7,7 @@ import { DailyCard } from '../components/DailyCard';
 import { addSamples, clearSamples, db, inboxEnabled, inLibrary } from '../lib/db';
 import { lacksWhy } from '../lib/why';
 import { takeLibSub } from '../lib/libsub';
-import { staggerDelay } from '../lib/motion';
+import { staggerDelay, useAfterReady } from '../lib/motion';
 import { throwbacks } from '../lib/memory';
 import { itemHasImage } from '../lib/imagestore';
 import { useThumbSrc } from '../lib/useImage';
@@ -78,22 +78,30 @@ export function Library() {
   };
 
   // v0.23 穗仓只放整理过的，和在待理里超过 7 天的
+  // v0.24 冷启动：穗仓 / 待理数 / 缺为什么数 / 类型计数 / 示例数合成一遍扫完（原来是五遍）；标签云、回顾、今日一穗等首屏画完、主线程空闲再算
   const inboxOn = inboxEnabled();
-  const shelf = useMemo(() => {
-    if (!items) return [];
-    const now = Date.now();
-    return items.filter((i) => inLibrary(i, now, inboxOn));
+  const idle = useAfterReady();
+  const { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples } = useMemo(() => {
+    const shelf: Item[] = [];
+    const typeN = new Map<ItemType, number>();
+    let nInbox = 0, nNoWhy = 0, nSamples = 0, nShelfSamples = 0;
+    if (items) {
+      const now = Date.now();
+      for (const i of items) {
+        if (i.inbox && inboxOn) nInbox++;
+        if (lacksWhy(i)) nNoWhy++;
+        if (i.sample) nSamples++;
+        if (!inLibrary(i, now, inboxOn)) continue;
+        shelf.push(i);
+        if (i.sample) nShelfSamples++;
+        typeN.set(i.type, (typeN.get(i.type) || 0) + 1);
+      }
+    }
+    return { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples };
   }, [items, inboxOn]);
-  const nInbox = items && inboxOn ? items.filter((i) => i.inbox).length : 0;
   useEffect(() => { if (items) prefetchSubviews(); }, [items]);
-  const nNoWhy = useMemo(() => (items ? items.filter(lacksWhy).length : 0), [items]);
-  const filtered = useMemo(() => shelf.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag))), [shelf, type, tag]);
+  const filtered = useMemo(() => (type === 'all' && !tag ? shelf : shelf.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)))), [shelf, type, tag]);
   const seqIds = useMemo(() => filtered.map((i) => i.id!), [filtered]);
-  const typeN = useMemo(() => {
-    const m = new Map<ItemType, number>();
-    for (const i of shelf) m.set(i.type, (m.get(i.type) || 0) + 1);
-    return m;
-  }, [shelf]);
   useEffect(() => {
     const d = (e: KeyboardEvent) => (shiftDown.current = e.shiftKey);
     window.addEventListener('keydown', d);
@@ -155,7 +163,7 @@ export function Library() {
     };
   }, []);
   // 示例不是你拾的：不进「一周前 / 那年今天」
-  const backs = useMemo(() => (items ? throwbacks(items.filter((i) => !i.sample)) : []), [items]);
+  const backs = useMemo(() => (items && idle ? throwbacks(items.filter((i) => !i.sample)) : []), [items, idle]);
 
   // 冷启动打点：第一次把穗仓（含卡片）画出来的时刻，e2e 读它
   useEffect(() => {
@@ -179,7 +187,6 @@ export function Library() {
   }, [items]);
   const cellStyle = useCallback((i: number): CSSProperties | undefined => (firstPaint.current && i < STAGGER_FIRST ? ({ '--d': `${staggerDelay(i)}ms` } as CSSProperties) : undefined), []);
 
-  const nSamples = items ? items.filter((i) => i.sample).length : 0;
   async function loadSamples() {
     const ids = await addSamples(10);
     toast(`放进了 ${ids.length} 穗示例（标着「示例」），随时一键清掉`);
@@ -196,7 +203,6 @@ export function Library() {
   if (searching && devs) return <Suspense fallback={<Loading />}><SearchView items={items} devs={devs} onClose={() => setSearching(false)} /></Suspense>;
   if (sub === 'inbox') return <Suspense fallback={<Loading />}><InboxView onClose={() => setSub(null)} /></Suspense>;
   if (sub === 'why') return <Suspense fallback={<Loading />}><WhyView onClose={() => setSub(null)} /></Suspense>;
-  const nShelfSamples = shelf.filter((i) => i.sample).length;
   const own = shelf.length - nShelfSamples;
   const filtering = type !== 'all' || !!tag;
 
@@ -261,7 +267,7 @@ export function Library() {
               </span>
             </div>
           )}
-          <DailyCard items={items} />
+          {idle && <DailyCard items={items} />}
           {nSamples > 0 && (
             <div className="samples-bar note-row">
               <span className="meta-text">
@@ -361,10 +367,10 @@ export function Library() {
         {desktop ? (
           <aside className="lib-rail" aria-label="今天">
             {notesEl}
-            <TagCloud items={items} onPick={setTag} active={tag} />
+            {idle && <TagCloud items={items} onPick={setTag} active={tag} />}
           </aside>
         ) : (
-          <TagCloud items={items} onPick={setTag} active={tag} />
+          idle ? <TagCloud items={items} onPick={setTag} active={tag} /> : null
         )}
       </div>
     </section>
