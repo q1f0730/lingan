@@ -5,9 +5,12 @@ import { DAILY_COMBO, pickDaily, pickStillValid, todayKey } from './daily';
 import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
 import { drawSamples, sampleTimes } from './samples';
-import { blobToDataUrl, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
+import { blobToDataUrl, dataUrlToBlob, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
 import type { DailyPick, Development, FtRow, Item, StoredImage } from './types';
 import { cleanText, clicheKey, validKey, wallCandidates, type Cliche } from './wall';
+import { dupKeys, imageKey, mergedPatch, refreshDup } from './dupe';
+import { sha256Hex } from './sha256';
+import { resolveTag } from './tagalias';
 
 export class LinganDB extends Dexie {
   items!: Table<Item, number>;
@@ -123,7 +126,20 @@ export class LinganDB extends Dexie {
           });
         await tx.table('meta').put({ k: 'deviceId', v: dev });
       });
+    // v0.23 待理与补为什么：items 加 inbox（待理收件箱）与 *dup（重复钥匙：链接 / 原图哈希 / 文字指纹）索引。
+    // 迁移：老穗一律不进待理（升级不把整个穗仓塞进收件箱）；按链接与文字补上重复钥匙，原图哈希由后台空闲时补（backfillImageDup）。不动任何内容
+    this.version(9)
+      .stores({ items: '++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt, graftCount, &uid, deletedAt, inbox, *dup' })
+      .upgrade((tx) =>
+        tx
+          .table('items')
+          .toCollection()
+          .modify((it: Item) => {
+            it.dup = dupKeys(it);
+          }),
+      );
     stampHooks(this);
+    dupHooks(this);
     // 库里记的设备 id 为准（localStorage 被清了但库还在时沿用原来的）
     // 不返回 Promise：不拖慢打开（冷启动），读完再对齐
     this.on('ready', () => {
@@ -144,7 +160,7 @@ export interface MetaRow {
 }
 
 /** 这些字段的变化不算「修改」（缩略图、碰过、向量、嫁接统计、自身盖章） */
-const ITEM_LOCAL = new Set(['thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'touchedAt', 'embedding', 'embedModel', 'graftCount', 'graftedAt', 'uid', 'deviceId', 'updatedAt']);
+const ITEM_LOCAL = new Set(['thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'touchedAt', 'embedding', 'embedModel', 'graftCount', 'graftedAt', 'uid', 'deviceId', 'updatedAt', 'dup', 'tagSugg']);
 const DEV_LOCAL = new Set(['uid', 'deviceId', 'updatedAt']);
 const CLICHE_LOCAL = new Set(['listed', 'blocked', 'lastAt', 'uid', 'deviceId', 'updatedAt']);
 
@@ -192,6 +208,25 @@ function stampTable(table: Table<Stamped, number>, local: Set<string>) {
     return Object.keys(add).length ? add : undefined;
   });
 }
+const DUP_FIELDS = ['type', 'title', 'content', 'creator', 'url'];
+/** v0.23 重复钥匙跟着内容走：新建时补上（保留已有的图片钥匙），改了标题 / 正文 / 链接 / 作者 / 类型就重算 */
+function dupHooks(d: LinganDB) {
+  d.items.hook('creating', function (_pk, obj) {
+    obj.dup = refreshDup(obj);
+  });
+  d.items.hook('updating', function (mods, _pk, obj) {
+    const m = mods as Record<string, unknown>;
+    // Dexie 会把没变的多值索引（tags / dup）也放进 mods：真改了 dup 才算显式写入；内容字段真变了才重算
+    if ('dup' in m && !sameValue(m.dup, obj.dup)) return undefined;
+    const o = obj as unknown as Record<string, unknown>;
+    if (!DUP_FIELDS.some((k) => k in m && !sameValue(m[k], o[k]))) return undefined;
+    const next = { ...obj } as Item;
+    for (const k of DUP_FIELDS) if (k in m) (next as unknown as Record<string, unknown>)[k] = m[k];
+    const dup = refreshDup(next);
+    return sameValue(dup, obj.dup) ? undefined : { dup };
+  });
+}
+
 /** v0.21 自动盖章：新建时补 uid / deviceId / updatedAt；改了内容（不是缩略图、碰过这类派生字段）时更新 updatedAt 与 deviceId */
 function stampHooks(d: LinganDB) {
   stampTable(d.items as unknown as Table<Stamped, number>, ITEM_LOCAL);
@@ -282,7 +317,8 @@ export function normalizeTags(input: string | string[]): string[] {
   const arr = Array.isArray(input) ? input : input.split(/[,，、\s#]+/);
   const out: string[] = [];
   for (const t of arr) {
-    const s = t.trim().replace(/^#/, '');
+    const raw = t.trim().replace(/^#/, '');
+    const s = raw ? resolveTag(raw) : raw;
     if (s && !out.includes(s) && s.length <= 24) out.push(s);
   }
   return out.slice(0, 12);
@@ -300,12 +336,15 @@ const notifyImage = () => imageListeners.forEach((f) => f());
 export const notifyNewImages = notifyImage;
 
 /** 新增一件穗：有图时原图进 images 表，行里只标「待做缩略图」 */
-export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db, at?: { createdAt?: number; uid?: string }): Promise<number> {
+export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db, at?: { createdAt?: number; uid?: string; inbox?: boolean }): Promise<number> {
   const now = Date.now();
   // v0.22 极速拾收件箱：保留在原生面板里按下「存」的那一刻（createdAt）和原生生成的 uid（ULID），重复收也认得出
   const created = at?.createdAt && Number.isFinite(at.createdAt) && at.createdAt > 0 && at.createdAt <= now + 60000 ? Math.floor(at.createdAt) : now;
   const row: Item = { graftCount: 0, ...data, tags: normalizeTags(data.tags), createdAt: created, updatedAt: now };
   if (at?.uid && isUlid(at.uid)) row.uid = at.uid;
+  // v0.23 待理：速记 / 分享 / 极速拾 / 选字 / 正在播放 收进来的先进待理（设置里关掉待理时不进）
+  if (at?.inbox && inboxEnabled()) row.inbox = 1;
+  else delete row.inbox;
   delete row.thumb;
   delete row.thumbW;
   delete row.thumbH;
@@ -314,9 +353,13 @@ export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>
   delete row.hasImage;
   let id = 0;
   let had = false;
+  const blob = detachInlineImage(row);
+  if (!blob) delete row.image;
+  // v0.23 原图哈希：同一张图再收一次认得出（ROADMAP v0.31）
+  let ik: string | undefined;
+  if (blob) ik = await blobHash(blob);
+  row.dup = dupKeys(row, ik);
   await d.transaction('rw', d.items, d.images, async () => {
-    const blob = detachInlineImage(row);
-    if (!blob) delete row.image;
     id = await d.items.add(row);
     if (blob) {
       await d.images.put({ itemId: id, blob });
@@ -325,6 +368,126 @@ export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>
   });
   if (had) notifyImage();
   return id;
+}
+
+async function blobHash(b: Blob): Promise<string | undefined> {
+  try {
+    return imageKey(await sha256Hex(new Uint8Array(await b.arrayBuffer())));
+  } catch {
+    return undefined;
+  }
+}
+
+// ——— v0.23 待理（0101）———
+export const INBOX_DAYS = 7;
+const INBOX_OFF = 'glean.inbox';
+/** 设置里能关掉待理：关掉后新穗直接进穗仓，已在待理里的也都显示在穗仓 */
+export function inboxEnabled(): boolean {
+  try {
+    return localStorage.getItem(INBOX_OFF) !== 'off';
+  } catch {
+    return true;
+  }
+}
+export function setInboxEnabled(on: boolean) {
+  try {
+    if (on) localStorage.removeItem(INBOX_OFF);
+    else localStorage.setItem(INBOX_OFF, 'off');
+  } catch {
+    /* ignore */
+  }
+}
+/** 穗仓里显示它吗：整理过的，或在待理里超过 7 天的（待理关掉时全显示） */
+export function inLibrary(it: Pick<Item, 'inbox' | 'createdAt'>, now = Date.now(), on = inboxEnabled()): boolean {
+  return !it.inbox || !on || it.createdAt < now - INBOX_DAYS * 86400000;
+}
+/** 留下 = 整理过了，出待理（一批） */
+export async function keepItems(ids: number[], d: LinganDB = db) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return 0;
+  let n = 0;
+  await d.transaction('rw', d.items, async () => {
+    n = await d.items
+      .where(':id')
+      .anyOf(list)
+      .modify((it: Item) => {
+        delete it.inbox;
+      });
+  });
+  return n;
+}
+/** 一键全部入仓 */
+export async function keepAllInbox(d: LinganDB = db): Promise<number[]> {
+  const ids = (await d.items.where('inbox').equals(1).primaryKeys()) as number[];
+  await keepItems(ids, d);
+  return ids;
+}
+/** 撤销「留下」：放回待理 */
+export async function reInbox(ids: number[], d: LinganDB = db) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return;
+  await d.transaction('rw', d.items, async () => {
+    await d.items.where(':id').anyOf(list).modify({ inbox: 1 });
+  });
+}
+
+// ——— v0.23 这穗收过了（ROADMAP v0.31）———
+const NO_IMG = 'x:noimg';
+/** 和它重复的旧穗（活着的、不是示例、不是它自己），最早的在前 */
+export async function findDupes(id: number, d: LinganDB = db): Promise<Item[]> {
+  const it = await d.items.get(id);
+  if (!it?.dup?.length) return [];
+  const keys = it.dup.filter((k) => k !== NO_IMG);
+  if (!keys.length) return [];
+  const rows = await d.items.where('dup').anyOf(keys).distinct().toArray();
+  return rows.filter((x) => x.id !== id && alive(x) && !x.sample).sort((a, b) => a.createdAt - b.createdAt);
+}
+/** 合并：留下旧的那件（时间取更早），标签取并集、两次的为什么都留下、缺的字段补上；新的那件进回收站（可撤销） */
+export async function mergeInto(keepId: number, dropId: number, d: LinganDB = db, now = Date.now()) {
+  await d.transaction('rw', d.items, async () => {
+    const [keep, drop] = await Promise.all([d.items.get(keepId), d.items.get(dropId)]);
+    if (!keep || !drop) return;
+    const p = mergedPatch(keep, drop);
+    if (drop.createdAt < keep.createdAt) p.createdAt = drop.createdAt;
+    await d.items.update(keepId, p);
+    await d.items.update(dropId, { deletedAt: now });
+  });
+}
+/** 老原图补哈希（后台空闲时一次几张）：从 from（itemId）之后往下补，返回补了几张和下一次的起点；next = null 表示补完了 */
+export async function backfillImageDup(d: LinganDB = db, batch = 6, from = 0): Promise<{ done: number; next: number | null }> {
+  const ids = (await d.images.where('itemId').above(from).limit(batch * 8).primaryKeys()) as number[];
+  if (!ids.length) return { done: 0, next: null };
+  let done = 0;
+  let last = from;
+  const rows = await d.items.bulkGet(ids);
+  for (let k = 0; k < rows.length; k++) {
+    last = ids[k];
+    const it = rows[k];
+    if (!it || it.id == null || (it.dup || []).some((x) => x.startsWith('i:') || x === NO_IMG)) continue;
+    const im = await d.images.get(it.id);
+    const ik = im?.blob ? await blobHash(im.blob) : undefined;
+    // 解不开的也记一个占位（不参与比对），免得每次都重试
+    await d.items.update(it.id, { dup: [...(it.dup || []).filter((x) => !x.startsWith('i:') && x !== NO_IMG), ik || NO_IMG] });
+    if (++done >= batch) break;
+  }
+  return { done, next: last };
+}
+
+/** v0.23 老原图都补上哈希：每次打开 App 后第一次收进一张图时跑一遍（已有哈希的直接跳过）。不在启动时跑：不和首屏、备份抢内存 */
+let imgDupRun: Promise<void> | null = null;
+export function ensureImageDup(d: LinganDB = db): Promise<void> {
+  if (d === db && imgDupRun) return imgDupRun;
+  const run = (async () => {
+    let from = 0;
+    for (;;) {
+      const r = await backfillImageDup(d, 8, from);
+      if (r.next == null) break;
+      from = r.next;
+      await new Promise((res) => setTimeout(res, 0));
+    }
+  })().catch(() => undefined);
+  if (d === db) imgDupRun = run;
+  return run;
 }
 
 /** 改一件穗。patch 里带了 image 键：字符串 = 换原图，空 = 删图；不带 = 不动图 */
@@ -339,6 +502,19 @@ export async function updateItem(id: number, patch: Partial<Item>, d: LinganDB =
   if ('image' in patch) {
     await setItemImage(d, id, image);
     if (image) notifyImage();
+    // 换了 / 删了原图：图片钥匙跟着换
+    const cur = await d.items.get(id);
+    if (cur) {
+      let ik: string | undefined;
+      if (image && isDataUrl(image)) {
+        try {
+          ik = await blobHash(dataUrlToBlob(image));
+        } catch {
+          ik = undefined;
+        }
+      }
+      await d.items.update(id, { dup: dupKeys(cur, ik) });
+    }
   }
 }
 
