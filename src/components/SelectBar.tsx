@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { db, keepItems, reInbox, trashItems, untrashItems } from '../lib/db';
 import { addTagsTo, removeTagFrom, restoreTypes, setTypeOf } from '../lib/batch';
 import { useApp } from '../lib/store';
-import { TYPE_LABEL, TYPE_ORDER } from '../lib/types';
+import { TYPE_LABEL, TYPE_ORDER, type Item } from '../lib/types';
 
 export function SelectBar({ ids, total, onAll, onNone, onDone }: { ids: number[]; total: number; onAll: () => void; onNone: () => void; onDone: () => void }) {
   const { toast, developFrom } = useApp();
@@ -36,6 +36,13 @@ export function SelectBar({ ids, total, onAll, onNone, onDone }: { ids: number[]
     onNone();
     toast(`删掉了 ${list.length} 穗（在回收站）`, 'ok', { label: '撤销', run: () => void untrashItems(list).then(() => toast('已放回穗仓')) });
   }
+  // v0.34 0902 批量放进花园（私密穗跳过），可撤销
+  async function garden() {
+    const rows = (await db.items.bulkGet(ids)).filter((x) => x && !x.private && !x.garden);
+    const list = rows.map((x) => x!.id!);
+    await db.items.where(':id').anyOf(list).modify((x: Item) => void (x.garden = 1));
+    toast(list.length ? `${list.length} 穗放进花园` : '选中的已经在花园里了（私密穗不放）', 'ok', list.length ? { label: '撤销', run: () => void db.items.where(':id').anyOf(list).modify((x: Item) => void delete x.garden) } : undefined);
+  }
   async function keep() {
     const list = [...ids];
     const k = await keepItems(list);
@@ -63,6 +70,9 @@ export function SelectBar({ ids, total, onAll, onNone, onDone }: { ids: number[]
           </button>
           <button className="btn text sb-graft" disabled={n < 2} onClick={() => developFrom(ids.slice(0, 6))}>
             带进嫁接
+          </button>
+          <button className="btn text sb-garden" disabled={!n} onClick={garden}>
+            放进花园
           </button>
           <button className="btn text danger sb-del" disabled={!n} onClick={del}>
             删除
