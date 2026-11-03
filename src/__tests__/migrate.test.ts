@@ -26,7 +26,7 @@ interface Fixture {
     meta?: Array<{ k: string; v: unknown }>;
   };
 }
-const LATEST = 9;
+const LATEST = 10;
 // 夹具按原文读进来（vite 的 ?raw），不依赖 node:fs
 const raw = import.meta.glob('./fixtures/dexie/v*.json', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const fixtures: Fixture[] = Object.values(raw)
@@ -61,9 +61,9 @@ function expectedImages(fx: Fixture): Map<number, string> {
   return m;
 }
 
-describe('0710 Dexie 迁移回归：v1–v8 夹具库逐个升级到最新', () => {
-  it('夹具齐全：v1 到 v8 每版一份', () => {
-    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+describe('0710 Dexie 迁移回归：v1–v9 夹具库逐个升级到最新', () => {
+  it('夹具齐全：v1 到 v9 每版一份', () => {
+    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(new LinganDB(uniq('probe')).verno).toBe(LATEST);
   });
 
@@ -96,9 +96,13 @@ describe('0710 Dexie 迁移回归：v1–v8 夹具库逐个升级到最新', () 
         if (fx.version >= 6) expect(it.graftCount).toBe(src.graftCount);
         // v0.13：行里不再有内联原图
         expect(it.image).toBeUndefined();
-        // v0.23：老穗不进待理（升级不把整个穗仓塞进收件箱）；有链接 / 文字的补上重复钥匙
-        expect(it.inbox).toBeUndefined();
+        // v0.23：老穗不进待理（升级不把整个穗仓塞进收件箱）；有链接 / 文字的补上重复钥匙。v9 起原样保留（待理里的还在待理）
+        if (fx.version < 9) expect(it.inbox).toBeUndefined();
+        else expect(it.inbox).toEqual(src.inbox);
         expect(Array.isArray(it.dup)).toBe(true);
+        if (fx.version >= 9) expect(it.dup).toEqual(src.dup);
+        // v0.22 / v0.23 的可选字段原样保留
+        for (const k of ['source', 'tagSugg'] as const) if (src[k] !== undefined) expect(it[k], `item ${src.id}.${k}`).toEqual(src[k]);
         if (src.url) expect(it.dup!.some((k) => k.startsWith('u:'))).toBe(true);
       }
       expect(new Set(items.map((x) => x.uid)).size).toBe(items.length);
@@ -141,6 +145,8 @@ describe('0710 Dexie 迁移回归：v1–v8 夹具库逐个升级到最新', () 
       expect(await d.daily.count()).toBe(fx.data.daily?.length || 0);
       expect(await d.ftidx.count()).toBe(fx.data.ftidx?.length || 0);
       expect((await d.meta.get('deviceId'))?.v).toBe(items[0].deviceId);
+      // v0.24：新表 rejects（不要的理由）建好了，空的
+      expect(await d.rejects.count()).toBe(0);
 
       // 升级后的库导出 .glean → 导进空库：一样
       const sink = new BlobSink();
