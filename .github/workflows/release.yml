@@ -142,10 +142,15 @@ jobs:
           V="${TAG#v}"
           sed "s/^const VERSION = '.*';/const VERSION = '$V';/" mcp/glean-mcp.mjs > glean-mcp.mjs
           gh release upload "$TAG" glean-mcp.mjs --clobber -R "$GITHUB_REPOSITORY"
+          # v0.36 0008 / 0009：浏览器扩展（Chrome / Edge 加载已解压）打成 zip，版本号跟着 tag
+          jq --arg v "$V" '.version=$v' extension/manifest.json > /tmp/manifest.json && cp /tmp/manifest.json extension/manifest.json
+          (cd extension && zip -qr ../glean-extension.zip . -x 'lib.d.ts')
+          unzip -l glean-extension.zip | grep -q 'manifest.json' || { echo "::error::extension zip broken"; exit 1; }
+          gh release upload "$TAG" glean-extension.zip --clobber -R "$GITHUB_REPOSITORY"
           mkdir -p a && cd a
           gh release download "$TAG" -R "$GITHUB_REPOSITORY" --pattern '*'
           ls -la
-          for p in "Glean_${V}_android.apk" "latest.json" "glean-mcp.mjs"; do [ -f "$p" ] || { echo "::error::missing $p"; exit 1; }; done
+          for p in "Glean_${V}_android.apk" "latest.json" "glean-mcp.mjs" "glean-extension.zip"; do [ -f "$p" ] || { echo "::error::missing $p"; exit 1; }; done
           ls *setup.exe >/dev/null && ls *.msi >/dev/null && ls *setup.exe.sig >/dev/null || { echo "::error::missing exe / msi / updater signature"; exit 1; }
           grep -q "\"version\": *\"$V\"" latest.json || { echo "::error::latest.json version mismatch"; cat latest.json; exit 1; }
           grep -q 'windows-x86_64' latest.json || { echo "::error::latest.json has no windows platform"; exit 1; }
