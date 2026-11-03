@@ -10,7 +10,6 @@ import { enrichItem } from './lib/enrich';
 import { detectMotionLevel } from './lib/motion';
 import { onQuickFocus, onTrayGo } from './lib/desktop';
 import { shareToDraft, takeGo, takeShared } from './lib/share';
-import { drainInbox, inboxBridge, pushHints } from './lib/capture';
 import { afterAdd } from './components/QuickBar';
 import { NowPlayingTray } from './components/NowPlaying';
 import { loadSettings, saveSettings, type Settings } from './lib/settings';
@@ -180,6 +179,7 @@ export default function App() {
   const goRef = useRef<(v: string) => void>(() => {});
   useEffect(() => {
     let alive = true;
+    const hasInbox = typeof window !== 'undefined' && 'LinganInbox' in window;
     const pull = async () => {
       const d = shareToDraft(takeShared());
       if (d) {
@@ -189,9 +189,10 @@ export default function App() {
           if (err) toast('AI 整理失败：' + err, 'err');
         });
       }
-      const r = await drainInbox(db);
+      // 极速拾收件箱只在安卓有：没桥就不加载这部分代码（首包不变大）
+      const r = hasInbox ? await (await import('./lib/capture')).drainInbox(db) : null;
       if (!alive) return;
-      if (r.added.length) {
+      if (r && r.added.length) {
         const one = r.added.length === 1 ? r.added[0].draft : null;
         toast(one ? `极速拾 · 收进「${one.title.slice(0, 16)}」${one.source ? ' · 来自 ' + one.source : ''}` : `极速拾 · 收进 ${r.added.length} 穗`);
         for (const a of r.added) afterAdd(a.id, a.draft, settingsRef.current, (m) => toast(m, 'err'));
@@ -201,7 +202,7 @@ export default function App() {
     };
     void pull();
     // 面板上的「最近用过的标签」：一打开就先同步一次
-    if (inboxBridge()) void pushHints(db);
+    if (hasInbox) void import('./lib/capture').then((m) => m.pushHints(db));
     const vis = () => {
       if (document.visibilityState === 'visible') void pull();
     };
