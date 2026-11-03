@@ -36,3 +36,7 @@ CI：`.github/workflows/ci.yml` 每次推送跑前五项；`release.yml` 手动�
 - **首屏**：新功能默认懒加载；改完看 `dist/index.html` 的 modulepreload，只能有 app 块 + 入口 + runtime。
 - **动效**必须尊重 reduced-motion，不能拖慢低端安卓。
 - 公开署名 Q1f730，不写真名。
+- **数量不是成就（0910）**：不加「拾满 N 穗 / 连续 N 天」之类的数量成就、排行、徽章；鼓励只挂在质量行为上（写了为什么、做成、跨媒介）。
+- **核心永久免费 + 本地优先（0911）**：收、搜、嫁接（自带 key / 本地模型）、导出备份不许做成付费或强制联网。
+- **外联一律走 `getFetch()`（src/lib/ai.ts）**：出站总开关（src/lib/gate.ts）在那一层拦外网；新加的网络功能不许绕开它直接 `fetch`（检查更新 update.ts 走 updater 插件，单独判断 `outboundOff()`）。
+- **分享 / 花园 / 明信片发出去前必须过 `scanPersonal`（src/lib/sharekit.ts）**，私密穗不进花园、新枝分享里只写「一穗私密的」。
