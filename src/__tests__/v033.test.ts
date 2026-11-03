@@ -12,7 +12,7 @@ import type { Item } from '../lib/types';
 describe('0510 parseLink', () => {
   it('capture with text / url / why / tags', () => {
     const l = parseLink('glean://capture?text=' + encodeURIComponent('夜车上的一句话') + '&url=https%3A%2F%2Fexample.com%2Fa&why=%E5%A5%BD&tags=%E5%A4%9C,%23%E8%BD%A6');
-    expect(l).toEqual({ k: 'capture', text: '夜车上的一句话', url: 'https://example.com/a', why: '好', title: '', tags: ['夜', '车'] });
+    expect(l).toEqual({ k: 'capture', text: '夜车上的一句话', url: 'https://example.com/a', why: '好', title: '', tags: ['夜', '车'], from: '' });
   });
   it('rejects junk, non-http url, empty capture, other schemes', () => {
     expect(parseLink('https://x.com')).toBeNull();
