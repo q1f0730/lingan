@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { GraftTrail, HistoryRow } from '../components/IdeaCard';
 import { db } from '../lib/db';
+import { setStar } from '../lib/repo';
 import { dropWithReason } from '../lib/feedback';
 import { groupBranches } from '../lib/branches';
 import { transformName } from '../lib/graft';
@@ -113,7 +114,7 @@ export function Branches() {
                         className="btn text hbatch-star"
                         onClick={async () => {
                           const all = g.devs.every((d) => d.starred);
-                          await db.developments.bulkUpdate(g.devs.map((d) => ({ key: d.id!, changes: { starred: !all } })));
+                          await setStar(g.devs.map((d) => d.id!), !all);
                           toast(all ? '这一捆都不留了' : '三根都留下了');
                         }}
                       >
@@ -187,7 +188,7 @@ function Manifesto({ groups, byId }: { groups: ReturnType<typeof groupBranches>;
           </span>
         </div>
         <div className="actions text-actions">
-          <button className="btn text strong" onClick={() => db.developments.update(dev.id!, { starred: !dev.starred })}>
+          <button className="btn text strong" onClick={() => setStar(dev.id!, !dev.starred)}>
             {dev.starred ? '已留下' : '留下'}
           </button>
           <button className="btn text" onClick={() => developFrom(dev.itemIds.filter((x) => x > 0))}>
