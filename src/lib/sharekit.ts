@@ -4,6 +4,7 @@
 // - 0901 公开名默认 Q1f730；0916 新枝溯源穗可「显示 / 只显示类型和标题 / 不带」
 // 分享设置只存本机 localStorage（敏感词本身就是隐私，不进同步、不进备份）。
 import { cleanUrl } from './cleanurl';
+import { exitOpen } from './privacy';
 import { TYPE_LABEL, type Item } from './types';
 
 export type ShareField = 'title' | 'content' | 'why' | 'time' | 'url' | 'tags' | 'source';
@@ -122,7 +123,7 @@ export function sprigLine(it: Item, mode: SprigMode): string {
 /** 一根新枝的分享文字；私密穗永远只写「一穗私密的」 */
 export function branchShareText(b: BranchLike, items: Item[], mode: SprigMode, name: string): string {
   // v0.39 0907 上锁的穗连「一穗私密的」都不写
-  const src = mode === 'none' ? [] : items.filter((it) => !it.locked).map((it) => (it.private ? '一穗私密的' : sprigLine(it, mode)));
+  const src = mode === 'none' ? [] : items.filter((it) => exitOpen(it, 'share')).map((it) => (it.private ? '一穗私密的' : sprigLine(it, mode)));
   return [
     `《${b.title.replace(/^《|》$/g, '')}》`,
     b.idea,
