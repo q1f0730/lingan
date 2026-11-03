@@ -115,15 +115,18 @@ export async function chat(s: Settings, messages: ChatMsg[], opts: { model?: str
   return out.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 }
 
-export async function caption(s: Settings, imageDataUrl: string): Promise<string> {
+export async function caption(s: Settings, imageDataUrl: string, vocab: string[] = []): Promise<string> {
   if (!s.chat.visionModel) throw new AIError('没有配置看图模型');
+  // v0.23 0110：标签只从你已有的词汇里选，实在没有合适的才给新词（新词要你点头才算数）
+  const voc = vocab.slice(0, 80);
+  const tagRule = voc.length ? `最后给出 3–5 个短标签，尽量只从这些已有标签里选：${voc.join('、')}；实在没有合适的才写新词。格式：标签：a,b,c` : '最后给出5个短标签，格式：标签：a,b,c,d,e';
   return chat(
     s,
     [
       {
         role: 'user',
         content: [
-          { type: 'text', text: '用中文描述这张图：画面内容、构图、色彩、光线、情绪与氛围、可能的风格流派。80字以内，最后给出5个短标签，格式：标签：a,b,c,d,e' },
+          { type: 'text', text: '用中文描述这张图：画面内容、构图、色彩、光线、情绪与氛围、可能的风格流派。80字以内，' + tagRule },
           { type: 'image_url', image_url: { url: imageDataUrl } },
         ],
       },
