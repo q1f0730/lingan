@@ -4,7 +4,7 @@ import { ClipOffer, QuickBar, QuickWindow } from './components/QuickBar';
 import { ConfirmLayer, type ConfirmReq } from './components/Confirm';
 import { Detail } from './components/Detail';
 import { Sheet } from './components/Sheet';
-import { addItem, db, deleteItem, restoreItem, snapshotItem, touchItems, updateItem } from './lib/db';
+import { addItem, alive, db, touchItems, trashItems, untrashItems, updateItem } from './lib/db';
 import { getOriginalDataUrl } from './lib/imagestore';
 import { enrichItem } from './lib/enrich';
 import { detectMotionLevel } from './lib/motion';
@@ -280,20 +280,21 @@ export default function App() {
 
   async function onDelete(it: Item) {
     if (!it.id) return;
-    const used = (await db.developments.toArray()).filter((d) => d.itemIds.includes(it.id!)).length;
+    const used = (await db.developments.toArray()).filter((d) => alive(d) && d.itemIds.includes(it.id!)).length;
     const ok = await confirm({
       title: `删掉「${it.title}」？`,
-      body: used ? `它是 ${used} 根新枝的来源。删掉以后，这些新枝的「因为这几穗」里会少它一穗。` : '删掉以后 5 秒内可以撤销。',
+      body: used ? `它是 ${used} 根新枝的来源。删掉以后，这些新枝的「因为这几穗」里会少它一穗。会先放进回收站，30 天内可以在设置里恢复。` : '会先放进回收站，30 天内可以在设置里恢复。',
       ok: '删掉',
       cancel: '留着',
       danger: true,
     });
     if (!ok) return;
-    const snap = await snapshotItem(it.id);
-    await deleteItem(it.id);
+    // v0.21 删除 = 立墓碑进回收站（原图、来源都不动），撤销 = 拔掉墓碑
+    const id = it.id;
+    await trashItems([id]);
     setDetail(null);
     setCapture(null);
-    toast('已删掉 1 穗', 'ok', snap ? { label: '撤销', run: () => void restoreItem(snap).then(() => toast('已放回穗仓')) } : undefined);
+    toast('已删掉 1 穗（在回收站）', 'ok', { label: '撤销', run: () => void untrashItems([id]).then(() => toast('已放回穗仓')) });
   }
 
   if (onboard) return (
