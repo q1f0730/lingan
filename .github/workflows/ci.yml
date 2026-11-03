@@ -1,0 +1,39 @@
+# v0.25 0704：每次推送 / PR 都跑质量门（不发版）。ghsync 每个文件一次提交 → 一串 push，concurrency 只留最后一次。
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: tsc
+        run: npx tsc -b
+      - name: oxlint
+        run: npx oxlint
+      - name: vitest
+        run: npx vitest run
+      - name: build
+        run: npx vite build
+      - name: size budget (0742)
+        run: node scripts/size-budget.mjs --report size-report.md --json size-report.json
+      - name: glean-mcp syntax
+        run: node --check mcp/glean-mcp.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-report
+          path: size-report.*
+          if-no-files-found: ignore
