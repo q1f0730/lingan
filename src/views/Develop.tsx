@@ -248,7 +248,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                 <PickTable items={shown} onOpen={openItem} onSwap={busy ? undefined : replaceOne} showCount={pickedBy === 'neglected'} />
                 <ModePicker mode={mode} onPick={chooseMode} disabled={busy} items={items} picked={shown} pickedBy={pickedBy} note={drawNote} />
                 <div className="graft-wrap">
-                  <button className="btn primary graft-btn" onClick={() => develop(shown)} disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}>
+                  <button className="btn primary graft-btn rw-shimmer" onClick={() => develop(shown)} disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}>
                     {busy ? '正在嫁接…' : pickedBy ? `按「${modeName(pickedBy)}」嫁接这 ${shown.length} 穗` : `嫁接这 ${shown.length} 穗`}
                   </button>
                 </div>
