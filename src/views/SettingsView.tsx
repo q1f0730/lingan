@@ -14,6 +14,8 @@ import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
 import { db } from '../lib/db';
 import { PRESETS, aiReady, distinctOf, embedConfig, keyOptional, vaultKind, withPreset, type Settings } from '../lib/settings';
 import { LocalModelPanel } from '../components/LocalModelPanel';
+import { OutboundPanel } from '../components/OutboundPanel';
+import { previewMode } from '../lib/outbound';
 import { AgentPanel } from '../components/AgentPanel';
 import { UpdatePanel } from '../components/UpdatePanel';
 import { AutoBackupPanel, SnapshotPanel } from '../components/SafetyPanel';
@@ -39,6 +41,7 @@ const AgentP = memo(AgentPanel);
 const UpdateP = memo(UpdatePanel);
 const AutoBackupP = memo(AutoBackupPanel);
 const SnapshotP = memo(SnapshotPanel);
+const OutboundP = memo(OutboundPanel);
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm, desktop } = useApp();
@@ -218,6 +221,7 @@ export function SettingsView() {
     ['set-snap', '操作前快照', ''],
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
+    ['set-out', '出站', { off: '直接发', once: '看一次', always: '每次先看' }[previewMode()]],
     ['set-agent', 'Agent 与 API', readAgentCfg().on ? (readAgentCfg().write ? '开 · 可写' : '开 · 只读') : '关'],
     ['set-update', '更新', readUpdatePrefs().auto ? '自动检查' : '手动'],
     ['set-diag', '诊断', errCount ? `${errCount} 条错误` : '无错误'],
@@ -487,6 +491,8 @@ export function SettingsView() {
               )}
             </div>
           </section>
+
+          <OutboundP />
 
           <AgentP />
 
