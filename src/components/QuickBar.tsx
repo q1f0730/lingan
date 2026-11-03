@@ -11,6 +11,7 @@ import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
 import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
 import { NowPlayingButton } from './NowPlaying';
+import { notifyDupe, savedMsg } from '../lib/dupnotice';
 
 /** v0.22 速记草稿：输入防抖写本地，App 被杀后下次打开接着写；存了或清空就删 */
 function useDraft(key: string, text: string, setText: (t: string) => void): [boolean, () => void] {
@@ -47,7 +48,8 @@ function useDraft(key: string, text: string, setText: (t: string) => void): [boo
 
 /** Save a quick draft, then fill link metadata + AI enrichment in the background. */
 export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) => void): Promise<number> {
-  const id = await addItem(d);
+  // v0.23 速记 / 剪贴板 / 速记小窗收进来的先进待理
+  const id = await addItem(d, db, { inbox: true });
   afterAdd(id, d, s, onErr);
   return id;
 }
@@ -139,6 +141,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
     setBusy(true);
     try {
       const id = await quickAdd(d, settings, (m) => toast(m, 'err'));
+      void notifyDupe(id, toast);
       dropDraft();
       setText('');
       setWhy('');
@@ -286,9 +289,10 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
     if (!d || busy) return;
     setBusy(true);
     try {
-      await quickAdd(type ? { ...d, type } : d, settings, (m) => toast(m, 'err'));
+      const id = await quickAdd(type ? { ...d, type } : d, settings, (m) => toast(m, 'err'));
       dropDraft();
-      toast('已拾进穗仓');
+      toast(savedMsg());
+      void notifyDupe(id, toast);
       onClose();
     } catch (e) {
       toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
@@ -381,8 +385,9 @@ export function ClipOffer() {
     setClip(null);
     const d = parseQuick(t);
     if (!d) return;
-    await quickAdd(d, settings, (m) => toast(m, 'err'));
-    toast('已拾进穗仓');
+    const id = await quickAdd(d, settings, (m) => toast(m, 'err'));
+    toast(savedMsg());
+    void notifyDupe(id, toast);
   }
   function skip() {
     clipMemory.set(clip!);
