@@ -33,6 +33,9 @@ const loadDevelop = () => import('./views/Develop');
 const loadBranches = () => import('./views/Branches');
 const loadTaste = () => import('./views/Taste');
 const loadSettings_ = () => import('./views/SettingsView');
+// v0.29 作品工坊：懒加载，空闲时预取
+const loadWorks = () => import('./views/Works');
+const Works = lazy(() => loadWorks().then((m) => ({ default: m.Works })));
 const Develop = lazy(() => loadDevelop().then((m) => ({ default: m.Develop })));
 const Branches = lazy(() => loadBranches().then((m) => ({ default: m.Branches })));
 const Taste = lazy(() => loadTaste().then((m) => ({ default: m.Taste })));
@@ -52,6 +55,7 @@ export function prefetchViews() {
   void loadBranches();
   void loadTaste();
   void loadSettings_();
+  void loadWorks();
 }
 import { MotionRoot } from './components/rw/MotionRoot';
 import { NAV, NavBar } from './components/rw/NavBar';
@@ -490,7 +494,7 @@ export default function App() {
         e.preventDefault();
         openCapture();
       }
-      // 侧栏标着的 Alt+1…4 / Alt+, 切页
+      // 侧栏标着的 Alt+1…5 / Alt+, 切页
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const hit = NAV.find((n) => n.key === e.key || (n.key !== ',' && e.code === 'Digit' + n.key) || (n.key === ',' && e.code === 'Comma'));
         if (hit) {
@@ -647,6 +651,7 @@ export default function App() {
                 {view === 'library' && <Library />}
                 {view === 'develop' && <Develop preset={preset} clearPreset={() => setPreset(null)} />}
                 {view === 'branches' && <Branches />}
+                {view === 'works' && <Works />}
                 {view === 'taste' && <Taste />}
                 {view === 'settings' && <SettingsView />}
               </Suspense>
