@@ -14,7 +14,7 @@ import { collectDiagnostics } from './lib/diagcollect';
 import { guardUpgrade, markSchema } from './lib/upgradeguard';
 import { PENDING_KEY } from './lib/safewrite';
 import { isTauriEnv } from './lib/desktop';
-import { firstLibraryItems, primeLibraryItems } from './lib/libitems';
+import { primeLibraryItems } from './lib/libitems';
 
 // v0.20：全局错误先挂上（之后任何未捕获的错误 / Promise 拒绝都进本地日志），日志脱敏认得当前密钥
 installGlobalErrorHandlers();
@@ -31,10 +31,11 @@ ftShared(db);
 const root = createRoot(document.getElementById('root')!);
 
 function start() {
-  // v0.30：穗仓的全部穗先开查；结果 300ms 内到就等它再画（第一帧直接带卡片，省掉空外壳那一遍布局 + 绘制），
-  // 库很大 / 读得慢就照旧先画外壳。安全模式也一样（首屏就是穗仓）
+  // v0.30：穗仓的全部穗在渲染之前就开查（读库和画外壳并行，Library 接同一个订阅）。安全模式也一样（首屏就是穗仓）。
+  // 试过「结果 300ms 内到就等它再画、第一帧直接带卡片」：同会话交替测按「带卡片那一帧真正画完」算，卡片普通快 ~17ms、
+  // 4× 降速不快，但首次绘制普通晚 ~60ms、4× 晚 ~190ms（白屏更久），所以不等，外壳照常先画
   primeLibraryItems();
-  void firstLibraryItems(300).then(boot);
+  boot();
 }
 
 function boot() {
