@@ -3,6 +3,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
 import { addItem, db } from '../lib/db';
+import { addDevelopment, attachResult, setDevStatus, setFollowups } from '../lib/repo';
 import { askFollowup, childDevelopment, regraft, REGRAFT_LABEL, resultItem, STATUS_LABEL, STATUS_ORDER, statusOf, withFollowup } from '../lib/branchplus';
 import { compressImage } from '../lib/image';
 import { aiVisible } from '../lib/privacy';
@@ -40,7 +41,7 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
   // 私密穗 + 云端模型：不发出去，走离线
   const cloudOk = aiReady(settings) && items.every((x) => aiVisible(x, settings));
   const setStatus = async (s: BranchStatus) => {
-    await db.developments.update(dev.id, { status: s, statusAt: Date.now() });
+    await setDevStatus(dev.id, s);
     toast(`标成「${STATUS_LABEL[s]}」`);
   };
   async function grow(kind: RegraftKind) {
@@ -50,7 +51,7 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
       const fresh = (await db.developments.get(dev.id)) || dev;
       const r = await regraft(cloudOk ? settings : null, fresh, items, kind);
       if (!fresh.uid) throw new Error('这根新枝还没有 uid，稍后再试');
-      await db.developments.add(childDevelopment(fresh, r.idea, kind, r.source, Date.now(), items.map((x) => x.id!)));
+      await addDevelopment(childDevelopment(fresh, r.idea, kind, r.source, Date.now(), items.map((x) => x.id!)));
       toast(`「${REGRAFT_LABEL[kind]}」长出一根子枝${r.source === 'offline' ? '（离线）' : ''}${r.error ? `：模型没接上（${r.error.slice(0, 30)}），用离线` : ''}`, r.error ? 'err' : undefined);
     } catch (e) {
       toast('没长出来：' + (e instanceof Error ? e.message : String(e)), 'err');
@@ -65,7 +66,7 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
     try {
       const f = await askFollowup(cloudOk ? settings : null, dev, items, text);
       const fresh = (await db.developments.get(dev.id)) || dev;
-      await db.developments.update(dev.id, { followups: withFollowup(fresh.followups, f) });
+      await setFollowups(dev.id, withFollowup(fresh.followups, f));
       setQ('');
     } catch (e) {
       toast('没问成：' + (e instanceof Error ? e.message : String(e)), 'err');
@@ -80,8 +81,7 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
       const data = f.type.startsWith('image/') ? await compressImage(f, 1600, 0.85) : undefined;
       const id = await addItem(resultItem(dev, data, ''));
       const it = await db.items.get(id);
-      const fresh = (await db.developments.get(dev.id)) || dev;
-      await db.developments.update(dev.id, { resultUids: [...(fresh.resultUids || []), it?.uid].filter(Boolean) as string[], status: fresh.status === 'tried' ? 'tried' : 'done', statusAt: Date.now() });
+      await attachResult(dev.id, it?.uid);
       toast('结果收成了一穗，挂在这根新枝下');
     } catch (e) {
       toast('没收成：' + (e instanceof Error ? e.message : String(e)), 'err');
