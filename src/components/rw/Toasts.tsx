@@ -1,4 +1,4 @@
-import { AnimatePresence, m } from 'framer-motion';
+import { AnimatePresence, m } from './lite';
 
 export interface ToastT {
   id: number;
