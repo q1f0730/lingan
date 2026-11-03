@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { LOCAL_SERVERS, normalizeHost, probeLocal, suggestModels, chatModels, embedModels, type ProbeResult } from '../lib/localmodel';
-import type { Settings } from '../lib/settings';
+import { embedConfig, type Settings } from '../lib/settings';
+import { MINI, MINI_KEY } from '../lib/privacy';
+import { embedAllMissing } from '../lib/enrich';
+import { useApp } from '../lib/store';
 
 /**
  * v0.24 0208 / 0209 本地模型：一键探测本机的 LM Studio（1234）/ Ollama（11434），列出模型点一下就用；
@@ -116,6 +119,44 @@ export function LocalModelPanel({ s, setS, auto, desktop }: { s: Settings; setS:
           <input type="checkbox" checked={!!s.privateLocal} onChange={(e) => setS((x) => ({ ...x, privateLocal: e.target.checked }))} /> 私密穗也可以发给本地模型（只在接口是本机 / 局域网时生效；云端永远不发）
         </label>
       )}
+    </div>
+  );
+}
+
+/** v0.38 端侧向量：下载 / 删除本机小模型；下好后（且没配别的向量模型时）顺手把全部穗向量化 */
+export function MiniPanel({ s }: { s: Settings }) {
+  const { toast } = useApp();
+  const [on, setOn] = useState(() => !!localStorage.getItem(MINI_KEY));
+  const [st, setSt] = useState('');
+  const run = async () => {
+    const m = await import('../lib/mini');
+    try {
+      if (on) {
+        await m.removeMini();
+        setOn(false);
+        return toast('本机小模型已删除');
+      }
+      setSt('0%');
+      await m.downloadMini((p) => setSt(p + '%'));
+      setOn(true);
+      if (embedConfig(s)?.baseUrl === MINI) {
+        const r = await embedAllMissing(s, (d, t) => setSt(`向量化 ${d}/${t}`));
+        toast(r.error ? `向量化中断：${r.error}` : `已就绪，向量化了 ${r.done} 穗`, r.error ? 'err' : 'ok');
+      } else toast('已下载；配了向量模型时优先用那个');
+    } catch (e) {
+      toast(e instanceof Error ? e.message : String(e), 'err');
+    } finally {
+      setSt('');
+    }
+  };
+  return (
+    <div className="mini-panel">
+      <p className="meta-text">
+        本机小模型（约 8.8MB）：不用联网和 Key 也能语义搜索、聚母题、看星图，私密穗也不出设备。没配向量模型时自动用它。{on ? ' · 已下载' : ''}
+      </p>
+      <button className="btn text mini-btn" onClick={run} disabled={!!st}>
+        {st || (on ? '删除本机小模型' : '下载本机小模型')}
+      </button>
     </div>
   );
 }
