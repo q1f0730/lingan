@@ -52,8 +52,8 @@ export function parseQuick(raw: string): QuickDraft | null {
     const url = cleanUrl(found);
     const code = parseShareCode(text, found);
     const rest = code ? code.title : text.replace(found, '').trim();
-    const type: ItemType = force || guessType(url);
-    return { ...base, type, title: (rest || url).slice(0, 120), url, content: '', ...(code?.source ? { source: code.source } : {}) };
+    const type: ItemType = force || code?.type || guessType(url);
+    return { ...base, creator: code ? code.creator || (/QQ音乐|网易云|豆瓣|App$/i.test(creator) ? '' : creator) : creator, type, title: (rest || url).slice(0, 120), url, content: '', ...(code?.source ? { source: code.source } : {}) };
   }
   if (!text) return null;
   const bk = text.match(BOOK);
