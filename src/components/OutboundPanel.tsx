@@ -1,6 +1,7 @@
 // v0.30 设置 · 出站：ROADMAP v0.25「发出去前看一眼」的开关（关 / 每次 / 只看一次）+ 0906 出站清单（本月按域名汇总、最近 20 次）。
 import { useEffect, useState } from 'react';
 import { clearLog, KIND_LABEL, monthSummary, previewMode, readLog, setPreviewMode, type PreviewMode } from '../lib/outbound';
+import { outboundOff, setOutboundOff } from '../lib/gate';
 import '../styles/v030.css';
 
 const MODES: Array<{ id: PreviewMode; label: string }> = [
@@ -14,6 +15,7 @@ export function OutboundPanel() {
   const [mode, setMode] = useState<PreviewMode>(previewMode);
   const [log, setLog] = useState(readLog);
   const [open, setOpen] = useState(false);
+  const [off, setOff] = useState(outboundOff);
   useEffect(() => {
     const on = () => setLog(readLog());
     window.addEventListener('glean:outbound', on);
@@ -29,6 +31,13 @@ export function OutboundPanel() {
     <section className="set-sec outbound" id="set-out">
       <h2 className="sec-title">出站</h2>
       <p className="meta-text">拾穗什么时候往外发东西、发给谁、发了哪几类。只记域名、种类、字段类别和大小，不记内容、不记密钥，只存在本机。</p>
+      <div className="table action-table">
+        <button className="trow cap-switch out-gate" role="switch" aria-checked={!off} onClick={() => (setOutboundOff(!off), setOff(!off))}>
+          <span className="tc tc-title">出站总开关</span>
+          <span className="tc tc-src">{off ? '关着：模型、抓链接、网盘、检查更新、Agent 写入都停，只留本机和局域网' : '开着：按下面的规则往外发'}</span>
+          <span className="tc tc-date">{off ? '关' : '开'}</span>
+        </button>
+      </div>
       <div className="field out-mode">
         <span className="label">调模型前，发出去前看一眼</span>
         <div className="seg out-seg" role="radiogroup" aria-label="发出去前看一眼">
