@@ -39,7 +39,7 @@ export function SelectBar({ ids, total, onAll, onNone, onDone }: { ids: number[]
   }
   // v0.34 0902 批量放进花园（私密穗跳过），可撤销
   async function garden() {
-    const rows = (await db.items.bulkGet(ids)).filter((x) => x && !x.private && !x.locked && !x.garden);
+    const rows = (await db.items.bulkGet(ids)).filter((x) => x && !x.private && !x.locked && !x.shut?.includes('garden') && !x.garden);
     const list = rows.map((x) => x!.id!);
     await setGarden(list, true);
     toast(list.length ? `${list.length} 穗放进花园` : '选中的已经在花园里了（私密穗不放）', 'ok', list.length ? { label: '撤销', run: () => void setGarden(list, false) } : undefined);
