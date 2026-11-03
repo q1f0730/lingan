@@ -2803,6 +2803,70 @@ async function security() {
   await ctx.close();
 }
 
+// v0.25 Agent 与 API / 更新：网页版里是说明 + 开关（本地 API 只有桌面版），写入开关要确认，接入命令可复制，访问记录可见
+async function agent() {
+  const tag = 'agent';
+  for (const vp of [{ width: 1366, height: 860 }, { width: 390, height: 844 }]) {
+    const ctx = await b.newContext({ viewport: vp, permissions: ['clipboard-read', 'clipboard-write'] });
+    await ctx.addInitScript(() => localStorage.setItem('glean.onboarded', '1'));
+    const pg = await ctx.newPage();
+    pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+    await pg.goto(base);
+    await pg.waitForSelector('.view');
+    await pg.evaluate(() => localStorage.setItem('glean.apiaudit.v1', JSON.stringify([{ t: Date.now() - 60000, client: 'Claude Code', tool: 'search_items', n: 7, ok: true }, { t: Date.now() - 30000, client: 'Cherry Studio', tool: 'add_item', n: 0, ok: false }])));
+    await openSettings(pg);
+    await pg.waitForSelector('#set-agent');
+    const st = await pg.evaluate(() => ({
+      na: !!document.querySelector('#set-agent .agent-na'),
+      apiDisabled: document.querySelector('.agent-api')?.disabled,
+      apiOn: document.querySelector('.agent-api')?.getAttribute('aria-checked'),
+      write: document.querySelector('.agent-write')?.getAttribute('aria-checked'),
+      audit: document.querySelector('.agent-audit')?.textContent || '',
+      recent: document.querySelectorAll('.agent-recent li').length,
+      denied: document.querySelectorAll('.agent-recent li.err').length,
+      update: !!document.querySelector('#set-update'),
+      checkDisabled: document.querySelector('.update-check')?.disabled,
+      overflow: [...document.querySelectorAll('#set-agent, #set-update')].some((e) => e.scrollWidth > e.clientWidth + 1),
+      index: [...document.querySelectorAll('.set-link-k')].map((e) => e.textContent).join('|'),
+    }));
+    if (!st.na || !st.apiDisabled || st.apiOn !== 'false') errs.push(`[${tag}] web build should show desktop-only API switch ${JSON.stringify(st)}`);
+    if (st.write !== 'false') errs.push(`[${tag}] write should default to read-only`);
+    if (!st.audit.includes('Claude Code') || !st.audit.includes('7 穗') || st.recent !== 2 || st.denied !== 1) errs.push(`[${tag}] audit view wrong ${JSON.stringify(st)}`);
+    if (!st.update || !st.checkDisabled) errs.push(`[${tag}] update panel on web should exist with check disabled`);
+    if (st.overflow) errs.push(`[${tag}] agent/update panel overflows at ${vp.width}`);
+    if (!st.index.includes('Agent 与 API') || !st.index.includes('更新')) errs.push(`[${tag}] settings index missing new sections: ${st.index}`);
+    // 写入：要确认；取消 = 保持只读
+    await pg.click('.agent-write');
+    await pg.waitForSelector('.confirm');
+    await pg.click('.confirm button:has-text("保持只读")');
+    await pg.waitForTimeout(300);
+    if ((await pg.getAttribute('.agent-write', 'aria-checked')) !== 'false') errs.push(`[${tag}] cancel should keep read-only`);
+    await pg.click('.agent-write');
+    await pg.waitForSelector('.confirm');
+    await pg.click('.confirm button:has-text("允许写入")');
+    await pg.waitForTimeout(300);
+    const cfg = await pg.evaluate(() => JSON.parse(localStorage.getItem('glean.agent.v1') || '{}'));
+    if ((await pg.getAttribute('.agent-write', 'aria-checked')) !== 'true' || cfg.write !== true || cfg.on) errs.push(`[${tag}] write switch not saved ${JSON.stringify(cfg)}`);
+    // 端口
+    await pg.fill('.agent-port input', '50001');
+    await pg.locator('.agent-port input').blur();
+    await pg.waitForTimeout(200);
+    const port = await pg.evaluate(() => JSON.parse(localStorage.getItem('glean.agent.v1') || '{}').port);
+    if (port !== 50001) errs.push(`[${tag}] port not saved: ${port}`);
+    // 复制 Claude Code 命令
+    await pg.click('.agent-copy-cc');
+    await pg.waitForTimeout(300);
+    const clip = await pg.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+    if (vp.width > 1000 && !clip.startsWith('claude mcp add --transport http glean http://127.0.0.1:50001/mcp --header "Authorization: Bearer ')) errs.push(`[${tag}] claude command copy wrong: ${clip}`);
+    // 自动检查更新开关在网页版不可点；清空访问记录
+    await pg.click('.agent-audit-clear');
+    await pg.waitForSelector('.agent-audit-empty');
+    if (vp.width < 600) await pg.locator('#set-agent').screenshot({ path: `${out}/agent-mobile.png` }).catch(() => {});
+    await ctx.close();
+  }
+  console.log('agent: settings panels ok');
+}
+
 try {
   if (process.env.E2E_ONLY === 'graft24') {
     await graft24();
@@ -2821,8 +2885,13 @@ try {
     await perf();
     throw Object.assign(new Error('perf only'), { only: true });
   }
+  if (process.env.E2E_ONLY === 'agent') {
+    await agent();
+    throw Object.assign(new Error('agent only'), { only: true });
+  }
   await security();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
+  await agent();
   await onboarding();
   if (process.env.E2E_ONLY === 'onboarding') throw Object.assign(new Error('onboarding only'), { only: true });
   await obsidian();
