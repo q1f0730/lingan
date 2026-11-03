@@ -1,0 +1,103 @@
+{
+  "version": "0.39.0",
+  "date": "2026-11-04",
+  "build": "app-DxVZZsD-.js",
+  "e2e": {
+    "coldStartMs": 188,
+    "coldStartCpu4xMs": 535,
+    "searchMaxMs": 17.1,
+    "searchMedianMs": 17,
+    "quickEnterToCardMs": {
+      "median": 10,
+      "runs": [
+        11,
+        15,
+        9,
+        10,
+        9
+      ],
+      "items": 1000
+    },
+    "backup": {
+      "items": 1000,
+      "images": 300,
+      "ms": 638,
+      "heapDeltaMB": 34.4,
+      "peakMB": 44.1,
+      "heapRuns": [
+        45.8,
+        34.4,
+        34.2
+      ]
+    },
+    "restoreMs": 862,
+    "scroll": "masonry/timeline/list 60fps jank 0%",
+    "touchTargetsSmall": 0,
+    "textZoom13Overflow": 0,
+    "note": "InstaBox 整套 e2e ALL PASS（v038 组首次进整套），定稿 dist app-DxVZZsD-"
+  },
+  "interleavedBench": {
+    "script": "e2e/bench5.mjs (painted)，InstaBox 4451=d38 app-Zs8mGSLv / 4450=d39 app-DxVZZsD-（新端口，哈希已核对）",
+    "rounds": 9,
+    "v038": {
+      "normalMedian": 187,
+      "cpu4xMedian": 581,
+      "normalRuns": [
+        184,
+        202,
+        190,
+        187,
+        186,
+        198,
+        233,
+        183,
+        172
+      ],
+      "cpu4xRuns": [
+        594,
+        581,
+        624,
+        555,
+        560,
+        570,
+        598,
+        559,
+        635
+      ]
+    },
+    "v039": {
+      "normalMedian": 192,
+      "cpu4xMedian": 586,
+      "normalRuns": [
+        198,
+        181,
+        195,
+        198,
+        183,
+        175,
+        218,
+        181,
+        192
+      ],
+      "cpu4xRuns": [
+        627,
+        580,
+        628,
+        571,
+        586,
+        622,
+        560,
+        574,
+        588
+      ]
+    },
+    "perfGate": "OK 普通 187 → 192ms（+2.7%，U=43.5/81，z=-0.26）；4× 581 → 586ms（+0.9%，U=33.5/81，z=0.62）",
+    "verdict": "持平，不显著；离 10% 回归线很远，不用挪懒加载"
+  },
+  "bundle": {
+    "firstScreenJsKB": "530 → 535.6",
+    "firstScreenJsGzipKB": "179 → 181.1",
+    "totalKB": "2166.9 → 2222.0（预算 2226.6 不放宽）",
+    "note": "首屏新增 lib/plugs.ts（接入把关）+ lib/lock.ts（上锁状态）+ privacy 出口判断；快照 / 订阅 / 歌单 / PIN / 设置面板全懒加载"
+  }
+}
