@@ -3133,7 +3133,7 @@ async function ui27() {
   await pg.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: x, clientY: y })); }, [box.x + 20, box.y + 20]);
   await pg.waitForSelector('.ctxmenu.as-sheet', { timeout: 2000 }).catch(() => errs.push(`[${tag}] long press menu`));
   const acts = await pg.locator('.ctxmenu-item').allTextContents();
-  if (acts.join('|') !== '打开|编辑|拿去嫁接|放进嫁接篮|复制文字|复制 glean:// 链接|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
+  if (acts.join('|') !== '打开|编辑|拿去嫁接|放进嫁接篮|复制文字|复制 glean:// 链接|分享…|放进花园|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
   await pg.click('.ctx-edit');
   await pg.waitForSelector('.sheet .capture', { timeout: 3000 }).catch(() => errs.push(`[${tag}] menu edit`));
   await pg.click('.sheet .icon-btn');
@@ -4292,7 +4292,137 @@ async function v033() {
   console.log(`v033: item / capture / graft / search / quick / bad links, copy glean:// link, clip codes+passwords skipped / desktop: cold-start link, send-to 2 files, autostart, hotkey conflict + change, excerpt key, grab toggle, prefill selection, clipboard image once, excerpt saved, external link → system ok`);
 }
 
+// v0.34 分享出去 · 隐私边界：0899 逐项勾选 / 0909 个人信息拦截 / 0900 递来的 / 0902–0903 花园页 / 0905 出站总开关 / 0916 + 新枝明信片
+function pngSize(buf) {
+  return buf.slice(1, 4).toString() === 'PNG' ? { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) } : null;
+}
+async function v034() {
+  const tag = 'v034';
+  // A. 桌面：分享一穗（默认只带标题 + 正文）→ 个人信息拦截 → 递穗链接 → 对方收到进「递来的」→ 也拾一穗要写为什么
+  const c1 = await b.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  await c1.addInitScript(() => {
+    window.__copied = [];
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { readText: async () => '', writeText: async (t) => void window.__copied.push(t) } });
+  });
+  let outside = 0;
+  await c1.route('**/gate-probe.example/**', (r) => (outside++, r.fulfill({ status: 200, body: '<title>x</title>' })));
+  const p = await c1.newPage();
+  p.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p.goto(base);
+  await p.waitForSelector('text=穗仓还是空的');
+  await quickSave(p, '空房间 > 像奶奶家，电话 13812345678');
+  await quickSave(p, '末班车 > 一个人坐');
+  await p.locator('.main [data-item-id] >> text=空房间').first().click({ button: 'right' });
+  await p.click('.ctxmenu >> text=分享…');
+  await p.waitForSelector('.share-panel', { timeout: 5000 });
+  const pre = (await p.textContent('.share-preview')).trim();
+  if (pre !== '空房间') errs.push(`[${tag}] default share text "${pre}"`);
+  if ((await p.getAttribute('.share-f-why', 'aria-pressed')) !== 'false') errs.push(`[${tag}] why should be off by default`);
+  await p.screenshot({ path: `${out}/v034-share-desktop.png` });
+  await p.click('.share-f-why');
+  if (!(await p.textContent('.share-preview')).includes('为什么：像奶奶家')) errs.push(`[${tag}] why toggle not in preview`);
+  await p.click('.share-copy');
+  await p.waitForSelector('.confirm >> text=这段字里像有个人信息', { timeout: 3000 }).catch(() => errs.push(`[${tag}] phone not caught`));
+  const cbody = await p.locator('.confirm').innerText().catch(() => '');
+  if (cbody.includes('13812345678') || !cbody.includes('138****5678')) errs.push(`[${tag}] confirm should mask phone: ${cbody.slice(0, 80)}`);
+  await p.click('.confirm >> text=回去改');
+  if ((await p.evaluate(() => window.__copied.length)) !== 0) errs.push(`[${tag}] copied despite cancel`);
+  await p.click('.share-f-why');
+  await p.click('.share-hand');
+  await p.waitForTimeout(300);
+  const copied = await p.evaluate(() => window.__copied.at(-1) || '');
+  const link = (copied.match(/glean:\/\/capture\?\S+/) || [])[0] || '';
+  if (!link || !link.includes('from=Q1f730') || /why=|1381234/.test(link)) errs.push(`[${tag}] hand link ${link.slice(0, 120)}`);
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(200);
+  // 对方：粘进速记条
+  const c2 = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const q = await c2.newPage();
+  q.on('pageerror', (e) => errs.push(`[${tag}] pageerror(q) ${e.message}`));
+  await q.goto(base);
+  await q.waitForSelector('text=穗仓还是空的');
+  await quickSave(q, '朋友的一穗');
+  await q.fill('.quick-input', copied.replace(/\n/g, ' '));
+  await q.press('.quick-input', 'Enter');
+  await q.waitForSelector('text=Q1f730 递来一穗', { timeout: 4000 }).catch(() => errs.push(`[${tag}] handed toast missing`));
+  if ((await dbRaw(q, 'items')).length !== 1) errs.push(`[${tag}] handed item went into the library`);
+  await q.click('.inbox-open');
+  await q.waitForSelector('.handed-row', { timeout: 4000 });
+  await q.screenshot({ path: `${out}/v034-handed-mobile.png` });
+  await q.click('.handed-also');
+  await q.click('.handed-take');
+  await q.waitForSelector('text=先写一句你自己为什么要它', { timeout: 3000 }).catch(() => errs.push(`[${tag}] why not required`));
+  await q.fill('.handed-why input', '我也想拍空房间');
+  await q.press('.handed-why input', 'Enter');
+  await waitItems(q, 2, 4000);
+  const got = (await dbRaw(q, 'items')).find((r) => r.title === '空房间');
+  if (!got || got.why !== '我也想拍空房间' || got.source !== 'Q1f730 递来的') errs.push(`[${tag}] also-glean row ${JSON.stringify(got && { why: got.why, source: got.source })}`);
+  if ((await q.locator('.handed-row').count()) !== 0) errs.push(`[${tag}] handed row not cleared`);
+  await c2.close();
+  // B. 花园：标一穗、批量不放私密、生成页面只含它
+  await p.locator('.main [data-item-id] >> text=末班车').first().click({ button: 'right' });
+  await p.click('.ctxmenu >> text=放进花园');
+  await p.waitForTimeout(300);
+  if ((await dbRaw(p, 'items')).find((r) => r.title === '末班车')?.garden !== 1) errs.push(`[${tag}] garden flag not set`);
+  await openSettings(p);
+  await p.click('.set-link:has-text("分享与花园")');
+  await p.fill('.share-words', '奶奶家');
+  await p.click('.share-name');
+  const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 8000 }), (async () => {
+    await p.click('.garden-build');
+    await p.click('.confirm >> text=生成网页');
+  })()]);
+  const html = fs.readFileSync(await dl.path(), 'utf8');
+  if (!html.includes('Q1f730 的花园') || !html.includes('末班车') || html.includes('空房间') || html.includes('一个人坐')) errs.push(`[${tag}] garden html content`);
+  // C. 出站总开关：关掉 → 黑条「出站已关」，抓链接不出网；打开恢复
+  await p.click('.set-link:has-text("出站")');
+  await p.click('.out-gate');
+  await p.waitForSelector('.offline-bar >> text=出站已关', { timeout: 3000 }).catch(() => errs.push(`[${tag}] gate bar missing`));
+  await p.click('.nav-btn:has-text("穗仓")');
+  await quickSave(p, 'https://gate-probe.example/a');
+  await p.waitForTimeout(1200);
+  if (outside) errs.push(`[${tag}] fetched outside with gate off (${outside})`);
+  await openSettings(p);
+  await p.click('.out-gate');
+  if (await p.locator('.offline-bar').count()) errs.push(`[${tag}] gate bar should go away`);
+  await c1.close();
+  // D. 手机：新枝分享 + 明信片（0916 只写类型和标题；1080 宽 PNG）
+  const c3 = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, acceptDownloads: true });
+  await c3.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { readText: async () => '', writeText: async () => {} } }));
+  const r = await c3.newPage();
+  r.on('pageerror', (e) => errs.push(`[${tag}] pageerror(r) ${e.message}`));
+  await r.goto(base);
+  await r.waitForSelector('text=穗仓还是空的');
+  await quickSave(r, '《花样年华》 @王家卫 > 旗袍和楼梯');
+  await quickSave(r, '/歌 梦二 @梅林茂 > 大提琴');
+  await quickSave(r, '楼梯间的灯一直坏着 > 坏掉的灯');
+  await r.click('.nav-btn:has-text("嫁接")');
+  await r.click('.controls button:has-text("抽几穗")');
+  await r.click('.graft-btn');
+  await r.waitForSelector('.three .idea', { timeout: 15000 });
+  await r.locator('.three .idea >> nth=0 >> .idea-share').click();
+  await r.waitForSelector('.share-panel');
+  const bt = await r.textContent('.share-preview');
+  if (bt.includes('王家卫') || !bt.includes('—— Q1f730 · 拾穗 Glean')) errs.push(`[${tag}] branch share default should be plain: ${bt.slice(0, 120)}`);
+  await r.click('.share-m-show');
+  await r.click('.share-card');
+  await r.waitForSelector('.share-cardview img', { timeout: 8000 });
+  const nat = await r.evaluate(() => { const i = document.querySelector('.share-cardview img'); return [i.naturalWidth, i.naturalHeight]; });
+  if (nat[0] !== 1080 || nat[1] < 1350) errs.push(`[${tag}] postcard size ${nat}`);
+  await r.screenshot({ path: `${out}/v034-postcard-mobile.png` });
+  const [dl2] = await Promise.all([r.waitForEvent('download', { timeout: 6000 }), r.click('.card-save')]);
+  const png = pngSize(fs.readFileSync(await dl2.path()));
+  if (!png || png.w !== 1080) errs.push(`[${tag}] postcard download ${JSON.stringify(png)}`);
+  fs.copyFileSync(await dl2.path(), `${out}/v034-postcard.png`);
+  await c3.close();
+  console.log(`v034: share defaults title+content, why toggle, phone caught+masked, hand link → handed inbox → also-glean needs why, garden html only marked, gate bar + no outside fetch, branch share plain/show, postcard ${nat.join('x')}`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v034') {
+    await v034();
+    throw Object.assign(new Error('v034 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v033') {
     await v033();
     throw Object.assign(new Error('v033 only'), { only: true });
@@ -4358,6 +4488,7 @@ try {
   await v031();
   await v032();
   await v033();
+  await v034();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
