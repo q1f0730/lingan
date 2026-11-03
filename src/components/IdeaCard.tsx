@@ -10,11 +10,17 @@ import { evidenceOf, MIN_EVIDENCE, sourceIds, splitMentions, type Evidence } fro
 import { TYPE_LABEL, type Development, type GraftBatch, type Idea, type Item } from '../lib/types';
 import { nn } from '../lib/studio';
 import { noveltyLabel } from '../lib/distinct';
+import { FormPicker } from './FormPicker';
+import { FOCUS_WORK_KEY, FORMS } from '../lib/works';
+import { createWork } from '../lib/workstore';
+import type { WorkForm } from '../lib/types';
 
 
 /** 一根新枝（m3 / m25 / d4）：细体序号 → 标题 → 一句话 → 因为这几穗 → 文字动作「留下 / 再接一次 / 不要」 */
 export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onAgain }: { idea: Idea; source: 'ai' | 'offline'; devId?: number; animate?: boolean; index?: number; hideCliches?: boolean; onAgain?: () => void }) {
-  const { toast, openItem, confirm } = useApp();
+  const { toast, openItem, confirm, go } = useApp();
+  const [forming, setForming] = useState(false);
+  const [busy, setBusy] = useState(false);
   const dev = useLiveQuery(() => (devId ? db.developments.get(devId) : undefined), [devId]);
   const ids = useMemo(() => (dev ? sourceIds(dev, idea) : []), [dev, idea]);
   const srcItems = useLiveQuery(async () => (ids.length ? (await db.items.bulkGet(ids)).map((x) => (x && !x.deletedAt ? x : undefined)) : []), [ids.join(',')]);
@@ -61,6 +67,27 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
       toast('已复制');
     } catch {
       toast('复制失败，请长按选择文字', 'err');
+    }
+  }
+  // v0.29 0301 立项：选个形态 → 建作品 → 打开它的工作区
+  async function found(f: WorkForm) {
+    if (!devId || busy) return;
+    setBusy(true);
+    try {
+      const id = await createWork(f, [devId]);
+      if (!dev?.starred) await db.developments.update(devId, { starred: true });
+      try {
+        sessionStorage.setItem(FOCUS_WORK_KEY, String(id));
+      } catch {
+        /* ignore */
+      }
+      toast(`立项：《${idea.title.replace(/^《|》$/g, '')}》· ${FORMS[f].label}`);
+      setForming(false);
+      go('works');
+    } catch (e) {
+      toast('立项失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    } finally {
+      setBusy(false);
     }
   }
   async function drop() {
@@ -148,11 +175,22 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
           复制
         </button>
         {devId && (
+          <button className="btn text idea-found" onClick={() => setForming((x) => !x)} aria-expanded={forming}>
+            {forming ? '收起' : '立项'}
+          </button>
+        )}
+        {devId && (
           <button className="btn text faint idea-drop" onClick={drop}>
             不要
           </button>
         )}
       </div>
+      {forming && devId && (
+        <div className="idea-forming">
+          <p className="meta-text">把这根新枝做成什么？选一个形态，它和来源穗会一起进一件新作品。</p>
+          <FormPicker onPick={(f) => void found(f)} busy={busy} />
+        </div>
+      )}
     </article>
   );
 }
