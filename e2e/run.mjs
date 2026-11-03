@@ -4092,7 +4092,7 @@ async function tauriMock(ctx, opts) {
     const cbs = new Map();
     let next = 1;
     const listeners = {};
-    const st = { keys: { quick: 'ctrl+shift+l', excerpt: '', grab: true }, autostart: false, taken: [], opened: [], calls: [] };
+    const st = { keys: { quick: 'ctrl+shift+l', excerpt: '', grab: true, shot: 'ctrl+shift+k' }, autostart: false, taken: [], opened: [], calls: [], seq: 7, ocrBytes: 0, notes: [] };
     window.__mock = st;
     const png = Uint8Array.from(atob(o.png), (c) => c.charCodeAt(0)).buffer;
     const files = o.send ? [{ name: '发送的图.png', mime: 'image/png', data: png }, { name: '一段话.txt', mime: 'text/plain', data: new TextEncoder().encode('从资源管理器发来的一段话').buffer }] : [];
@@ -4136,7 +4136,20 @@ async function tauriMock(ctx, opts) {
             st.opened.push(args.url);
             return null;
           case 'clip_peek':
-            return { seq: 7, private: false, image: true };
+            return { seq: st.seq, private: false, image: true };
+          // v0.36：系统 OCR / 截图 / 听写 / 通知
+          case 'ocr_image':
+            st.ocrBytes = args?.byteLength || 0;
+            if (o.ocrNoLang) throw 'nolang';
+            return '拾穗  截图里的字\n\n第二行 霓虹';
+          case 'shot_now':
+          case 'dictate':
+            return true;
+          case 'plugin:notification|is_permission_granted':
+            return true;
+          case 'plugin:notification|notify':
+            st.notes.push(args.options);
+            return null;
           case 'clip_image':
             return png;
           case 'plugin:clipboard-manager|read_text':
@@ -4498,7 +4511,152 @@ async function v035() {
   console.log(`v035: bilibili link cleaned (t=192 kept) + api up, 从 3:12 看, reunion (1 row, meets 1, why joined), douban csv 2 new → imported (bundle, mark date) → re-import 0 new, kindle 2`);
 }
 
+// v0.36 系统能力接进来：0005 截图热键 / 0020 系统 OCR 进秒搜 / 0008 0009 0042 扩展的 glean://capture（img、clip）/ 说一句就收 / 0519 通知
+async function v036() {
+  const tag = 'v036';
+  const png = await (async () => {
+    const pg = await b.newPage();
+    const d = await pg.evaluate(() => {
+      const c = document.createElement('canvas');
+      c.width = 200; c.height = 120;
+      const g = c.getContext('2d');
+      g.fillStyle = '#f4f4f4'; g.fillRect(0, 0, 200, 120);
+      g.fillStyle = '#111'; g.font = '28px sans-serif'; g.fillText('拾穗', 40, 70);
+      return c.toDataURL('image/png').split(',')[1];
+    });
+    await pg.close();
+    return d;
+  })();
+  // A. 网页版：扩展「拾这张图」（App 下载图）+ 安卓式「按住说话」（模拟 LinganVoice 桥）
+  const c1 = await b.newContext({ viewport: { width: 390, height: 844 } });
+  await c1.route('**/e2e-img/frame.png', (r) => r.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from(png, 'base64') }));
+  await c1.addInitScript(() => {
+    window.__voice = { st: { state: 'idle', text: '', err: 0 }, next: { state: 'done', text: '雨夜的霓虹像电影', err: 0 }, starts: 0 };
+    window.LinganVoice = {
+      start: () => ((window.__voice.starts++, (window.__voice.st = { state: 'listening', text: '', err: 0 })), 'listening'),
+      stop: () => void (window.__voice.st = window.__voice.next),
+      poll: () => {
+        const s = JSON.stringify(window.__voice.st);
+        if (window.__voice.st.state === 'done' || window.__voice.st.state === 'error') window.__voice.st = { state: 'idle', text: '', err: 0 };
+        return s;
+      },
+    };
+  });
+  const p = await c1.newPage();
+  p.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p.goto(base);
+  await p.waitForSelector('text=穗仓还是空的');
+  const imgUrl = new URL('e2e-img/frame.png', base).href;
+  await p.evaluate((u) => window.dispatchEvent(new CustomEvent('glean:link', { detail: u })), 'glean://capture?img=' + encodeURIComponent(imgUrl) + '&url=' + encodeURIComponent('https://example.com/gallery') + '&title=' + encodeURIComponent('展览里的一张'));
+  await waitItems(p, 1, 6000);
+  const im = (await dbRaw(p, 'items'))[0];
+  if (!im || im.type !== 'image' || !im.hasImage || im.title !== '展览里的一张') errs.push(`[${tag}] img capture row ${JSON.stringify(im && { type: im.type, hasImage: im.hasImage, title: im.title })}`);
+  // 按住「说」→ 松手 → 一穗
+  const mic = p.locator('.quick-mic:visible').first();
+  await mic.waitFor({ timeout: 4000 }).catch(() => errs.push(`[${tag}] mic button missing`));
+  await p.screenshot({ path: `${out}/v036-mic-mobile.png` });
+  const box = await mic.boundingBox();
+  if (box && (box.width < 40 || box.height < 40)) errs.push(`[${tag}] mic target small ${box.width}x${box.height}`);
+  await mic.hover();
+  await p.mouse.down();
+  await p.waitForTimeout(300);
+  if (!(await mic.innerText()).includes('松手')) errs.push(`[${tag}] mic not in hold state`);
+  await p.mouse.up();
+  await waitItems(p, 2, 5000);
+  const said = (await dbRaw(p, 'items')).find((r) => r.title.includes('雨夜的霓虹'));
+  if (!said || !said.createdAt) errs.push(`[${tag}] voice row ${JSON.stringify(said && { t: said.title, type: said.type })}`);
+  await p.waitForSelector('.quick-after', { timeout: 3000 }).catch(() => errs.push(`[${tag}] voice no why prompt`));
+  await p.keyboard.press('Escape');
+  // 断网：明确报错，不存
+  await p.evaluate(() => (window.__voice.next = { state: 'error', text: '', err: 2 }));
+  await mic.hover();
+  await p.mouse.down();
+  await p.waitForTimeout(200);
+  await p.mouse.up();
+  await p.waitForSelector('text=没网', { timeout: 4000 }).catch(() => errs.push(`[${tag}] offline voice no toast`));
+  if ((await dbRaw(p, 'items')).length !== 2) errs.push(`[${tag}] offline voice saved a row`);
+  await c1.close();
+
+  // B. 桌面版（模拟 Tauri）：截图热键 → 小窗自动带图 → 存 → 系统 OCR → 秒搜「图中文字」；clip=1 的扩展链接；Win+H；设置
+  const c2 = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  await tauriMock(c2, { png, send: false, links: [] });
+  const d = await c2.newPage();
+  d.on('pageerror', (e) => errs.push(`[${tag}] desktop pageerror ${e.message}`));
+  await d.goto(base);
+  await d.waitForSelector('text=穗仓还是空的');
+  await d.evaluate(() => window.__emit('quick-focus', '\u0001shot:8'));
+  await d.waitForSelector('.qw-img img[alt="要拾的图片"]', { timeout: 4000 }).catch(() => errs.push(`[${tag}] shot image not taken`));
+  if ((await d.inputValue('.quick-window input')) !== '') errs.push(`[${tag}] shot sentinel leaked into input`);
+  await d.fill('.quick-window input', '截图补一句');
+  await d.press('.quick-window input', 'Enter');
+  await waitItems(d, 1, 5000);
+  let row = null;
+  for (let n = 0; n < 20 && !row?.ocr; n++) {
+    await d.waitForTimeout(250);
+    row = (await dbRaw(d, 'items'))[0];
+  }
+  if (!row || row.type !== 'image' || row.ocr !== '拾穗 截图里的字\n第二行 霓虹') errs.push(`[${tag}] ocr row ${JSON.stringify(row && { type: row.type, ocr: row.ocr })}`);
+  if (!(await d.evaluate(() => window.__mock.ocrBytes))) errs.push(`[${tag}] ocr got no bytes`);
+  await d.evaluate(() => window.dispatchEvent(new CustomEvent('glean:link', { detail: 'glean://search?q=' + encodeURIComponent('截图里的字') })));
+  await d.waitForSelector('.search-view input', { timeout: 5000 });
+  await d.waitForFunction(() => (document.querySelector('.search-view')?.innerText || '').includes('截图补一句'), null, { timeout: 5000 }).catch(() => errs.push(`[${tag}] ocr text not searchable`));
+  const sv = await d.locator('.search-view').innerText().catch(() => '');
+  if (!sv.includes('图中文字')) errs.push(`[${tag}] search hit field label missing`);
+  await d.keyboard.press('Escape');
+  await d.waitForTimeout(400);
+  // 详情里显示「图中文字」
+  await d.locator('.main [data-item-id]').first().click();
+  await d.waitForSelector('.detail-ocr', { timeout: 4000 }).catch(() => errs.push(`[${tag}] detail ocr section missing`));
+  await d.screenshot({ path: `${out}/v036-detail-ocr-desktop.png` });
+  await d.keyboard.press('Escape');
+  await d.waitForTimeout(400);
+  // 扩展「拾当前时间点」：clip=1 = 剪贴板里那一帧（新序号）
+  await d.evaluate(() => (window.__mock.seq = 9));
+  await d.evaluate((u) => window.dispatchEvent(new CustomEvent('glean:link', { detail: u })), 'glean://capture?text=' + encodeURIComponent('花样年华 3:12') + '&url=' + encodeURIComponent('https://www.bilibili.com/video/BV1xx411c7mD?t=192') + '&title=' + encodeURIComponent('花样年华 · 3:12') + '&clip=1');
+  await waitItems(d, 2, 5000);
+  const fr = (await dbRaw(d, 'items')).find((r) => r.title === '花样年华 · 3:12');
+  if (!fr || fr.type !== 'image' || !fr.hasImage || !(fr.url || '').includes('t=192')) errs.push(`[${tag}] frame capture row ${JSON.stringify(fr && { type: fr.type, hasImage: fr.hasImage, url: fr.url })}`);
+  // Win+H 听写：点「说」= 焦点进速记框 + dictate
+  await d.click('.quick-mic:visible');
+  await d.waitForFunction(() => window.__mock.calls.includes('dictate'), null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] dictate not called`));
+  if (!(await d.evaluate(() => document.activeElement?.classList.contains('quick-input')))) errs.push(`[${tag}] dictate without focus in quick input`);
+  // 设置：截图热键行 + 现在截一张 + 识别旧图里的字
+  await d.evaluate(() => window.dispatchEvent(new CustomEvent('glean:link', { detail: 'glean://go/settings' })));
+  await d.waitForSelector('.cap-key-shot', { timeout: 6000 });
+  if (!(await d.locator('.cap-key-shot').innerText()).includes('Ctrl+Shift+K')) errs.push(`[${tag}] shot key label`);
+  await d.click('.cap-shot-now');
+  await d.waitForFunction(() => window.__mock.calls.includes('shot_now'), null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] shot_now not called`));
+  await d.click('.cap-key-shot');
+  await d.keyboard.press('Backspace');
+  await d.waitForFunction(() => window.__mock.keys.shot === '', null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] shot key not cleared`));
+  await d.click('.cap-ocr');
+  await d.waitForSelector('text=秒搜能搜到了', { timeout: 5000 }).catch(() => errs.push(`[${tag}] ocr backfill toast`));
+  await d.locator('.cap-key-shot').scrollIntoViewIfNeeded();
+  await d.screenshot({ path: `${out}/v036-settings-desktop.png` });
+  await c2.close();
+
+  // C. 没装中文 OCR 语言包：提示一次，穗照样存
+  const c3 = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  await tauriMock(c3, { png, send: false, links: [], ocrNoLang: true });
+  const e = await c3.newPage();
+  e.on('pageerror', (x) => errs.push(`[${tag}] nolang pageerror ${x.message}`));
+  await e.goto(base);
+  await e.waitForSelector('text=穗仓还是空的');
+  await e.evaluate(() => window.__emit('quick-focus', '\u0001shot:3'));
+  await e.waitForSelector('.qw-img img[alt="要拾的图片"]', { timeout: 4000 });
+  await e.press('.quick-window input', 'Enter');
+  await e.waitForSelector('text=没装中文 OCR', { timeout: 5000 }).catch(() => errs.push(`[${tag}] nolang hint missing`));
+  const nr = (await dbRaw(e, 'items'))[0];
+  if (!nr || nr.type !== 'image' || nr.ocr !== undefined) errs.push(`[${tag}] nolang row ${JSON.stringify(nr && { type: nr.type, ocr: nr.ocr })}`);
+  await c3.close();
+  console.log('v036: ext img capture, hold-to-talk saved + offline toast / desktop: shot hotkey → image → OCR → search 图中文字 + detail, clip=1 frame, Win+H, settings shot key/now/backfill, nolang hint ok');
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v036') {
+    await v036();
+    throw Object.assign(new Error('v036 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v035') {
     await v035();
     throw Object.assign(new Error('v035 only'), { only: true });
@@ -4574,6 +4732,7 @@ try {
   await v033();
   await v034();
   await v035();
+  await v036();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
