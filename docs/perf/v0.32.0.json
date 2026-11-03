@@ -1,0 +1,92 @@
+{
+ "version": "0.32.0",
+ "date": "2026-11-03",
+ "machine": "InstaBox（同一会话）",
+ "e2e": {
+  "coldStartMs": 198,
+  "coldStartCpu4xMs": 573,
+  "searchMaxMs": 17.3,
+  "searchCpu4xMaxMs": 45.1,
+  "scroll": "masonry/timeline/list 60fps jank 0%",
+  "backup": {
+   "ms": 637,
+   "heapDeltaMB": 35,
+   "peakMB": 44.5
+  },
+  "restore": {
+   "ms": 902,
+   "heapDeltaMB": 40.5
+  }
+ },
+ "interleavedBench": {
+  "script": "/workspace/work/v030/bench5.mjs（painted）",
+  "rounds": 9,
+  "v031": {
+   "normalMedian": 192,
+   "cpu4xMedian": 588,
+   "normalRuns": [
+    190,
+    185,
+    185,
+    195,
+    193,
+    192,
+    224,
+    189,
+    201
+   ],
+   "cpu4xRuns": [
+    564,
+    574,
+    589,
+    575,
+    575,
+    614,
+    596,
+    615,
+    588
+   ]
+  },
+  "v032": {
+   "normalMedian": 197,
+   "cpu4xMedian": 589,
+   "normalRuns": [
+    191,
+    197,
+    192,
+    210,
+    215,
+    203,
+    197,
+    176,
+    191
+   ],
+   "cpu4xRuns": [
+    642,
+    574,
+    528,
+    606,
+    617,
+    589,
+    603,
+    555,
+    585
+   ]
+  }
+ },
+ "lan": {
+  "vitest": "真实 HTTP 往返到 e2e/lanmock.mjs：手机 6（含 1 图）+ 电脑 4 → 两边 10；断开再同步推 1 行、上行 <4KB",
+  "e2e": "v032：5+5=10，增量上行约 685B / 下行约 630B；清掉 2 个旧包"
+ },
+ "size": {
+  "firstJsKB": 558.4,
+  "firstJsGzipKB": 189.0,
+  "firstCssKB": 126.8,
+  "totalAssetsKB": 2238.0,
+  "lazy": {
+   "sync": "约 34KB",
+   "lan": "6.6KB",
+   "qrcode": "4.1KB"
+  }
+ }
+}
