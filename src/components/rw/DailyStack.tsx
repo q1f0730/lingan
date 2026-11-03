@@ -1,4 +1,4 @@
-import { m } from 'framer-motion';
+import { m } from './lite';
 import { useState } from 'react';
 import { itemHasImage } from '../../lib/imagestore';
 import { useThumbSrc } from '../../lib/useImage';
