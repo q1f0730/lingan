@@ -22,6 +22,18 @@ export function shareToDraft(p: SharePayload | null | undefined): QuickDraft | n
   return d;
 }
 
+/** v0.22 长按图标快捷方式「今日一穗」：MainActivity 记下要去的页（daily / library / settings），读一次清一次 */
+export function takeGo(): string {
+  const b = (window as unknown as { LinganShare?: { go?: () => string } }).LinganShare;
+  if (!b?.go) return '';
+  try {
+    const g = b.go();
+    return g === 'daily' || g === 'library' || g === 'settings' ? g : '';
+  } catch {
+    return '';
+  }
+}
+
 /** Read and clear whatever the Android share sheet handed us (bridge injected by the native side). */
 export function takeShared(): SharePayload | null {
   const b = (window as unknown as { LinganShare?: { take: () => string } }).LinganShare;
