@@ -1,6 +1,6 @@
 // v0.29 B2 创作产出：作品工坊（0301–0309、0314、0322、0339、0340）。整页懒加载，首屏不带。
 import { useLiveQuery } from 'dexie-react-hooks';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { Sheet } from '../components/Sheet';
 import { FormPicker } from '../components/FormPicker';
@@ -17,14 +17,19 @@ import {
   FOCUS_WORK_KEY,
   FORMS,
   fmtSec,
+  applyDisplayEdit,
+  dispToMd,
   insertRef,
+  mdToDisp,
   mdBlocks,
   newShot,
   PANEL_LABEL,
   pendingRef,
   playlistText,
+  refLayout,
   refToken,
   refUids,
+  snapCaret,
   reviewCheck,
   safeFileName,
   SHOT_SIZES,
@@ -36,6 +41,7 @@ import {
   workMarkdown,
   type Block,
   type Inline,
+  type RefLayout,
   type WorkPanel,
 } from '../lib/works';
 
@@ -356,20 +362,32 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
     return [...m, ...(lib || []).filter((x) => !seen.has(x.uid))].slice(0, 8);
   }, [pend, mats, lib]);
   const byUid = useMemo(() => new Map((refsAll || []).map((x) => [x.uid!, x])), [refsAll]);
+  // v0.30：编辑框里只显示 [[标题]]，uid 藏在草稿里；光标、[[ 弹窗都按显示文本算，写回时换算成草稿位置
+  const layout = useMemo(() => refLayout(text), [text]);
+  const caretTo = useRef(-1);
+  useLayoutEffect(() => {
+    const el = ta.current;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 2 + 'px';
+    }
+    if (caretTo.current >= 0 && el) {
+      el.setSelectionRange(caretTo.current, caretTo.current);
+      caretTo.current = -1;
+    }
+  }, [layout.display, mode]);
   const insertAt = useCallback(
     (token: string) => {
       const el = ta.current;
-      const caret = el ? el.selectionStart : text.length;
-      const r = insertRef(text, caret, token);
+      const dcaret = el ? el.selectionStart : layout.display.length;
+      // 正在打的 [[xxx 是普通文字，草稿里一模一样：换算成草稿位置后直接在草稿里替换
+      const r = insertRef(text, dispToMd(layout, dcaret), token);
       setText(r.text);
       setPend(null);
-      requestAnimationFrame(() => {
-        if (!ta.current) return;
-        ta.current.focus();
-        ta.current.setSelectionRange(r.caret, r.caret);
-      });
+      caretTo.current = mdToDisp(refLayout(r.text), r.caret);
+      requestAnimationFrame(() => ta.current?.focus());
     },
-    [text, setText],
+    [text, setText, layout],
   );
   useEffect(() => {
     apiRef.current = {
@@ -389,6 +407,10 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
   const sync = () => {
     const el = ta.current;
     if (!el) return;
+    if (el.selectionStart === el.selectionEnd) {
+      const c = snapCaret(layout, el.selectionStart);
+      if (c !== el.selectionStart) el.setSelectionRange(c, c);
+    }
     const p = pendingRef(el.value, el.selectionStart);
     setPend(p);
     setSel(0);
@@ -423,12 +445,18 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
       {hits.length > 0 && <p className="work-warn meta-text work-wall-list">套路墙上的词：{hits.slice(0, 6).join('、')}</p>}
       {mode === 'write' ? (
         <div className="work-editor">
+          <div className="work-ed-box">
+          <RefBackdrop layout={layout} byUid={byUid} loaded={!!refsAll} />
           <textarea
             ref={ta}
             className="work-text"
-            value={text}
+            value={layout.display}
             onChange={(e) => {
-              setText(e.target.value);
+              const v = e.target.value;
+              const r = applyDisplayEdit(text, v);
+              setText(r.md);
+              // 改动碰到了引用（整块删 / 插到后面 / 粘贴了带 uid 的引用）→ 显示文本和刚打的不一样，光标按换算的放
+              if (r.caret >= 0 && refLayout(r.md).display !== v) caretTo.current = r.caret;
               requestAnimationFrame(sync);
             }}
             onKeyUp={(e) => {
@@ -452,6 +480,7 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
             spellCheck={false}
             aria-label="草稿（Markdown，打 [[ 引用一穗）"
           />
+          </div>
           {pend && (
             <div className="ref-pick" role="listbox" aria-label="引用哪一穗">
               <div className="label">引用一穗{pend.q ? ` · ${pend.q}` : ''}</div>
@@ -480,6 +509,30 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
           }} />
         </article>
       )}
+    </div>
+  );
+}
+
+/** v0.30 编辑框下面那一层：和编辑框同字号同换行，把 [[标题]] 画成 chip（括号淡掉），编辑框本身文字透明、只留光标和选区 */
+function RefBackdrop({ layout, byUid, loaded }: { layout: RefLayout; byUid: Map<string, Item>; loaded: boolean }) {
+  const parts: ReactNode[] = [];
+  let last = 0;
+  layout.spans.forEach((sp, i) => {
+    if (sp.ds > last) parts.push(layout.display.slice(last, sp.ds));
+    const gone = loaded && !byUid.has(sp.uid);
+    parts.push(
+      <span key={i} className={`ref-chip${gone ? ' gone' : ''}`} data-uid={sp.uid}>
+        <span className="ref-br">[[</span>
+        {sp.title}
+        <span className="ref-br">]]</span>
+      </span>,
+    );
+    last = sp.de;
+  });
+  parts.push(layout.display.slice(last) + '\n');
+  return (
+    <div className="work-hl" aria-hidden>
+      {parts}
     </div>
   );
 }
