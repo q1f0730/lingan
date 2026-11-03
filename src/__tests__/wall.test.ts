@@ -253,7 +253,7 @@ describe('套路墙存储', () => {
     v6.close();
     const d = new LinganDB(name);
     const wall = await d.cliches.orderBy('key').toArray();
-    expect(d.verno).toBe(10); // v0.24 起是 10（不要的理由） // v0.23 起是 9（待理 + 重复钥匙）
+    expect(d.verno).toBe(11); // v0.29 起是 11（作品） // v0.24 起是 10（不要的理由） // v0.23 起是 9（待理 + 重复钥匙）
     expect(wall.map((c) => [c.key, c.listed])).toEqual(
       [
         ['城市里的陌生人', 1],
