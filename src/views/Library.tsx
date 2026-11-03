@@ -1,21 +1,41 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { HoverPreview, Hits, ItemCard, ItemRow } from '../components/ItemCard';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { VirtualList, VirtualMasonry } from '../components/Virtual';
 import { DailyCard } from '../components/DailyCard';
-import { addSamples, clearSamples, db } from '../lib/db';
+import { addSamples, clearSamples, db, inboxEnabled, inLibrary } from '../lib/db';
+import { lacksWhy } from '../lib/why';
+import { takeLibSub } from '../lib/libsub';
 import { staggerDelay } from '../lib/motion';
 import { throwbacks } from '../lib/memory';
 import { itemHasImage } from '../lib/imagestore';
 import { useThumbSrc } from '../lib/useImage';
 import { activeMonths, displayTitle, groupByWeek, monthGrid, tagCounts } from '../lib/studio';
-import { SearchView } from './Search';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 import { Seg } from '../components/rw/Seg';
 import { WordReveal } from '../components/rw/WordReveal';
 import { IconSearch } from '../components/rw/icons';
+
+// v0.23 待理 / 缺为什么：直接打进首包（约 10KB）。做成懒加载反而会让打包器把整个库层拆成单独的首屏块，4× 降速冷启动慢约 6%
+// v0.23 瘦首包：搜索 / 待理 / 缺为什么 / 多选工具条都是点开才用，单独成块；首屏画完后空闲时预取，点开不等网络
+const loadSearch = () => import('./Search');
+const loadInbox = () => import('../components/Inbox');
+const loadWhy = () => import('../components/WhyColumn');
+const loadSelect = () => import('../components/SelectBar');
+const SearchView = lazy(() => loadSearch().then((m) => ({ default: m.SearchView })));
+const InboxView = lazy(() => loadInbox().then((m) => ({ default: m.InboxView })));
+const WhyView = lazy(() => loadWhy().then((m) => ({ default: m.WhyView })));
+const SelectBar = lazy(() => loadSelect().then((m) => ({ default: m.SelectBar })));
+let prefetched = false;
+function prefetchSubviews() {
+  if (prefetched) return;
+  prefetched = true;
+  const go = () => { void loadSearch(); void loadInbox(); void loadWhy(); void loadSelect(); };
+  const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  if (ric) ric(go, { timeout: 2500 }); else setTimeout(go, 1200);
+}
 
 type LibView = 'grid' | 'list' | 'timeline' | 'calendar';
 const VIEWS: Array<[LibView, string]> = [
@@ -41,6 +61,11 @@ export function Library() {
   const devs = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const q = '';
   const [searching, setSearching] = useState(false);
+  const [sub, setSub] = useState<'inbox' | 'why' | null>(takeLibSub);
+  // v0.23 一次整理一把：null = 没在选；Shift 点 = 连选一段
+  const [sel, setSel] = useState<Set<number> | null>(null);
+  const lastPick = useRef<number | null>(null);
+  const shiftDown = useRef(false);
   const [type, setType] = useState<ItemType | 'all'>('all');
   const [tag, setTag] = useState<string | null>(null);
   const [lv, setLv] = useState<LibView>(() => {
@@ -52,15 +77,65 @@ export function Library() {
     localStorage.setItem(VIEW_KEY, v);
   };
 
-  const filtered = useMemo(() => {
+  // v0.23 穗仓只放整理过的，和在待理里超过 7 天的
+  const inboxOn = inboxEnabled();
+  const shelf = useMemo(() => {
     if (!items) return [];
-    return items.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)));
-  }, [items, type, tag]);
+    const now = Date.now();
+    return items.filter((i) => inLibrary(i, now, inboxOn));
+  }, [items, inboxOn]);
+  const nInbox = items && inboxOn ? items.filter((i) => i.inbox).length : 0;
+  useEffect(() => { if (items) prefetchSubviews(); }, [items]);
+  const nNoWhy = useMemo(() => (items ? items.filter(lacksWhy).length : 0), [items]);
+  const filtered = useMemo(() => shelf.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag))), [shelf, type, tag]);
+  const seqIds = useMemo(() => filtered.map((i) => i.id!), [filtered]);
   const typeN = useMemo(() => {
     const m = new Map<ItemType, number>();
-    for (const i of items || []) m.set(i.type, (m.get(i.type) || 0) + 1);
+    for (const i of shelf) m.set(i.type, (m.get(i.type) || 0) + 1);
     return m;
-  }, [items]);
+  }, [shelf]);
+  useEffect(() => {
+    const d = (e: KeyboardEvent) => (shiftDown.current = e.shiftKey);
+    window.addEventListener('keydown', d);
+    window.addEventListener('keyup', d);
+    return () => {
+      window.removeEventListener('keydown', d);
+      window.removeEventListener('keyup', d);
+    };
+  }, []);
+  const pick = useCallback(
+    (it: Item) => {
+      if (!sel) {
+        openItem(it, seqIds);
+        return;
+      }
+      const id = it.id!;
+      const next = new Set(sel);
+      if (shiftDown.current && lastPick.current != null) {
+        const a = seqIds.indexOf(lastPick.current);
+        const b = seqIds.indexOf(id);
+        if (a >= 0 && b >= 0) for (let k = Math.min(a, b); k <= Math.max(a, b); k++) next.add(seqIds[k]);
+      } else if (next.has(id)) next.delete(id);
+      else next.add(id);
+      lastPick.current = id;
+      setSel(next);
+    },
+    [sel, seqIds, openItem],
+  );
+  // 选择时：Ctrl+A 全选当前筛选结果，Esc 退出
+  useEffect(() => {
+    if (!sel) return;
+    const h = (e: KeyboardEvent) => {
+      const t = (e.target as HTMLElement)?.tagName;
+      if (t === 'INPUT' || t === 'TEXTAREA') return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        setSel(new Set(seqIds));
+      } else if (e.key === 'Escape') setSel(null);
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [sel, seqIds]);
   // v0.17 秒搜：桌面按 / 或 Ctrl+K 打开搜索
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
@@ -118,8 +193,11 @@ export function Library() {
   }
 
   if (!items) return <Loading />;
-  if (searching && devs) return <SearchView items={items} devs={devs} onClose={() => setSearching(false)} />;
-  const own = items.length - nSamples;
+  if (searching && devs) return <Suspense fallback={<Loading />}><SearchView items={items} devs={devs} onClose={() => setSearching(false)} /></Suspense>;
+  if (sub === 'inbox') return <Suspense fallback={<Loading />}><InboxView onClose={() => setSub(null)} /></Suspense>;
+  if (sub === 'why') return <Suspense fallback={<Loading />}><WhyView onClose={() => setSub(null)} /></Suspense>;
+  const nShelfSamples = shelf.filter((i) => i.sample).length;
+  const own = shelf.length - nShelfSamples;
   const filtering = type !== 'all' || !!tag;
 
   if (items.length === 0) {
@@ -161,6 +239,28 @@ export function Library() {
 
   const notesEl = !filtering ? (
         <div className="lib-notes">
+          {nInbox > 0 && (
+            <div className="inbox-bar note-row">
+              <span className="label">待理 <span className="num">({nInbox})</span></span>
+              <span className="meta-text">刚收的先放这里，理完再进穗仓</span>
+              <span className="note-acts">
+                <button className="btn text strong inbox-open" onClick={() => setSub('inbox')}>
+                  去整理
+                </button>
+              </span>
+            </div>
+          )}
+          {nNoWhy > 0 && (
+            <div className="why-bar note-row">
+              <span className="label">缺为什么 <span className="num">({nNoWhy})</span></span>
+              <span className="meta-text">一次补 5 条，写一句就好</span>
+              <span className="note-acts">
+                <button className="btn text strong why-open" onClick={() => setSub('why')}>
+                  补 5 条
+                </button>
+              </span>
+            </div>
+          )}
           <DailyCard items={items} />
           {nSamples > 0 && (
             <div className="samples-bar note-row">
@@ -198,7 +298,7 @@ export function Library() {
         </div>
       ) : null;
   const title = tag ? `#${tag}` : '穗仓';
-  const count = tag ? filtered.length : own > 0 || nSamples === 0 ? own : 0;
+  const count = tag ? filtered.length : own > 0 || nShelfSamples === 0 ? own : 0;
   return (
     <section className="view library">
       <DisplayTitle
@@ -208,6 +308,9 @@ export function Library() {
         aside={
           <div className="page-tools">
             <Seg id="libview" className="view-switch" label="视图" value={lv} options={VIEWS} onPick={pickView} />
+            <button className={`chip select-toggle${sel ? ' on' : ''}`} onClick={() => setSel(sel ? null : new Set())} title="多选：批量打标签 / 改类型 / 删除（Shift 连选，Ctrl+A 全选）">
+              {sel ? '完成' : '选择'}
+            </button>
             <button className="search-toggle" onClick={() => setSearching(true)} title="搜索（/ 或 Ctrl+K）">
               <IconSearch size={16} />
               <span>搜索</span>
@@ -219,7 +322,7 @@ export function Library() {
         <div className="lib-main">
       <div className="chips scroll filter-row" role="toolbar" aria-label="类型">
         <button className={`chip${type === 'all' ? ' on' : ''}`} onClick={() => setType('all')}>
-          全部 <span className="n">({items.length})</span>
+          全部 <span className="n">({shelf.length})</span>
         </button>
         {TYPE_ORDER.filter((t) => typeN.get(t)).map((t) => (
           <button key={t} className={`chip${type === t ? ' on' : ''}`} onClick={() => setType(type === t ? 'all' : t)}>
@@ -239,20 +342,21 @@ export function Library() {
           <p className="meta-text">没找到这一穗。</p>
         </div>
       ) : lv === 'list' ? (
-        <ListView items={filtered} q={q} onOpen={openItem} desktop={desktop} />
+        <ListView items={filtered} q={q} onOpen={pick} desktop={desktop} sel={sel} />
       ) : lv === 'timeline' ? (
-        <Timeline items={filtered} q={q} onOpen={openItem} />
+        <Timeline items={filtered} q={q} onOpen={pick} sel={sel} />
       ) : lv === 'calendar' ? (
-        <MonthCalendar items={filtered} onOpen={openItem} />
+        <MonthCalendar items={filtered} onOpen={pick} />
       ) : (
         <VirtualMasonry<Item>
           items={filtered}
           keyOf={(it) => it.id!}
           estimate={(_it, w) => Math.round(w * 1.25)}
           cellStyle={cellStyle}
-          render={(it) => <ItemCard item={it} onOpen={openItem} q={q || undefined} />}
+          render={(it) => <ItemCard item={it} onOpen={pick} q={q || undefined} selected={sel ? sel.has(it.id!) : undefined} />}
         />
       )}
+      {sel && <Suspense fallback={null}><SelectBar ids={[...sel]} total={filtered.length} onAll={() => setSel(new Set(seqIds))} onNone={() => setSel(new Set())} onDone={() => setSel(null)} /></Suspense>}
         </div>
         {desktop ? (
           <aside className="lib-rail" aria-label="今天">
@@ -268,7 +372,7 @@ export function Library() {
 }
 
 /** 列表：无线表格，表头下一条 1px 黑线；桌面悬停时行标题右移 + 光标旁预览图 */
-function ListView({ items, q, onOpen, desktop }: { items: Item[]; q: string; onOpen: (i: Item) => void; desktop: boolean }) {
+function ListView({ items, q, onOpen, desktop, sel }: { items: Item[]; q: string; onOpen: (i: Item) => void; desktop: boolean; sel: Set<number> | null }) {
   const [hov, setHov] = useState<{ it: Item; x: number; y: number } | null>(null);
   const onHover = useCallback((it: Item | null, e?: React.PointerEvent) => setHov(it && e && itemHasImage(it) ? { it, x: e.clientX, y: e.clientY } : null), []);
   return (
@@ -288,7 +392,7 @@ function ListView({ items, q, onOpen, desktop }: { items: Item[]; q: string; onO
         keyOf={(it) => it.id!}
         estimate={() => (desktop ? 64 : 44)}
         threshold={60}
-        render={(it) => <ItemRow item={it} onOpen={onOpen} q={q || undefined} onHover={desktop ? onHover : undefined} />}
+        render={(it) => <ItemRow item={it} onOpen={onOpen} q={q || undefined} onHover={desktop ? onHover : undefined} selected={sel ? sel.has(it.id!) : undefined} />}
       />
       {hov && <HoverPreview item={hov.it} x={hov.x} y={hov.y} />}
     </div>
@@ -301,7 +405,7 @@ function TlThumb({ it }: { it: Item }) {
 }
 
 /** 时间线：按周成带，左边周标与条数，右边当周的穗（时间 · 标题 · 类型 · 缩略图） */
-function Timeline({ items, q, onOpen }: { items: Item[]; q: string; onOpen: (i: Item) => void }) {
+function Timeline({ items, q, onOpen, sel }: { items: Item[]; q: string; onOpen: (i: Item) => void; sel: Set<number> | null }) {
   const weeks = useMemo(() => groupByWeek(items), [items]);
   return (
     <VirtualList
@@ -321,7 +425,7 @@ function Timeline({ items, q, onOpen }: { items: Item[]; q: string; onOpen: (i: 
             {g.items.map((it) => {
               const d = new Date(it.createdAt);
               return (
-                <button key={it.id} className="tl-frame" data-item-id={it.id} onClick={() => onOpen(it)}>
+                <button key={it.id} className={`tl-frame${sel?.has(it.id!) ? ' selected' : ''}`} data-item-id={it.id} aria-pressed={sel ? sel.has(it.id!) : undefined} onClick={() => onOpen(it)}>
                   <span className="tl-time num">
                     {String(d.getMonth() + 1).padStart(2, '0')}/{String(d.getDate()).padStart(2, '0')} {String(d.getHours()).padStart(2, '0')}:{String(d.getMinutes()).padStart(2, '0')}
                   </span>
