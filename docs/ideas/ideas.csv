@@ -506,12 +506,12 @@
 0505,C2 平台与系统集成,小组件,1×1 桌面小组件「拾」，点一下弹速记卡,比找图标、等启动快，放在主屏第一页就是随时可拾,AppWidgetProvider + RemoteViews，点击 PendingIntent 打开透明速记 Activity,5,M,P0,待做,
 0506,C2 平台与系统集成,vivo 特性,长按 App 图标出现「拾一穗 / 今日一穗 / 搜索」快捷方式,长按图标是高频操作，还能拖成独立桌面图标,res/xml/shortcuts.xml 静态快捷方式，intent 带 glean:// 深链；支持固定到桌面,5,S,P0,待做,
 0507,C2 平台与系统集成,全局热键,选中任意文字按 Ctrl+Shift+C 直接存为摘抄,在网页、PDF、微信电脑版里看到好句子，不用复制、切窗、粘贴,热键触发后模拟 Ctrl+C（SendInput），读剪贴板存穗，再还原原剪贴板；角落淡出「已拾」,5,M,P0,待做,
-0508,C2 平台与系统集成,跨端同步,每天自动备份到本机文件夹，保留最近 7 份,现在只有手动导出，WebView 数据被清就全没了,Windows 默认 文档\Glean\backup，安卓写 Download/Glean；JSON+图片 ZIP，滚动删除旧份,5,S,P0,待做,
+0508,C2 平台与系统集成,跨端同步,每天自动备份到本机文件夹，保留最近 7 份,现在只有手动导出，WebView 数据被清就全没了,Windows 默认 文档\Glean\backup，安卓写 Download/Glean；JSON+图片 ZIP，滚动删除旧份,5,S,P0,已做,v0.26.0
 0509,C2 平台与系统集成,跨端同步,所有系统入口先写本地收件队列再合并,通知回复、磁贴、小组件、右键在 App 未启动时也要能存，原生侧写不了 IndexedDB,原生侧写 App 私有目录 inbox/*.json，前端启动和回前台时导入并删除；断网、无 key 照常,5,M,P0,待做,
 0510,C2 平台与系统集成,深链接,注册 glean:// 协议：capture、item/<id>、graft?ids=,小组件、通知、扩展、Obsidian 回链、自动化都要统一入口,tauri-plugin-deep-link 注册 Windows 协议与安卓 intent-filter，前端统一路由解析，未知参数安全忽略,5,M,P0,待做,
 0511,C2 平台与系统集成,自动更新,Windows 自动更新：tauri-plugin-updater + GitHub Releases,版本迭代很快，用户手动下载安装包根本跟不上,CI 产出签名的 latest.json，启动后后台检查，下载完提示「重启后更新」；设置可关,5,M,P0,已做,v0.25.0
-0512,C2 平台与系统集成,自动更新,安卓应用内更新：检查 GitHub Release，下载 APK 调系统安装,安卓没有应用商店渠道，更新全靠手动去 GitHub,读 releases/latest，下载到 cache，FileProvider + PackageInstaller 安装；需 REQUEST_INSTALL_PACKAGES,5,M,P0,待做,
-0513,C2 平台与系统集成,自动更新,更新前自动备份数据库，迁移失败可回滚,Dexie 已迭代到 v7，任何一次迁移出错都会丢穗,安装更新前导出完整备份到本地备份目录；新版迁移失败时提示并提供「恢复到更新前」,5,S,P0,待做,
+0512,C2 平台与系统集成,自动更新,安卓应用内更新：检查 GitHub Release，下载 APK 调系统安装,安卓没有应用商店渠道，更新全靠手动去 GitHub,读 releases/latest，下载到 cache，FileProvider + PackageInstaller 安装；需 REQUEST_INSTALL_PACKAGES,5,M,P0,已做,v0.26.0
+0513,C2 平台与系统集成,自动更新,更新前自动备份数据库，迁移失败可回滚,Dexie 已迭代到 v7，任何一次迁移出错都会丢穗,安装更新前导出完整备份到本地备份目录；新版迁移失败时提示并提供「恢复到更新前」,5,S,P0,已做,v0.26.0
 0514,C2 平台与系统集成,安卓系统,剪贴板一键收跳过验证码、密码等敏感内容,剪贴板提示弹出「收进拾穗：384920」既尴尬又不安全,读 ClipDescription EXTRA_IS_SENSITIVE，再加本地规则（4–8 位纯数字、含「验证码」）跳过,4,S,P0,待做,
 0515,C2 平台与系统集成,全局热键,全局热键可自定义并检测冲突,Ctrl+Shift+L 可能被其他软件占用，注册失败时静默无效,设置页录制组合键，注册失败时提示「被占用，换一个」；默认保留 Ctrl+Shift+L,4,S,P0,待做,
 0516,C2 平台与系统集成,开机启动,设置里「开机静默启动到托盘」开关（默认关）,全局热键和截图采集都要求 App 在后台，不开机启动就经常失效,tauri-plugin-autostart，带 --hidden 参数启动时只建托盘不显示主窗口,4,S,P0,待做,
@@ -603,11 +603,11 @@
 0602,D1 数据、隐私、同步与可靠性,数据模型,每行加 HLC 时间戳 + deviceId + modifiedAt,合并时要判断谁新、来自哪台设备；Date.now() 在手机电脑时钟不准时会错判,新增 lib/hlc.ts（混合逻辑时钟）；Dexie creating/updating 钩子自动盖章；首次启动生成 deviceId 存 meta 表,5,M,P0,待做,
 0603,D1 数据、隐私、同步与可靠性,数据模型,删除改为墓碑 deletedAt，物理删除延后,现在删穗是真删，同步后对端无法知道它被删了，会被“复活”,items/developments 加 deletedAt 索引；所有查询统一走过滤；墓碑 90 天后且全部设备已同步再清理,5,M,P0,已做,v0.21.0
 0604,D1 数据、隐私、同步与可靠性,本地存储,启动时调用 navigator.storage.persist() 申请持久存储,300 张图就有 100MB 原图在 IndexedDB；未持久化时 WebView/浏览器在存储压力下可整库清掉,main.tsx 空闲时调用；设置「备份与导入」显示「存储：已持久 / 可能被系统清理」,5,S,P0,已做,v0.20.0
-0605,D1 数据、隐私、同步与可靠性,本地存储,写入失败（QuotaExceeded/事务中止）统一捕获并兜底保存,现在速记写库失败可能静默丢穗，正是最不能丢的零摩擦记录,db 层包装 add/put；失败时把原文本存入 localStorage 待写队列并黑条提示，下次启动自动重放,5,S,P0,待做,
-0606,D1 数据、隐私、同步与可靠性,备份,自动本地备份 + GFS 轮转（7 天 / 4 周 / 12 月）,现在只有手动「导出备份」，用户不会记得；一次误操作就没有回头路,每天首次打开后 requestIdleCallback 写入 AppData/backups；按日周月保留；设置里列出可一键恢复,5,M,P0,待做,
+0605,D1 数据、隐私、同步与可靠性,本地存储,写入失败（QuotaExceeded/事务中止）统一捕获并兜底保存,现在速记写库失败可能静默丢穗，正是最不能丢的零摩擦记录,db 层包装 add/put；失败时把原文本存入 localStorage 待写队列并黑条提示，下次启动自动重放,5,S,P0,已做,v0.26.0
+0606,D1 数据、隐私、同步与可靠性,备份,自动本地备份 + GFS 轮转（7 天 / 4 周 / 12 月）,现在只有手动「导出备份」，用户不会记得；一次误操作就没有回头路,每天首次打开后 requestIdleCallback 写入 AppData/backups；按日周月保留；设置里列出可一键恢复,5,M,P0,已做,v0.26.0
 0607,D1 数据、隐私、同步与可靠性,备份,备份流式写出，不再整库 JSON.stringify,exportAll 把原图拼成 base64 data URL 进一个对象，100MB 图片变 136MB 字符串，安卓 WebView 易 OOM 崩溃,逐条读 items/images，边读边写 ZIP 条目（复用自写 zip.ts 加流式 API）；内存峰值与库大小无关,5,M,P0,已做,v0.21.0
 0608,D1 数据、隐私、同步与可靠性,备份,新备份格式 .glean：ZIP 内 data.jsonl + images/ 原二进制 + manifest.json,base64 膨胀 33%，且 JSON 单文件损坏一个字节就整份读不出,manifest 记每个文件 sha256 与条数；图片按内容哈希命名；importAll 同时兼容旧 .json,5,M,P0,已做,v0.21.0
-0609,D1 数据、隐私、同步与可靠性,备份,备份目标可选本地文件夹（坚果云/OneDrive 同步目录）,不写任何网络代码就得到云备份，Windows 用户最省事,Tauri dialog 选目录并持久化；fs scope 运行时放行该目录；自动备份同时写一份过去,5,S,P0,待做,
+0609,D1 数据、隐私、同步与可靠性,备份,备份目标可选本地文件夹（坚果云/OneDrive 同步目录）,不写任何网络代码就得到云备份，Windows 用户最省事,Tauri dialog 选目录并持久化；fs scope 运行时放行该目录；自动备份同时写一份过去,5,S,P0,已做,v0.26.0
 0610,D1 数据、隐私、同步与可靠性,备份,恢复三种模式：合并 / 替换（先快照本机）/ 只补缺,现有只有合并，重复导入同一份备份穗数翻倍，换机时又想整库替换,import 参数 mode；替换前自动写一份本机快照；只补缺基于 uid,5,M,P0,已做,v0.21.0
 0611,D1 数据、隐私、同步与可靠性,备份,导入按 uid 去重，旧备份用 createdAt+标题+内容哈希兜底,importAll 每条都 add 新 id，同一份备份导两次全部重复，新枝也复制,导入前建已有 uid/指纹集合；命中则跳过或按更新时间覆盖；结果显示「新增 n · 跳过重复 m」,5,S,P0,已做,v0.21.0
 0612,D1 数据、隐私、同步与可靠性,同步,同步层抽象 SyncTransport 接口（list/get/put/delete + etag）,v0.22 局域网、WebDAV、文件夹、OneDrive 若各写一套合并逻辑会互相不一致,lib/sync/transport.ts 定义接口；合并引擎只依赖接口；v0.22 局域网作为第一个实现,5,M,P0,待做,
@@ -619,10 +619,10 @@
 0618,D1 数据、隐私、同步与可靠性,加密,恢复码（Base32 打印卡）并强制确认,忘记口令就永久打不开同步数据，E2EE 下没人能帮找回,首次开同步展示恢复码，要求输入末 4 位确认；可生成 A4 打印页；恢复码也能包裹 DEK,5,S,P0,待做,
 0619,D1 数据、隐私、同步与可靠性,冲突合并,字段级 LWW 合并（每字段带 HLC）,整行覆盖会让手机改的标签被电脑改的「为什么」整条吃掉,Item 存 fieldClock 映射；合并逐字段取 HLC 大者；纯函数 mergeItem 单测覆盖,5,M,P0,待做,
 0620,D1 数据、隐私、同步与可靠性,冲突合并,合并引擎属性测试：随机操作序列任意顺序应用都收敛,合并 bug 等于数据丢失，示例单测覆盖不了交错情况,vitest + fast-check 生成多设备增删改序列，断言不同应用顺序得到相同最终库、无丢字段,5,M,P0,待做,
-0621,D1 数据、隐私、同步与可靠性,版本历史,大操作前自动全库快照（导入、清示例、清空、批量删、同步）,「清掉示例」「清空所有」一旦误伤没有回头路,"统一 withSnapshot(label, fn) 包裹这些操作；快照写入 AppData/snapshots，保留最近 10 个",5,M,P0,待做,
-0622,D1 数据、隐私、同步与可靠性,版本历史,「清空所有」改二次确认并先自动导出,现在清空连套路墙一起清，是全 App 最危险的按钮,确认弹层要求输入「清空」；执行前强制写一份 .glean 到备份目录并告诉路径,5,S,P0,待做,
+0621,D1 数据、隐私、同步与可靠性,版本历史,大操作前自动全库快照（导入、清示例、清空、批量删、同步）,「清掉示例」「清空所有」一旦误伤没有回头路,"统一 withSnapshot(label, fn) 包裹这些操作；快照写入 AppData/snapshots，保留最近 10 个",5,M,P0,已做,v0.26.0
+0622,D1 数据、隐私、同步与可靠性,版本历史,「清空所有」改二次确认并先自动导出,现在清空连套路墙一起清，是全 App 最危险的按钮,确认弹层要求输入「清空」；执行前强制写一份 .glean 到备份目录并告诉路径,5,S,P0,已做,v0.26.0
 0623,D1 数据、隐私、同步与可靠性,回收站,回收站：删除保留 30 天,现在只有 5 秒撤销，过了就永久没了；删一穗还会让新枝溯源断链,基于墓碑实现；设置「回收站 (n)」列表，恢复/彻底删除；30 天自动清理,5,M,P0,已做,v0.21.0
-0624,D1 数据、隐私、同步与可靠性,迁移,每次 Dexie 升级前自动导出一份原始库,已经迁移 7 次，v8 加 uid/HLC/墓碑是最大一次，风险最高,打开 DB 前比较 verno；需升级时先用无 schema 的 Dexie 读全表写 pre-upgrade-vN.glean,5,S,P0,待做,
+0624,D1 数据、隐私、同步与可靠性,迁移,每次 Dexie 升级前自动导出一份原始库,已经迁移 7 次，v8 加 uid/HLC/墓碑是最大一次，风险最高,打开 DB 前比较 verno；需升级时先用无 schema 的 Dexie 读全表写 pre-upgrade-vN.glean,5,S,P0,已做,v0.26.0
 0625,D1 数据、隐私、同步与可靠性,迁移,迁移失败兜底页：可导出原始数据而不是白屏,UpgradeError/VersionError 时现在 App 直接起不来，用户以为数据没了,捕获 db.open 错误渲染极简页：错误摘要 + 「导出原始数据」+「复制诊断信息」,5,S,P0,已做,v0.20.0
 0626,D1 数据、隐私、同步与可靠性,密钥安全,AI API key 移出 localStorage，存系统钥匙串,settings.ts 现在把 apiKey 明文写 localStorage，任何注入或拿到 WebView 目录都能读走,Rust keyring 命令存取；前端只在请求时取；迁移后清除 localStorage 中的 key 字段,5,M,P0,已做,v0.20.0
 0627,D1 数据、隐私、同步与可靠性,密钥安全,开启 CSP（tauri.conf 现为 csp:null）,链接预览抓来的标题、模型返回内容若有注入可直接执行脚本并读走 key,default-src 'self'; img-src 'self' blob: data: https:; style-src 'self' 'unsafe-inline'; 连接走 plugin-http；e2e 验证无 CSP 报错,5,S,P0,已做,v0.20.0
@@ -635,7 +635,7 @@
 0634,D1 数据、隐私、同步与可靠性,本地存储,速记输入草稿自动保存,打到一半切 App、安卓后台被杀、Windows 小窗 Esc，字就没了,QuickBar/CaptureForm 输入 300ms 防抖存草稿；下次聚焦时恢复并显示「上次没存的」,4,S,P1,待做,
 0635,D1 数据、隐私、同步与可靠性,本地存储,大导入分批事务 + 可续传,importAll 把几百条含图写在一个事务里，安卓中途被杀全部回滚，用户以为导了其实没有,每 50 条一个事务；进度写 meta（已导到第几条 + 文件哈希）；重开后询问「继续导入」,4,M,P1,待做,
 0636,D1 数据、隐私、同步与可靠性,本地存储,收图时限制原图尺寸与体积（默认长边 4096）,手机直出 50MP 照片单张十几 MB，几十张就能撑爆 IndexedDB 配额，列表缩略图也用不到这么大,入库前读尺寸，超限按长边 4096 重编码（质量 0.9），保留原始尺寸元数据；设置可选「保留完全原图」,4,S,P1,待做,
-0637,D1 数据、隐私、同步与可靠性,备份,备份写完立即回读校验,写到一半磁盘满或被杀会留下看似正常的坏备份，等到要恢复才发现,导出后重新打开 ZIP 校验 manifest 哈希与条数；设置里每份备份标「已验证 / 损坏」,4,S,P1,待做,
+0637,D1 数据、隐私、同步与可靠性,备份,备份写完立即回读校验,写到一半磁盘满或被杀会留下看似正常的坏备份，等到要恢复才发现,导出后重新打开 ZIP 校验 manifest 哈希与条数；设置里每份备份标「已验证 / 损坏」,4,S,P1,已做,v0.26.0
 0638,D1 数据、隐私、同步与可靠性,备份,备份可选口令加密（Argon2id + XChaCha20-Poly1305）,备份常被发到微信文件传输助手或网盘，私人灵感裸奔,libsodium.js wasm 或 Rust 端 age crate；文件头标记已加密；导入时询问口令；附加密格式单测,4,M,P1,待做,
 0639,D1 数据、隐私、同步与可靠性,备份,「上次备份 n 天前」提醒,没有任何备份/同步超过 7 天时用户毫无感知,meta 记 lastBackupAt；超 7 天在设置与穗仓顶部 Studio 黑条提示，点一下立刻备份；可关,4,S,P1,待做,
 0640,D1 数据、隐私、同步与可靠性,备份,安卓备份到 SAF 选定目录（持久授权）,手机端同样可以把备份落到坚果云/Syncthing 文件夹,在 patch-android 的 LinganFiles 桥加 ACTION_OPEN_DOCUMENT_TREE + takePersistableUriPermission，分块写入,4,M,P1,待做,
@@ -730,7 +730,7 @@
 0729,D2 工程质量、性能与发布,CI/CD,ghsync 同步后核对远端与本地清单,contents API 逐文件上传，漏传/超时中断时 CI 构建的不是本地那份代码,ghsync 结束后拉远端 tree 比对 sha；生成 MANIFEST.sha256 入库，CI 第一步校验,4,S,P1,待做,
 0730,D2 工程质量、性能与发布,CI/CD,迁回真正的 git 工作流,ghsync 每个文件一个 commit，没有可读历史、无法 revert/bisect,本地 git init，用 token 走 https push；保留 ghsync 作为兜底；RELEASE_RUNBOOK 同步更新,4,M,P1,待做,
 0731,D2 工程质量、性能与发布,自动更新,国内更新源镜像 + 多源回退,GitHub Release 国内下载慢甚至失败，更新形同虚设,CI 把 latest.json 与安装包同步到 Cloudflare R2/Pages（用户已有 Cloudflare）；endpoints 配多源,4,M,P1,待做,
-0732,D2 工程质量、性能与发布,自动更新,安卓应用内检查更新并调起系统安装,不上应用商店的 apk 没有任何更新通道,读 latest.json 比较版本；下载 apk 到 cache 并用 FileProvider 交给安装器；Manifest 声明 REQUEST_INSTALL_PACKAGES,4,M,P1,待做,
+0732,D2 工程质量、性能与发布,自动更新,安卓应用内检查更新并调起系统安装,不上应用商店的 apk 没有任何更新通道,读 latest.json 比较版本；下载 apk 到 cache 并用 FileProvider 交给安装器；Manifest 声明 REQUEST_INSTALL_PACKAGES,4,M,P1,已做,v0.26.0
 0733,D2 工程质量、性能与发布,插件架构,统一捕获源接口 CaptureSource,速记、剪贴板、安卓分享、导入器各自把输入变成穗，规则不一致,定义 normalize(raw)→Item 管道（类型识别、链接规范化、去重提示）；各入口只写适配,4,M,P1,待做,
 0734,D2 工程质量、性能与发布,插件架构,链接解析器注册表（按域名）,v0.27 要专门解析网易云/QQ 音乐/豆瓣/B 站/小红书，写成 if-else 会失控,linkmeta 改为 resolvers[]：match(url)+resolve()；每个解析器配真实链接 fixture 单测,4,S,P1,待做,
 0735,D2 工程质量、性能与发布,代码结构,导入数据与模型返回用 zod 运行时校验,importAll 只检查 title 和 type，模型返回 JSON 也靠手写判断，脏数据会进库,定义 ItemSchema/BackupSchema/GraftResponseSchema；校验失败给出具体字段错误,4,S,P1,待做,
@@ -748,7 +748,7 @@
 0747,D2 工程质量、性能与发布,崩溃上报,生产环境也启用 tauri-plugin-log（Warn 级、轮转）,lib.rs 只在 debug 构建启用日志，正式版出问题零记录,release 构建 LevelFilter::Warn，文件目标 + 1MB×3 轮转；前端错误也转发写入,3,S,P1,待做,
 0748,D2 工程质量、性能与发布,CI/CD,release 附 SHA256SUMS 与校验说明,用户从镜像或网盘拿到的包需要能确认没被改过,CI 最后一步对全部产物 sha256sum 上传；release notes 模板加 PowerShell Get-FileHash 一行,3,S,P1,已做,v0.25.0
 0749,D2 工程质量、性能与发布,CI/CD,锁定 Rust 与 Node 工具链版本,dtolnay/rust-toolchain@stable 每次可能拿到新版本，同一 tag 重跑结果不同,加 rust-toolchain.toml 与 .nvmrc；Actions 读取这两个文件,3,S,P1,待做,
-0750,D2 工程质量、性能与发布,自动更新,更新前自动备份并展示中文更新说明,每版都可能有 Dexie 迁移，更新前留一份备份最稳妥,updater 下载完成、安装前调用自动备份；弹层显示 docs/releases 对应版本摘要,3,S,P1,待做,
+0750,D2 工程质量、性能与发布,自动更新,更新前自动备份并展示中文更新说明,每版都可能有 Dexie 迁移，更新前留一份备份最稳妥,updater 下载完成、安装前调用自动备份；弹层显示 docs/releases 对应版本摘要,3,S,P1,已做,v0.26.0
 0751,D2 工程质量、性能与发布,自动更新,更新检查隐私：每日最多一次、只请求静态文件、可关,更新检查不应变成遥测,GET 静态 latest.json，不带任何设备参数；设置「自动检查更新」开关并写进联网清单,3,S,P1,已做,v0.25.0
 0752,D2 工程质量、性能与发布,多语言,prompt 模板独立成文件并带版本号,嫁接提示词散在 ai.ts/graft.ts 里，改一处难追溯，v0.32 也要记 prompt 版本,"src/prompts/*.ts 导出 {id, version, build()}；新枝记录 promptVersion；契约测试按版本",3,S,P1,待做,
 0753,D2 工程质量、性能与发布,代码结构,拆分 db.ts：schema / migrations / backup / import,一个文件里混着 7 版迁移、备份、导入、套路墙合并，下一次大迁移极易改错,按职责拆 4 个文件，公共导出不变；先补测试再搬代码,3,S,P1,待做,
