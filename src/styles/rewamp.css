@@ -3646,12 +3646,12 @@ html[data-kb] .dock .nav {
 html[data-kb] .clip-offer {
   display: none;
 }
-/* 0414 手机上所有可点的东西触达区 ≥ 44×44：不改外观，用透明 ::after 往外扩（低优先级 :where，组件自己的定位照旧） */
+/* 0414 手机上所有可点的东西触达区 ≥ 44×44：不改外观，用透明 ::after 往外扩（整条选择器零优先级，组件自己的定位照旧；卡片 / 列表行本来就大，不挂） */
 @media (pointer: coarse), (max-width: 600px) {
-  :where(button, a[href], [role='button'], [role='switch'], [role='radio'], [role='tab'], [role='menuitem'], [role='option'], summary):not(.rw-shimmer) {
+  :where(button, a[href], [role='button'], [role='switch'], [role='radio'], [role='tab'], [role='menuitem'], [role='option'], summary):where(:not(.rw-shimmer, .card, .trow, .tl-frame)) {
     position: relative;
   }
-  :where(button, a[href], [role='button'], [role='switch'], [role='radio'], [role='tab'], [role='menuitem'], [role='option'], summary):not(.rw-shimmer)::after {
+  :where(button, a[href], [role='button'], [role='switch'], [role='radio'], [role='tab'], [role='menuitem'], [role='option'], summary):where(:not(.rw-shimmer, .card, .trow, .tl-frame))::after {
     content: '';
     position: absolute;
     left: 50%;
@@ -3779,12 +3779,29 @@ html[data-kb] .clip-offer {
   gap: 6px;
   padding: 6px 0 2px;
 }
+.quick-top,
+.quick-dock {
+  position: relative;
+}
 .tag-suggest-quick {
-  padding: 8px 4px 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: 8px 4px;
+}
+.quick-top .tag-suggest-quick {
+  top: 100%;
 }
 .quick-dock .tag-suggest-quick {
-  order: -1;
-  padding: 0 4px 8px;
+  bottom: calc(100% + 4px);
+  background: var(--bg-glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .tag-suggest-opt {
   display: inline-flex;
