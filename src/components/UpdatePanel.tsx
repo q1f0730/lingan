@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { checkForUpdate, installAndRestart, LATEST_JSON, openDownload, readUpdatePrefs, RELEASES, updatePlatform, writeUpdatePrefs, type CheckResult } from '../lib/update';
-import { onUpdateState, updateState } from '../lib/updatecheck';
+import { androidUpdater, checkForUpdate, LATEST_JSON, readUpdatePrefs, RELEASES, updatePlatform, writeUpdatePrefs, type ApkStep, type CheckResult } from '../lib/update';
+import { androidInstall, desktopInstall, onUpdateState, updateState } from '../lib/updatecheck';
 import { useApp } from '../lib/store';
 
 /** v0.25 设置 → 更新（0511 0751）：自动检查开关、手动检查、Windows 下载好后重启更新、安卓去下载新 APK */
@@ -10,6 +10,8 @@ export function UpdatePanel({ version }: { version: string }) {
   const [prefs, setPrefs] = useState(() => readUpdatePrefs());
   const [res, setRes] = useState<CheckResult | null>(() => updateState());
   const [busy, setBusy] = useState<'' | 'check' | 'install'>('');
+  const [step, setStep] = useState('');
+  const ask = (title: string, body: string) => confirm({ title, body, ok: '仍然更新', cancel: '先不更新', danger: true });
   useEffect(() => onUpdateState(setRes), []);
 
   async function check() {
@@ -26,14 +28,31 @@ export function UpdatePanel({ version }: { version: string }) {
 
   async function install() {
     if (res?.kind !== 'desktop' || busy) return;
-    const yes = await confirm({ title: `更新到 v${res.version}？`, body: '拾穗会关掉、装好新版后自动重新打开，大约半分钟。穗都在本机数据库里，不受影响。', ok: '重启更新', cancel: '稍后' });
+    const yes = await confirm({ title: `更新到 v${res.version}？`, body: '先自动备份一份完整的 .glean 到备份文件夹，然后拾穗会关掉、装好新版后自动重新打开，大约半分钟。', ok: '备份并重启更新', cancel: '稍后' });
     if (!yes) return;
     setBusy('install');
     try {
-      await installAndRestart();
+      await desktopInstall(res.version, version, toast, ask);
     } catch (e) {
       toast(`更新失败：${(e as Error)?.message || e}`, 'err');
+    } finally {
       setBusy('');
+    }
+  }
+
+  // v0.26 0512：安卓应用内下载 → 校验 → 备份 → 系统安装器
+  async function installApk() {
+    if (res?.kind !== 'android' || busy) return;
+    setBusy('install');
+    const show = (s: ApkStep) =>
+      setStep(s.step === 'sums' ? '取校验文件…' : s.step === 'download' ? `下载中 ${s.total ? Math.round((s.done / s.total) * 100) + '%' : `${(s.done / 1048576).toFixed(1)}MB`}` : s.step === 'backup' ? '更新前备份…' : '打开系统安装器…');
+    try {
+      await androidInstall(res.latest, version, toast, ask, show);
+    } catch (e) {
+      toast(`更新失败：${(e as Error)?.message || e}`, 'err');
+    } finally {
+      setBusy('');
+      setStep('');
     }
   }
 
@@ -52,8 +71,8 @@ export function UpdatePanel({ version }: { version: string }) {
         {plat === 'web'
           ? '网页版刷新就是最新；安卓和 Windows 版在这里检查新版。'
           : plat === 'android'
-            ? '有新版时提示你，点一下用浏览器下载新安装包（签名不变，直接覆盖安装，穗都还在）。'
-            : '有新版时后台下载好（安装包经签名校验），再问你要不要重启更新。'}
+            ? '有新版时提示你，在 App 里下载安装包（核对 SHA-256 和签名证书），先自动备份一份，再交给系统安装器覆盖安装。'
+            : '有新版时后台下载好（安装包经签名校验），装之前先自动备份一份，再重启更新。'}
         只读取一个公开的静态文件，不带任何设备信息。
       </p>
       <div className="table action-table">
@@ -75,15 +94,18 @@ export function UpdatePanel({ version }: { version: string }) {
           </button>
         )}
         {res?.kind === 'android' && (
-          <button className="trow update-download" onClick={() => openDownload(res.latest.apkUrl) || toast('打不开浏览器', 'err')}>
-            <span className="tc tc-title">下载 v{res.latest.version}</span>
-            <span className="tc tc-src">用浏览器下载安装包，下完点开安装</span>
+          <button className="trow update-download" onClick={installApk} disabled={!!busy}>
+            <span className="tc tc-title">{busy === 'install' ? step || '处理中…' : `下载并安装 v${res.latest.version}`}</span>
+            <span className="tc tc-src">{androidUpdater() ? '校验通过、备份好之后打开系统安装器' : '用浏览器下载安装包，下完点开安装'}</span>
             <span className="tc tc-date" />
           </button>
         )}
       </div>
       {(res?.kind === 'desktop' || res?.kind === 'android') && (res.kind === 'desktop' ? res.notes : res.latest.notes) && (
-        <p className="meta-text update-notes">{res.kind === 'desktop' ? res.notes : res.latest.notes}</p>
+        <div className="update-notes">
+          <p className="meta-text update-notes-k">这版新了什么</p>
+          <p className="meta-text update-notes-body">{res.kind === 'desktop' ? res.notes : res.latest.notes}</p>
+        </div>
       )}
       <dl className="kv">
         <div>
