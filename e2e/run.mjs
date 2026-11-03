@@ -361,8 +361,15 @@ async function run(name, viewport) {
   if (latin) {
     const pre = latin.slice(0, 3).toLowerCase();
     await sqType(pg, pre);
+    // v0.28 起字母还会按拼音 / 首字母命中中文穗（字表懒加载，晚到几十毫秒）：等字表到了再数。
+    // 字面命中的穗必须一个不少；多出来的只能是标题 / 作者 / 正文里有汉字的（拼音命中），v0.31 修偶发（示例穗随机抽到能拼出 sta 的中文标题）
+    await pg.waitForTimeout(400);
     const hl = await sqHeads(pg);
-    if (hl.items !== expectItems(pre) || hl.items < 1) errs.push(`[${name}] prefix "${pre}" 穗 (${hl.items}) expected ${expectItems(pre)}`);
+    const shown = (await pg.locator('.sq-items .sq-row[data-item-id]').evaluateAll((els) => els.map((e) => Number(e.dataset.itemId)))) || [];
+    const literal = rawItems.filter((x) => e2eMatch(itemSearchText(x), e2eTerms(pre))).map((x) => x.id);
+    const extra = shown.filter((id) => !literal.includes(id));
+    const cjk = (id) => /[\u4e00-\u9fff]/.test(['title', 'creator', 'content'].map((k) => rawItems.find((x) => x.id === id)?.[k] || '').join(''));
+    if (hl.items < 1 || literal.some((id) => !shown.includes(id)) || extra.some((id) => !cjk(id)) || hl.items !== shown.length) errs.push(`[${name}] prefix "${pre}" 穗 (${hl.items}) literal ${literal} shown ${shown}`);
   }
   // 两个字 + 类型 / 日期 / 标签叠加：挑一个出现在 ≥2 穗里的中文二字词
   const bi = (() => {
