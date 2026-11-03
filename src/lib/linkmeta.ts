@@ -120,7 +120,13 @@ export async function fetchLinkMeta(rawUrl: string): Promise<LinkMeta & { imageD
     const imageData = await fetchImageData(url).catch(() => undefined);
     return { url: rawUrl, type: 'image', imageData, title: decodeURIComponent(url.split('/').pop()?.split('?')[0] || '图片') };
   }
-  const res = await withTimeout((signal) => f(url, { headers: { 'User-Agent': UA, Accept: 'text/html,*/*' }, signal }), 12000);
+  // v0.30 0906 出站记录：抓链接只发了链接本身
+  const rec = (ok: boolean) => void import('./outbound').then((o) => o.recordOutbound({ at: Date.now(), host: o.hostOf(url), kind: 'link', fields: ['链接'], bytes: url.length, ok }));
+  const res = await withTimeout((signal) => f(url, { headers: { 'User-Agent': UA, Accept: 'text/html,*/*' }, signal }), 12000).catch((e) => {
+    rec(false);
+    throw e;
+  });
+  rec(res.ok);
   if (!res.ok) throw new Error(`网页返回 ${res.status}`);
   const html = await res.text();
   const m = parseHtmlMeta(html, url);
