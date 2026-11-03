@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { basketHint, getBasket, toggleBasket } from '../lib/basket';
 import { db } from '../lib/db';
 import { useApp } from '../lib/store';
 import { displayTitle } from '../lib/studio';
@@ -14,13 +15,13 @@ export function placeMenu(x: number, y: number, w: number, h: number, vw: number
   return { left, top: Math.max(pad, Math.min(top, vh - h - pad)) };
 }
 
-type Act = 'open' | 'edit' | 'graft' | 'copy' | 'link' | 'delete';
+type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'delete';
 
 /**
  * v0.27 0411：长按卡片（手机）或右键（电脑）弹出上下文菜单：打开 / 编辑 / 拿去嫁接 / 复制文字 / 复制链接 / 删掉。
  * 认 `[data-item-id]`（网格卡、列表行、时间线帧、月历行），有弹层时不出。
  */
-export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Exclude<Act, 'copy' | 'link'>, it: Item) => void }) {
+export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Exclude<Act, 'copy' | 'link' | 'basket'>, it: Item) => void }) {
   const { toast, desktop } = useApp();
   const [st, setSt] = useState<{ it: Item; x: number; y: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -142,12 +143,20 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
       }
       return;
     }
+    if (a === 'basket') {
+      // v0.28 0408 待嫁接篮
+      if (it.id == null) return;
+      const n = getBasket().length;
+      toast(toggleBasket(it.id) ? `放进嫁接篮 · ${basketHint(Math.min(n + 1, 5))}` : '从嫁接篮拿出来了');
+      return;
+    }
     onAct(a, it);
   };
   const items: Array<[Act, string]> = [
     ['open', '打开'],
     ['edit', '编辑'],
     ['graft', '拿去嫁接'],
+    ['basket', it.id != null && getBasket().includes(it.id) ? '拿出嫁接篮' : '放进嫁接篮'],
     ['copy', it.type === 'text' ? '复制原文' : '复制文字'],
     ...(it.url ? ([['link', '复制链接']] as Array<[Act, string]>) : []),
     ['delete', '删掉'],
