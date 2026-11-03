@@ -4,6 +4,7 @@ import { useLibraryItems } from '../lib/libitems';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { HoverPreview, Hits, ItemCard, ItemRow } from '../components/ItemCard';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
+import { SyncBadge } from '../components/SyncBadge';
 import { VirtualList, VirtualMasonry } from '../components/Virtual';
 import { DailyCard } from '../components/DailyCard';
 import { addSamples, clearSamples, db, inboxEnabled, inLibrary } from '../lib/db';
@@ -338,7 +339,12 @@ export function Library() {
       <DisplayTitle
         title={title}
         count={count}
-        extra={nSamples > 0 ? <span className="title-note">示例 ({nSamples}) 不计数</span> : null}
+        extra={
+          <>
+            {nSamples > 0 ? <span className="title-note">示例 ({nSamples}) 不计数</span> : null}
+            <SyncBadge onOpen={() => go('settings')} />
+          </>
+        }
         aside={
           <div className="page-tools">
             <Seg id="libview" className="view-switch" label="视图" value={lv} options={VIEWS} onPick={pickView} />
