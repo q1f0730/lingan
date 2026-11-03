@@ -2,9 +2,11 @@ import { Seg } from '../components/rw/Seg';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
-import { clearAll, exportAll, importAll } from '../lib/db';
+import { clearAll, liveCounts } from '../lib/db';
+import { applyImport, exportGlean, gleanName, GLEAN_MIME, MODE_LABEL, planImport, previewImport, readBackupFile, type ImportCounts, type ImportMode, type Incoming } from '../lib/backup';
+import { TrashPanel } from '../components/Trash';
 import { embedAllMissing } from '../lib/enrich';
-import { androidFiles, deliverZip, readFileText, saveTextFile, type ZipTarget } from '../lib/files';
+import { androidFiles, deliverZip, openFileSink, type ZipTarget } from '../lib/files';
 import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
 import { db } from '../lib/db';
 import { PRESETS, embedConfig, vaultKind, withPreset, type Settings } from '../lib/settings';
@@ -20,7 +22,10 @@ export const APP_VERSION = __APP_VERSION__;
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm } = useApp();
-  const counts = useLiveQuery(async () => ({ items: await db.items.count(), devs: await db.developments.count(), imgs: await db.images.count() }), []);
+  const counts = useLiveQuery(() => liveCounts(db), []);
+  const [backing, setBacking] = useState('');
+  const [pending, setPending] = useState<{ name: string; inc: Incoming; preview: Record<ImportMode, ImportCounts>; mode: ImportMode } | null>(null);
+  const [importing, setImporting] = useState(false);
   const [s, setS] = useState<Settings>(settings);
   const [testing, setTesting] = useState(false);
   const [embedding, setEmbedding] = useState<string>('');
@@ -67,14 +72,25 @@ export function SettingsView() {
     else toast(`已向量化 ${r.done} 穗`);
   }
 
-  async function doExport() {
+  // v0.21 .glean 流式备份：一张一张读原图写出去，不在内存里拼整库
+  async function doExport(target: ZipTarget = 'save') {
+    if (backing) return;
+    const now = Date.now();
+    let sink: Awaited<ReturnType<typeof openFileSink>> = null;
     try {
-      const b = await exportAll();
-      const name = `glean-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      const where = await saveTextFile(name, JSON.stringify(b));
-      if (where) toast(`已导出 ${b.items.length} 穗`);
+      sink = await openFileSink(gleanName(now), { mime: GLEAN_MIME, ext: 'glean', label: '拾穗备份', target, shareTitle: '拾穗备份' });
+      if (!sink) return;
+      setBacking('0%');
+      const t0 = performance.now();
+      const st = await exportGlean(sink, db, { now, appVersion: APP_VERSION, onProgress: (a, t) => setBacking(`${Math.round((a / Math.max(1, t)) * 100)}%`) });
+      const where = await sink.close();
+      (window as unknown as { __gleanBackup?: unknown }).__gleanBackup = { ...st, ms: Math.round(performance.now() - t0) };
+      if (where) toast(`已导出 ${st.items} 穗 · ${st.developments} 新枝 · ${st.images} 张图${target === 'downloads' ? `（${where}）` : ''}`);
     } catch (e) {
+      await sink?.abort();
       toast('导出失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    } finally {
+      setBacking('');
     }
   }
 
@@ -97,14 +113,43 @@ export function SettingsView() {
     }
   }
 
+  // v0.21 导入：先读目录与条目、按 uid 去重算出三种模式各会怎样，选好再写
   async function doImport(f?: File | null) {
     if (!f) return;
     try {
-      const txt = await readFileText(f);
-      const r = await importAll(JSON.parse(txt));
-      toast(`已导入 ${r.items} 穗、${r.developments} 根新枝`);
+      const inc = await readBackupFile(f);
+      const preview = await previewImport(inc, db);
+      setPending({ name: f.name, inc, preview, mode: 'merge' });
+      requestAnimationFrame(() => document.querySelector('.import-preview')?.scrollIntoView({ block: 'nearest' }));
     } catch (e) {
       toast('导入失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    }
+  }
+
+  async function runImport() {
+    if (!pending || importing) return;
+    const { inc, mode } = pending;
+    const c = pending.preview[mode];
+    if (mode === 'replace' && (c.items.trash || c.developments.trash)) {
+      const ok = await confirm({ title: '用这份备份替换本机？', body: `本机不在备份里的 ${c.items.trash} 穗、${c.developments.trash} 根新枝会移进回收站（30 天内可恢复），同一件以备份为准。`, ok: '替换', cancel: '算了', danger: true });
+      if (!ok) return;
+    }
+    setImporting(true);
+    try {
+      const plan = await planImport(inc, db, mode);
+      const r = await applyImport(inc, plan, db);
+      setPending(null);
+      const parts = [`新增 ${r.items.add} 穗`];
+      if (r.items.update) parts.push(`更新 ${r.items.update} 穗`);
+      if (r.items.skip) parts.push(`跳过重复 ${r.items.skip}`);
+      if (r.developments.add + r.developments.update) parts.push(`新枝 ${r.developments.add + r.developments.update} 根`);
+      if (r.items.trash) parts.push(`${r.items.trash} 穗进回收站`);
+      toast(`已${MODE_LABEL[mode]}：${parts.join(' · ')}${r.problems.length ? `。注意：${r.problems.join('；')}` : ''}`, r.badImages ? 'err' : 'ok');
+      (window as unknown as { __gleanImport?: unknown }).__gleanImport = r;
+    } catch (e) {
+      toast('导入失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -125,6 +170,7 @@ export function SettingsView() {
     ['set-embed', '向量', settings.embed.model || '不用'],
     ['set-look', '外观', THEME_LABEL[settings.theme]],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
+    ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
     ['set-diag', '诊断', errCount ? `${errCount} 条错误` : '无错误'],
     ['set-about', '关于', `v${APP_VERSION}`],
@@ -272,15 +318,30 @@ export function SettingsView() {
               </div>
             </dl>
             <div className="table action-table">
-              <button className="trow" onClick={doExport}>
-                <span className="tc tc-title">导出备份</span>
-                <span className="tc tc-src">全部穗与新枝，可在另一台设备导入</span>
-                <span className="tc tc-date">.json</span>
-              </button>
-              <button className="trow" onClick={() => fileRef.current?.click()}>
+              {onAndroid ? (
+                <>
+                  <button className="trow backup-export" onClick={() => doExport('share')} disabled={!!backing}>
+                    <span className="tc tc-title">{backing ? `打包中 ${backing}` : '导出备份'}</span>
+                    <span className="tc tc-src">全部穗、新枝、原图，用系统分享发出去</span>
+                    <span className="tc tc-date">.glean</span>
+                  </button>
+                  <button className="trow backup-downloads" onClick={() => doExport('downloads')} disabled={!!backing}>
+                    <span className="tc tc-title">存到「下载」</span>
+                    <span className="tc tc-src">同样的备份，直接存进手机的下载文件夹</span>
+                    <span className="tc tc-date">.glean</span>
+                  </button>
+                </>
+              ) : (
+                <button className="trow backup-export" onClick={() => doExport('save')} disabled={!!backing}>
+                  <span className="tc tc-title">{backing ? `打包中 ${backing}` : '导出备份'}</span>
+                  <span className="tc tc-src">全部穗、新枝、原图（原样二进制），可在另一台设备导入</span>
+                  <span className="tc tc-date">.glean</span>
+                </button>
+              )}
+              <button className="trow backup-import" onClick={() => fileRef.current?.click()}>
                 <span className="tc tc-title">导入备份</span>
-                <span className="tc tc-src">合并进来，不覆盖现有的</span>
-                <span className="tc tc-date">.json</span>
+                <span className="tc tc-src">先看条数再选：合并 / 只补缺 / 替换，重复的按 uid 认出来</span>
+                <span className="tc tc-date">.glean</span>
               </button>
               <button className="trow danger" onClick={wipe}>
                 <span className="tc tc-title">清空</span>
@@ -288,9 +349,51 @@ export function SettingsView() {
                 <span className="tc tc-date" />
               </button>
             </div>
-            <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={(e) => { doImport(e.target.files?.[0]); e.target.value = ''; }} />
-            <p className="hint meta-text">手机和电脑之间可以用「导出 → 导入」搬运。</p>
+            <input ref={fileRef} className="backup-file" type="file" accept=".glean,.json,.zip,application/json,application/zip,application/octet-stream" hidden onChange={(e) => { doImport(e.target.files?.[0]); e.target.value = ''; }} />
+            {pending && (
+              <div className="import-preview" data-format={pending.inc.format}>
+                <p className="meta-text import-src">
+                  {pending.name} · {pending.inc.format === 'glean' ? '.glean' : '旧版 JSON'}
+                  {pending.inc.exportedAt ? ` · ${new Date(pending.inc.exportedAt).toLocaleString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 导出` : ''} · {pending.inc.items.length} 穗 · {pending.inc.developments.length} 新枝 · {pending.inc.imageCount} 张图
+                </p>
+                {pending.inc.problems.length > 0 && <p className="meta-text import-problems">注意：{pending.inc.problems.join('；')}</p>}
+                <div className="radio-list" role="radiogroup" aria-label="导入方式">
+                  {(['merge', 'missing', 'replace'] as ImportMode[]).map((m) => {
+                    const c = pending.preview[m];
+                    const note =
+                      m === 'merge'
+                        ? `新增 ${c.items.add} · 更新 ${c.items.update} · 跳过 ${c.items.skip}（同一件以较新的为准）`
+                        : m === 'missing'
+                          ? `新增 ${c.items.add} · 已有的 ${c.items.skip} 件一件不动`
+                          : `新增 ${c.items.add} · 覆盖 ${c.items.update} · 本机另外 ${c.items.trash} 穗移进回收站`;
+                    return (
+                      <div key={m} className="radio-item">
+                        <button role="radio" aria-checked={pending.mode === m} className={`radio chip import-mode${pending.mode === m ? ' on' : ''}`} data-mode={m} onClick={() => setPending({ ...pending, mode: m })}>
+                          <i className="sq" aria-hidden />
+                          <span className="radio-name">{MODE_LABEL[m]}</span>
+                        </button>
+                        <p className="meta-text radio-note import-note" data-mode={m} data-add={c.items.add} data-update={c.items.update} data-skip={c.items.skip} data-trash={c.items.trash}>
+                          {note}；新枝 +{c.developments.add + c.developments.update}
+                          {c.images ? ` · 图 ${c.images}` : ''}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="actions">
+                  <button className="btn primary import-go" onClick={runImport} disabled={importing}>
+                    {importing ? '导入中…' : `${MODE_LABEL[pending.mode]}导入`}
+                  </button>
+                  <button className="btn text import-cancel" onClick={() => setPending(null)} disabled={importing}>
+                    取消
+                  </button>
+                </div>
+              </div>
+            )}
+            <p className="hint meta-text">手机和电脑之间可以用「导出 → 导入」搬运。旧版的 .json 备份照样能导入。</p>
           </section>
+
+          <TrashPanel />
 
           <section className="set-sec obsidian-panel" id="set-obsidian">
             <h2 className="sec-title">搬去 Obsidian</h2>
