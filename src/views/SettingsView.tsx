@@ -15,6 +15,7 @@ import { db } from '../lib/db';
 import { PRESETS, aiReady, distinctOf, embedConfig, keyOptional, vaultKind, withPreset, type Settings } from '../lib/settings';
 import { LocalModelPanel } from '../components/LocalModelPanel';
 import { OutboundPanel } from '../components/OutboundPanel';
+import { SyncPanel, syncSummary } from '../components/SyncPanel';
 import { previewMode } from '../lib/outbound';
 import { AgentPanel } from '../components/AgentPanel';
 import { UpdatePanel } from '../components/UpdatePanel';
@@ -42,6 +43,7 @@ const UpdateP = memo(UpdatePanel);
 const AutoBackupP = memo(AutoBackupPanel);
 const SnapshotP = memo(SnapshotPanel);
 const OutboundP = memo(OutboundPanel);
+const SyncP = memo(SyncPanel);
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm, desktop } = useApp();
@@ -217,6 +219,7 @@ export function SettingsView() {
     ['set-capture', '极速采集', captureSummary()],
     ['set-tags', '待理与标签', inboxEnabled() ? '待理开' : '待理关'],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
+    ['set-sync', '同步', syncSummary()],
     ['set-autobak', '自动备份', readAutoBak().on ? '开' : '关'],
     ['set-snap', '操作前快照', ''],
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
@@ -461,6 +464,8 @@ export function SettingsView() {
             )}
             <p className="hint meta-text">手机和电脑之间可以用「导出 → 导入」搬运。旧版的 .json 备份照样能导入。</p>
           </section>
+
+          <SyncP version={APP_VERSION} />
 
           <AutoBackupP version={APP_VERSION} onRestore={onRestore} />
 
