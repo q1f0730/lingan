@@ -39,6 +39,8 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 # v0.26 0609：自己选的自动备份文件夹（对话框放行的 fs 权限）重启后还在
 tauri-plugin-persisted-scope = "2"
+# v0.32 局域网直连：请求签名用 HMAC-SHA256（手写 HMAC，只引 sha2）
+sha2 = "0.10"
 
 # v0.22：Windows「正在播放一键拾」读系统媒体传输控件（SMTC）
 [target.'cfg(windows)'.dependencies]
