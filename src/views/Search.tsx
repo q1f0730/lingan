@@ -13,6 +13,10 @@ import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type Development, type Item, type ItemType } from '../lib/types';
 import { completeSyntax, matchFilters, parseSyntax, SYNTAX_HELP } from '../lib/qsyntax';
 import { AskPanel } from '../components/AskPanel';
+import { embed } from '../lib/ai';
+import { embedConfig } from '../lib/settings';
+import { isLocalBaseUrl, MINI } from '../lib/privacy';
+import { cosine } from '../lib/similarity';
 
 const RECENT_KEY = 'glean.recentq';
 const RANGES: DateRange[] = ['all', '7d', '30d', 'year', 'custom'];
@@ -52,7 +56,7 @@ function hitWhere(h: SearchHit, terms: Term[]): Array<{ label: string; text: str
 }
 
 export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Development[]; onClose: () => void }) {
-  const { openItem, go, desktop } = useApp();
+  const { openItem, go, desktop, settings } = useApp();
   const ft = ftShared(db);
   const rev = useSyncExternalStore(ft.subscribe, ft.getRev);
   const [q, setQ] = useState('');
@@ -107,6 +111,33 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
     return completeSyntax(q, { tags: [...tags.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t), sources: [...srcs], bundles: [...bundles] });
   }, [q, items]);
 
+  // v0.38 0109 意思相近：查询也算向量，和同一个模型算过的穗比余弦。本机小模型 / 本地模型打字停下就算；云端要点一下（免得每停一次就发一次）
+  const [sem, setSem] = useState<{ q: string; hits: Item[] } | null>(null);
+  const [semGo, setSemGo] = useState('');
+  const semText = parsed.text.trim();
+  const ec = embedConfig(settings);
+  const semModel = ec?.model || '';
+  const semUrl = ec?.baseUrl || '';
+  const semHas = !!semModel && items.some((i) => i.embedModel === semModel && !!i.embedding);
+  const semAuto = semUrl === MINI || isLocalBaseUrl(semUrl);
+  useEffect(() => {
+    if (semText.length < 2 || !semHas || (!semAuto && semGo !== semText)) return;
+    let dead = false;
+    const t = setTimeout(async () => {
+      try {
+        const [v] = await embed(settings, [semText]);
+        const min = semUrl === MINI ? 0.16 : 0.35;
+        const hits = items.filter((i) => i.embedModel === semModel && !!i.embedding).map((it) => ({ it, c: cosine(v, it.embedding!) })).filter((x) => x.c >= min).sort((a, b) => b.c - a.c).slice(0, 12).map((x) => x.it);
+        if (!dead) setSem({ q: semText, hits });
+      } catch {
+        /* 向量接口不可用：只给字面命中 */
+      }
+    }, semAuto ? 150 : 0);
+    return () => {
+      dead = true;
+      clearTimeout(t);
+    };
+  }, [semText, semHas, semAuto, semGo, settings, semUrl, semModel, items]);
   // 搜索本身（索引候选 + 原文核对），记下计算耗时
   const base = useMemo(() => {
     void rev;
@@ -148,7 +179,12 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   const bHits = type === 'all' || type === 'branch' ? (tag ? [] : allB) : [];
   const nBranchFacet = tag ? 0 : allB.length;
   const active = terms.length > 0 || filters.length > 0 || type !== 'all' || !!tag || range !== 'all';
-  const total = iHits.length + bHits.length;
+  const semHits = useMemo(() => {
+    if (!sem || sem.q !== semText || type === 'branch') return null;
+    const lit = new Set(iHits.map((h) => h.doc.obj.id));
+    return sem.hits.filter((it) => !lit.has(it.id) && (type === 'all' || it.type === type) && (!tag || it.tags.includes(tag)));
+  }, [sem, semText, iHits, type, tag]);
+  const total = iHits.length + bHits.length + (semHits?.length || 0);
 
   // 输入 → 结果画到屏幕上的耗时（e2e 读它，也读自己量的）
   useLayoutEffect(() => {
@@ -364,10 +400,32 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
         <div className="sq-results">
           {type !== 'branch' && (
             <section className="sq-sec sq-items">
-              <div className="sq-sec-head label">穗 ({iHits.length})</div>
+              <div className="sq-sec-head label">{semHits ? '字面命中' : '穗'} ({iHits.length})</div>
               {iHits.length > 0 && <ItemResults hits={iHits} terms={terms} desktop={desktop} onOpen={openHit} />}
             </section>
           )}
+          {semHits ? (
+            <section className="sq-sec sq-sem">
+              <div className="sq-sec-head label">意思相近 ({semHits.length})</div>
+              {semHits.length ? (
+                semHits.map((it) => (
+                  <button key={it.id} className="sq-branch" data-item-id={it.id} onClick={() => openItem(it, semHits.map((x) => x.id!))}>
+                    <span className="sq-btitle">{displayTitle(it)}</span>
+                    {it.why && <span className="sq-bbody">{it.why.slice(0, 60)}</span>}
+                    <span className="sq-meta">
+                      {TYPE_LABEL[it.type]} · <span className="num">{shortDate(it.createdAt)}</span>
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="meta-text">没有意思相近的穗。</p>
+              )}
+            </section>
+          ) : semHas && !semAuto && semText.length > 1 && type !== 'branch' ? (
+            <button className="linklike sq-semgo" onClick={() => setSemGo(semText)}>
+              按意思再找找（向量接口）
+            </button>
+          ) : null}
           {(type === 'branch' || (type === 'all' && !tag && (bHits.length > 0 || iHits.length === 0))) && (
             <section className="sq-sec sq-branches">
               <div className="sq-sec-head label">新枝 ({bHits.length})</div>
