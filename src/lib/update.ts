@@ -8,6 +8,7 @@
 // 隐私：只 GET 一个静态文件，不带任何设备参数；自动检查每天最多一次，设置里可关。
 
 import { isTauriEnv } from './desktop';
+import { assertReach, GATE_MSG, outboundOff } from './gate';
 
 export const REPO = 'q1f0730/lingan';
 export const LATEST_JSON = `https://github.com/${REPO}/releases/latest/download/latest.json`;
@@ -97,6 +98,8 @@ let downloaded = false;
 
 export async function checkForUpdate(current: string, opts: { download?: boolean } = {}): Promise<CheckResult> {
   const plat = updatePlatform();
+  // v0.34 0905 出站总开关关着：不检查更新
+  if (plat !== 'web' && outboundOff()) return { kind: 'error', message: GATE_MSG };
   try {
     if (plat === 'android') {
       const l = await fetchLatest();
@@ -184,6 +187,7 @@ export type ApkStep = { step: 'sums' } | { step: 'download'; done: number; total
 
 async function fetchSha(v: string): Promise<string> {
   const { fetch } = await import('@tauri-apps/plugin-http');
+  assertReach(sumsUrl(v));
   const r = await fetch(sumsUrl(v), { method: 'GET' });
   if (!r.ok) throw new Error(r.status === 404 ? '新版还在发布中（校验文件没出来），过几分钟再试' : `取校验文件失败 HTTP ${r.status}`);
   const sha = parseSums(await r.text(), apkName(v));
