@@ -1,3 +1,4 @@
+import { enqueuePending, isStorageError, PendingWriteError, replayPending } from './safewrite';
 import Dexie, { type Table, type Transaction } from 'dexie';
 import { adoptDeviceId, getDeviceId } from './device';
 import { isUlid, ulid } from './ulid';
@@ -341,7 +342,7 @@ const notifyImage = () => imageListeners.forEach((f) => f());
 export const notifyNewImages = notifyImage;
 
 /** 新增一件穗：有图时原图进 images 表，行里只标「待做缩略图」 */
-export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db, at?: { createdAt?: number; uid?: string; inbox?: boolean }): Promise<number> {
+export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db, at?: { createdAt?: number; uid?: string; inbox?: boolean; noQueue?: boolean }): Promise<number> {
   const now = Date.now();
   // v0.22 极速拾收件箱：保留在原生面板里按下「存」的那一刻（createdAt）和原生生成的 uid（ULID），重复收也认得出
   const created = at?.createdAt && Number.isFinite(at.createdAt) && at.createdAt > 0 && at.createdAt <= now + 60000 ? Math.floor(at.createdAt) : now;
@@ -364,15 +365,35 @@ export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>
   let ik: string | undefined;
   if (blob) ik = await blobHash(blob);
   row.dup = dupKeys(row, ik);
-  await d.transaction('rw', d.items, d.images, async () => {
-    id = await d.items.add(row);
-    if (blob) {
-      await d.images.put({ itemId: id, blob });
-      had = true;
+  try {
+    await d.transaction('rw', d.items, d.images, async () => {
+      id = await d.items.add(row);
+      if (blob) {
+        await d.images.put({ itemId: id, blob });
+        had = true;
+      }
+    });
+  } catch (e) {
+    // v0.26 0605：存储层写不进去 → 暂存进待写队列，下次打开补上（原生收件箱来的不暂存：它没 ack 会自己再来）
+    if (at?.noQueue || !isStorageError(e)) throw e;
+    let entry;
+    try {
+      entry = enqueuePending({ ...data, tags: row.tags }, { createdAt: created, uid: row.uid, inbox: !!row.inbox });
+    } catch {
+      throw e;
     }
-  });
+    throw new PendingWriteError(entry, e);
+  }
   if (had) notifyImage();
   return id;
+}
+
+/** v0.26 0605：把暂存的穗补进库（启动后空闲时；有暂存才会被调用） */
+export async function replayPendingWrites(d: LinganDB = db): Promise<{ done: number; left: number }> {
+  return replayPending(
+    (e) => addItem(e.data as Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d, { createdAt: e.createdAt, uid: e.uid, inbox: e.inbox, noQueue: true }),
+    async (uid) => (await d.items.where('uid').equals(uid).count()) > 0,
+  );
 }
 
 async function blobHash(b: Blob): Promise<string | undefined> {
