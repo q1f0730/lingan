@@ -1,4 +1,5 @@
 import { BUNDLE_EVENT, BUNDLE_OPEN_KEY, graftFromBundle } from '../lib/bundles';
+import { readHanded } from '../lib/handed';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useLibraryItems } from '../lib/libitems';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -76,6 +77,13 @@ export function Library() {
   const q = '';
   const [searching, setSearching] = useState(false);
   const [sub, setSub] = useState<'inbox' | 'why' | null>(takeLibSub);
+  // v0.34 0900 别人递来的（本机 localStorage，不在库里）
+  const [nHanded, setNHanded] = useState(() => readHanded().length);
+  useEffect(() => {
+    const on = () => setNHanded(readHanded().length);
+    window.addEventListener('glean:handed', on);
+    return () => window.removeEventListener('glean:handed', on);
+  }, []);
   // v0.23 一次整理一把：null = 没在选；Shift 点 = 连选一段
   const [sel, setSel] = useState<Set<number> | null>(null);
   const lastPick = useRef<number | null>(null);
@@ -266,6 +274,11 @@ export function Library() {
             <button className="btn text" onClick={loadSamples}>
               先放点示例
             </button>
+            {nHanded > 0 && (
+              <button className="btn text inbox-open" onClick={() => setSub('inbox')}>
+                看递来的 {nHanded} 穗
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -274,10 +287,10 @@ export function Library() {
 
   const notesEl = !filtering ? (
         <div className="lib-notes">
-          {nInbox > 0 && (
+          {nInbox + nHanded > 0 && (
             <div className="inbox-bar note-row">
-              <span className="label">待理 <span className="num">({nInbox})</span></span>
-              <span className="meta-text">刚收的先放这里，理完再进穗仓</span>
+              <span className="label">待理 <span className="num">({nInbox})</span>{nHanded ? <> · 递来的 <span className="num">({nHanded})</span></> : null}</span>
+              <span className="meta-text">{nHanded && !nInbox ? '别人递来的穗，拾了才进穗仓' : '刚收的先放这里，理完再进穗仓'}</span>
               <span className="note-acts">
                 <button className="btn text strong inbox-open" onClick={() => setSub('inbox')}>
                   去整理
