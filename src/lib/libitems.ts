@@ -31,7 +31,15 @@ let firstWaiters: Array<() => void> = [];
  */
 export const HEAD = 60;
 export const libraryQuery = () => db.items.orderBy('createdAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt));
-export const headQuery = () => db.items.orderBy('createdAt').reverse().filter((x) => !x.deletedAt).limit(HEAD).toArray();
+/**
+ * 不用 reverse().limit()：倒序 + limit 在 Dexie 里走游标，一条一个来回（60 条 = 60 次往返，4× 降速时比全表 getAll 还慢）。
+ * 改成 createdAt 索引上一次 getAllKeys 拿全部主键（按时间升序，只有数字），取最后一截再一次 bulkGet。
+ */
+export async function headQuery(): Promise<Item[]> {
+  const keys = (await db.items.orderBy('createdAt').primaryKeys()) as number[];
+  const rows = await db.items.bulkGet(keys.slice(-HEAD - 20).reverse());
+  return rows.filter((x): x is Item => !!x && !x.deletedAt).slice(0, HEAD);
+}
 
 /** 首段时的计数（全量到了以后为 null）：live = 回收站外的总数，samples = 示例数，inbox = 还在 7 天待理里的 */
 export interface LibMeta {
@@ -44,7 +52,8 @@ export async function headMeta(now = Date.now()): Promise<LibMeta> {
   const [all, del, samples, inbox] = await Promise.all([
     db.items.count(),
     db.items.where('deletedAt').above(0).count(),
-    db.items.where('sample').equals(1).filter((x) => !x.deletedAt).count(),
+    // 只用索引数（不读行）：进了回收站的示例极少，全量到了会校正
+    db.items.where('sample').equals(1).count(),
     db.items.where('inbox').equals(1).filter((x) => !x.deletedAt && x.createdAt > now - 7 * 864e5).count(),
   ]);
   return { live: all - del, samples, inbox };
