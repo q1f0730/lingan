@@ -700,20 +700,20 @@
 0699,D1 数据、隐私、同步与可靠性,导入导出,导入 Notion 导出 ZIP（CSV 数据库 + md 页面）,部分用户用 Notion 做灵感库,解析 CSV 列映射到 Item 字段；页面 md 作正文；附件图片入 images,2,M,P3,待做,
 0700,D1 数据、隐私、同步与可靠性,隐私,AI 服务商旁标注数据所在地与是否用于训练,智谱/硅基流动/Gemini 的数据政策不同，用户选之前应知道,settings 预设加 region 与 policyUrl 字段；引导页和设置里一行灰字说明,2,S,P3,待做,
 0701,D1 数据、隐私、同步与可靠性,隐私,安卓可选防截屏（FLAG_SECURE）,最近任务缩略图和录屏会露出穗的内容,patch-android 读取设置后对 Activity 设置 FLAG_SECURE；默认关,2,S,P3,待做,
-0702,D2 工程质量、性能与发布,启动,首屏只查最新 60 条，其余空闲分页加载,Library 现在 useLiveQuery 全表 toArray，1 万穗时启动和每次写入都要读全量,orderBy('createdAt').reverse().limit(60) 先出首屏；requestIdleCallback 续读；虚拟滚动按需扩展,5,M,P0,待做,
-0703,D2 工程质量、性能与发布,大数据量,10k / 50k 穗压力夹具与基准,现在最大测试规模 1000 穗，没有任何证据证明更大时可用,e2e 种子脚本生成 1 万（3000 图）和 5 万（纯文字）；测冷启动、滚动、搜索、导出、内存,5,M,P0,待做,
+0702,D2 工程质量、性能与发布,启动,首屏只查最新 60 条，其余空闲分页加载,Library 现在 useLiveQuery 全表 toArray，1 万穗时启动和每次写入都要读全量,orderBy('createdAt').reverse().limit(60) 先出首屏；requestIdleCallback 续读；虚拟滚动按需扩展,5,M,P0,已做,v0.37.0
+0703,D2 工程质量、性能与发布,大数据量,10k / 50k 穗压力夹具与基准,现在最大测试规模 1000 穗，没有任何证据证明更大时可用,e2e 种子脚本生成 1 万（3000 图）和 5 万（纯文字）；测冷启动、滚动、搜索、导出、内存,5,M,P0,已做,v0.37.0
 0704,D2 工程质量、性能与发布,测试,新增 ci.yml：每次推送跑 tsc + oxlint + vitest + build,现在只有 release 工作流在 Windows 上跑 npm test，平时推上去的代码坏了也不知道,ghsync 每次 contents API 提交都会触发 push 事件；ubuntu 单 job，几分钟出结果,5,S,P0,已做,v0.25.0
-0705,D2 工程质量、性能与发布,测试,e2e 搬进 GitHub Actions,发版质量门依赖手动在 InstaBox 跑 e2e，靠记性就会漏,Actions 装 playwright chromium，静态服务 dist 跑 e2e/run.mjs；ALL PASS 才允许 release,5,M,P0,待做,
+0705,D2 工程质量、性能与发布,测试,e2e 搬进 GitHub Actions,发版质量门依赖手动在 InstaBox 跑 e2e，靠记性就会漏,Actions 装 playwright chromium，静态服务 dist 跑 e2e/run.mjs；ALL PASS 才允许 release,5,M,P0,已做,v0.37.0
 0706,D2 工程质量、性能与发布,崩溃上报,全局 ErrorBoundary + onerror/unhandledrejection,代码里没有任何错误边界，组件一抛错整个 App 白屏，用户只能杀进程,App 外层与每个 view 包 ErrorBoundary，显示「这一页出错了 · 重试 · 复制诊断」；全局事件写日志,5,S,P0,已做,v0.20.0
 0707,D2 工程质量、性能与发布,崩溃上报,「复制诊断信息」按钮,用户靠把问题丢给 AI 排查，一段干净的诊断文本价值最大,设置「关于」：版本、平台、WebView 版本、库规模、索引/缩略图状态、最近 20 条错误；自动脱敏,5,S,P0,已做,v0.20.0
 0708,D2 工程质量、性能与发布,CI/CD,安卓签名密钥移出公开仓库并轮换,signing/lingan.p12 和密码明文在公开仓库与 workflow 里，任何人都能签出可覆盖安装的伪造版,keystore base64 存 GitHub Secrets；用 apksigner rotate（v3 签名方案轮换）生成新密钥并保持升级链；删除仓库文件,5,M,P0,已做,v0.20.0
-0709,D2 工程质量、性能与发布,代码结构,仓储层：所有写入经 repo（统一盖章、索引、历史）,现在写入点分散，ftidx 增量要在多处手动触发；同步、历史、回收站上线后更会漏,lib/repo/items.ts 提供 add/update/remove/restore；内部做 HLC、ftsync、history；oxlint 规则禁止视图直接写 db,5,M,P0,待做,
+0709,D2 工程质量、性能与发布,代码结构,仓储层：所有写入经 repo（统一盖章、索引、历史）,现在写入点分散，ftidx 增量要在多处手动触发；同步、历史、回收站上线后更会漏,lib/repo/items.ts 提供 add/update/remove/restore；内部做 HLC、ftsync、history；oxlint 规则禁止视图直接写 db,5,M,P0,已做,v0.37.0
 0710,D2 工程质量、性能与发布,测试,Dexie 迁移回归套件：为 v1–v7 每个历史版本存一份夹具库，CI 逐个升级到最新并比对,保证每次加 schema 都不丢旧数据,fake-indexeddb + 夹具 JSON，断言条数与关键字段,5,M,P0,已做,v0.21.0
 0711,D2 工程质量、性能与发布,崩溃上报,本地错误日志环形缓冲,出问题后无从复现；用户不写代码，需要现成的证据,Dexie logs 表保留最近 500 条：时间、版本、页面、错误名与栈；不记录穗内容,4,S,P0,已做,v0.20.0
 0712,D2 工程质量、性能与发布,CI/CD,质量门 job 前置：全绿才建 release,现在 create-release 第一步就建好正式 release，构建失败会留下没有安装包的空 release,新增 verify job（tsc/lint/test/build/e2e）；create-release needs verify,4,S,P0,已做,v0.25.0
-0713,D2 工程质量、性能与发布,性能,图片入库时生成 3 档缩略图（256/768/原图），网格只读 256,大图库滚动和内存占用都降下来,OffscreenCanvas 后台生成，WebP 编码，旧穗后台补建,4,M,P0,待做,
+0713,D2 工程质量、性能与发布,性能,图片入库时生成 3 档缩略图（256/768/原图），网格只读 256,大图库滚动和内存占用都降下来,OffscreenCanvas 后台生成，WebP 编码，旧穗后台补建,4,M,P0,已做,v0.37.0
 0714,D2 工程质量、性能与发布,CI/CD,npm ci 替代 npm install,release 工作流用 npm install，每次可能装到不同版本，构建不可复现,三个 job 统一 npm ci；setup-node 打开 cache: npm,3,S,P0,已做,v0.25.0
-0715,D2 工程质量、性能与发布,启动,10k 穗冷启动基准纳入 docs/perf,长期使用必然过千，1000 穗基准掩盖了线性退化,perf json 增加 10k 档（含 3000 图）；release notes 表格同时给 1k/10k,4,S,P1,待做,
+0715,D2 工程质量、性能与发布,启动,10k 穗冷启动基准纳入 docs/perf,长期使用必然过千，1000 穗基准掩盖了线性退化,perf json 增加 10k 档（含 3000 图）；release notes 表格同时给 1k/10k,4,S,P1,已做,v0.37.0
 0716,D2 工程质量、性能与发布,包体,去掉或懒载 framer-motion,v0.16 起动效只剩淡入 + 慢放大 3%，却仍有 11 个文件引用 framer-motion，主包 507KB,用 CSS transition + IntersectionObserver 替代；确有需要处用 LazyMotion + domAnimation；对比前后体积,4,S,P1,待做,
 0717,D2 工程质量、性能与发布,包体,安卓 APK 按 ABI 拆分，主推 arm64,现在 aarch64+armv7 打进一个 apk，体积接近翻倍；用户的 vivo X300 Pro 是 arm64,tauri android build --split-per-abi；release 附 arm64 与 armv7 两个 apk，说明里写怎么选,4,S,P1,待做,
 0718,D2 工程质量、性能与发布,包体,Rust release profile 优化,Cargo.toml 没有 [profile.release]，Windows 安装包和 apk 里的 so 都偏大,"lto=true、codegen-units=1、opt-level=""s""、strip=true、panic=""abort""；记录前后体积",4,S,P1,待做,
@@ -721,13 +721,13 @@
 0720,D2 工程质量、性能与发布,渲染,口味统计、热力图、相似度计算移入 Web Worker,taste/heatmap/modes 在主线程全量计算，库大了切页会卡,Comlink 或原生 postMessage；Worker 内也用 Dexie 读；主线程只收结果,4,M,P1,待做,
 0721,D2 工程质量、性能与发布,渲染,接法抽样避免 O(n²) 相似度,相近/远距每换一穗都算与已选的平均相似度，全库扫描在 1 万穗时明显卡,先按类型/标签取 500 候选池再算；缓存每穗特征向量；放 Worker；单测保持抽样性质不变,4,M,P1,待做,
 0722,D2 工程质量、性能与发布,渲染,收窄 useLiveQuery 订阅范围,打开详情会写 touchedAt，触发 Library 全表查询和整个网格重渲染,列表查询只取渲染需要的字段或用 id 列表 + 单卡订阅；touchedAt 写入批量延后到空闲,4,M,P1,待做,
-0723,D2 工程质量、性能与发布,渲染,速记回车到卡片出现的交互延迟纳入 e2e（≤100ms）,记录摩擦是用户第一条反馈，INP 比冷启动更能代表日常手感,Playwright 记录 keydown 到新卡片出现在 DOM 的时间；普通与 4× 降速各断言,4,S,P1,待做,
+0723,D2 工程质量、性能与发布,渲染,速记回车到卡片出现的交互延迟纳入 e2e（≤100ms）,记录摩擦是用户第一条反馈，INP 比冷启动更能代表日常手感,Playwright 记录 keydown 到新卡片出现在 DOM 的时间；普通与 4× 降速各断言,4,S,P1,已做,v0.37.0
 0724,D2 工程质量、性能与发布,测试,视觉回归截图对比,Studio 风格规则严格（无圆角无阴影无图标），换皮和改 CSS 很容易悄悄破坏,Playwright toHaveScreenshot 覆盖手机/桌面 × 白/黑主要页面；阈值 0.1%；基准图入库,4,M,P1,待做,
 0725,D2 工程质量、性能与发布,测试,安卓模拟器冒烟测试,分享进来、LinganFiles 导出桥等安卓专属路径从未在 CI 里跑过,reactivecircus/android-emulator-runner 安装 apk、启动、adb 截图、发一次分享 intent 断言入库,4,L,P1,待做,
 0726,D2 工程质量、性能与发布,测试,模型响应契约测试（录制回放）,智谱/硅基/Gemini 返回格式一变，四步嫁接解析就会坏,录制真实响应去 key 存 fixtures；回放测试 MAP/DIVERGE/DEFIX/CONVERGE 解析与溯源校验,4,M,P1,待做,
-0727,D2 工程质量、性能与发布,测试,性能回归门：与上一版 perf json 对比,docs/perf 已有 v0.13–v0.19 数据却没被用来卡退化,CI 读取上一版 json；冷启动/搜索/滚动退化 >15% 失败，并在 release notes 生成对比表,4,S,P1,待做,
-0728,D2 工程质量、性能与发布,CI/CD,release 先建草稿，产物齐了再发布,用户可能在 apk 还没上传时打开 release 页,action-gh-release draft:true；最后 publish job 检查 apk/exe/msi 都在再改为正式,4,S,P1,待做,
-0729,D2 工程质量、性能与发布,CI/CD,ghsync 同步后核对远端与本地清单,contents API 逐文件上传，漏传/超时中断时 CI 构建的不是本地那份代码,ghsync 结束后拉远端 tree 比对 sha；生成 MANIFEST.sha256 入库，CI 第一步校验,4,S,P1,待做,
+0727,D2 工程质量、性能与发布,测试,性能回归门：与上一版 perf json 对比,docs/perf 已有 v0.13–v0.19 数据却没被用来卡退化,CI 读取上一版 json；冷启动/搜索/滚动退化 >15% 失败，并在 release notes 生成对比表,4,S,P1,已做,v0.37.0
+0728,D2 工程质量、性能与发布,CI/CD,release 先建草稿，产物齐了再发布,用户可能在 apk 还没上传时打开 release 页,action-gh-release draft:true；最后 publish job 检查 apk/exe/msi 都在再改为正式,4,S,P1,已做,v0.37.0
+0729,D2 工程质量、性能与发布,CI/CD,ghsync 同步后核对远端与本地清单,contents API 逐文件上传，漏传/超时中断时 CI 构建的不是本地那份代码,ghsync 结束后拉远端 tree 比对 sha；生成 MANIFEST.sha256 入库，CI 第一步校验,4,S,P1,已做,v0.37.0
 0730,D2 工程质量、性能与发布,CI/CD,迁回真正的 git 工作流,ghsync 每个文件一个 commit，没有可读历史、无法 revert/bisect,本地 git init，用 token 走 https push；保留 ghsync 作为兜底；RELEASE_RUNBOOK 同步更新,4,M,P1,待做,
 0731,D2 工程质量、性能与发布,自动更新,国内更新源镜像 + 多源回退,GitHub Release 国内下载慢甚至失败，更新形同虚设,CI 把 latest.json 与安装包同步到 Cloudflare R2/Pages（用户已有 Cloudflare）；endpoints 配多源,4,M,P1,待做,
 0732,D2 工程质量、性能与发布,自动更新,安卓应用内检查更新并调起系统安装,不上应用商店的 apk 没有任何更新通道,读 latest.json 比较版本；下载 apk 到 cache 并用 FileProvider 交给安装器；Manifest 声明 REQUEST_INSTALL_PACKAGES,4,M,P1,已做,v0.26.0
@@ -737,7 +737,7 @@
 0736,D2 工程质量、性能与发布,代码结构,AGENTS.md：给 Claude Code / Qoder 的仓库指南,用户主要靠多 agent 写代码，统一的质量门命令和禁忌能减少返工,写清目录结构、质量门、Dexie 迁移规则、Studio 设计约束、禁止写入 key；runbook 链接过去,4,S,P1,已做,v0.25.0
 0737,D2 工程质量、性能与发布,可观测性,AI 调用本地指标：延迟、token、重试、429,免费模型限流是嫁接失败的主因，现在看不到,ai.ts 包装层记录每次调用到 metrics 表；设置 AI 区显示近 7 天成功率与平均延迟,4,S,P1,待做,
 0738,D2 工程质量、性能与发布,可观测性,统一后台任务调度器,thumbJob、ftsync 各自 setTimeout/idle，再加同步、向量、自动备份会互相抢资源,lib/scheduler.ts：优先级队列、并发上限、暂停/恢复、状态订阅；现有任务迁入,4,M,P1,待做,
-0739,D2 工程质量、性能与发布,发布质量,一键发版前检查 tools/preflight.sh,RELEASE_RUNBOOK 7 步质量门靠人记，容易漏 e2e 或版本号,脚本依次跑 tsc/vitest/build/本地 e2e/体积预算/版本一致/notes 存在，全过才打印可发,4,S,P1,待做,
+0739,D2 工程质量、性能与发布,发布质量,一键发版前检查 tools/preflight.sh,RELEASE_RUNBOOK 7 步质量门靠人记，容易漏 e2e 或版本号,脚本依次跑 tsc/vitest/build/本地 e2e/体积预算/版本一致/notes 存在，全过才打印可发,4,S,P1,已做,v0.37.0
 0740,D2 工程质量、性能与发布,启动,启动分段打点并在「关于」可见,现在 e2e 只测冷启动总时长（约 180ms），一旦变慢不知道慢在 Dexie、索引还是字体,performance.mark：脚本执行/DB open/首查/首帧/字体就绪；写入本地指标表；e2e 同时断言各段,3,S,P1,待做,
 0741,D2 工程质量、性能与发布,启动,主窗口先隐藏，首屏渲染完成再 show,WebView2 冷启动有白屏闪一下，黑主题下尤其刺眼,tauri.conf windows.visible=false；前端首帧后 getCurrentWindow().show()；超时 1.5s 强制显示,3,S,P1,待做,
 0742,D2 工程质量、性能与发布,包体,体积预算进 CI：主 chunk 超标即失败,没有预算，体积只会越积越大,vite build 后脚本读取 dist/assets 大小；主 JS ≤350KB、首屏字体 ≤350KB；输出 visualizer 报告为 artifact,3,S,P1,已做,v0.25.0
@@ -753,7 +753,7 @@
 0752,D2 工程质量、性能与发布,多语言,prompt 模板独立成文件并带版本号,嫁接提示词散在 ai.ts/graft.ts 里，改一处难追溯，v0.32 也要记 prompt 版本,"src/prompts/*.ts 导出 {id, version, build()}；新枝记录 promptVersion；契约测试按版本",3,S,P1,待做,
 0753,D2 工程质量、性能与发布,代码结构,拆分 db.ts：schema / migrations / backup / import,一个文件里混着 7 版迁移、备份、导入、套路墙合并，下一次大迁移极易改错,按职责拆 4 个文件，公共导出不变；先补测试再搬代码,3,S,P1,待做,
 0754,D2 工程质量、性能与发布,代码结构,ADR 决策记录 docs/adr/,Dexie 不换 sqlite、无 git、Studio 视觉等决策散在 PLAN 和对话里，后来的 agent 会推翻重来,每条决策一页：背景/选项/结论/依据；先补 6–8 条既有决策,3,S,P1,待做,
-0755,D2 工程质量、性能与发布,可观测性,e2e 失败时保存 Playwright trace,现在失败只看 tail -10 输出，定位慢,失败用例保存 trace.zip 与截图，CI 上传 artifact；InstaBox 跑法也保留,3,S,P1,待做,
+0755,D2 工程质量、性能与发布,可观测性,e2e 失败时保存 Playwright trace,现在失败只看 tail -10 输出，定位慢,失败用例保存 trace.zip 与截图，CI 上传 artifact；InstaBox 跑法也保留,3,S,P1,已做,v0.37.0
 0756,D2 工程质量、性能与发布,发布质量,版本号单一来源 + 关于页显示构建信息,package.json 0.0.0、tauri.conf 与 Cargo 0.1.0，只在 CI 里改，本地构建版本号是错的,根目录 VERSION 文件，set-version.mjs 读取并写三处；关于页显示版本 + 构建日期 + 清单哈希,3,S,P1,待做,
 0757,D2 工程质量、性能与发布,插件架构,本地 HTTP API（127.0.0.1 + token）,用户希望 Claude Code、OpenClaw 等 agent 共享记忆，拾穗可以成为它们的灵感库,Rust 端 axum 监听本机端口，/items 查询与新增；随机 token 存钥匙串；默认关,4,M,P2,待做,
 0758,D2 工程质量、性能与发布,发布质量,Windows 代码签名,未签名 exe 会触发 SmartScreen「已保护你的电脑」，劝退普通用户,申请 SignPath 开源免费签名或 Azure Trusted Signing；tauri.conf 配 signCommand,4,M,P2,待做,
