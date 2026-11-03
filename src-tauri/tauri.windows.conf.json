@@ -1,0 +1,37 @@
+{
+  "app": {
+    "windows": [
+      {
+        "title": "拾穗 Glean",
+        "width": 1100,
+        "height": 760,
+        "resizable": true,
+        "fullscreen": false,
+        "minWidth": 360,
+        "minHeight": 560,
+        "dragDropEnabled": false,
+        "visible": false
+      }
+    ]
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "glean"
+        ]
+      }
+    }
+  },
+  "bundle": {
+    "windows": {
+      "nsis": {
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    }
+  }
+}
