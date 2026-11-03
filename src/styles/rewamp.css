@@ -3287,6 +3287,8 @@ details summary {
   gap: 12px;
   padding: 0 0 10px;
 }
+/* v0.37 大库：「1 / 1001」不折行 */
+.detail-step .num { white-space: nowrap; }
 .detail-inbox {
   margin: 10px 0 0;
   background: var(--accent-soft);
