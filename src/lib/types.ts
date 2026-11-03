@@ -49,6 +49,10 @@ export interface Item {
   dup?: string[];
   /** v0.23 AI 想加、但不在你标签词汇里的新词：要你点一下才算数（0110） */
   tagSugg?: string[];
+  /** v0.24 0206 反口味：-1 = 我讨厌的（不当素材抽，嫁接时列进 AVOID）；没有 = 普通的穗 */
+  polarity?: -1;
+  /** v0.24 0242 私密：任何发到云端模型的调用（嫁接 / 看图 / 打标签 / 向量 / 口味侧写）都不带它；本地模型可在设置里允许 */
+  private?: 1;
   createdAt: number;
   updatedAt: number;
 }
@@ -75,6 +79,12 @@ export interface Idea {
   evidenceNote?: string;
   /** v0.19 套路墙：这一根原本撞了墙。replaced = 用别的种子重长了这一根；scrubbed = 把撞到的字删掉了 */
   wall?: 'replaced' | 'scrubbed';
+  /** v0.24 三枝不撞车：这一根原本和另一根太像，换成了没用上的种子长的 */
+  distinct?: 'replaced';
+  /** v0.24 0241 新颖度：和穗仓里已有新枝的最大相似度（0–1，越低越新）；method = 字面 / 向量 */
+  nearest?: { sim: number; method: 'text' | 'vector'; title?: string };
+  /** v0.24 0234 去 AI 腔：本地改写了几处模板句式 */
+  deai?: number;
 }
 
 /** 四步嫁接的中间产物：张力与种子（可展开看） */
@@ -114,6 +124,8 @@ export interface Development {
   batch?: GraftBatch;
   /** v0.12：与 idea.evidence 相同，单独放一份方便建索引（Dexie version 2） */
   evidence?: 'ok' | 'weak' | 'legacy';
+  /** v0.24 0202 锚点穗：嫁接时钉住的主干（穗 id）；其余穗只当养分 */
+  anchorId?: number;
   /** v0.18 用哪种接法抽的穗（相近 / 远距 / 被冷落 / 跨媒介 / 反氛围）；之前长的没有 */
   mode?: GraftMode;
   /** v0.21 全局唯一 id（ULID）：备份、导入去重、以后同步都认它；本机自增 id 只在这台设备上有意义 */
@@ -164,4 +176,21 @@ export interface FtRow {
   sig: string;
   /** 切好的词：中文单字 + 二元、英文整词 */
   tok: string[];
+}
+
+/** v0.24 0212 「不要」的理由：点「不要」时选的（可不选）。写进下次嫁接的 FEEDBACK 段，口味页可见可删 */
+export interface Reject {
+  id?: number;
+  /** 快捷理由 id（cliche 太俗 / far 太远 / hard 做不了 / notme 不像我）或 custom */
+  reason: string;
+  /** 自定义理由的原话（custom 时有） */
+  text?: string;
+  /** 被不要的那根新枝的标题与一句话（新枝 30 天后会被彻底清掉，理由留着） */
+  title: string;
+  gist?: string;
+  devUid?: string;
+  uid?: string;
+  deviceId?: string;
+  updatedAt?: number;
+  createdAt: number;
 }
