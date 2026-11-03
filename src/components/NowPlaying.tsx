@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { onNowPlaying } from '../lib/desktop';
-import { addItem } from '../lib/db';
+import { addItem, db } from '../lib/db';
+import { notifyDupe } from '../lib/dupnotice';
 import { nowPlayingSupport } from '../lib/npsupport';
 import type { NowPlaying } from '../lib/nowplaying';
 
@@ -38,9 +39,10 @@ export function useNowPlaying() {
       const np = await read();
       if (!np) return null;
       const d = (await loadNP()).nowPlayingDraft(np);
-      const id = await addItem(d);
+      const id = await addItem(d, db, { inbox: true });
       afterAdd(id, d, settings, (m) => toast(m, 'err'));
       toast(`已拾 ♪ ${np.title}${np.artist ? ' — ' + np.artist : ''}`);
+      void notifyDupe(id, toast);
       return id;
     } catch (e) {
       toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
