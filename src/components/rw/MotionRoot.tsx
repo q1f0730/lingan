@@ -7,7 +7,7 @@ const loadFeatures = () => afterFirstPaint().then(() => import('./features')).th
 
 /**
  * Rewamp UI 的组件都用 Framer Motion 写动效。这里用 LazyMotion + `m.*`：首包只带极小的渲染器，
- * 动画特性（domMax，含 layoutId）在首屏后异步加载，不拖冷启动。
+ * 动画特性（domAnimation；v0.34 起 layoutId 换成 Glide）在首屏后异步加载，不拖冷启动。
  * 减少动态效果（系统设置或低端机判为 off）时一律不动，只保留最终状态。
  */
 export function MotionRoot({ level, children }: { level: MotionLevel; children: ReactNode }) {
