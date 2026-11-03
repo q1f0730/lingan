@@ -1,0 +1,286 @@
+{
+ "version": 8,
+ "app": "v0.21–v0.22",
+ "schema": {
+  "1": {
+   "items": "++id, type, createdAt, updatedAt, *tags",
+   "developments": "++id, createdAt, starred"
+  },
+  "2": {
+   "developments": "++id, createdAt, starred, evidence"
+  },
+  "3": {
+   "items": "++id, type, createdAt, updatedAt, *tags, thumbTodo",
+   "images": "&itemId"
+  },
+  "4": {
+   "items": "++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt",
+   "daily": "&day"
+  },
+  "5": {
+   "ftidx": "&key, kind"
+  },
+  "6": {
+   "items": "++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt, graftCount"
+  },
+  "7": {
+   "cliches": "++id, &key, source, struck, lastAt"
+  },
+  "8": {
+   "items": "++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt, graftCount, &uid, deletedAt",
+   "developments": "++id, createdAt, starred, evidence, &uid, deletedAt",
+   "cliches": "++id, &key, source, struck, lastAt, &uid",
+   "meta": "&k"
+  }
+ },
+ "data": {
+  "items": [
+   {
+    "id": 1,
+    "type": "film",
+    "title": "重庆森林",
+    "creator": "王家卫",
+    "year": "1994",
+    "why": "凤梨罐头的过期日期",
+    "tags": [
+     "香港",
+     "霓虹"
+    ],
+    "createdAt": 1729000000000,
+    "updatedAt": 1729000001000,
+    "touchedAt": 1729777600000,
+    "graftCount": 2,
+    "graftedAt": 1729691200000,
+    "uid": "01JA86WJG0GQ5QF19BDCMYTXGH",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   },
+   {
+    "id": 2,
+    "type": "music",
+    "title": "晴天",
+    "creator": "周杰伦",
+    "tags": [
+     "夏天"
+    ],
+    "url": "https://music.example/1",
+    "createdAt": 1729086400000,
+    "updatedAt": 1729086400000,
+    "graftCount": 1,
+    "graftedAt": 1729691200000,
+    "uid": "01JAAS99G0SBKZE8NW0DR5HKTG",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   },
+   {
+    "id": 3,
+    "type": "text",
+    "title": "摘一句",
+    "content": "所有的大人都曾是小孩",
+    "tags": [],
+    "createdAt": 1729172800000,
+    "updatedAt": 1729172800000,
+    "graftCount": 0,
+    "uid": "01JADBP0G03PV494KX32EQJ06V",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   },
+   {
+    "id": 4,
+    "type": "image",
+    "title": "雨后的操场",
+    "tags": [
+     "雨"
+    ],
+    "createdAt": 1729259200000,
+    "updatedAt": 1729259200000,
+    "hasImage": 1,
+    "thumbTodo": 1,
+    "graftCount": 0,
+    "uid": "01JAFY2QG0GGS5MA5JF8T93DE4",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   },
+   {
+    "id": 5,
+    "type": "idea",
+    "title": "把天气写成菜单",
+    "why": "",
+    "tags": [
+     "想法"
+    ],
+    "createdAt": 1729345600000,
+    "updatedAt": 1729432000000,
+    "graftCount": 0,
+    "uid": "01JAJGFEG0J4Z6QP6FK189XWFV",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   },
+   {
+    "id": 6,
+    "type": "link",
+    "title": "一篇文章",
+    "url": "https://example.com/a",
+    "tags": [],
+    "createdAt": 1729432000000,
+    "updatedAt": 1729432000000,
+    "graftCount": 0,
+    "uid": "01JAN2W5G042YAXEZKBPRC4ED1",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   },
+   {
+    "id": 7,
+    "type": "music",
+    "title": "示例：月光",
+    "creator": "德彪西",
+    "tags": [],
+    "sample": 1,
+    "createdAt": 1729518400000,
+    "updatedAt": 1729518400000,
+    "graftCount": 0,
+    "uid": "01JAQN8WG0X7PW7SQSM1T00FFT",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   }
+  ],
+  "developments": [
+   {
+    "id": 1,
+    "itemIds": [
+     1,
+     2
+    ],
+    "jump": 0.6,
+    "idea": {
+     "title": "小票上的情书",
+     "bridge": "过期",
+     "idea": "把罐头日期写成副歌",
+     "cliches": [
+      "旧套路甲",
+      "「旧套路乙」"
+     ],
+     "refs": [
+      1,
+      2
+     ],
+     "evidence": "legacy"
+    },
+    "source": "ai",
+    "createdAt": 1729604800000,
+    "evidence": "legacy",
+    "uid": "01JAT7NKG0XEGF7Z79WF9776GT",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E",
+    "updatedAt": 1729604800000
+   },
+   {
+    "id": 2,
+    "itemIds": [
+     1,
+     2,
+     3
+    ],
+    "jump": 0.5,
+    "idea": {
+     "title": "三枝里的一根",
+     "bridge": "",
+     "idea": "操场上的情书",
+     "cliches": [],
+     "refs": [
+      1,
+      3
+     ],
+     "transform": "invert",
+     "evidence": "legacy"
+    },
+    "source": "offline",
+    "createdAt": 1729691200000,
+    "starred": true,
+    "batch": {
+     "id": "gold",
+     "index": 0,
+     "size": 1,
+     "tensions": [
+      {
+       "text": "t",
+       "refs": [
+        1
+       ]
+      }
+     ],
+     "seeds": []
+    },
+    "evidence": "legacy",
+    "mode": "far",
+    "uid": "01JAWT2AG0JXMXM6MYKQ29WH91",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E",
+    "updatedAt": 1729691200000
+   }
+  ],
+  "images": [
+   {
+    "itemId": 4,
+    "image": "data:image/jpeg;base64,/9j/4HJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW5yYWlucmFpbnJhaW7/2Q=="
+   }
+  ],
+  "daily": [
+   {
+    "day": "2024-10-20",
+    "oldIds": [
+     1,
+     2,
+     3
+    ],
+    "comboIds": [
+     1,
+     2,
+     3,
+     5
+    ],
+    "createdAt": 1729777600000
+   }
+  ],
+  "ftidx": [
+   {
+    "key": "i:1",
+    "kind": "i",
+    "ref": 1,
+    "sig": "old",
+    "tok": [
+     "重",
+     "庆",
+     "重庆"
+    ]
+   }
+  ],
+  "cliches": [
+   {
+    "id": 1,
+    "key": "旧套路甲",
+    "text": "旧套路甲",
+    "source": "ai",
+    "struck": 0,
+    "listed": 1,
+    "blocked": 2,
+    "createdAt": 1729604800000,
+    "lastAt": 1729604800000,
+    "uid": "01JAT7NKG0NMRD30DDG6DEKEZ0",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E",
+    "updatedAt": 1729604800000
+   },
+   {
+    "id": 2,
+    "key": "我讨厌的词",
+    "text": "我讨厌的词",
+    "source": "user",
+    "struck": 1,
+    "listed": 0,
+    "blocked": 0,
+    "createdAt": 1729604800000,
+    "lastAt": 1729604800000,
+    "uid": "01JAT7NKG0NMRD30DDG6DEKEZ1",
+    "deviceId": "01M6FX5TQ9H1KT46KV2SG0TB1E",
+    "updatedAt": 1729604800000
+   }
+  ],
+  "meta": [
+   {
+    "k": "deviceId",
+    "v": "01M6FX5TQ9H1KT46KV2SG0TB1E"
+   }
+  ]
+ }
+}
