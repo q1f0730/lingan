@@ -2,6 +2,7 @@ import { enqueuePending, isStorageError, PendingWriteError, replayPending } from
 import Dexie, { type Table, type Transaction } from 'dexie';
 import { adoptDeviceId, getDeviceId } from './device';
 import { isUlid, ulid } from './ulid';
+import { hlcFromWall, isHlc, tick } from './hlc';
 import { DAILY_COMBO, pickDaily, pickStillValid, todayKey } from './daily';
 import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
@@ -147,6 +148,28 @@ export class LinganDB extends Dexie {
     // v0.29 作品工坊（0301）：works 表（新枝立项后的作品：素材 / 草稿 / 待办 / 分镜 / 歌单 / 情绪板，引用都存 uid）。
     // 迁移：新表，不动任何旧数据（旧版没有作品）
     this.version(11).stores({ works: '++id, &uid, updatedAt, createdAt, deletedAt, stage' });
+    // v0.31 同步地基（0602 0619）：五张会同步的表每行加 hlc（混合逻辑时钟，行里最新一次修改）+ hc（新建时的 HLC）
+    // + fh（改过的字段 → 那次的 HLC，字段级合并用），hlc 建索引（同步只推 hlc 比上次推过的大的行）。
+    // 迁移：按每行自己的 updatedAt 和 deviceId 换算 hlc = hc，不动任何内容
+    this.version(12)
+      .stores({
+        items: '++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt, graftCount, &uid, deletedAt, inbox, *dup, hlc',
+        developments: '++id, createdAt, starred, evidence, &uid, deletedAt, hlc',
+        cliches: '++id, &key, source, struck, lastAt, &uid, hlc',
+        rejects: '++id, &uid, createdAt, reason, hlc',
+        works: '++id, &uid, updatedAt, createdAt, deletedAt, stage, hlc',
+      })
+      .upgrade(async (tx) => {
+        const dev = getDeviceId();
+        for (const t of SYNC_TABLES)
+          await tx
+            .table(t)
+            .toCollection()
+            .modify((r: Stamped & { lastAt?: number }) => {
+              if (!isHlc(r.hlc)) r.hlc = hlcFromWall(r.updatedAt || r.lastAt || r.createdAt || 0, r.deviceId || dev);
+              if (!isHlc(r.hc)) r.hc = r.hlc;
+            });
+      });
     stampHooks(this);
     dupHooks(this);
     // 库里记的设备 id 为准（localStorage 被清了但库还在时沿用原来的）
@@ -169,9 +192,13 @@ export interface MetaRow {
 }
 
 /** 这些字段的变化不算「修改」（缩略图、碰过、向量、嫁接统计、自身盖章） */
-const ITEM_LOCAL = new Set(['thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'touchedAt', 'embedding', 'embedModel', 'graftCount', 'graftedAt', 'uid', 'deviceId', 'updatedAt', 'dup', 'tagSugg']);
-const DEV_LOCAL = new Set(['uid', 'deviceId', 'updatedAt']);
-const CLICHE_LOCAL = new Set(['listed', 'blocked', 'lastAt', 'uid', 'deviceId', 'updatedAt']);
+/** v0.31 会同步的表（顺序 = 应用顺序：穗先于引用它的新枝 / 作品） */
+export const SYNC_TABLES = ['items', 'developments', 'cliches', 'rejects', 'works'] as const;
+export type SyncTable = (typeof SYNC_TABLES)[number];
+const STAMP_META = ['hlc', 'hc', 'fh'];
+const ITEM_LOCAL = new Set([...STAMP_META, 'imgSha', 'thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'touchedAt', 'embedding', 'embedModel', 'graftCount', 'graftedAt', 'uid', 'deviceId', 'updatedAt', 'dup', 'tagSugg']);
+const DEV_LOCAL = new Set([...STAMP_META, 'uid', 'deviceId', 'updatedAt']);
+const CLICHE_LOCAL = new Set([...STAMP_META, 'listed', 'blocked', 'lastAt', 'uid', 'deviceId', 'updatedAt']);
 
 /** 导入 / 迁移时原样写入（不盖本机章）：迁移事务、或事务上打了 __gleanRaw 标记 */
 function rawTx(tx: Transaction | undefined): boolean {
@@ -179,10 +206,22 @@ function rawTx(tx: Transaction | undefined): boolean {
   const t = tx as Transaction & { __gleanRaw?: boolean; mode?: string; idbtrans?: IDBTransaction };
   return !!t.__gleanRaw || t.mode === 'versionchange' || t.idbtrans?.mode === 'versionchange';
 }
-/** 在当前事务里关掉自动盖章（导入备份要保留对方的 updatedAt / deviceId） */
-export function markRawTransaction() {
-  const t = Dexie.currentTransaction as (Transaction & { __gleanRaw?: boolean }) | null;
-  if (t) t.__gleanRaw = true;
+/**
+ * 在当前事务里关掉自动盖章（导入备份要保留对方的 updatedAt / deviceId）。
+ * v0.31：sync=true 是同步引擎在写（行的 HLC 原样）；其余的原样写入（导入、恢复快照）字段的 HLC 保留，
+ * 但行的 hlc 换成本机新的一刻——这样下次同步会把它们推出去（不然从别的设备备份导进来的旧行永远推不出去）
+ */
+export function markRawTransaction(sync = false) {
+  const t = Dexie.currentTransaction as (Transaction & { __gleanRaw?: boolean; __gleanSync?: boolean }) | null;
+  if (t) {
+    t.__gleanRaw = true;
+    if (sync) t.__gleanSync = true;
+  }
+}
+/** 原样写入、但不是同步也不是迁移：行要重新盖一个本机 hlc */
+function restampTx(tx: Transaction | undefined): boolean {
+  const t = tx as (Transaction & { __gleanSync?: boolean; mode?: string; idbtrans?: IDBTransaction }) | undefined;
+  return !!t && !t.__gleanSync && t.mode !== 'versionchange' && t.idbtrans?.mode !== 'versionchange';
 }
 
 function sameValue(a: unknown, b: unknown): boolean {
@@ -196,25 +235,61 @@ function sameValue(a: unknown, b: unknown): boolean {
   }
 }
 
-type Stamped = { uid?: string; deviceId?: string; updatedAt?: number; createdAt?: number };
-function stampTable(table: Table<Stamped, number>, local: Set<string>) {
+type Stamped = { uid?: string; deviceId?: string; updatedAt?: number; createdAt?: number; hlc?: string; hc?: string; fh?: Record<string, string> };
+const PURGED_KEY = 'glean.sync.purged';
+/** v0.31 同步开着时，彻底删掉的行记一笔墓碑（表 + uid + HLC），下次同步推给别的设备，免得被拉回来 */
+function notePurge(t: string, uid: string | undefined) {
+  if (!uid) return;
+  try {
+    if (!localStorage.getItem('glean.sync.v1')) return;
+    const v = JSON.parse(localStorage.getItem(PURGED_KEY) || '[]');
+    const list = Array.isArray(v) ? v : [];
+    list.push({ t, u: uid, h: tick() });
+    localStorage.setItem(PURGED_KEY, JSON.stringify(list.slice(-5000)));
+  } catch {
+    /* ignore */
+  }
+}
+function stampTable(name: string, table: Table<Stamped, number>, local: Set<string>) {
   table.hook('creating', function (_pk, obj, tx) {
     if (!isUlid(obj.uid)) obj.uid = ulid(typeof obj.createdAt === 'number' ? obj.createdAt : Date.now());
-    if (rawTx(tx)) return;
+    if (rawTx(tx)) {
+      // 导入 / 同步写进来的行：字段带着对方的 HLC；旧备份没有就按它的 updatedAt 换算
+      if (!isHlc(obj.hc)) obj.hc = isHlc(obj.hlc) ? obj.hlc : hlcFromWall(obj.updatedAt || obj.createdAt || 0, obj.deviceId || getDeviceId());
+      if (!isHlc(obj.hlc)) obj.hlc = obj.hc;
+      if (restampTx(tx)) obj.hlc = tick();
+      return;
+    }
     if (!obj.deviceId) obj.deviceId = getDeviceId();
     if (typeof obj.updatedAt !== 'number') obj.updatedAt = typeof obj.createdAt === 'number' ? obj.createdAt : Date.now();
+    obj.hlc = obj.hc = tick();
+    delete obj.fh;
   });
   table.hook('updating', function (mods, _pk, obj, tx) {
-    if (rawTx(tx)) return undefined;
-    const add: Record<string, unknown> = {};
     const m = mods as Record<string, unknown>;
+    if (rawTx(tx)) {
+      if (!restampTx(tx) || 'hlc' in m) return undefined;
+      return Object.keys(m).some((k) => !local.has(k.split('.')[0]) && !sameValue(m[k], Dexie.getByKeyPath(obj, k))) ? { hlc: tick() } : undefined;
+    }
+    const add: Record<string, unknown> = {};
     if (!isUlid(obj.uid) && !('uid' in m)) add.uid = ulid(typeof obj.createdAt === 'number' ? obj.createdAt : Date.now());
     // Dexie 会把没变的字段（例如多值索引 tags）也放进 mods：逐个和旧值比，真变了才算修改
-    if (Object.keys(m).some((k) => !local.has(k.split('.')[0]) && !sameValue(m[k], Dexie.getByKeyPath(obj, k)))) {
+    const changed = [...new Set(Object.keys(m).filter((k) => !local.has(k.split('.')[0]) && !sameValue(m[k], Dexie.getByKeyPath(obj, k))).map((k) => k.split('.')[0]))];
+    if (changed.length) {
       add.deviceId = getDeviceId();
       if (!('updatedAt' in m)) add.updatedAt = Date.now();
+      // 0619 字段级：记下这次改了哪几个字段、在什么时刻
+      const h = tick();
+      add.hlc = h;
+      const fh: Record<string, string> = { ...(obj.fh || {}) };
+      for (const k of changed) fh[k] = h;
+      add.fh = fh;
+      if (!isHlc(obj.hc)) add.hc = hlcFromWall(obj.createdAt || 0, obj.deviceId || getDeviceId());
     }
     return Object.keys(add).length ? add : undefined;
+  });
+  table.hook('deleting', function (_pk, obj, tx) {
+    if (!rawTx(tx)) notePurge(name, obj?.uid);
   });
 }
 const DUP_FIELDS = ['type', 'title', 'content', 'creator', 'url'];
@@ -238,11 +313,11 @@ function dupHooks(d: LinganDB) {
 
 /** v0.21 自动盖章：新建时补 uid / deviceId / updatedAt；改了内容（不是缩略图、碰过这类派生字段）时更新 updatedAt 与 deviceId */
 function stampHooks(d: LinganDB) {
-  stampTable(d.items as unknown as Table<Stamped, number>, ITEM_LOCAL);
-  stampTable(d.developments as unknown as Table<Stamped, number>, DEV_LOCAL);
-  stampTable(d.cliches as unknown as Table<Stamped, number>, CLICHE_LOCAL);
-  stampTable(d.rejects as unknown as Table<Stamped, number>, DEV_LOCAL);
-  stampTable(d.works as unknown as Table<Stamped, number>, DEV_LOCAL);
+  stampTable('items', d.items as unknown as Table<Stamped, number>, ITEM_LOCAL);
+  stampTable('developments', d.developments as unknown as Table<Stamped, number>, DEV_LOCAL);
+  stampTable('cliches', d.cliches as unknown as Table<Stamped, number>, CLICHE_LOCAL);
+  stampTable('rejects', d.rejects as unknown as Table<Stamped, number>, DEV_LOCAL);
+  stampTable('works', d.works as unknown as Table<Stamped, number>, DEV_LOCAL);
 }
 
 /** v0.19 从新枝里收集模型列出过的套路：同一批（batch.id）只算一次；返回可直接入库的行 */
@@ -701,6 +776,16 @@ export async function clearAll(d: LinganDB = db) {
     await d.daily.clear();
     await d.ftidx.clear();
   });
+  // v0.31：开着同步时「清空」只清本机；同步进度归零，下次同步会把云端的全拉回来（要彻底不同步先断开）
+  try {
+    const c = JSON.parse(localStorage.getItem('glean.sync.v1') || 'null');
+    if (c?.state) {
+      c.state = { seq: c.state.seq ?? null, pushed: c.state.pushed, seen: {} };
+      localStorage.setItem('glean.sync.v1', JSON.stringify(c));
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 /** v0.14 碰了一下（打开详情 / 拿去嫁接）：只记 touchedAt，不算「修改」 */
