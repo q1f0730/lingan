@@ -28,7 +28,7 @@ export interface AppCtx {
   /** ≥1024px：桌面多栏布局 */
   desktop: boolean;
 }
-export type View = 'library' | 'develop' | 'branches' | 'taste' | 'settings';
+export type View = 'library' | 'develop' | 'branches' | 'works' | 'taste' | 'settings';
 export const Ctx = createContext<AppCtx | null>(null);
 export function useApp(): AppCtx {
   const c = useContext(Ctx);
