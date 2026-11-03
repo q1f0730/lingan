@@ -231,7 +231,7 @@ describe('v0.18 嫁接次数', () => {
     const rows = await d.items.orderBy('id').toArray();
     expect(rows.map((r) => r.graftCount)).toEqual([2, 2, 1, 0]);
     expect(rows.map((r) => r.graftedAt)).toEqual([202, 202, 202, undefined]);
-    expect(d.verno).toBe(11); // v0.29 起是 11（作品） // v0.24 起是 10（不要的理由） // v0.23 起是 9（待理 + 重复钥匙） // v0.19 起是 7（套路墙）
+    expect(d.verno).toBe(12); // v0.31 起是 12（HLC） // v0.29 起是 11（作品） // v0.24 起是 10（不要的理由） // v0.23 起是 9（待理 + 重复钥匙） // v0.19 起是 7（套路墙）
     expect(await d.items.where('graftCount').equals(0).count()).toBe(1);
     // 再嫁接一次：次数 +1、记下时间
     await markGrafted([3, 4, 4], d, 9999);
