@@ -13,7 +13,7 @@ export function GardenPanel() {
   const [p, setP] = useState(readSharePrefs);
   const [words, setWords] = useState(() => p.words.join('\n'));
   const [busy, setBusy] = useState(false);
-  const n = useLiveQuery(() => db.items.filter((x) => !!x.garden && !x.deletedAt && !x.private && !x.sample).count(), []);
+  const n = useLiveQuery(() => db.items.filter((x) => !!x.garden && !x.deletedAt && !x.private && !x.locked && !x.sample).count(), []);
   const save = (next: typeof p) => (setP(next), writeSharePrefs(next));
 
   async function build(target: 'save' | 'share' | 'downloads') {
