@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { SNAP_KEY, snapOn } from '../lib/linkmeta';
 import { isTauriEnv } from '../lib/desktop';
 import { NP_ACCESS_WHY, nowPlayingAccess, nowPlayingSupport, openNowPlayingAccess } from '../lib/nowplaying';
 import { NOTIFY_WHY, notifyBridge, readNotify, requestNotify, type NotifyStatus } from '../lib/notify';
@@ -28,6 +29,7 @@ export function CapturePanel() {
   const [ns, setNs] = useState<NotifyStatus | null>(() => readNotify());
   const [access, setAccess] = useState(() => nowPlayingAccess());
   const [asking, setAsking] = useState(false);
+  const [snap, setSnap] = useState(snapOn);
 
   const refresh = useCallback(() => {
     setNs(readNotify());
@@ -109,6 +111,13 @@ export function CapturePanel() {
         </div>
       )}
       {desktop && <EntryPanel />}
+      <div className="table action-table">
+        <button className="trow cap-switch cap-snap" role="switch" aria-checked={snap} onClick={() => (localStorage.setItem(SNAP_KEY, snap ? '0' : '1'), setSnap(!snap))}>
+          <span className="tc tc-title">收链接时存正文快照</span>
+          <span className="tc tc-src">把网页正文抽成纯文字（最多 50KB）存进这一穗，原链接被删了也能看；用的是抓标题时那份网页，不多发请求</span>
+          <span className="tc tc-date">{snap ? '开' : '关'}</span>
+        </button>
+      </div>
       <dl className="kv cap-ways">
         {ways.map(([k, v]) => (
           <div key={k}>
