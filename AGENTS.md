@@ -10,6 +10,7 @@
 - `src-tauri/` Rust：`lib.rs` 入口与托盘、`api.rs` + `apicore.rs` 本地 API、`smtc.rs` Windows 正在播放。
 - `scripts/android/*.kt` 安卓原生代码（`patch-android.mjs` 换包名后拷进 gen）。
 - `e2e/run.mjs` Playwright 端到端（含性能基准）。`mcp/glean-mcp.mjs` stdio 桥 + CLI。
+- `extension/` 浏览器扩展（MV3，纯 JS，不进 App 包；`lib.js` 的纯函数由 `src/__tests__/v036.test.ts` 测，release.yml 打成 `glean-extension.zip`）。
 - `docs/releases/` 每版发布说明，`docs/perf/` 每版性能，`docs/ideas/` 1000 条建议与实施计划。
 
 ## 质量门（全部必须过，不许删测试、不许放宽阈值）
