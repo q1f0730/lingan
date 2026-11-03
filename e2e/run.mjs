@@ -2379,10 +2379,10 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 100) errs.push(`[legacy] db version expected 100 (Dexie v10) got ${ver}`);
+  if (ver !== 110) errs.push(`[legacy] db version expected 110 (Dexie v11) got ${ver}`);
   // v0.26 0624：迁移前先把旧库原样存了一份（glean-snap 里的 pre-upgrade），记下当前库版本；再打开不会重复存
   const pu = await pg.evaluate(() => ({ g: window.__gleanPreUpgrade, seen: localStorage.getItem('glean.schema.v1') }));
-  if (!pu.g || pu.g.from !== 1 || pu.g.to !== 10 || !pu.g.id || pu.seen !== '10') errs.push(`[legacy] pre-upgrade dump ${JSON.stringify(pu)}`);
+  if (!pu.g || pu.g.from !== 1 || pu.g.to !== 11 || !pu.g.id || pu.seen !== '11') errs.push(`[legacy] pre-upgrade dump ${JSON.stringify(pu)}`);
   const snaps = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('glean-snap'); r.onsuccess = () => { const q = r.result.transaction('snaps').objectStore('snaps').getAll(); q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ kind: x.kind, schema: x.schema, items: x.items.map((i) => i.title), devs: x.developments.length, graft: x.items.map((i) => i.graftCount) }))); }; }; }));
   const pre = snaps.filter((x) => x.kind === 'pre-upgrade');
   if (pre.length !== 1 || pre[0].schema !== 1 || pre[0].items.join() !== '旧片子,旧歌,旧念头' || pre[0].devs !== 2 || pre[0].graft.some((x) => x != null)) errs.push(`[legacy] pre-upgrade snapshot should hold the untouched v1 rows ${JSON.stringify(snaps)}`);
@@ -3422,7 +3422,164 @@ async function v028() {
   console.log('v028: inline syntax / share code / clean url / basket / bundles / pool / pinyin / three-pane / onboarding first ok');
 }
 
+// v0.29 B2 创作产出：作品工坊（0301–0309、0314、0322、0339、0340）
+async function workDb(pg) {
+  return dbRaw(pg, 'works');
+}
+async function v029() {
+  const tag = 'v029';
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, acceptDownloads: true });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  await quickSave(pg, '《花样年华》 @王家卫 > 旗袍和楼梯 #香港');
+  await quickSave(pg, '/歌 梦二 @梅林茂 > 一直重复的大提琴');
+  await quickSave(pg, '/歌 晴天 @周杰伦 > 夏天跑步时燃');
+  await quickSave(pg, '楼梯间的灯一直坏着 #香港');
+  const png = await pngFileJs(pg);
+  await pg.evaluate(async (png) => { document.activeElement?.blur?.(); const blob = await (await fetch(png)).blob(); const dt = new DataTransfer(); dt.items.add(new File([blob], 'image.png', { type: 'image/png' })); document.body.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }, png);
+  await pg.waitForTimeout(1200);
+  // 六页导航（新枝和口味之间多了「作品」），手机底栏放得下、触达区够大
+  const navs = await pg.evaluate(() => [...document.querySelectorAll('.dock .nav-btn')].map((e) => e.textContent.trim()));
+  if (navs.join() !== '穗仓,嫁接,新枝,作品,口味,设置') errs.push(`[${tag}] dock nav ${navs.join()}`);
+  // 离线嫁接一次，拿一根新枝立项（0301 / 0302）
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls button:has-text("抽几穗")');
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 15000 });
+  const ideaTitle = (await pg.textContent('.three .idea >> nth=0 >> .idea-title')).trim();
+  await pg.click('.three .idea >> nth=0 >> .idea-found');
+  await pg.waitForSelector('.idea-forming .work-form', { timeout: 3000 }).catch(() => errs.push(`[${tag}] form picker missing`));
+  if ((await pg.locator('.idea-forming .work-form').count()) !== 6) errs.push(`[${tag}] expected 6 forms`);
+  await pg.screenshot({ path: `${out}/v029-found.png` });
+  await pg.click('.idea-forming .work-form[data-form="film"]');
+  await pg.waitForSelector('.work-space[data-form="film"]', { timeout: 4000 }).catch(() => errs.push(`[${tag}] workspace did not open after 立项`));
+  const wt = await pg.inputValue('.work-title').catch(() => '');
+  if (wt !== ideaTitle.replace(/^《|》$/g, '')) errs.push(`[${tag}] work title ${wt} vs ${ideaTitle}`);
+  let ws = await workDb(pg);
+  if (ws.length !== 1 || ws[0].form !== 'film' || ws[0].itemUids.length < 3 || ws[0].devUids.length !== 1 || !(ws[0].shots || []).length || !(ws[0].board?.nodes || []).length || ws[0].todos.length !== 3) errs.push(`[${tag}] work row ${JSON.stringify(ws.map((w) => ({ f: w.form, i: w.itemUids.length, d: w.devUids.length, s: (w.shots || []).length, b: (w.board?.nodes || []).length, t: w.todos.length })))}`);
+  const kept = await dbRaw(pg, 'developments');
+  if (!kept.some((d) => d.starred)) errs.push(`[${tag}] founded branch should be kept`);
+  // 0304 / 0305 分镜：选参考帧、目标时长超了要提醒
+  const nShots = await pg.locator('.shot').count();
+  if (nShots < 1) errs.push(`[${tag}] no shots`);
+  await pg.click('.shot-add');
+  if ((await pg.locator('.shot').count()) !== nShots + 1) errs.push(`[${tag}] add shot`);
+  const lastFrame = pg.locator('.shot >> nth=-1 >> .shot-frame');
+  if ((await lastFrame.textContent()).trim() !== '中') errs.push(`[${tag}] shot glyph should be 景别字印`);
+  await lastFrame.click();
+  await pg.waitForSelector('.frame-pick .frame-opt', { timeout: 3000 }).catch(() => errs.push(`[${tag}] frame picker empty`));
+  await pg.click('.frame-pick .frame-opt >> nth=0');
+  await pg.waitForSelector('.shot >> nth=-1 >> .shot-frame.has', { timeout: 2000 }).catch(() => errs.push(`[${tag}] frame not set`));
+  await pg.fill('.shot-target input', '5');
+  await pg.waitForSelector('.shot-total.over', { timeout: 2000 }).catch(() => errs.push(`[${tag}] over-target warning`));
+  await pg.click('.work-stage .chip:has-text("在做")');
+  await pg.click('.work-todos li >> nth=0 >> input');
+  const smallW = await smallTargets(pg);
+  if (smallW.length) errs.push(`[${tag}] small targets in workspace: ${smallW.slice(0, 6).join('; ')}`);
+  await pg.screenshot({ path: `${out}/v029-shots.png` });
+  await pg.waitForTimeout(600);
+  ws = await workDb(pg);
+  const w0 = ws[0];
+  if (w0.stage !== 'doing' || !w0.todos[0].done || w0.targetSec !== 5 || !w0.shots[w0.shots.length - 1].frameUid) errs.push(`[${tag}] workspace edits not saved ${JSON.stringify({ st: w0.stage, td: w0.todos[0], t: w0.targetSec })}`);
+  // 0303 稿：打 [[ 选穗插入引用，预览里成可点的穗
+  await pg.click('.work-tabs [data-tab="draft"]');
+  await pg.click('.work-text');
+  await pg.keyboard.press('Control+End');
+  await pg.keyboard.type('\n他站在[[花样');
+  await pg.waitForSelector('.ref-pick .ref-opt', { timeout: 3000 }).catch(() => errs.push(`[${tag}] ref picker missing`));
+  await pg.keyboard.press('Enter');
+  const draft = await pg.inputValue('.work-text');
+  if (!/他站在\[\[花样年华\|[0-9A-Z]{26}\]\]/.test(draft)) errs.push(`[${tag}] ref not inserted: ${draft.slice(-60)}`);
+  await pg.screenshot({ path: `${out}/v029-draft.png` });
+  await pg.click('.work-read');
+  await pg.waitForSelector('.work-read-view .md-ref:has-text("花样年华")', { timeout: 2000 }).catch(() => errs.push(`[${tag}] preview ref chip`));
+  await pg.screenshot({ path: `${out}/v029-preview.png` });
+  // 0308 情绪板：立项时摆好的块 + 加一块文字，存进库
+  await pg.click('.work-tabs [data-tab="board"]');
+  await pg.waitForSelector('.board-node', { timeout: 4000 }).catch(() => errs.push(`[${tag}] board nodes missing`));
+  const nb0 = await pg.locator('.board-node').count();
+  await pg.click('.board-text');
+  await pg.click('.board-swatch >> nth=0');
+  if ((await pg.locator('.board-node').count()) !== nb0 + 2) errs.push(`[${tag}] board add text/color`);
+  await pg.screenshot({ path: `${out}/v029-board.png` });
+  await pg.waitForTimeout(700);
+  ws = await workDb(pg);
+  if ((ws[0].board?.nodes || []).length !== nb0 + 2) errs.push(`[${tag}] board not saved ${(ws[0].board?.nodes || []).length}`);
+  // 0339 导出 .md：引用变《标题》[n]，带溯源、署名
+  const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 5000 }), pg.click('.work-export')]);
+  const md = fs.readFileSync(await dl.path(), 'utf8');
+  if (!md.includes('## 溯源') || !/《花样年华》\[\d\]/.test(md) || !md.includes('## 分镜') || !md.includes('Q1f730') || /\|[0-9A-Z]{26}\]\]/.test(md)) errs.push(`[${tag}] markdown export ${md.slice(0, 200)}`);
+  // 0309 素材：手机上是一个页签
+  await pg.click('.work-tabs [data-tab="mats"]');
+  if ((await pg.locator('.work-mat').count()) < 3) errs.push(`[${tag}] materials tab`);
+  // 回列表
+  await pg.click('.work-back');
+  await pg.waitForSelector('.work-row', { timeout: 3000 });
+  // 空白歌单（0306 / 0322）：只用库里的两首歌，导出「歌名 - 歌手」
+  await pg.click('.work-new');
+  await pg.click('.work-pick-blank .work-form[data-form="playlist"]');
+  await pg.waitForSelector('.work-space[data-form="playlist"]', { timeout: 4000 });
+  if ((await pg.locator('.track').count()) !== 2) errs.push(`[${tag}] playlist should have 2 library songs got ${await pg.locator('.track').count()}`);
+  const whys = await pg.evaluate(() => [...document.querySelectorAll('.track-why')].map((e) => e.value));
+  if (!/^开场：/.test(whys[0] || '') || !/^收尾：/.test(whys[1] || '')) errs.push(`[${tag}] track roles ${whys}`);
+  const [dl2] = await Promise.all([pg.waitForEvent('download', { timeout: 5000 }), pg.click('.track-export')]);
+  const txt = fs.readFileSync(await dl2.path(), 'utf8');
+  if (!txt.includes('梦二 - 梅林茂') || !txt.includes('晴天 - 周杰伦')) errs.push(`[${tag}] playlist txt ${txt}`);
+  await pg.screenshot({ path: `${out}/v029-playlist.png` });
+  await pg.click('.work-back');
+  // 空白影评（0307）：论点没引用收藏要点名
+  await pg.click('.work-new');
+  await pg.click('.work-pick-blank .work-form[data-form="review"]');
+  await pg.waitForSelector('.work-space[data-form="review"] .work-warn', { timeout: 4000 }).catch(() => errs.push(`[${tag}] review warning missing`));
+  const warn = await pg.textContent('.work-warn').catch(() => '');
+  if (!warn.includes('论点一')) errs.push(`[${tag}] review warn ${warn}`);
+  if (!(await pg.textContent('.work-words')).includes('/ 800 字')) errs.push(`[${tag}] review word target`);
+  await pg.click('.work-back');
+  // 刷新后都还在
+  await pg.reload();
+  await pg.click('.nav-btn:has-text("作品")');
+  await pg.waitForSelector('.work-row');
+  if ((await pg.locator('.work-row').count()) !== 3) errs.push(`[${tag}] works after reload ${await pg.locator('.work-row').count()}`);
+  const smallL = await smallTargets(pg);
+  if (smallL.length) errs.push(`[${tag}] small targets in works list: ${smallL.slice(0, 6).join('; ')}`);
+  await pg.screenshot({ path: `${out}/v029-list.png` });
+  await ctx.close();
+
+  // 桌面：左稿右穗，从穗仓搜素材加进来、一键引用
+  const dctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  const dp = await dctx.newPage();
+  dp.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await dp.goto(base);
+  await dp.waitForSelector('text=穗仓还是空的');
+  await quickSave(dp, '《一一》 @杨德昌 > 小孩拍后脑勺');
+  await dp.click('.nav-btn:has-text("作品")');
+  await dp.waitForSelector('.works .empty');
+  await dp.screenshot({ path: `${out}/v029-desktop-empty.png` });
+  await dp.click('.work-new');
+  await dp.click('.work-pick-blank .work-form[data-form="story"]');
+  await dp.waitForSelector('.work-side .work-mats', { timeout: 4000 }).catch(() => errs.push(`[${tag}] desktop materials column missing`));
+  const heads = (await dp.inputValue('.work-text')).match(/^## .+$/gm) || [];
+  if (heads.join() !== '## 人物,## 欲望,## 阻碍,## 转折,## 结尾意象') errs.push(`[${tag}] story skeleton ${heads}`);
+  await dp.fill('.work-mat-q', '一一');
+  await dp.click('.work-mat-add');
+  await dp.waitForSelector('.work-mat', { timeout: 3000 }).catch(() => errs.push(`[${tag}] material not added`));
+  await dp.click('.work-text');
+  await dp.keyboard.press('Control+End');
+  await dp.click('.work-mat-quote');
+  await dp.waitForTimeout(200);
+  if (!/\[\[一一\|[0-9A-Z]{26}\]\]/.test(await dp.inputValue('.work-text'))) errs.push(`[${tag}] quote material into draft`);
+  await dp.screenshot({ path: `${out}/v029-desktop-story.png` });
+  await dctx.close();
+  console.log('v029: nav / 立项 / forms / shots+frames / draft refs / preview / board / md export / materials / playlist txt / review check / desktop ok');
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v029') {
+    await v029();
+    throw Object.assign(new Error('v029 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v028') {
     await v028();
     throw Object.assign(new Error('v028 only'), { only: true });
@@ -3463,6 +3620,7 @@ try {
   await security();
   await ui27();
   await v028();
+  await v029();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
