@@ -420,6 +420,12 @@ export function onNewImage(fn: Listener): () => void {
 const notifyImage = () => imageListeners.forEach((f) => f());
 /** 导入等批量写入了原图之后，通知后台补缩略图 */
 export const notifyNewImages = notifyImage;
+const addListeners = new Set<(row: Item, d: LinganDB) => void>();
+/** v0.37 0723 新穗提交后立刻通知（穗仓先把这一穗插进列表，不等 liveQuery 把全表重读一遍） */
+export function onItemAdded(fn: (row: Item, d: LinganDB) => void): () => void {
+  addListeners.add(fn);
+  return () => addListeners.delete(fn);
+}
 
 /** 新增一件穗：有图时原图进 images 表，行里只标「待做缩略图」 */
 export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db, at?: { createdAt?: number; uid?: string; inbox?: boolean; noQueue?: boolean }): Promise<number> {
@@ -465,6 +471,8 @@ export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>
     throw new PendingWriteError(entry, e);
   }
   if (had) notifyImage();
+  // 行对象就是刚写进去的那份（钩子盖的章也在上面）；不再读库——这时全表重读正占着 IndexedDB，单取一行也要排在它后面
+  addListeners.forEach((f) => f({ ...row, id }, d));
   return id;
 }
 
