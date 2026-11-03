@@ -92,7 +92,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                     <span className="radio-name">{p.name}</span>
                   </button>
                   <p className="meta-text radio-note">{p.note}</p>
-                  {preset === p.id && p.id !== 'custom' && (
+                  {preset === p.id && p.id !== 'custom' && p.id !== 'local' && (
                     <input className="line-input" type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="粘贴 API key" aria-label="API key" autoComplete="off" />
                   )}
                 </div>
