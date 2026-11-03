@@ -1,5 +1,6 @@
 // v0.25 启动后（空闲时）的自动检查：每天最多一次；结果共享给设置 → 更新
 import { checkForUpdate, dueForCheck, installAndRestart, installAndroidUpdate, readUpdatePrefs, updatePlatform, writeUpdatePrefs, type ApkStep, type CheckResult, type Latest } from './update';
+import { outboundOff } from './gate';
 
 let state: CheckResult | null = null;
 const subs = new Set<(r: CheckResult | null) => void>();
@@ -51,7 +52,7 @@ export async function androidInstall(l: Latest, appVersion: string, toast: Toast
 
 export async function autoCheck(version: string, toast: Toast, now = Date.now()): Promise<CheckResult | null> {
   const plat = updatePlatform();
-  if (plat === 'web') return null;
+  if (plat === 'web' || outboundOff()) return null;
   const p = readUpdatePrefs();
   if (!dueForCheck(p, now)) return null;
   writeUpdatePrefs({ ...p, lastCheck: now });
