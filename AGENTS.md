@@ -4,7 +4,7 @@
 
 ## 目录
 
-- `src/lib/` 逻辑层（纯函数为主，可单测）：`db.ts` Dexie schema 与迁移、`backup.ts` .glean 备份、`graft.ts` 嫁接、`search.ts` 搜索、`agentapi.ts` 本地 API / MCP、`update.ts` 自动更新、`vault.ts` 钥匙串。
+- `src/lib/` 逻辑层（纯函数为主，可单测）：`db.ts` Dexie schema 与迁移、`backup.ts` .glean 备份、`graft.ts` 嫁接、`search.ts` 搜索、`agentapi.ts` 本地 API / MCP、`update.ts` 自动更新、`vault.ts` 钥匙串、`autobackup.ts` 自动备份与回读校验、`snapshots.ts` 操作前快照与升级前副本、`safewrite.ts` 写入失败暂存。
 - `src/views/` 页面，`src/components/` 组件，样式全在 `src/index.css`。
 - `src/__tests__/` vitest（node 环境 + fake-indexeddb）；夹具在 `src/__tests__/fixtures/`。
 - `src-tauri/` Rust：`lib.rs` 入口与托盘、`api.rs` + `apicore.rs` 本地 API、`smtc.rs` Windows 正在播放。
@@ -28,6 +28,7 @@ CI：`.github/workflows/ci.yml` 每次推送跑前五项；`release.yml` 手动�
 
 ## 硬规则
 
+- **会批量删 / 覆盖数据的新操作必须用 `withSnapshot(label, db, fn)` 包起来**（snapshots.ts，懒加载）；设置页新面板用 `memo` 包（导出进度会重画整页）。
 - **Dexie 改 schema 必须新增 version + upgrade 迁移**，并在 `src/__tests__/fixtures/dexie/` 加上一版夹具、`migrate.test.ts` 覆盖。不许改已有 version 的定义。
 - **密钥不进仓库、不进日志、不进 localStorage 设置**：AI 密钥走 `src/lib/vault.ts`；本地 API 令牌只在系统钥匙串（Rust `api.rs`）；签名私钥只在 GitHub Secrets。
 - **私密穗（`private: 1`）不出本机**：不发云端模型、不给 MCP / API。
