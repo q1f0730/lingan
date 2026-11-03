@@ -121,7 +121,8 @@ export function sprigLine(it: Item, mode: SprigMode): string {
 }
 /** 一根新枝的分享文字；私密穗永远只写「一穗私密的」 */
 export function branchShareText(b: BranchLike, items: Item[], mode: SprigMode, name: string): string {
-  const src = mode === 'none' ? [] : items.map((it) => (it.private ? '一穗私密的' : sprigLine(it, mode)));
+  // v0.39 0907 上锁的穗连「一穗私密的」都不写
+  const src = mode === 'none' ? [] : items.filter((it) => !it.locked).map((it) => (it.private ? '一穗私密的' : sprigLine(it, mode)));
   return [
     `《${b.title.replace(/^《|》$/g, '')}》`,
     b.idea,
