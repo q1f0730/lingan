@@ -165,7 +165,7 @@ export async function fetchLinkMeta(rawUrl: string): Promise<LinkMeta & { imageD
   return { ...m, url: out, imageData };
 }
 
-async function fetchImageData(url: string): Promise<string> {
+export async function fetchImageData(url: string): Promise<string> {
   const f = await getFetch();
   const res = await withTimeout((signal) => f(typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window ? fetchableUrl(url) : url, { headers: { 'User-Agent': UA }, signal }), 12000);
   if (!res.ok) throw new Error('img ' + res.status);
