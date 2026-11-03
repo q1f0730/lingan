@@ -79,15 +79,29 @@ jobs:
           npx tauri icon public/favicon.svg
           node scripts/patch-android.mjs
           npx tauri android build --apk --ci --target aarch64 armv7
-      - name: sign
+      - name: sign (v3 key rotation, key from secrets)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           set -e
+          if [ -z "$KS_B64" ] || [ -z "$KS_PASS" ]; then echo "::error::missing ANDROID_KEYSTORE_B64 / ANDROID_KEYSTORE_PASSWORD secrets"; exit 1; fi
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
           IN=$(find src-tauri/gen/android/app/build/outputs/apk -name '*release*.apk' | head -1)
           echo "apk: $IN"
+          KS="$RUNNER_TEMP/glean.p12"
+          echo "$KS_B64" | base64 -d > "$KS"
           $BT/zipalign -f -p 4 "$IN" aligned.apk
-          $BT/apksigner sign --ks signing/lingan.p12 --ks-type PKCS12 --ks-pass pass:lingan-q1f730 --ks-key-alias lingan --out "Glean_${TAG#v}_android.apk" aligned.apk
-          $BT/apksigner verify "Glean_${TAG#v}_android.apk"
+          # 新密钥 + 轮换证明（旧 lingan.p12 → glean2026）；minSdk 28，只出 v3 签名，CI 不再需要旧密钥
+          $BT/apksigner sign --ks "$KS" --ks-type PKCS12 --ks-key-alias glean2026 --ks-pass env:KS_PASS \
+            --lineage signing/glean.lineage --rotation-min-sdk-version 28 \
+            --v1-signing-enabled false --v2-signing-enabled false --min-sdk-version 28 \
+            --out "Glean_${TAG#v}_android.apk" aligned.apk
+          rm -f "$KS"
+          $BT/apksigner verify --print-certs -v "Glean_${TAG#v}_android.apk" | grep -E "Verifies|v3 scheme|Signer #1 certificate (DN|SHA-256)"
+          FP=$($BT/apksigner verify --print-certs "Glean_${TAG#v}_android.apk" | grep 'Signer #1 certificate SHA-256' | awk '{print $NF}')
+          if [ "$FP" != "9771c62b20a081c6c3d17d0928f2314f969105f1cfaa8cc1ab6bfee4cfb36d88" ]; then echo "::error::unexpected signer $FP"; exit 1; fi
+          $BT/apksigner lineage --in "Glean_${TAG#v}_android.apk" --print-certs | grep -E "Signer #. in lineage certificate SHA-256"
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
