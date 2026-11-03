@@ -72,8 +72,12 @@ export type ZipTarget = 'save' | 'share' | 'downloads';
  * - 浏览器：直接下载
  * 返回给人看的位置；用户取消返回 null。
  */
-export async function deliverZip(name: string, bytes: Uint8Array, target: ZipTarget = 'save'): Promise<string | null> {
-  const mime = 'application/zip';
+export function deliverZip(name: string, bytes: Uint8Array, target: ZipTarget = 'save'): Promise<string | null> {
+  return deliverFile(name, bytes, target, 'application/zip', 'ZIP', '导出到 Obsidian');
+}
+
+/** v0.34 通用版：明信片 PNG、花园 HTML 也走这条（安卓分享 / 存下载，Windows 保存对话框，浏览器下载） */
+export async function deliverFile(name: string, bytes: Uint8Array, target: ZipTarget, mime: string, label: string, shareTitle: string): Promise<string | null> {
   const bridge = androidFiles();
   if (bridge) {
     await pushToAndroid(bridge, name, bytes);
@@ -82,13 +86,13 @@ export async function deliverZip(name: string, bytes: Uint8Array, target: ZipTar
       if (!where) throw new Error('存到下载失败');
       return where;
     }
-    if (!bridge.share(mime, '导出到 Obsidian')) throw new Error('打不开系统分享');
+    if (!bridge.share(mime, shareTitle)) throw new Error('打不开系统分享');
     return '分享面板';
   }
   if (isTauri()) {
     const { save } = await import('@tauri-apps/plugin-dialog');
     const { writeFile } = await import('@tauri-apps/plugin-fs');
-    const path = await save({ defaultPath: name, filters: [{ name: 'ZIP', extensions: ['zip'] }] });
+    const path = await save({ defaultPath: name, filters: [{ name: label, extensions: [name.split('.').pop() || 'zip'] }] });
     if (!path) return null;
     await writeFile(path, bytes);
     return String(path);
