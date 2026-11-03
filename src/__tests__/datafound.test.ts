@@ -184,7 +184,7 @@ describe('v0.21 .glean 流式备份', () => {
     expect(paths[0]).toMatch(/^images\/[0-9a-f]{64}\.jpg$/);
     expect(paths.slice(1)).toEqual(['data.jsonl', 'manifest.json']);
     const man = JSON.parse(new TextDecoder().decode(files.find((f) => f.path === 'manifest.json')!.data)) as GleanManifest;
-    expect(man).toMatchObject({ format: 'glean', formatVersion: 1, schema: 11, deviceId: getDeviceId(), counts: { items: 5, developments: 2, cliches: 2, images: 1, trashedItems: 1 } });
+    expect(man).toMatchObject({ format: 'glean', formatVersion: 1, schema: 12, deviceId: getDeviceId(), counts: { items: 5, developments: 2, cliches: 2, images: 1, trashedItems: 1 } });
     for (const f of files.filter((x) => x.path !== 'manifest.json')) expect(man.files[f.path].sha256).toBe(await sha256Hex(f.data));
     expect(paths[0]).toBe(`images/${man.files[paths[0]].sha256}.jpg`);
     const lines = new TextDecoder()
