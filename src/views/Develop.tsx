@@ -13,6 +13,7 @@ import { feedbackBlock, recentRejects } from '../lib/feedback';
 import { nearestOld } from '../lib/distinct';
 import { lacksWhy } from '../lib/why';
 import { daySeed, mulberry32, pickItems } from '../lib/similarity';
+import { bundleCounts, inBundle, takePool } from '../lib/bundles';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, type Development, type GraftBatch, type Item } from '../lib/types';
 import { displayTitle, nn, shortDate } from '../lib/studio';
@@ -36,7 +37,11 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const all = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   // v0.24 0206 我讨厌的不当素材；0242 私密穗在用云端模型时不抽（本地模型且允许时照常）
   const ai = aiReady(settings);
-  const items = useMemo(() => all?.filter((x) => x.polarity !== -1 && (!ai || aiVisible(x, settings))), [all, ai, settings]);
+  const usable = useMemo(() => all?.filter((x) => x.polarity !== -1 && (!ai || aiVisible(x, settings))), [all, ai, settings]);
+  // v0.28 0108 嫁接池：只在某个穗束里抽（null = 整个穗仓）
+  const [pool, setPool] = useState<string | null>(takePool);
+  const pools = useMemo(() => bundleCounts(usable || []).filter(([, n]) => n >= MIN_EVIDENCE), [usable]);
+  const items = useMemo(() => (pool && usable ? usable.filter((x) => inBundle(x, pool)) : usable), [usable, pool]);
   const avoid = useMemo(() => (all || []).filter((x) => x.polarity === -1 && aiVisible(x, settings)), [all, settings]);
   /** 0202 钉住的主干（穗 id） */
   const [anchor, setAnchor] = useState<number | null>(null);
@@ -57,6 +62,13 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const abortRef = useRef<AbortController | null>(null);
 
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
+  const pickPool = (p: string | null) => {
+    if (busy) return;
+    setPool(p);
+    setPicked(null);
+    setPickedBy(null);
+    setResult(null);
+  };
 
   // 今日三穗：一整天都是同一组
   const daily = useMemo(() => {
@@ -261,14 +273,36 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
         <div className="empty">
           <h2 className="lead">穗还不够</h2>
           <p className="meta-text">至少要拾 {MIN_EVIDENCE} 穗，才能嫁接：每根新枝都要能说出它是从哪 {MIN_EVIDENCE} 穗长出来的。</p>
-          <button className="btn primary" onClick={() => go('library')}>
-            去拾穗
-          </button>
+          {pool ? (
+            <button className="btn primary" onClick={() => pickPool(null)}>
+              改回整个穗仓
+            </button>
+          ) : (
+            <button className="btn primary" onClick={() => go('library')}>
+              去拾穗
+            </button>
+          )}
         </div>
       ) : (
         <div className={`graft-layout${result || busy ? ' has-result' : ''}`}>
           <div className="graft-side">
-            {!shown && daily && (
+            {(pools.length > 0 || pool) && (
+              <div className="pool-pick" role="radiogroup" aria-label="从哪抽">
+                <span className="label">从哪抽</span>
+                <div className="chips scroll">
+                  <button role="radio" aria-checked={!pool} className={`chip${!pool ? ' on' : ''}`} onClick={() => pickPool(null)} disabled={busy}>
+                    整个穗仓 <span className="n">({(usable || []).length})</span>
+                  </button>
+                  {pools.map(([b, n]) => (
+                    <button key={b} role="radio" aria-checked={pool === b} className={`chip pool-chip${pool === b ? ' on' : ''}`} onClick={() => pickPool(b)} disabled={busy}>
+                      束 · {b} <span className="n">({n})</span>
+                    </button>
+                  ))}
+                </div>
+                {pool && <p className="meta-text pool-note">只在穗束「{pool}」里抽（{items.length} 穗）。</p>}
+              </div>
+            )}
+            {!shown && daily && !pool && (
               <section className="daily">
                 <div className="label">今日三穗 · {String(new Date().getMonth() + 1).padStart(2, '0')}/{String(new Date().getDate()).padStart(2, '0')}</div>
                 <PickTable items={daily} onOpen={openItem} />
