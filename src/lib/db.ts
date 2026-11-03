@@ -7,7 +7,7 @@ import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
 import { drawSamples, sampleTimes } from './samples';
 import { blobToDataUrl, dataUrlToBlob, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
-import type { DailyPick, Development, FtRow, Item, Reject, StoredImage } from './types';
+import type { DailyPick, Development, FtRow, Item, Reject, StoredImage, Work } from './types';
 import { cleanText, clicheKey, validKey, wallCandidates, type Cliche } from './wall';
 import { dupKeys, imageKey, mergedPatch, refreshDup } from './dupe';
 import { sha256Hex } from './sha256';
@@ -22,6 +22,7 @@ export class LinganDB extends Dexie {
   cliches!: Table<Cliche, number>;
   meta!: Table<MetaRow, string>;
   rejects!: Table<Reject, number>;
+  works!: Table<Work, number>;
   constructor(name = 'lingan') {
     super(name);
     this.version(1).stores({
@@ -143,6 +144,9 @@ export class LinganDB extends Dexie {
     // v0.24 嫁接反馈：rejects 表存「不要」的理由（快捷理由 / 自定义原话 + 那根新枝的标题），按时间取最近 20 条写进嫁接提示词。
     // 迁移：新表，不动任何旧数据（旧版没有记过理由）
     this.version(10).stores({ rejects: '++id, &uid, createdAt, reason' });
+    // v0.29 作品工坊（0301）：works 表（新枝立项后的作品：素材 / 草稿 / 待办 / 分镜 / 歌单 / 情绪板，引用都存 uid）。
+    // 迁移：新表，不动任何旧数据（旧版没有作品）
+    this.version(11).stores({ works: '++id, &uid, updatedAt, createdAt, deletedAt, stage' });
     stampHooks(this);
     dupHooks(this);
     // 库里记的设备 id 为准（localStorage 被清了但库还在时沿用原来的）
@@ -238,6 +242,7 @@ function stampHooks(d: LinganDB) {
   stampTable(d.developments as unknown as Table<Stamped, number>, DEV_LOCAL);
   stampTable(d.cliches as unknown as Table<Stamped, number>, CLICHE_LOCAL);
   stampTable(d.rejects as unknown as Table<Stamped, number>, DEV_LOCAL);
+  stampTable(d.works as unknown as Table<Stamped, number>, DEV_LOCAL);
 }
 
 /** v0.19 从新枝里收集模型列出过的套路：同一批（batch.id）只算一次；返回可直接入库的行 */
@@ -686,9 +691,10 @@ export async function restoreItem(s: ItemSnapshot, d: LinganDB = db): Promise<nu
 
 /** 清空所有穗、新枝、原图（连同每日一穗记录） */
 export async function clearAll(d: LinganDB = db) {
-  await d.transaction('rw', [d.items, d.developments, d.images, d.daily, d.ftidx, d.cliches, d.rejects], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.images, d.daily, d.ftidx, d.cliches, d.rejects, d.works], async () => {
     await d.cliches.clear();
     await d.rejects.clear();
+    await d.works.clear();
     await d.items.clear();
     await d.developments.clear();
     await d.images.clear();
