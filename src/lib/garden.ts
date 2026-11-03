@@ -6,7 +6,7 @@ import { cleanUrl } from './cleanurl';
 import { TYPE_LABEL, type Item } from './types';
 
 export function gardenItems(all: Item[]): Item[] {
-  return all.filter((it) => it.garden && !it.deletedAt && !it.private && !it.sample).sort((a, b) => b.createdAt - a.createdAt);
+  return all.filter((it) => it.garden && !it.deletedAt && !it.private && !it.locked && !it.sample).sort((a, b) => b.createdAt - a.createdAt);
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
