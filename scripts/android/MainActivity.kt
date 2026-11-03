@@ -139,6 +139,19 @@ class MainActivity : TauriActivity() {
         pendingGo = ""
         return g
       }
+
+      // v0.25 应用内检查新版：用系统浏览器下载新 APK（只放行本仓库的 Release 地址）
+      @JavascriptInterface
+      fun openUrl(url: String): Boolean {
+        if (!url.startsWith("https://github.com/q1f0730/lingan/releases/")) return false
+        return try {
+          val i = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          runOnUiThread { startActivity(i) }
+          true
+        } catch (e: Exception) {
+          false
+        }
+      }
     }, "LinganShare")
     // v0.22 极速拾收件箱：半屏面板 / 磁贴 / 通知 / 小部件写进来的穗，JS 收进 IndexedDB 后逐条 ack
     webView.addJavascriptInterface(object {
