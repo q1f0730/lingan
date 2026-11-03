@@ -1,0 +1,92 @@
+{
+ "version": "0.35.0",
+ "date": "2026-11-04",
+ "machine": "InstaBox（同一会话）",
+ "dist": "app-DerHWVrP.js（发布用的同一份构建）",
+ "e2e": {
+  "coldStartMs": 171,
+  "coldStartCpu4xMs": 572,
+  "searchMaxMs": 17.2,
+  "searchCpu4xMaxMs": 42.5,
+  "scroll": "masonry/timeline/list 60fps jank 0%",
+  "backup": {
+   "ms": 624,
+   "heapDeltaMB": 36.1,
+   "peakMB": 47.4
+  },
+  "restore": {
+   "ms": 900,
+   "heapDeltaMB": 43.7
+  },
+  "note": "完整 InstaBox e2e ALL PASS（新增 v035 组）"
+ },
+ "interleavedBench": {
+  "script": "/workspace/work/v030/bench5.mjs（painted）",
+  "rounds": 9,
+  "run1": {
+   "v034": {
+    "normalMedian": 201,
+    "cpu4xMedian": 571,
+    "normalRuns": [
+     210,
+     205,
+     171,
+     216,
+     213,
+     193,
+     201,
+     195,
+     190
+    ],
+    "cpu4xRuns": [
+     544,
+     547,
+     583,
+     564,
+     571,
+     618,
+     579,
+     565,
+     575
+    ]
+   },
+   "v035": {
+    "normalMedian": 190,
+    "cpu4xMedian": 587,
+    "normalRuns": [
+     186,
+     197,
+     187,
+     190,
+     189,
+     182,
+     205,
+     192,
+     201
+    ],
+    "cpu4xRuns": [
+     527,
+     588,
+     592,
+     569,
+     587,
+     601,
+     622,
+     566,
+     570
+    ]
+   }
+  },
+  "mannWhitney": {
+   "normal": "U(v035 慢于 v034)=21.5/81，不显著（临界 ≤17 / ≥64）",
+   "cpu4x": "U=53/81，不显著"
+  }
+ },
+ "size": {
+  "firstJsKB": 565.3,
+  "firstJsGzipKB": 191.8,
+  "firstCssKB": 126.9,
+  "totalAssetsKB": 2219.7,
+  "note": "拼音字表紧凑编码 31.4KB → 18.8KB；新增 importers 懒加载块约 7.7KB、platforms 1.4KB；总资源比 v0.34 多约 2KB"
+ }
+}
