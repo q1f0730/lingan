@@ -3489,3 +3489,24 @@ button.heat-cell {
     margin-left: -12px;
   }
 }
+/* v0.32 0660 穗仓标题旁的同步状态：成功是浅灰小字，失败是黑条 + 原因 */
+.title-note.sync-badge {
+  display: inline-block;
+  margin-top: 6px;
+}
+.title-note + .title-note.sync-badge {
+  margin-left: 12px;
+}
+.sync-badge.err {
+  display: block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  max-width: 100%;
+  font-size: 12px;
+  text-align: left;
+  color: var(--bg);
+  background: var(--fg);
+  border: 0;
+  border-radius: 0;
+  overflow-wrap: anywhere;
+}
