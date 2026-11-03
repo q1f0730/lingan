@@ -5046,6 +5046,22 @@ async function v039() {
   const lockRow = await waitRow((r) => r.title === '稻香');
   if (lockRow?.locked !== 1) errs.push(`[${tag}] locked flag not saved`);
   await pg.keyboard.press('Escape');
+  // 6b. 0934 每穗出口：详情「给谁看」关花园；设置里按标签 #播客 关 Agent
+  await pg.click('.card:has-text("第 12 期")');
+  await pg.waitForSelector('.detail-exits');
+  await pg.click('.detail-exits .exit-garden');
+  await pg.waitForSelector('.detail-exits .exit-garden.off', { timeout: 5000 }).catch(() => errs.push(`[${tag}] exit toggle not shown`));
+  const ex1 = await waitRow((r) => r.url === 'https://example.com/ep12' && r.shut?.includes('garden'), 5000);
+  if (!ex1) errs.push(`[${tag}] garden exit not saved`);
+  await pg.keyboard.press('Escape');
+  await openSettings(pg);
+  await pg.click('.set-link:has-text("接入与权限")');
+  await pg.fill('.exit-tag', '#播客');
+  await pg.click('.exit-pick:has-text("Agent")');
+  await pg.click('.exit-close');
+  await pg.waitForSelector('.toast:has-text("1 穗 #播客 关了")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] bulk exit toast`));
+  const ex2 = await waitRow((r) => r.url === 'https://example.com/ep12' && r.shut?.includes('agent') && r.shut?.includes('garden'), 5000);
+  if (!ex2) errs.push(`[${tag}] bulk agent exit not saved`);
   await c.close();
 
   // 7. 本机小模型国内镜像：中国大陆时区先走 cdn.jsdmirror.com，挂了换 jsd.onmicrosoft.cn；不碰 cdn.jsdelivr.net
