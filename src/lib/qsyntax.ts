@@ -2,7 +2,7 @@
 // 中文冒号「：」也认。值里有空格时用引号：tag:"夜 车"。认不出的 key:value 原样留给全文搜索。
 import { TYPE_LABEL, type Item, type ItemType } from './types';
 
-export type QKey = 'type' | 'tag' | 'year' | 'from' | 'why' | 'before' | 'after' | 'inbox';
+export type QKey = 'type' | 'tag' | 'year' | 'from' | 'why' | 'before' | 'after' | 'inbox' | 'bundle';
 export interface QFilter {
   key: QKey;
   value: string;
@@ -23,6 +23,7 @@ const KEYS: Record<string, QKey> = {
   before: 'before', 之前: 'before',
   after: 'after', 之后: 'after',
   inbox: 'inbox', 待理: 'inbox',
+  bundle: 'bundle', 束: 'bundle', 穗束: 'bundle',
 };
 export const SYNTAX_HELP: Array<[string, string]> = [
   ['type:电影', '类型'],
@@ -32,6 +33,7 @@ export const SYNTAX_HELP: Array<[string, string]> = [
   ['why:空', '没写为什么'],
   ['before:2026-10', '这之前收的'],
   ['inbox:是', '还在待理'],
+  ['束:毕业设计', '在哪个穗束（v0.28）'],
 ];
 
 const TOKEN = /(^|\s)(-?)([A-Za-z#\u4e00-\u9fff]{1,6})[:：]("[^"]*"|“[^”]*”|[^\s]+)/g;
@@ -92,7 +94,7 @@ function yearMatch(year: string | undefined, v: string): boolean {
   return /^\d{1,3}$/.test(pre) && y.startsWith(pre);
 }
 
-type QItem = Pick<Item, 'type' | 'tags' | 'year' | 'source' | 'url' | 'creator' | 'why' | 'createdAt' | 'inbox'>;
+type QItem = Pick<Item, 'type' | 'tags' | 'year' | 'source' | 'url' | 'creator' | 'why' | 'createdAt' | 'inbox' | 'bundles'>;
 function one(it: QItem, f: QFilter): boolean {
   const v = f.value;
   switch (f.key) {
@@ -131,6 +133,8 @@ function one(it: QItem, f: QFilter): boolean {
     }
     case 'inbox':
       return NO.test(v) ? !it.inbox : !!it.inbox;
+    case 'bundle':
+      return isEmptyWord(v) ? !it.bundles?.length : (it.bundles || []).some((b) => b === v || b.toLowerCase() === v.toLowerCase());
   }
 }
 export function matchFilters(it: QItem, filters: QFilter[]): boolean {
@@ -139,7 +143,7 @@ export function matchFilters(it: QItem, filters: QFilter[]): boolean {
 }
 
 /** 正在输入 key: 时给的补全（最多 6 个） */
-export function completeSyntax(q: string, ctx: { tags: string[]; sources: string[] }): Array<{ label: string; insert: string }> {
+export function completeSyntax(q: string, ctx: { tags: string[]; sources: string[]; bundles?: string[] }): Array<{ label: string; insert: string }> {
   const m = q.match(/(?:^|\s)(-?)([A-Za-z\u4e00-\u9fff]{1,6})[:：]([^\s]*)$/);
   if (!m) return [];
   const key = KEYS[m[2].toLowerCase()];
@@ -152,6 +156,7 @@ export function completeSyntax(q: string, ctx: { tags: string[]; sources: string
   else if (key === 'from') opts = ctx.sources;
   else if (key === 'why') opts = ['空', '有'];
   else if (key === 'inbox') opts = ['是', '否'];
+  else if (key === 'bundle') opts = ctx.bundles || [];
   else if (key === 'year') opts = ['199x', '200x', '201x', '202x'];
   return opts
     .filter((o) => !part || o.toLowerCase().startsWith(part.toLowerCase()) || o.includes(part))
