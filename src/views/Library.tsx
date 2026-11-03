@@ -1,3 +1,4 @@
+import { BUNDLE_EVENT, BUNDLE_OPEN_KEY, graftFromBundle } from '../lib/bundles';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { HoverPreview, Hits, ItemCard, ItemRow } from '../components/ItemCard';
@@ -55,8 +56,18 @@ declare global {
   }
 }
 
+function takeBundleOpen(): string | null {
+  try {
+    const b = sessionStorage.getItem(BUNDLE_OPEN_KEY);
+    if (b) sessionStorage.removeItem(BUNDLE_OPEN_KEY);
+    return b || null;
+  } catch {
+    return null;
+  }
+}
+
 export function Library() {
-  const { openItem, openCapture, toast, developFrom, desktop } = useApp();
+  const { openItem, openCapture, toast, developFrom, desktop, go } = useApp();
   const items = useLiveQuery(() => db.items.orderBy('createdAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const devs = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const q = '';
@@ -68,6 +79,16 @@ export function Library() {
   const shiftDown = useRef(false);
   const [type, setType] = useState<ItemType | 'all'>('all');
   const [tag, setTag] = useState<string | null>(null);
+  // v0.28 0107 穗束筛选（详情里点「束 · X」跳过来）
+  const [bundle, setBundle] = useState<string | null>(takeBundleOpen);
+  useEffect(() => {
+    const on = (e: Event) => {
+      takeBundleOpen();
+      setBundle((e as CustomEvent<string>).detail || null);
+    };
+    window.addEventListener(BUNDLE_EVENT, on);
+    return () => window.removeEventListener(BUNDLE_EVENT, on);
+  }, []);
   const [lv, setLv] = useState<LibView>(() => {
     const v = localStorage.getItem(VIEW_KEY) as LibView | null;
     return v && VIEWS.some(([k]) => k === v) ? v : 'grid';
@@ -81,9 +102,10 @@ export function Library() {
   // v0.24 冷启动：穗仓 / 待理数 / 缺为什么数 / 类型计数 / 示例数合成一遍扫完（原来是五遍）；标签云、回顾、今日一穗等首屏画完、主线程空闲再算
   const inboxOn = inboxEnabled();
   const idle = useAfterReady();
-  const { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples } = useMemo(() => {
+  const { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples, bundleN } = useMemo(() => {
     const shelf: Item[] = [];
     const typeN = new Map<ItemType, number>();
+    const bundleN = new Map<string, number>();
     let nInbox = 0, nNoWhy = 0, nSamples = 0, nShelfSamples = 0;
     if (items) {
       const now = Date.now();
@@ -95,12 +117,14 @@ export function Library() {
         shelf.push(i);
         if (i.sample) nShelfSamples++;
         typeN.set(i.type, (typeN.get(i.type) || 0) + 1);
+        if (i.bundles) for (const b of i.bundles) bundleN.set(b, (bundleN.get(b) || 0) + 1);
       }
     }
-    return { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples };
+    return { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples, bundleN };
   }, [items, inboxOn]);
   useEffect(() => { if (items) prefetchSubviews(); }, [items]);
-  const filtered = useMemo(() => (type === 'all' && !tag ? shelf : shelf.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)))), [shelf, type, tag]);
+  const filtered = useMemo(() => (type === 'all' && !tag && !bundle ? shelf : shelf.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)) && (!bundle || !!i.bundles?.includes(bundle)))), [shelf, type, tag, bundle]);
+  const bundleList = useMemo(() => [...bundleN.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh')).slice(0, 12), [bundleN]);
   const seqIds = useMemo(() => filtered.map((i) => i.id!), [filtered]);
   useEffect(() => {
     const d = (e: KeyboardEvent) => (shiftDown.current = e.shiftKey);
@@ -342,7 +366,26 @@ export function Library() {
             #{tag} ✕
           </button>
         )}
+        {bundle && !bundleN.has(bundle) && (
+          <button className="chip on bundle-chip" onClick={() => setBundle(null)}>
+            束 · {bundle} ✕
+          </button>
+        )}
+        {bundleList.map(([b, n]) => (
+          <button key={'b' + b} className={`chip bundle-chip${bundle === b ? ' on' : ''}`} onClick={() => setBundle(bundle === b ? null : b)} title={`穗束「${b}」`}>
+            束 · {b} <span className="n">({n})</span>
+            {bundle === b && ' ✕'}
+          </button>
+        ))}
       </div>
+      {bundle && bundleN.get(bundle)! >= 3 && (
+        <div className="bundle-bar note-row">
+          <span className="meta-text">穗束「{bundle}」· {bundleN.get(bundle)} 穗</span>
+          <button className="btn text strong bundle-graft" onClick={() => graftFromBundle(bundle, go)}>
+            从这一束里嫁接
+          </button>
+        </div>
+      )}
 
           {!desktop && notesEl}
       {filtered.length === 0 ? (
