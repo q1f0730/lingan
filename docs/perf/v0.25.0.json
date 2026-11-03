@@ -205,5 +205,51 @@
     },
     "items": 1000,
     "images": 300
+  },
+  "interleavedBench": {
+    "note": "InstaBox 同一会话交替测（e2e/bench3.mjs，轮流换先后顺序），1000 穗 / 300 图，中位数 ms；v024 = GitHub main（v0.24.0）源码 vite build",
+    "session1_9rounds": {
+      "v024": {
+        "normal": 220,
+        "cpu4x": 667
+      },
+      "v025": {
+        "normal": 227,
+        "cpu4x": 678
+      }
+    },
+    "session2_13rounds": {
+      "v024": {
+        "normal": 193,
+        "cpu4x": 599
+      },
+      "v025": {
+        "normal": 208,
+        "cpu4x": 598
+      }
+    },
+    "session3_11rounds_ABA": {
+      "v024a": {
+        "normal": 198,
+        "cpu4x": 592
+      },
+      "v025": {
+        "normal": 193,
+        "cpu4x": 579
+      },
+      "v024b": {
+        "normal": 198,
+        "cpu4x": 568
+      }
+    },
+    "verdict": "无可测差异：v0.25 落在 v0.24 自己两次（A/A）之间；网页 / e2e 冷启动路径只多一个 isTauriEnv() 提前返回的 effect，首屏 JS +0.4KB"
+  },
+  "sizeBudget": {
+    "firstJsKB": 539.9,
+    "firstJsGzipKB": 181.2,
+    "firstCssKB": 116.3,
+    "fontFirstSliceKB": 329.6,
+    "fontInterKB": 33.5,
+    "budget": "scripts/size-budget.json"
   }
 }
