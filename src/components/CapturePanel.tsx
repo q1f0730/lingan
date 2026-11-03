@@ -3,18 +3,21 @@ import { isTauriEnv } from '../lib/desktop';
 import { NP_ACCESS_WHY, nowPlayingAccess, nowPlayingSupport, openNowPlayingAccess } from '../lib/nowplaying';
 import { NOTIFY_WHY, notifyBridge, readNotify, requestNotify, type NotifyStatus } from '../lib/notify';
 import { useApp } from '../lib/store';
+import { EntryPanel } from './EntryPanel';
 
 const ANDROID_WAYS: Array<[string, string]> = [
   ['分享 → 拾穗', '在任何 App 里分享文字、链接或图片给「拾穗」：弹出半屏「极速拾」，补一句为什么就存，存完自动回到原来的 App。'],
   ['长按选字 → 拾穗', '在微信读书、浏览器、知乎里选中一句话，菜单里点「拾穗」：收成摘抄，自动记下来自哪个 App，作者之后可以补。'],
   ['下拉快捷设置', '编辑快捷设置面板，把「拾一穗」「拾这首歌」两个磁贴拖进来：一下拉就能记，或一点收下正在放的歌。'],
   ['桌面小部件', '长按桌面空白处 → 小部件 → 拾穗：拾一穗 / 粘贴 / ♪ 这首歌 / 穗仓 四个按钮。'],
-  ['长按图标', '长按拾穗图标：拾一穗 / 粘贴拾 / 拾这首歌 / 今日一穗。'],
+  ['长按图标', '长按拾穗图标：拾一穗 / 粘贴拾 / 拾这首歌 / 今日一穗 / 搜索。'],
 ];
 const DESKTOP_WAYS: Array<[string, string]> = [
-  ['Ctrl+Shift+L', '在任何程序里唤出速记小窗，回车即存；小窗里「♪ 当前歌曲」一键收下正在放的歌。'],
+  ['速记小窗', '按速记热键（默认 Ctrl+Shift+L）在任何程序里唤出，回车即存；「♪ 当前歌曲」一键收歌。'],
   ['托盘菜单', '右键托盘图标 →「拾正在播放的歌」：读系统媒体控件（网易云 / QQ 音乐 / Spotify 等），一键存成音乐穗。'],
+  ['发送到', '资源管理器里右键图片或 .txt / .md →「发送到 → 拾穗 Glean」。'],
 ];
+const LINK_WAY: [string, string] = ['glean:// 链接', 'glean://capture?text=… 放进书签 / 快捷指令一点就拾；卡片菜单「复制链接」得到 glean://item/…'];
 
 /** v0.22 设置 → 极速采集：入口说明 + 安卓的常驻通知 / 通知使用权开关（权限都在第一次用时说明再请求） */
 export function CapturePanel() {
@@ -82,7 +85,7 @@ export function CapturePanel() {
     if (go && !openNowPlayingAccess()) toast('打不开系统设置：请在 设置 → 通知 → 通知使用权 里打开拾穗', 'err');
   }
 
-  const ways = android ? ANDROID_WAYS : desktop ? DESKTOP_WAYS : [...ANDROID_WAYS, ...DESKTOP_WAYS];
+  const ways = [...(android ? ANDROID_WAYS : desktop ? DESKTOP_WAYS : [...ANDROID_WAYS, ...DESKTOP_WAYS]), LINK_WAY];
   return (
     <section className="set-sec capture-panel" id="set-capture">
       <h2 className="sec-title">极速采集</h2>
@@ -105,6 +108,7 @@ export function CapturePanel() {
           )}
         </div>
       )}
+      {desktop && <EntryPanel />}
       <dl className="kv cap-ways">
         {ways.map(([k, v]) => (
           <div key={k}>
