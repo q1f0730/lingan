@@ -3133,7 +3133,7 @@ async function ui27() {
   await pg.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: x, clientY: y })); }, [box.x + 20, box.y + 20]);
   await pg.waitForSelector('.ctxmenu.as-sheet', { timeout: 2000 }).catch(() => errs.push(`[${tag}] long press menu`));
   const acts = await pg.locator('.ctxmenu-item').allTextContents();
-  if (acts.join('|') !== '打开|编辑|拿去嫁接|放进嫁接篮|复制文字|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
+  if (acts.join('|') !== '打开|编辑|拿去嫁接|放进嫁接篮|复制文字|复制 glean:// 链接|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
   await pg.click('.ctx-edit');
   await pg.waitForSelector('.sheet .capture', { timeout: 3000 }).catch(() => errs.push(`[${tag}] menu edit`));
   await pg.click('.sheet .icon-btn');
