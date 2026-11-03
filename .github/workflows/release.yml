@@ -15,7 +15,23 @@ concurrency:
 env:
   TAG: ${{ github.event.inputs.tag || github.ref_name }}
 jobs:
+  # v0.25 0712：质量门前置，全绿才建 release
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx tsc -b
+      - run: npx vitest run
+      - run: npx vite build
+      - run: node scripts/size-budget.mjs --report size-report.md
+      - run: node --check mcp/glean-mcp.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: size-report, path: size-report.md }
   create-release:
+    needs: verify
     runs-on: ubuntu-latest
     outputs:
       id: ${{ steps.rel.outputs.id }}
@@ -39,28 +55,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with: { node-version: 22, cache: npm }
       - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
         with: { workspaces: 'src-tauri -> target' }
       - name: set version
         shell: bash
         run: node scripts/set-version.mjs "${TAG#v}"
-      - run: npm install
+      - run: npm ci
       - run: npm test
+      # v0.25 0511 自动更新：安装包用 updater 私钥签名（私钥只在 Secrets），tauri-action 上传 .sig 与 latest.json
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           releaseId: ${{ needs.create-release.outputs.id }}
           assetNamePattern: 'Glean_[version]_[arch][setup][ext]'
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
   android:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22 }
+        with: { node-version: 22, cache: npm }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
       - uses: dtolnay/rust-toolchain@stable
@@ -70,7 +91,7 @@ jobs:
         with: { workspaces: 'src-tauri -> target' }
       - name: set version
         run: node scripts/set-version.mjs "${TAG#v}"
-      - run: npm install
+      - run: npm ci
       - name: android init + build
         run: |
           export NDK_HOME="$ANDROID_NDK_LATEST_HOME"
@@ -107,3 +128,28 @@ jobs:
         with:
           tag_name: ${{ env.TAG }}
           files: Glean_*_android.apk
+  # v0.25：产物核对（apk / exe / msi / latest.json / .sig 必须都在）+ 0748 SHA256SUMS + glean-mcp.mjs
+  finalize:
+    needs: [create-release, windows, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: check assets + checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          V="${TAG#v}"
+          sed "s/^const VERSION = '.*';/const VERSION = '$V';/" mcp/glean-mcp.mjs > glean-mcp.mjs
+          gh release upload "$TAG" glean-mcp.mjs --clobber -R "$GITHUB_REPOSITORY"
+          mkdir -p a && cd a
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" --pattern '*'
+          ls -la
+          for p in "Glean_${V}_android.apk" "latest.json" "glean-mcp.mjs"; do [ -f "$p" ] || { echo "::error::missing $p"; exit 1; }; done
+          ls *setup.exe >/dev/null && ls *.msi >/dev/null && ls *setup.exe.sig >/dev/null || { echo "::error::missing exe / msi / updater signature"; exit 1; }
+          grep -q "\"version\": *\"$V\"" latest.json || { echo "::error::latest.json version mismatch"; cat latest.json; exit 1; }
+          grep -q 'windows-x86_64' latest.json || { echo "::error::latest.json has no windows platform"; exit 1; }
+          rm -f SHA256SUMS.txt
+          sha256sum $(ls | grep -v '^SHA256SUMS') > ../SHA256SUMS.txt
+          cd .. && cat SHA256SUMS.txt
+          gh release upload "$TAG" SHA256SUMS.txt --clobber -R "$GITHUB_REPOSITORY"
