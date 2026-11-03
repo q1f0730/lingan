@@ -300,9 +300,12 @@ const notifyImage = () => imageListeners.forEach((f) => f());
 export const notifyNewImages = notifyImage;
 
 /** 新增一件穗：有图时原图进 images 表，行里只标「待做缩略图」 */
-export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db): Promise<number> {
+export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db, at?: { createdAt?: number; uid?: string }): Promise<number> {
   const now = Date.now();
-  const row: Item = { graftCount: 0, ...data, tags: normalizeTags(data.tags), createdAt: now, updatedAt: now };
+  // v0.22 极速拾收件箱：保留在原生面板里按下「存」的那一刻（createdAt）和原生生成的 uid（ULID），重复收也认得出
+  const created = at?.createdAt && Number.isFinite(at.createdAt) && at.createdAt > 0 && at.createdAt <= now + 60000 ? Math.floor(at.createdAt) : now;
+  const row: Item = { graftCount: 0, ...data, tags: normalizeTags(data.tags), createdAt: created, updatedAt: now };
+  if (at?.uid && isUlid(at.uid)) row.uid = at.uid;
   delete row.thumb;
   delete row.thumbW;
   delete row.thumbH;
