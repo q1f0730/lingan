@@ -58,6 +58,9 @@ export interface ShareCode {
   url: string;
   title: string;
   source?: string;
+  /** v0.35 分享文案里认出来的作者 / 歌手、类型 */
+  creator?: string;
+  type?: 'music';
 }
 
 const APP_OF: Array<[RegExp, string]> = [
@@ -70,6 +73,9 @@ const APP_OF: Array<[RegExp, string]> = [
   [/weibo\.(com|cn)/, '微博'],
   [/zhihu\.com/, '知乎'],
   [/douban\.com/, '豆瓣'],
+  [/y\.qq\.com/, 'QQ音乐'],
+  [/xiaoyuzhoufm\.com|xyzfm\.link/, '小宇宙'],
+  [/ximalaya\.com|xima\.tv/, '喜马拉雅'],
 ];
 
 /** 口令套话：这些字整段扔掉 */
@@ -96,8 +102,16 @@ const BOILER = [
  */
 export function parseShareCode(text: string, url: string): ShareCode | null {
   const app = APP_OF.find(([re]) => re.test(url))?.[1];
-  const looks = /复制|打开|口令|【|￥|\$[A-Za-z0-9]{6,}|App|分享/.test(text);
+  const looks = /复制|打开|口令|【|《|￥|\$[A-Za-z0-9]{6,}|App|分享/.test(text);
   if (!app || !looks) return null;
+  // v0.35 ROADMAP v0.27：网易云 / QQ 音乐「分享某某的单曲《歌名》」→ 歌名 + 歌手；豆瓣 / 播客取《》里的名字
+  const mu = /分享(.{1,40}?)的(单曲|歌曲|专辑|歌单)[:：]?\s*《([^》]{1,80})》/.exec(text);
+  if (mu) return { url, title: mu[3], source: app, ...(mu[2] === '歌单' ? {} : { creator: mu[1], type: 'music' as const }) };
+  // 小红书「标题 - 作者 | 小红书 - …」
+  const xh = app === '小红书' && /^\s*(?:\d+\s+)?(.{1,80}?)\s+-\s+(.{1,30}?)\s*[|｜]\s*小红书/.exec(text.replace(url, ' '));
+  if (xh) return { url, title: xh[1], creator: xh[2], source: app };
+  const bk = /《([^》]{1,80})》/.exec(text);
+  if (bk && /豆瓣|QQ|网易|小宇宙|喜马拉雅/.test(app)) return { url, title: bk[1], source: app };
   let rest = text.replace(url, ' ');
   // 抖音：「【某某的作品】标题 # 话题」→ 标题；小红书：「标题 - 作者 | 小红书」
   for (const re of BOILER) rest = rest.replace(re, ' ');
@@ -106,6 +120,7 @@ export function parseShareCode(text: string, url: string): ShareCode | null {
     .replace(/【([^】]{1,60})】/g, '$1')
     .replace(/[「」]/g, ' ')
     .replace(/\s*[|｜]\s*(?:小红书|抖音|淘宝|bilibili|哔哩哔哩)\s*$/i, '')
+    .replace(/\s*[-_—]\s*哔哩哔哩.*$/, '')
     .replace(/[，,。！!？?、\s]+$/g, '')
     .replace(/^[，,。！!？?、:：\s]+/g, '')
     .replace(/\s{2,}/g, ' ')
