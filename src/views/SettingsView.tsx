@@ -4,7 +4,10 @@ import { MoveIn } from '../components/MoveIn';
 import { readSharePrefs } from '../lib/sharekit';
 import { outboundOff } from '../lib/gate';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { memo, useCallback, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useRef, useState } from 'react';
+import { LockPanel, PlugPanel } from '../components/GuardPanels';
+import { lockReady } from '../lib/lock';
+import { PLUG_OFF_KEY } from '../lib/plugs';
 import { testConnection } from '../lib/ai';
 import { clearAll, liveCounts } from '../lib/db';
 import { applyImport, exportGlean, gleanName, GLEAN_MIME, MODE_LABEL, planImport, previewImport, readBackupFile, type ImportCounts, type ImportMode, type Incoming } from '../lib/backup';
@@ -53,6 +56,17 @@ const SyncP = memo(SyncPanel);
 const GardenP = memo(GardenPanel);
 const MiniP = memo(MiniPanel);
 const MoveInP = memo(MoveIn);
+const LockP = memo(LockPanel);
+const PlugP = memo(PlugPanel);
+// v0.39 0804 订阅：单独成块，滚到 / 点到才加载
+const FeedP = lazy(() => import('../components/Feeds').then((m) => ({ default: m.FeedPanel })));
+const plugsOff = () => {
+  try {
+    return (JSON.parse(localStorage.getItem(PLUG_OFF_KEY) || '[]') as string[]).length;
+  } catch {
+    return 0;
+  }
+};
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm, desktop } = useApp();
@@ -228,6 +242,7 @@ export function SettingsView() {
     ['set-capture', '极速采集', captureSummary()],
     ['set-tags', '待理与标签', inboxEnabled() ? '待理开' : '待理关'],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
+    ['set-feed', '订阅 · 待拾', localStorage.getItem('glean.feeds.n') ? `${localStorage.getItem('glean.feeds.n')} 个源 · 待拾 ${localStorage.getItem('glean.feeds.new') || 0}` : '没订阅'],
     ['set-sync', '同步 · 网盘', syncSummary()],
     ['set-lan', '局域网直连', lanSummary()],
     ['set-syncstate', '设备与记录', syncStateSummary()],
@@ -236,6 +251,8 @@ export function SettingsView() {
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
     ['set-share', '分享与花园', readSharePrefs().name],
+    ['set-lock', '上锁', lockReady() ? 'PIN 已设' : '没设'],
+    ['set-plugs', '接入与权限', plugsOff() ? `${plugsOff()} 项停用` : '全开'],
     ['set-out', '出站', outboundOff() ? '出站已关' : { off: '直接发', once: '看一次', always: '每次先看' }[previewMode()]],
     ['set-agent', 'Agent 与 API', readAgentCfg().on ? (readAgentCfg().write ? '开 · 可写' : '开 · 只读') : '关'],
     ['set-update', '更新', readUpdatePrefs().auto ? '自动检查' : '手动'],
@@ -479,6 +496,10 @@ export function SettingsView() {
             <p className="hint meta-text">手机和电脑之间可以用「导出 → 导入」搬运。旧版的 .json 备份照样能导入。</p>
           </section>
 
+          <Suspense fallback={<section className="set-sec" id="set-feed" />}>
+            <FeedP />
+          </Suspense>
+
           <SyncP version={APP_VERSION} />
 
           <AutoBackupP version={APP_VERSION} onRestore={onRestore} />
@@ -512,6 +533,10 @@ export function SettingsView() {
           </section>
 
           <GardenP />
+
+          <LockP />
+
+          <PlugP />
 
           <OutboundP />
 
