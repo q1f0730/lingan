@@ -53,6 +53,8 @@ export interface Item {
   polarity?: -1;
   /** v0.24 0242 私密：任何发到云端模型的调用（嫁接 / 看图 / 打标签 / 向量 / 口味侧写）都不带它；本地模型可在设置里允许 */
   private?: 1;
+  /** v0.28 0107 穗束（合集）名字：一穗可属于多个束，束也能当嫁接池（0108）。没加索引，不是 schema 变更 */
+  bundles?: string[];
   createdAt: number;
   updatedAt: number;
 }
