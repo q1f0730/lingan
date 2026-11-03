@@ -8,6 +8,8 @@ import { readAgentCfg, writeAgentCfg } from '../lib/agent';
 import { MINI_HOSTS } from '../lib/mini';
 import { useApp } from '../lib/store';
 import { embedConfig } from '../lib/settings';
+import { EXITS, type Exit } from '../lib/privacy';
+import { shutByTag } from '../lib/repo';
 import '../styles/v039.css';
 
 export function LockPanel() {
@@ -161,8 +163,8 @@ export function PlugPanel() {
     { id: 'feeds', reads: '不读穗仓', writes: '只写「待拾」，拾不拾你定', hosts: feedHosts?.length ? feedHosts.join('、') : '你订阅的源（还没有）', on: plugOn('feeds') },
     { id: 'netease', reads: '不读穗仓；只发歌单 id', writes: '导入前你勾选的歌（先拍快照）', hosts: NETEASE_HOSTS.join('、'), on: plugOn('netease') },
     { id: 'mini', reads: '不读穗仓', writes: '本机模型库（独立，下载完核对 SHA-256）', hosts: MINI_HOSTS.join('、'), on: plugOn('mini') },
-    { id: 'ai', reads: '穗的标题 / 正文 / 为什么；看图时读图片（私密穗不发云端，上锁的穗一律不发）', writes: '标签建议、图片描述、向量、新枝', hosts: aiHosts.join('、') || '还没配', on: plugOn('ai') },
-    { id: 'agent', reads: '穗的元数据和正文（私密、上锁的不给）', writes: agent.write ? '代拾一穗进待理（每次弹窗确认）' : '不能写（只读）', hosts: `只本机 127.0.0.1:${agent.port}`, on: plugOn('agent') && agent.on },
+    { id: 'ai', reads: '穗的标题 / 正文 / 为什么；看图时读图片（私密穗不发云端；上锁的、关了 AI 出口的一律不发）', writes: '标签建议、图片描述、向量、新枝', hosts: aiHosts.join('、') || '还没配', on: plugOn('ai') },
+    { id: 'agent', reads: '穗的元数据和正文（私密、上锁、关了 Agent 出口的不给）', writes: agent.write ? '代拾一穗进待理（每次弹窗确认）' : '不能写（只读）', hosts: `只本机 127.0.0.1:${agent.port}`, on: plugOn('agent') && agent.on },
   ];
   function flip(id: PlugId, on: boolean) {
     setPlug(id, on);
@@ -198,6 +200,46 @@ export function PlugPanel() {
           一键全部停用
         </button>
       </div>
+      <ExitBulk />
     </section>
+  );
+}
+
+/** v0.39 0934 按标签批量设出口（单穗在详情底部「给谁看」里设） */
+function ExitBulk() {
+  const { toast } = useApp();
+  const [tag, setTag] = useState('');
+  const [ex, setEx] = useState<Exit>('ai');
+  async function go(close: boolean) {
+    const t = tag.replace(/^#/, '').trim();
+    if (!t) return toast('先写一个标签', 'err');
+    const n = await shutByTag(t, ex, close);
+    const label = EXITS.find((x) => x[0] === ex)![1];
+    toast(n ? `${n} 穗 #${t} ${close ? '关了' : '开了'}「${label}」出口` : `#${t} 下没有要改的穗`);
+  }
+  return (
+    <div className="exit-bulk-wrap">
+      <h3 className="sub-title">按标签设出口</h3>
+      <p className="meta-text">某个标签下的穗都不给某个出口：比如 #心事 不给 AI 和 Agent。单穗在详情底部「给谁看」里设；上锁的穗所有出口都关。</p>
+      <label className="field">
+        <span className="label">标签</span>
+        <input className="exit-tag" value={tag} onChange={(e) => setTag(e.target.value)} placeholder="#心事" />
+      </label>
+      <div className="exit-bulk">
+        {EXITS.map(([e, label]) => (
+          <button key={e} className={`btn text exit-pick${ex === e ? ' on' : ''}`} aria-pressed={ex === e} onClick={() => setEx(e)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="actions">
+        <button className="btn text strong exit-close" onClick={() => go(true)}>
+          关掉这个出口
+        </button>
+        <button className="btn text exit-open" onClick={() => go(false)}>
+          重新打开
+        </button>
+      </div>
+    </div>
   );
 }
