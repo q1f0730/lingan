@@ -120,8 +120,9 @@ export function syncSystemTheme(theme: Theme, isTauri: boolean) {
     return;
   }
   if (isTauri && !/android/i.test(navigator.userAgent)) {
-    void import('@tauri-apps/api/window')
-      .then((m) => m.getCurrentWindow().setTheme(theme))
+    // v0.33：直接调窗口插件命令（等同 getCurrentWindow().setTheme），不再为这一行加载 13KB 的 window 模块
+    void import('@tauri-apps/api/core')
+      .then((m) => m.invoke('plugin:window|set_theme', { label: (window as unknown as { __TAURI_INTERNALS__: { metadata: { currentWindow: { label: string } } } }).__TAURI_INTERNALS__.metadata.currentWindow.label, value: theme }))
       .catch(() => {});
   }
 }
