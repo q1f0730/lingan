@@ -34,7 +34,7 @@ export interface Purge {
 
 const META = ['id', 'uid', 'hlc', 'hc', 'fh', 'updatedAt', 'deviceId', 'imgSha'];
 export const SKIP: Record<SyncTable, Set<string>> = {
-  items: new Set([...META, 'thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'embedding', 'embedModel', 'dup', 'tagSugg', 'touchedAt', 'graftCount', 'graftedAt']),
+  items: new Set([...META, 'thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'embedding', 'embedModel', 'dup', 'tagSugg', 'touchedAt', 'graftCount', 'graftedAt', 'metaTodo']),
   developments: new Set(META),
   cliches: new Set([...META, 'listed', 'blocked', 'lastAt']),
   rejects: new Set(META),
