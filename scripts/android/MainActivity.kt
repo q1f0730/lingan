@@ -33,7 +33,12 @@ class MainActivity : TauriActivity() {
 
   private fun grab(intent: Intent?) {
     // v0.22 长按图标「今日一穗」等快捷方式：带 glean_go 打开主界面某一页
-    intent?.getStringExtra("glean_go")?.let { if (it == "daily" || it == "library" || it == "settings") pendingGo = it }
+    intent?.getStringExtra("glean_go")?.let { if (it == "daily" || it == "library" || it == "settings" || it == "search") pendingGo = it }
+    // v0.33 0510：glean:// 深链接（浏览器书签、别的 App 里点开）→ 交给 JS 的 takeGo 路由
+    if (intent?.action == Intent.ACTION_VIEW) intent.data?.let { u ->
+      val s = u.toString()
+      if (u.scheme.equals("glean", true) && s.length <= 8192) pendingGo = s
+    }
     if (intent == null || intent.action != Intent.ACTION_SEND) return
     try {
       val o = JSONObject()
@@ -76,12 +81,16 @@ class MainActivity : TauriActivity() {
           .setIntent(Glean.quickIntent(this, mode)).build()
       val daily = ShortcutInfo.Builder(this, "daily").setShortLabel("今日一穗").setLongLabel("打开今日一穗").setIcon(icon).setRank(3)
         .setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_VIEW).putExtra("glean_go", "daily")).build()
+      // v0.33 0506：再加「搜索」；系统最多允许几个就放几个（超了 setDynamicShortcuts 会整个失败）
+      val search = ShortcutInfo.Builder(this, "search").setShortLabel("搜索").setLongLabel("搜穗仓").setIcon(icon).setRank(4)
+        .setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_VIEW).putExtra("glean_go", "search")).build()
       sm.dynamicShortcuts = listOf(
         quick("note", "拾一穗", "随手拾一穗", "note", 0),
         quick("paste", "粘贴拾", "拾剪贴板里的内容", "paste", 1),
         quick("music", "拾这首歌", "拾正在播放的歌", "music", 2),
         daily,
-      )
+        search,
+      ).take(sm.maxShortcutCountPerActivity.coerceAtLeast(1))
     } catch (e: Exception) {
     }
   }
@@ -151,6 +160,19 @@ class MainActivity : TauriActivity() {
         } catch (e: Exception) {
           false
         }
+      }
+
+      // v0.33 0520：外链交给系统（装了网易云 / B 站等 App 的会被它们的 App Links 接走），只放行 http / https
+      @JavascriptInterface
+      fun openExternal(url: String): Boolean {
+        if (url.length > 8192 || !(url.startsWith("https://", true) || url.startsWith("http://", true))) return false
+        runOnUiThread {
+          try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+          } catch (e: Exception) {
+          }
+        }
+        return true
       }
     }, "LinganShare")
     // v0.22 极速拾收件箱：半屏面板 / 磁贴 / 通知 / 小部件写进来的穗，JS 收进 IndexedDB 后逐条 ack
