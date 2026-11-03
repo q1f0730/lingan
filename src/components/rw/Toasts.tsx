@@ -19,7 +19,6 @@ export function Toasts({ toasts, dismiss }: { toasts: ToastT[]; dismiss: (id: nu
         {toasts.map((t) => (
           <m.div
             key={t.id}
-            layout
             className={`toast ${t.kind}${t.action ? ' has-action' : ''}`}
             style={{ ['--ms' as string]: `${t.ms}ms` }}
             initial={{ opacity: 0, y: 14, scale: 0.94 }}
