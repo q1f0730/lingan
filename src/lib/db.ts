@@ -1,4 +1,6 @@
-import Dexie, { type Table } from 'dexie';
+import Dexie, { type Table, type Transaction } from 'dexie';
+import { adoptDeviceId, getDeviceId } from './device';
+import { isUlid, ulid } from './ulid';
 import { DAILY_COMBO, pickDaily, pickStillValid, todayKey } from './daily';
 import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
@@ -14,6 +16,7 @@ export class LinganDB extends Dexie {
   daily!: Table<DailyPick, string>;
   ftidx!: Table<FtRow, string>;
   cliches!: Table<Cliche, number>;
+  meta!: Table<MetaRow, string>;
   constructor(name = 'lingan') {
     super(name);
     this.version(1).stores({
@@ -83,7 +86,117 @@ export class LinganDB extends Dexie {
         const rows = clichesFromDevs(devs);
         if (rows.length) await tx.table('cliches').bulkAdd(rows);
       });
+    // v0.21 数据地基：每件穗 / 新枝 / 套路一个全局 uid（ULID，唯一索引）+ updatedAt + deviceId；
+    // 穗与新枝加 deletedAt（墓碑 / 回收站）索引；meta 表记本机 deviceId。迁移只补字段，不删不改任何内容
+    this.version(8)
+      .stores({
+        items: '++id, type, createdAt, updatedAt, *tags, thumbTodo, sample, touchedAt, graftCount, &uid, deletedAt',
+        developments: '++id, createdAt, starred, evidence, &uid, deletedAt',
+        cliches: '++id, &key, source, struck, lastAt, &uid',
+        meta: '&k',
+      })
+      .upgrade(async (tx) => {
+        const dev = getDeviceId();
+        await tx
+          .table('items')
+          .toCollection()
+          .modify((it: Item) => {
+            if (!isUlid(it.uid)) it.uid = ulid(it.createdAt || Date.now());
+            if (!it.deviceId) it.deviceId = dev;
+            if (typeof it.updatedAt !== 'number') it.updatedAt = it.createdAt || Date.now();
+          });
+        await tx
+          .table('developments')
+          .toCollection()
+          .modify((d: Development) => {
+            if (!isUlid(d.uid)) d.uid = ulid(d.createdAt || Date.now());
+            if (!d.deviceId) d.deviceId = dev;
+            if (typeof d.updatedAt !== 'number') d.updatedAt = d.createdAt || Date.now();
+          });
+        await tx
+          .table('cliches')
+          .toCollection()
+          .modify((c: Cliche) => {
+            if (!isUlid(c.uid)) c.uid = ulid(c.createdAt || Date.now());
+            if (!c.deviceId) c.deviceId = dev;
+            if (typeof c.updatedAt !== 'number') c.updatedAt = c.lastAt || c.createdAt || Date.now();
+          });
+        await tx.table('meta').put({ k: 'deviceId', v: dev });
+      });
+    stampHooks(this);
+    // 库里记的设备 id 为准（localStorage 被清了但库还在时沿用原来的）
+    // 不返回 Promise：不拖慢打开（冷启动），读完再对齐
+    this.on('ready', () => {
+      void this.meta
+        .get('deviceId')
+        .then((row) => {
+          if (row && typeof row.v === 'string') adoptDeviceId(row.v);
+          else return this.meta.put({ k: 'deviceId', v: getDeviceId() });
+        })
+        .catch(() => undefined);
+    });
   }
+}
+
+export interface MetaRow {
+  k: string;
+  v: unknown;
+}
+
+/** 这些字段的变化不算「修改」（缩略图、碰过、向量、嫁接统计、自身盖章） */
+const ITEM_LOCAL = new Set(['thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'touchedAt', 'embedding', 'embedModel', 'graftCount', 'graftedAt', 'uid', 'deviceId', 'updatedAt']);
+const DEV_LOCAL = new Set(['uid', 'deviceId', 'updatedAt']);
+const CLICHE_LOCAL = new Set(['listed', 'blocked', 'lastAt', 'uid', 'deviceId', 'updatedAt']);
+
+/** 导入 / 迁移时原样写入（不盖本机章）：迁移事务、或事务上打了 __gleanRaw 标记 */
+function rawTx(tx: Transaction | undefined): boolean {
+  if (!tx) return false;
+  const t = tx as Transaction & { __gleanRaw?: boolean; mode?: string; idbtrans?: IDBTransaction };
+  return !!t.__gleanRaw || t.mode === 'versionchange' || t.idbtrans?.mode === 'versionchange';
+}
+/** 在当前事务里关掉自动盖章（导入备份要保留对方的 updatedAt / deviceId） */
+export function markRawTransaction() {
+  const t = Dexie.currentTransaction as (Transaction & { __gleanRaw?: boolean }) | null;
+  if (t) t.__gleanRaw = true;
+}
+
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a == null || b == null || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (a instanceof Blob || b instanceof Blob) return false;
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
+type Stamped = { uid?: string; deviceId?: string; updatedAt?: number; createdAt?: number };
+function stampTable(table: Table<Stamped, number>, local: Set<string>) {
+  table.hook('creating', function (_pk, obj, tx) {
+    if (!isUlid(obj.uid)) obj.uid = ulid(typeof obj.createdAt === 'number' ? obj.createdAt : Date.now());
+    if (rawTx(tx)) return;
+    if (!obj.deviceId) obj.deviceId = getDeviceId();
+    if (typeof obj.updatedAt !== 'number') obj.updatedAt = typeof obj.createdAt === 'number' ? obj.createdAt : Date.now();
+  });
+  table.hook('updating', function (mods, _pk, obj, tx) {
+    if (rawTx(tx)) return undefined;
+    const add: Record<string, unknown> = {};
+    const m = mods as Record<string, unknown>;
+    if (!isUlid(obj.uid) && !('uid' in m)) add.uid = ulid(typeof obj.createdAt === 'number' ? obj.createdAt : Date.now());
+    // Dexie 会把没变的字段（例如多值索引 tags）也放进 mods：逐个和旧值比，真变了才算修改
+    if (Object.keys(m).some((k) => !local.has(k.split('.')[0]) && !sameValue(m[k], Dexie.getByKeyPath(obj, k)))) {
+      add.deviceId = getDeviceId();
+      if (!('updatedAt' in m)) add.updatedAt = Date.now();
+    }
+    return Object.keys(add).length ? add : undefined;
+  });
+}
+/** v0.21 自动盖章：新建时补 uid / deviceId / updatedAt；改了内容（不是缩略图、碰过这类派生字段）时更新 updatedAt 与 deviceId */
+function stampHooks(d: LinganDB) {
+  stampTable(d.items as unknown as Table<Stamped, number>, ITEM_LOCAL);
+  stampTable(d.developments as unknown as Table<Stamped, number>, DEV_LOCAL);
+  stampTable(d.cliches as unknown as Table<Stamped, number>, CLICHE_LOCAL);
 }
 
 /** v0.19 从新枝里收集模型列出过的套路：同一批（batch.id）只算一次；返回可直接入库的行 */
@@ -183,6 +296,8 @@ export function onNewImage(fn: Listener): () => void {
   return () => imageListeners.delete(fn);
 }
 const notifyImage = () => imageListeners.forEach((f) => f());
+/** 导入等批量写入了原图之后，通知后台补缩略图 */
+export const notifyNewImages = notifyImage;
 
 /** 新增一件穗：有图时原图进 images 表，行里只标「待做缩略图」 */
 export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>, d: LinganDB = db): Promise<number> {
@@ -224,7 +339,120 @@ export async function updateItem(id: number, patch: Partial<Item>, d: LinganDB =
   }
 }
 
-/** 删除一件穗（连同原图） */
+/** v0.21 活着的（不在回收站里）。所有列表、搜索、嫁接、导出都只看它们 */
+export function alive<T extends { deletedAt?: number }>(x: T | null | undefined): x is T {
+  return !!x && !x.deletedAt;
+}
+export async function liveItems(d: LinganDB = db): Promise<Item[]> {
+  return (await d.items.toArray()).filter(alive);
+}
+export async function liveDevelopments(d: LinganDB = db): Promise<Development[]> {
+  return (await d.developments.toArray()).filter(alive);
+}
+/** 不在回收站里的穗有几件（count 走 deletedAt 索引，不读整表） */
+export async function liveCounts(d: LinganDB = db): Promise<{ items: number; devs: number; imgs: number; trash: number }> {
+  const [ni, nd, gi, gd] = await Promise.all([d.items.count(), d.developments.count(), d.items.where('deletedAt').above(0).count(), d.developments.where('deletedAt').above(0).count()]);
+  const trashIds = (await d.items.where('deletedAt').above(0).primaryKeys()) as number[];
+  const [imgs, trashImgs] = await Promise.all([d.images.count(), trashIds.length ? d.images.where('itemId').anyOf(trashIds).count() : Promise.resolve(0)]);
+  return { items: ni - gi, devs: nd - gd, imgs: imgs - trashImgs, trash: gi + gd };
+}
+
+/** v0.21 回收站保留天数 */
+export const TRASH_DAYS = 30;
+
+/** v0.21 删除 = 立墓碑（移进回收站，30 天内可恢复）。原图、嫁接次数、新枝里的来源都不动 */
+export async function trashItems(ids: number[], d: LinganDB = db, now = Date.now()) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return;
+  await d.transaction('rw', d.items, async () => {
+    await d.items.where(':id').anyOf(list).modify({ deletedAt: now });
+  });
+}
+export async function untrashItems(ids: number[], d: LinganDB = db) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return;
+  await d.transaction('rw', d.items, async () => {
+    await d.items
+      .where(':id')
+      .anyOf(list)
+      .modify((it: Item) => {
+        delete it.deletedAt;
+      });
+  });
+}
+export async function trashDevelopments(ids: number[], d: LinganDB = db, now = Date.now()) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return;
+  await d.transaction('rw', d.developments, async () => {
+    await d.developments.where(':id').anyOf(list).modify({ deletedAt: now });
+  });
+}
+export async function untrashDevelopments(ids: number[], d: LinganDB = db) {
+  const list = [...new Set(ids.filter((x) => x > 0))];
+  if (!list.length) return;
+  await d.transaction('rw', d.developments, async () => {
+    await d.developments
+      .where(':id')
+      .anyOf(list)
+      .modify((dv: Development) => {
+        delete dv.deletedAt;
+      });
+  });
+}
+/** 回收站里的东西（最近删的在前） */
+export async function listTrash(d: LinganDB = db): Promise<{ items: Item[]; developments: Development[] }> {
+  const [items, developments] = await Promise.all([d.items.where('deletedAt').above(0).toArray(), d.developments.where('deletedAt').above(0).toArray()]);
+  items.sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
+  developments.sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
+  return { items, developments };
+}
+/** 彻底删除（只删回收站里的，活着的穗传进来也不动） */
+export async function purgeTrash(sel: { items?: number[]; developments?: number[] } | 'all', d: LinganDB = db): Promise<{ items: number; developments: number }> {
+  let ni = 0;
+  let nd = 0;
+  await d.transaction('rw', [d.items, d.images, d.developments], async () => {
+    const iIds = ((await d.items.where('deletedAt').above(0).primaryKeys()) as number[]).filter((x) => sel === 'all' || (sel.items || []).includes(x));
+    const dIds = ((await d.developments.where('deletedAt').above(0).primaryKeys()) as number[]).filter((x) => sel === 'all' || (sel.developments || []).includes(x));
+    if (iIds.length) {
+      await d.items.bulkDelete(iIds);
+      await d.images.bulkDelete(iIds);
+    }
+    if (dIds.length) await d.developments.bulkDelete(dIds);
+    ni = iIds.length;
+    nd = dIds.length;
+  });
+  return { items: ni, developments: nd };
+}
+/** 回收站里超过 30 天的彻底清掉（启动后空闲时跑） */
+export async function purgeExpired(d: LinganDB = db, now = Date.now(), days = TRASH_DAYS): Promise<{ items: number; developments: number }> {
+  const cutoff = now - days * 86400000;
+  const [iIds, dIds] = await Promise.all([d.items.where('deletedAt').between(0, cutoff, false, true).primaryKeys(), d.developments.where('deletedAt').between(0, cutoff, false, true).primaryKeys()]);
+  if (!iIds.length && !dIds.length) return { items: 0, developments: 0 };
+  return purgeTrash({ items: iIds as number[], developments: dIds as number[] }, d);
+}
+
+/** v0.21 有行没有 uid（直接写库、极旧备份）：补上。先用 uid 索引的条数和总数比，一样就不扫表 */
+export async function ensureUids(d: LinganDB = db): Promise<number> {
+  let fixed = 0;
+  const dev = getDeviceId();
+  for (const t of [d.items, d.developments, d.cliches] as unknown as Array<Table<Stamped, number>>) {
+    const [all, withUid] = await Promise.all([t.count(), t.orderBy('uid').count()]);
+    if (all === withUid) continue;
+    await d.transaction('rw', t, async () => {
+      await t
+        .filter((x) => !isUlid(x.uid))
+        .modify((x: Stamped) => {
+          x.uid = ulid(typeof x.createdAt === 'number' ? x.createdAt : Date.now());
+          if (!x.deviceId) x.deviceId = dev;
+          if (typeof x.updatedAt !== 'number') x.updatedAt = x.createdAt || Date.now();
+          fixed++;
+        });
+    });
+  }
+  return fixed;
+}
+
+/** 彻底删除一件穗（连同原图）。界面上的「删除」走 trashItems（回收站） */
 export async function deleteItem(id: number, d: LinganDB = db) {
   await d.transaction('rw', d.items, d.images, async () => {
     await d.items.delete(id);
@@ -366,78 +594,9 @@ export async function exportAll(d: LinganDB = db): Promise<Backup> {
   return { app: 'lingan', version: 1, exportedAt: Date.now(), items, developments, cliches };
 }
 
-/** Merge import: items are re-added with new ids; developments are remapped. Returns counts. */
+/** 导入旧 JSON 备份对象（或 .glean 解析出来的内容），按 uid / 指纹去重合并。详见 lib/backup.ts */
 export async function importAll(b: unknown, d: LinganDB = db): Promise<{ items: number; developments: number }> {
-  if (!b || typeof b !== 'object' || (b as Backup).app !== 'lingan' || !Array.isArray((b as Backup).items)) {
-    throw new Error('不是拾穗（灵感暗房）的备份文件');
-  }
-  const bk = b as Backup;
-  const map = new Map<number, number>();
-  let n = 0;
-  let m = 0;
-  let imgs = 0;
-  const noCount: number[] = [];
-  const added: Development[] = [];
-  await d.transaction('rw', [d.items, d.developments, d.images, d.cliches], async () => {
-    for (const it of bk.items) {
-      if (!it || typeof it.title !== 'string' || !it.type) continue;
-      const { id, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _todo, thumbFail: _f, hasImage: _hi, ...rest } = it;
-      void _t, void _w, void _h, void _todo, void _f, void _hi;
-      const row: Item = { ...rest, tags: normalizeTags(rest.tags || []), createdAt: rest.createdAt || Date.now(), updatedAt: Date.now() };
-      const blob = detachInlineImage(row);
-      if (!blob) delete row.image;
-      const nid = await d.items.add(row);
-      if (blob) {
-        await d.images.put({ itemId: nid, blob });
-        imgs++;
-      }
-      if (typeof id === 'number') map.set(id, nid);
-      if (typeof rest.graftCount !== 'number') noCount.push(nid);
-      n++;
-    }
-    for (const dv of bk.developments || []) {
-      if (!dv || !dv.idea) continue;
-      const { id: _id, ...rest } = dv;
-      void _id;
-      // 素材 id 换成新 id；找不到的保留为 -1 占位，这样 refs（位置）仍然对得上
-      const nd: Development = { ...rest, itemIds: (rest.itemIds || []).map((x) => map.get(x) ?? -1) };
-      migrateDevelopment(nd);
-      await d.developments.add(nd);
-      added.push(nd);
-      m++;
-    }
-    // v0.18 旧备份没有嫁接次数：按一起导入的新枝回填，没有就补 0
-    if (noCount.length) {
-      const stats = graftStatsFromDevs(added);
-      for (const nid of noCount) {
-        const st = stats.get(nid);
-        await d.items.update(nid, st ? { graftCount: st.count, graftedAt: st.last } : { graftCount: 0 });
-      }
-    }
-    // v0.19 套路墙：备份里有就按 key 合并（我加的 / 划掉的状态带过来），旧备份没有就从导入的新枝里重建
-    const incoming: Cliche[] = Array.isArray(bk.cliches)
-      ? bk.cliches
-          .map((c) => {
-            const text = cleanText(c?.text);
-            const key = clicheKey(c?.key || text) || clicheKey(text);
-            const t = typeof c?.lastAt === 'number' ? c.lastAt : Date.now();
-            return { key, text: text || key, source: c?.source === 'user' ? 'user' : 'ai', struck: c?.struck ? 1 : 0, listed: Number(c?.listed) || 0, blocked: Number(c?.blocked) || 0, createdAt: typeof c?.createdAt === 'number' ? c.createdAt : t, lastAt: t } as Cliche;
-          })
-          .filter((c) => validKey(c.key))
-      : clichesFromDevs(added);
-    for (const c of incoming) {
-      const row = await d.cliches.where('key').equals(c.key).first();
-      if (!row) await d.cliches.add(c);
-      else
-        await d.cliches.update(row.id!, {
-          listed: Math.max(row.listed || 0, c.listed),
-          blocked: Math.max(row.blocked || 0, c.blocked),
-          lastAt: Math.max(row.lastAt, c.lastAt),
-          ...(c.source === 'user' ? { source: 'user' as const } : {}),
-          ...(c.struck && !row.struck ? { struck: 1 as const } : {}),
-        });
-    }
-  });
-  if (imgs) notifyImage();
-  return { items: n, developments: m };
+  const { importBackupObject } = await import('./backup');
+  const r = await importBackupObject(b, d, 'merge');
+  return { items: r.items.add + r.items.update, developments: r.developments.add + r.developments.update };
 }
