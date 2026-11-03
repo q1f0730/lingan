@@ -134,8 +134,8 @@ export async function installAndRestart(): Promise<void> {
     downloaded = true;
   }
   await pending.install();
-  const { relaunch } = await import('@tauri-apps/plugin-process');
-  await relaunch();
+  const { invoke } = await import('@tauri-apps/api/core');
+  await invoke('plugin:process|restart');
 }
 
 /** 安卓：用系统浏览器打开下载链接（只放行本仓库的 Release 地址） */
