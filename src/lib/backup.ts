@@ -2,7 +2,7 @@ import { withBundles } from './bundles';
 // v0.21 数据地基：.glean 备份（流式 ZIP）+ 按 uid 去重的导入（合并 / 替换 / 只补缺，先预览条数）。
 //
 // .glean = ZIP（只存储不压缩）：
-//   data.jsonl     一行一条：{"t":"item",…} / {"t":"dev",…,"itemUids":[…]} / {"t":"cliche",…} / {"t":"reject",…}（v0.24 不要的理由）
+//   data.jsonl     一行一条：{"t":"item",…} / {"t":"dev",…,"itemUids":[…]} / {"t":"cliche",…} / {"t":"reject",…}（v0.24 不要的理由）/ {"t":"work",…}（v0.29 作品，引用本来就是 uid）
 //   images/<sha256>.<ext>  原图原样二进制（按内容哈希命名，同一张图只存一份）
 //   manifest.json  格式、版本、导出时间、设备、条数，以及每个文件的 sha256 与字节数
 // 导出时一张一张读原图、边算哈希边写，data.jsonl 边生成边写（数据描述符），内存峰值≈一张原图，和库多大无关。
@@ -14,7 +14,7 @@ import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
 import { dataUrlToBlob, detachInlineImage, isDataUrl } from './imagestore';
 import { Sha256, sha256Hex } from './sha256';
-import type { Development, Item, Reject } from './types';
+import type { Development, Item, Reject, Work } from './types';
 import { isUlid, ulid } from './ulid';
 import { cleanText, clicheKey, validKey, type Cliche } from './wall';
 import { readZipBlob, zipEntryBlob, ZipWriter, type ByteSink } from './zipstream';
@@ -39,7 +39,7 @@ export interface GleanManifest {
   schema: number;
   exportedAt: number;
   deviceId: string;
-  counts: { items: number; developments: number; cliches: number; images: number; trashedItems: number; trashedDevelopments: number };
+  counts: { items: number; developments: number; cliches: number; images: number; trashedItems: number; trashedDevelopments: number; works?: number };
   files: Record<string, GleanFileInfo>;
 }
 export interface ExportStats {
@@ -192,6 +192,13 @@ export async function exportGlean(
     void _id;
     await push({ t: 'reject', ...rest });
   }
+  // v0.29 作品（引用存的是 uid，原样写；旧版读到不认识的行会跳过）
+  const works = await d.works.toArray();
+  for (const w of works) {
+    const { id: _id, ...rest } = w;
+    void _id;
+    await push({ t: 'work', ...rest });
+  }
   await flush();
   const { size } = await ent.end();
   files['data.jsonl'] = { sha256: hash.hex(), bytes: size, lines };
@@ -205,7 +212,7 @@ export async function exportGlean(
     schema: Math.round(d.verno),
     exportedAt: now,
     deviceId: getDeviceId(),
-    counts: { items: nItems, developments: devs.length, cliches: cl.length, images, trashedItems: await d.items.where('deletedAt').above(0).count(), trashedDevelopments: devs.filter((x) => x.deletedAt).length },
+    counts: { items: nItems, developments: devs.length, cliches: cl.length, images, trashedItems: await d.items.where('deletedAt').above(0).count(), trashedDevelopments: devs.filter((x) => x.deletedAt).length, works: works.length },
     files,
   };
   await zw.addFile('manifest.json', JSON.stringify(manifest, null, 2), now);
@@ -232,6 +239,8 @@ export interface Incoming {
   cliches: Cliche[] | null;
   /** v0.24 不要的理由（旧备份没有） */
   rejects?: Reject[];
+  /** v0.29 作品（旧备份没有） */
+  works?: Work[];
   /** .glean：按 ref 从包里取原图（未核对）；json：原图在行里 */
   image?: (ref: string) => Promise<Blob | null>;
   /** ref → 期望的 sha256 */
@@ -246,7 +255,7 @@ export function incomingFromObject(b: unknown): Incoming {
   if (!b || typeof b !== 'object' || (b as { app?: string }).app !== 'lingan' || !Array.isArray((b as { items?: unknown }).items)) {
     throw new Error('不是拾穗（灵感暗房）的备份文件');
   }
-  const bk = b as { exportedAt?: number; items: InItem[]; developments?: InDev[]; cliches?: Cliche[] };
+  const bk = b as { exportedAt?: number; items: InItem[]; developments?: InDev[]; cliches?: Cliche[]; works?: Work[] };
   const items = bk.items.filter((it) => it && typeof it.title === 'string' && it.type);
   return {
     format: 'json',
@@ -254,6 +263,7 @@ export function incomingFromObject(b: unknown): Incoming {
     items,
     developments: (bk.developments || []).filter((dv) => dv && dv.idea),
     cliches: Array.isArray(bk.cliches) ? bk.cliches : null,
+    works: Array.isArray(bk.works) ? bk.works.filter(validWork) : undefined,
     imageCount: items.filter((it) => isDataUrl(it.image)).length,
     problems: [],
   };
@@ -288,6 +298,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
   const developments: InDev[] = [];
   const cliches: Cliche[] = [];
   const rejects: Reject[] = [];
+  const works: Work[] = [];
   let bad = 0;
   for (const line of text.split('\n')) {
     if (!line.trim()) continue;
@@ -302,6 +313,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
     else if (o.t === 'dev' && o.idea) developments.push(o as unknown as InDev);
     else if (o.t === 'cliche' && typeof o.text === 'string') cliches.push(o as unknown as Cliche);
     else if (o.t === 'reject' && typeof o.reason === 'string') rejects.push(o as unknown as Reject);
+    else if (o.t === 'work' && validWork(o)) works.push(o as unknown as Work);
     else bad++;
   }
   if (bad) problems.push(`${bad} 行读不出，已跳过`);
@@ -316,6 +328,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
     developments,
     cliches,
     rejects,
+    works,
     imageCount: new Set(items.map((x) => x.imageRef).filter(Boolean)).size,
     imageSha,
     image: async (ref: string) => {
@@ -326,6 +339,12 @@ export async function readGlean(file: Blob): Promise<Incoming> {
     },
     problems,
   };
+}
+
+/** v0.29 作品行最起码要有标题、形态、创建时间 */
+function validWork(o: unknown): boolean {
+  const w = o as Partial<Work> | null;
+  return !!w && typeof w.title === 'string' && typeof w.form === 'string' && typeof w.createdAt === 'number';
 }
 
 /** 选中的文件：ZIP 头（PK）= .glean，否则当旧 JSON */
@@ -545,7 +564,7 @@ export async function applyImport(inc: Incoming, plan: ImportPlan, d: LinganDB =
   let wroteImages = 0;
   const addedDevs: Development[] = [];
   const noCount: number[] = [];
-  await d.transaction('rw', [d.items, d.developments, d.images, d.cliches, d.rejects], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.images, d.cliches, d.rejects, d.works], async () => {
     markRawTransaction();
     const uidToId = new Map<string, number>();
     const oldToId = new Map<number, number>();
@@ -689,6 +708,35 @@ export async function applyImport(inc: Incoming, plan: ImportPlan, d: LinganDB =
       void _id;
       if (!isUlid(row.uid)) row.uid = ulid(row.createdAt);
       await d.rejects.add({ ...row, title: String(row.title || ''), updatedAt: row.updatedAt || row.createdAt, deviceId: row.deviceId || getDeviceId() });
+    }
+    // v0.29 作品：按 uid 认；合并 = 备份里更新的覆盖，只补缺 = 只加本机没有的，替换 = 备份为准、本机多出来的进回收站
+    if (inc.works) {
+      const seenW = new Set<string>();
+      for (const w of inc.works) {
+        const { t: _t, id: _id, ...row } = w as Work & { t?: string };
+        void _t;
+        void _id;
+        if (!isUlid(row.uid)) row.uid = ulid(row.createdAt);
+        seenW.add(row.uid!);
+        row.devUids = Array.isArray(row.devUids) ? row.devUids : [];
+        row.itemUids = Array.isArray(row.itemUids) ? row.itemUids : [];
+        row.todos = Array.isArray(row.todos) ? row.todos : [];
+        row.draft = typeof row.draft === 'string' ? row.draft : '';
+        if (typeof row.updatedAt !== 'number') row.updatedAt = row.createdAt;
+        if (!row.deviceId) row.deviceId = getDeviceId();
+        const local = await d.works.where('uid').equals(row.uid!).first();
+        if (!local) {
+          if (!row.deletedAt) await d.works.add(row);
+        } else if (plan.mode === 'replace' || (plan.mode === 'merge' && row.updatedAt! > (local.updatedAt || local.createdAt))) await d.works.put({ ...row, id: local.id });
+      }
+      if (plan.mode === 'replace')
+        await d.works
+          .filter((x) => !x.deletedAt && !seenW.has(x.uid || ''))
+          .modify((x: Work) => {
+            x.deletedAt = now;
+            x.updatedAt = now;
+            x.deviceId = getDeviceId();
+          });
     }
   });
   if (wroteImages) notifyNewImages();
