@@ -54,9 +54,10 @@ function fnv(s: string): string {
 
 /** 一件穗的文字指纹来源：文案 / 想法看正文（没有正文看标题）；音乐、电影看 标题 + 作者 */
 function textBasis(it: Pick<Item, 'type' | 'title' | 'content' | 'creator' | 'url'>): string {
+  // v0.35 0016：音乐 / 电影带链接也按「作品名 + 作者」认（豆瓣导入的和速记的《片名》是同一部）
+  if (it.type === 'music' || it.type === 'film') return (it.title || '') + '|' + (it.creator || '');
   if (it.url) return '';
   if (it.type === 'text' || it.type === 'idea') return it.content || it.title || '';
-  if (it.type === 'music' || it.type === 'film') return (it.title || '') + '|' + (it.creator || '');
   return it.content || '';
 }
 
@@ -102,5 +103,8 @@ export function mergedPatch(keep: Item, drop: Item): Partial<Item> {
   if (why !== (keep.why || '')) p.why = why;
   for (const k of ['creator', 'year', 'content', 'source'] as const) if (!keep[k] && drop[k]) p[k] = drop[k];
   if (!keep.url && drop.url) p.url = drop.url;
+  // v0.35 0016 再次遇见：合并 = 又遇见了它一次，记下那次的时间
+  const meets = [...new Set([...(keep.meets || []), drop.createdAt, ...(drop.meets || [])])].filter((t) => t !== keep.createdAt).sort((a, b) => a - b).slice(-50);
+  if (meets.length) p.meets = meets;
   return p;
 }
