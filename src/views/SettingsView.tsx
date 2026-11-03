@@ -1,4 +1,7 @@
 import { Seg } from '../components/rw/Seg';
+import { GardenPanel } from '../components/GardenPanel';
+import { readSharePrefs } from '../lib/sharekit';
+import { outboundOff } from '../lib/gate';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { memo, useCallback, useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
@@ -45,6 +48,7 @@ const AutoBackupP = memo(AutoBackupPanel);
 const SnapshotP = memo(SnapshotPanel);
 const OutboundP = memo(OutboundPanel);
 const SyncP = memo(SyncPanel);
+const GardenP = memo(GardenPanel);
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm, desktop } = useApp();
@@ -227,7 +231,8 @@ export function SettingsView() {
     ['set-snap', '操作前快照', ''],
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
-    ['set-out', '出站', { off: '直接发', once: '看一次', always: '每次先看' }[previewMode()]],
+    ['set-share', '分享与花园', readSharePrefs().name],
+    ['set-out', '出站', outboundOff() ? '出站已关' : { off: '直接发', once: '看一次', always: '每次先看' }[previewMode()]],
     ['set-agent', 'Agent 与 API', readAgentCfg().on ? (readAgentCfg().write ? '开 · 可写' : '开 · 只读') : '关'],
     ['set-update', '更新', readUpdatePrefs().auto ? '自动检查' : '手动'],
     ['set-diag', '诊断', errCount ? `${errCount} 条错误` : '无错误'],
@@ -499,6 +504,8 @@ export function SettingsView() {
               )}
             </div>
           </section>
+
+          <GardenP />
 
           <OutboundP />
 
