@@ -15,13 +15,13 @@ export function placeMenu(x: number, y: number, w: number, h: number, vw: number
   return { left, top: Math.max(pad, Math.min(top, vh - h - pad)) };
 }
 
-type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'delete';
+type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 'delete';
 
 /**
  * v0.27 0411：长按卡片（手机）或右键（电脑）弹出上下文菜单：打开 / 编辑 / 拿去嫁接 / 复制文字 / 复制链接 / 删掉。
  * 认 `[data-item-id]`（网格卡、列表行、时间线帧、月历行），有弹层时不出。
  */
-export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Exclude<Act, 'copy' | 'link' | 'basket'>, it: Item) => void }) {
+export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket'>, it: Item) => void }) {
   const { toast, desktop } = useApp();
   const [st, setSt] = useState<{ it: Item; x: number; y: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -134,10 +134,11 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
   const text = it.content || it.title;
   const run = async (a: Act) => {
     setSt(null);
-    if (a === 'copy' || a === 'link') {
+    if (a === 'copy' || a === 'link' || a === 'glean') {
       try {
-        await navigator.clipboard.writeText(a === 'link' ? it.url || '' : text || '');
-        toast(a === 'link' ? '已复制链接' : '已复制');
+        // v0.33 0510：glean://item/<uid> 在别的 App / 书签里一点回到这一穗
+        await navigator.clipboard.writeText(a === 'glean' ? 'glean://item/' + it.uid : a === 'link' ? it.url || '' : text || '');
+        toast(a === 'copy' ? '已复制' : '已复制链接');
       } catch {
         toast('复制失败', 'err');
       }
@@ -159,6 +160,7 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
     ['basket', it.id != null && getBasket().includes(it.id) ? '拿出嫁接篮' : '放进嫁接篮'],
     ['copy', it.type === 'text' ? '复制原文' : '复制文字'],
     ...(it.url ? ([['link', '复制链接']] as Array<[Act, string]>) : []),
+    ...(it.uid ? ([['glean', '复制 glean:// 链接']] as Array<[Act, string]>) : []),
     ['delete', '删掉'],
   ];
   return (
