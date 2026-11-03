@@ -9,8 +9,20 @@ import { MINI_KEY } from './privacy';
 export const MINI_ID = 'glean-mini-zh-v1';
 export const MINI_SIZE = 8799540;
 export const MINI_SHA = '34ac606785ca9f6321807169811905d268b64fa9b199d86015db7e56a8f493d1';
-// 固定到发版 tag：内容不会变；下载完核对 SHA-256
-export const MINI_URLS = ['https://cdn.jsdelivr.net/gh/q1f0730/lingan@v0.38.0/models/mini-zh-v1.bin', 'https://raw.githubusercontent.com/q1f0730/lingan/v0.38.0/models/mini-zh-v1.bin'];
+// 固定到发版 tag：内容不会变；下载完核对大小与 SHA-256（镜像是第三方的也不怕被换包）
+const GH = 'q1f0730/lingan@v0.38.0/models/mini-zh-v1.bin';
+const RAW = 'q1f0730/lingan/v0.38.0/models/mini-zh-v1.bin';
+export const MINI_URLS = [`https://cdn.jsdelivr.net/gh/${GH}`, `https://raw.githubusercontent.com/${RAW}`];
+// v0.39 国内镜像：2026-11-04 用阿里云拨测（7 个大区 × 移动 / 电信 / 联通）实测 —— cdn.jsdmirror.com、jsd.onmicrosoft.cn 是国内节点、
+// 三网都 200；fastly.jsdelivr.net 三网可达；gh-proxy.com 可达但走境外节点；cdn.jsdelivr.net 移动基本不通，raw.githubusercontent.com 移动全挂。
+export const MINI_CN_URLS = [`https://cdn.jsdmirror.com/gh/${GH}`, `https://jsd.onmicrosoft.cn/gh/${GH}`, `https://fastly.jsdelivr.net/gh/${GH}`, `https://cdn.jsdelivr.net/gh/${GH}`, `https://gh-proxy.com/https://raw.githubusercontent.com/${RAW}`, `https://raw.githubusercontent.com/${RAW}`];
+export const MINI_HOSTS = ['cdn.jsdelivr.net', 'fastly.jsdelivr.net', 'cdn.jsdmirror.com', 'jsd.onmicrosoft.cn', 'gh-proxy.com', 'raw.githubusercontent.com'];
+
+/** 在国内（时区是中国大陆）先走国内镜像；其它地方 jsDelivr → GitHub raw → 再试国内镜像 */
+export function miniUrls(tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''): string[] {
+  const cn = /^Asia\/(Shanghai|Chongqing|Chungking|Harbin|Urumqi|Kashgar|Beijing)$|^PRC$/.test(tz);
+  return cn ? MINI_CN_URLS : [...MINI_URLS, ...MINI_CN_URLS.filter((u) => !MINI_URLS.includes(u))];
+}
 
 const store = () => {
   const d = new Dexie('glean-mini');
@@ -107,9 +119,11 @@ async function sha(b: ArrayBuffer): Promise<string> {
 /** 下载（jsDelivr → GitHub raw）→ 核对大小与 SHA-256 → 存进独立的 IndexedDB glean-mini */
 export async function downloadMini(onPct?: (p: number) => void): Promise<void> {
   const f = await getFetch();
+  const { assertPlug } = await import('./plugs');
   let err = '';
-  for (const url of MINI_URLS) {
+  for (const url of miniUrls()) {
     try {
+      assertPlug('mini', url, MINI_HOSTS);
       const r = await f(url);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const rd = r.body?.getReader();
