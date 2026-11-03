@@ -85,15 +85,23 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   const parsed = useMemo(() => parseSyntax(q), [q]);
   const filters = parsed.filters;
   const terms = useMemo(() => parseQuery(parsed.text), [parsed.text]);
+  // 拼音字表约 22KB：第一次打纯字母时才加载
+  const [py, setPy] = useState<typeof import('../lib/pinyin') | null>(null);
+  const wantPy = /^[A-Za-z][A-Za-z ]+$/.test(parsed.text.trim());
+  useEffect(() => {
+    if (wantPy && !py) void import('../lib/pinyin').then(setPy).catch(() => {});
+  }, [wantPy, py]);
   const complete = useMemo(() => {
     if (!/[:：][^\s]*$/.test(q)) return [];
     const tags = new Map<string, number>();
     const srcs = new Set<string>();
+    const bundles = new Set<string>();
     for (const it of items) {
+      for (const b of it.bundles || []) bundles.add(b);
       for (const t of it.tags) tags.set(t, (tags.get(t) || 0) + 1);
       if (it.source) srcs.add(it.source);
     }
-    return completeSyntax(q, { tags: [...tags.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t), sources: [...srcs] });
+    return completeSyntax(q, { tags: [...tags.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t), sources: [...srcs], bundles: [...bundles] });
   }, [q, items]);
 
   // 搜索本身（索引候选 + 原文核对），记下计算耗时
@@ -103,11 +111,16 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
     const t0 = performance.now();
     const ih = searchDocs(ft.index, itemDocs, terms);
     const bh = searchDocs(ft.index, devDocs, terms);
+    // v0.28 0112 拼音 / 首字母：打的是纯字母时，补上标题 / 作者 / 标签拼音对得上的穗（排在原文命中后面）
+    if (py && py.isPinyinQuery(parsed.text)) {
+      const seen = new Set(ih.map((h) => h.doc.key));
+      for (const doc of itemDocs) if (!seen.has(doc.key) && py.pinyinMatch(doc.obj, parsed.text)) ih.push({ doc, score: 0.5, fields: [] });
+    }
     ft.status.lastMs = +(performance.now() - t0).toFixed(2);
     ft.status.lastQuery = q;
     ft.status.lastHits = ih.length + bh.length;
     return { ih, bh };
-  }, [terms, itemDocs, devDocs, rev, ft, q]);
+  }, [terms, itemDocs, devDocs, rev, ft, q, py, parsed.text]);
 
   const [lo, hi] = useMemo(() => dateBounds(range, Date.now(), from, to), [range, from, to]);
   const inRange = useCallback((t: number) => t >= lo && t < hi, [lo, hi]);
