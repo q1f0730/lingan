@@ -1,4 +1,4 @@
-import { m } from 'framer-motion';
+import { m } from './rw/lite';
 import { useEffect, useRef, useState } from 'react';
 import type { ConfirmOpts } from '../lib/store';
 
