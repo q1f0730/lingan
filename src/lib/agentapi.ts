@@ -59,7 +59,7 @@ const iso = (t?: number) => (t ? new Date(t).toISOString() : undefined);
 const cut = (s: string | undefined, n: number) => (s && s.length > n ? s.slice(0, n) + '…' : s || undefined);
 
 export function visible(it: Item): boolean {
-  return !it.deletedAt && !it.private;
+  return !it.deletedAt && !it.private && !it.locked;
 }
 
 export function itemOut(it: Item, full = false) {
