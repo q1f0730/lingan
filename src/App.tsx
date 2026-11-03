@@ -47,6 +47,8 @@ const DropIn = lazy(() => import('./components/DropIn').then((m) => ({ default: 
 const CardMenu = lazy(() => import('./components/CardMenu').then((m) => ({ default: m.CardMenu })));
 // v0.28 0408 待嫁接篮：首屏之后才挂
 const Basket = lazy(() => import('./components/Basket'));
+// v0.34 分享出去：卡片菜单 / 新枝发 glean:share 事件才拉分享面板
+const SharePanel = lazy(() => import('./components/SharePanel'));
 export const IDLE_READY = 'glean:idle-ready';
 export function prefetchViews() {
   void loadDetail();
@@ -62,6 +64,7 @@ import { NAV, NavBar } from './components/rw/NavBar';
 import { Toasts, type ToastT } from './components/rw/Toasts';
 import { ThemeToggle } from './components/rw/ThemeToggle';
 import { IconSearch } from './components/rw/icons';
+import { outboundOff } from './lib/gate';
 
 /** 打开穗仓里的秒搜（侧栏 / 顶栏的搜索按钮、Ctrl+K 都走这里） */
 export const SEARCH_EVENT = 'glean:search';
@@ -98,15 +101,15 @@ function useTheme(pref: Settings['theme']): Theme {
   return resolveTheme(pref, sysDark);
 }
 
-function useOnline(): boolean {
-  const [on, setOn] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine !== false));
+// v0.34 0905：出站总开关关着时，离线黑条也出来，写「出站已关」
+function useOnline(): boolean | 'gate' {
+  const st = (): boolean | 'gate' => (outboundOff() ? 'gate' : typeof navigator === 'undefined' || navigator.onLine !== false);
+  const [on, setOn] = useState(st);
   useEffect(() => {
-    const f = () => setOn(navigator.onLine !== false);
-    window.addEventListener('online', f);
-    window.addEventListener('offline', f);
+    const f = () => setOn(st());
+    for (const e of ['online', 'offline', 'glean:gate']) window.addEventListener(e, f);
     return () => {
-      window.removeEventListener('online', f);
-      window.removeEventListener('offline', f);
+      for (const e of ['online', 'offline', 'glean:gate']) window.removeEventListener(e, f);
     };
   }, []);
   return on;
@@ -124,6 +127,12 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [preset, setPreset] = useState<number[] | null>(null);
   const [confirmReq, setConfirmReq] = useState<ConfirmReq | null>(null);
+  const [shareReq, setShareReq] = useState<{ item: number } | { dev: number } | null>(null);
+  useEffect(() => {
+    const on = (e: Event) => setShareReq((e as CustomEvent).detail);
+    window.addEventListener('glean:share', on);
+    return () => window.removeEventListener('glean:share', on);
+  }, []);
   const [onboard, setOnboard] = useState<boolean | null>(null);
   const [quickWin, setQuickWin] = useState(false);
   const [quickText, setQuickText] = useState('');
@@ -630,10 +639,10 @@ export default function App() {
               </button>
             </div>
           )}
-          {!online && (
+          {online !== true && (
             <div className="offline-bar" role="status">
               <span className="offline-dot" aria-hidden />
-              {settings.preset === 'local' ? '离线 · 拾穗照常保存，本地模型照常嫁接' : '离线 · 拾穗照常保存，嫁接会改用离线方式'}
+              {online === 'gate' ? '出站已关 · 只用本地功能，不往外网发任何东西' : settings.preset === 'local' ? '离线 · 拾穗照常保存，本地模型照常嫁接' : '离线 · 拾穗照常保存，嫁接会改用离线方式'}
             </div>
           )}
           <header className="topbar">
@@ -741,6 +750,11 @@ export default function App() {
             else if (a === 'delete') void onDelete(it);
           }}
             />
+          </Suspense>
+        )}
+        {shareReq && (
+          <Suspense fallback={null}>
+            <SharePanel req={shareReq} onClose={() => setShareReq(null)} />
           </Suspense>
         )}
         <NowPlayingTray />
