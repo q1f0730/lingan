@@ -3,10 +3,11 @@
 // - 0901 作者默认公开名 Q1f730；0909 生成前扫个人信息
 // - 0903 图片在 canvas 里重画再导出 JPEG（EXIF / GPS 全丢），最长边 1080；链接去追踪参数；不带时间到日、不带来源 App、不带 uid
 import { cleanUrl } from './cleanurl';
+import { exitOpen } from './privacy';
 import { TYPE_LABEL, type Item } from './types';
 
 export function gardenItems(all: Item[]): Item[] {
-  return all.filter((it) => it.garden && !it.deletedAt && !it.private && !it.locked && !it.sample).sort((a, b) => b.createdAt - a.createdAt);
+  return all.filter((it) => it.garden && !it.deletedAt && !it.private && exitOpen(it, 'garden') && !it.sample).sort((a, b) => b.createdAt - a.createdAt);
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
