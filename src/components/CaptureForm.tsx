@@ -95,11 +95,11 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
       const m = await fetchLinkMeta(url);
       setD((x) => ({
         ...x,
-        url,
+        url: m.url,
         type: x.type === 'idea' || x.type === 'link' ? m.type : x.type,
         title: !x.title || extractUrl(x.title) ? m.title || x.title.replace(url, '').trim() || '' : x.title,
         year: x.year || m.year || '',
-        creator: x.creator || m.siteName || '',
+        creator: x.creator || m.creator || m.siteName || '',
         content: x.content || m.description || '',
         image: x.image || m.imageData,
       }));
