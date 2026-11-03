@@ -92,6 +92,19 @@ if (!m.includes('.QuickActivity')) {
         </receiver>
     </application>`);
 }
+// v0.33 0510：glean:// 深链接交给主界面（MainActivity 是 singleTask，已在运行时走 onNewIntent）
+if (!m.includes('android:scheme="glean"')) {
+  const at = m.indexOf('.MainActivity"');
+  const end = at < 0 ? -1 : m.indexOf('</activity>', at);
+  if (end > 0)
+    m = m.slice(0, end) + `    <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="glean" />
+            </intent-filter>
+        ` + m.slice(end);
+}
 // v0.15 导出 ZIP 走 FileProvider 分享：Tauri 模板自带 ${applicationId}.fileprovider（含 cache-path）；没有就补上
 if (!m.includes('androidx.core.content.FileProvider')) {
   m = m.replace('</application>', `    <provider
