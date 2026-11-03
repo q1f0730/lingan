@@ -9,10 +9,12 @@ const errs = [];
 const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 // v0.16 引导只在第一次打开时出现：其余用例都当作「走过引导」的老用户（onboard: true 的上下文才看引导）
 const _newContext = b.newContext.bind(b);
+// v0.23 待理：默认开着（速记 / 分享来的穗先进待理）。老用例测的是「收了就在穗仓里」，上下文里先把待理关掉；inbox: true 的上下文（inbox() 用例）保持默认开
 b.newContext = async (opts = {}) => {
-  const { onboard, ...o } = opts;
+  const { onboard, inbox, ...o } = opts;
   const c = await _newContext(o);
   if (!onboard) await c.addInitScript(() => { try { localStorage.setItem('glean.onboarded', '1'); } catch { /* svg doc */ } });
+  if (!inbox) await c.addInitScript(() => { try { if (!sessionStorage.getItem('e2e.inbox.set')) { localStorage.setItem('glean.inbox', 'off'); sessionStorage.setItem('e2e.inbox.set', '1'); } } catch { /* svg doc */ } });
   return c;
 };
 // v0.20 Rewamp：旧的暖纸 / 麦田 / ASCII / 衬线 / 暗房一律不该再出现；卡片、按钮、弹层是 Rewamp 的圆角浮起语言；导航带图标
@@ -1249,7 +1251,7 @@ async function datafound() {
   const z = readZipBuf(gbuf);
   const man = JSON.parse(new TextDecoder().decode(z.get('manifest.json')));
   const imgs = [...z.keys()].filter((k) => k.startsWith('images/'));
-  if (man.format !== 'glean' || man.schema !== 8 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
+  if (man.format !== 'glean' || man.schema !== 9 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
   for (const [k, v] of z) if (k !== 'manifest.json' && man.files[k]?.sha256 !== sha256(v)) errs.push(`[datafound] sha256 mismatch ${k}`);
   if (imgs[0] && imgs[0] !== `images/${sha256(z.get(imgs[0]))}.png`) errs.push(`[datafound] image not named by content hash ${imgs[0]}`);
   const lines = new TextDecoder().decode(z.get('data.jsonl')).trim().split('\n').map((l) => JSON.parse(l));
@@ -1498,6 +1500,313 @@ async function capture() {
   await ctx.close();
 }
 
+// v0.23 待理与补为什么：待理收件箱（0101）+ 三秒整理（0115）、缺为什么（0102/0146）、这穗收过了（ROADMAP v0.31）、
+// 一次整理一把（ROADMAP v0.40/0159）、标签合并（0103/0147）、搜索语法（0111）、详情上一穗/下一穗（0113）、整理度（0160）
+async function inboxCount(pg) {
+  return (await dbRaw(pg, 'items')).filter((x) => x.inbox === 1).length;
+}
+async function quickSave(pg, text) {
+  await pg.fill('.quick-input', text);
+  await pg.press('.quick-input', 'Enter');
+  await pg.waitForFunction(() => !document.querySelector('.quick-input')?.value, null, { timeout: 3000 });
+  await pg.waitForTimeout(250);
+}
+async function inbox() {
+  const tag = 'inbox';
+  const ctx = await b.newContext({ viewport: { width: 1366, height: 860 }, inbox: true });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  // 链接补标题会去抓 example.com（离线 / 跨域时失败是预期的，穗照样存）
+  pg.on('console', (m) => m.type() === 'error' && !/CORS policy|Failed to load resource|ERR_/.test(m.text()) && errs.push(`[${tag}] console ${m.text()}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  // 1) 速记收进来的先进待理：穗仓网格里没有，顶上「待理 (3)」
+  await quickSave(pg, '待理一号 #雨');
+  await quickSave(pg, '待理二号的一句话');
+  await quickSave(pg, 'https://example.com/post/9?utm_source=wechat 一篇文章');
+  await pg.waitForSelector('.inbox-bar:has-text("待理 (3)")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] inbox bar (3) missing`));
+  if (await pg.locator('.masonry .card:has-text("待理一号")').count()) errs.push(`[${tag}] inbox item should not be on the shelf`);
+  if ((await inboxCount(pg)) !== 3) errs.push(`[${tag}] expected 3 inbox rows got ${await inboxCount(pg)}`);
+  const title = await pg.locator('.page-title').innerText();
+  if (title.replace(/\s+/g, '') !== '穗仓(0)') errs.push(`[${tag}] shelf count should not include inbox (示例不计数): ${title}`);
+  // 分享桥进来的也进待理
+  await pg.evaluate(() => { let n = 1; window.LinganShare = { take: () => (n-- > 0 ? JSON.stringify({ text: 'https://example.com/shared-inbox', subject: '分享进待理' }) : '') }; window.dispatchEvent(new Event('focus')); });
+  await pg.waitForSelector('.inbox-bar:has-text("待理 (4)")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] share should go to inbox`));
+  // 2) 这穗收过了：同一个链接带不同追踪参数 → 提示 → 合并（撤销可回）
+  await quickSave(pg, 'https://example.com/post/9/?spm_id_from=333&from=timeline 又看到这篇');
+  await pg.waitForSelector('.toast:has-text("收过了（同一个链接）")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] dup toast (same link) missing`));
+  await pg.click('.toast:has-text("收过了") .toast-act:has-text("合并")').catch(() => errs.push(`[${tag}] merge action missing`));
+  await pg.waitForSelector('.toast:has-text("已合并进")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] merged toast missing`));
+  let rows = await dbRaw(pg, 'items');
+  if (rows.filter((x) => /example\.com\/post\/9/.test(x.url || '')).length !== 1) errs.push(`[${tag}] merge should leave one post/9 row: ${rows.filter((x) => /post\/9/.test(x.url || '')).length}`);
+  // 3) 待理页：列表 → 三秒整理（键盘 1 留下 / 3 丢掉 / 2 补一句）
+  await pg.click('.inbox-open');
+  await pg.waitForSelector('.inbox-view .sort-card');
+  await studio(pg, tag + '-list');
+  await pg.screenshot({ path: `${out}/inbox-1-list.png` });
+  const nList = await pg.locator('.inbox-view .sort-card').count();
+  if (nList !== 4) errs.push(`[${tag}] inbox list should have 4 cards, got ${nList}`);
+  await pg.click('.inbox-focus');
+  await pg.waitForSelector('.sort-focus .sort-card.big');
+  await pg.screenshot({ path: `${out}/inbox-2-focus.png` });
+  const firstId = Number(await pg.locator('.sort-focus .sort-card').getAttribute('data-item-id'));
+  await pg.keyboard.press('1');
+  await pg.waitForSelector('.toast:has-text("进了穗仓")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] key 1 keep failed`));
+  rows = await dbRaw(pg, 'items');
+  if (rows.find((x) => x.id === firstId)?.inbox) errs.push(`[${tag}] kept item still in inbox`);
+  const secondId = Number(await pg.locator('.sort-focus .sort-card').getAttribute('data-item-id'));
+  if (secondId === firstId) errs.push(`[${tag}] focus did not advance`);
+  await pg.keyboard.press('3');
+  await pg.waitForSelector('.toast:has-text("丢掉了 1 穗")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] key 3 drop failed`));
+  if (!(await dbRaw(pg, 'items', true)).find((x) => x.id === secondId)?.deletedAt) errs.push(`[${tag}] dropped item not in trash`);
+  await pg.click('.toast:has-text("丢掉了") .toast-act:has-text("撤销")');
+  await pg.waitForTimeout(300);
+  if ((await dbRaw(pg, 'items', true)).find((x) => x.id === secondId)?.deletedAt) errs.push(`[${tag}] undo drop failed`);
+  // 2 = 补一句：焦点进输入框，回车存，出待理
+  await pg.waitForSelector('.sort-focus .sort-card');
+  const thirdId = Number(await pg.locator('.sort-focus .sort-card').getAttribute('data-item-id'));
+  await pg.keyboard.press('2');
+  if (!(await pg.evaluate(() => document.activeElement?.classList.contains('sort-why-input')))) errs.push(`[${tag}] key 2 should focus why input`);
+  await pg.keyboard.type('因为那天下雨');
+  await pg.keyboard.press('Enter');
+  await pg.waitForTimeout(400);
+  const r3 = (await dbRaw(pg, 'items')).find((x) => x.id === thirdId);
+  if (r3?.why !== '因为那天下雨' || r3?.inbox) errs.push(`[${tag}] why via key 2 not saved / still in inbox ${JSON.stringify({ why: r3?.why, inbox: r3?.inbox })}`);
+  if (!/今天理了 [23] 穗/.test(await pg.locator('.inbox-view .page-sub').innerText())) errs.push(`[${tag}] 今天理了 n 穗 missing`);
+  // 一键全部入仓（可撤销）
+  await pg.click('.inbox-keepall');
+  await pg.waitForSelector('.toast:has-text("全部进了穗仓")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] keep all toast missing`));
+  if ((await inboxCount(pg)) !== 0) errs.push(`[${tag}] keep all left ${await inboxCount(pg)}`);
+  await pg.waitForSelector('.inbox-empty', { timeout: 3000 }).catch(() => errs.push(`[${tag}] empty inbox state missing`));
+  await pg.click('.inbox-back');
+  await pg.waitForSelector('.masonry .card:has-text("待理一号")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] kept item not on shelf`));
+  if (await pg.locator('.inbox-bar').count()) errs.push(`[${tag}] inbox bar should hide when empty`);
+  // 超过 7 天的待理穗：穗仓里也看得到
+  await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const tx = r.result.transaction('items', 'readwrite'); const st = tx.objectStore('items'); st.add({ type: 'idea', title: '八天前的待理', tags: [], inbox: 1, createdAt: Date.now() - 8 * 864e5, updatedAt: Date.now() - 8 * 864e5, graftCount: 0, dup: [] }); tx.oncomplete = () => { r.result.close(); res(); }; }; }));
+  await pg.reload();
+  await pg.waitForSelector('.masonry .card:has-text("八天前的待理")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] >7d inbox item should show on shelf`));
+  await pg.waitForSelector('.inbox-bar:has-text("待理 (1)")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] >7d inbox item should still count in 待理`));
+
+  // 4) 缺为什么：一次 5 条，补一条、跳过一条
+  const noWhy0 = (await dbRaw(pg, 'items')).filter((x) => !x.sample && !(x.why || '').trim()).length;
+  await pg.waitForSelector('.why-bar', { timeout: 3000 }).catch(() => errs.push(`[${tag}] why bar missing`));
+  const whyBar = await pg.locator('.why-bar .label').innerText().catch(() => '');
+  if (!whyBar.includes(`(${noWhy0})`)) errs.push(`[${tag}] why bar count ${whyBar} expected ${noWhy0}`);
+  await pg.click('.why-open');
+  await pg.waitForSelector('.why-view .why-row');
+  const nRows = await pg.locator('.why-row').count();
+  if (nRows !== Math.min(5, noWhy0)) errs.push(`[${tag}] why batch should be ${Math.min(5, noWhy0)} got ${nRows}`);
+  if (!(await pg.locator('.why-row .why-prompt').count())) errs.push(`[${tag}] why prompts missing`);
+  await pg.screenshot({ path: `${out}/inbox-3-why.png` });
+  const w1 = Number(await pg.locator('.why-row').first().getAttribute('data-item-id'));
+  await pg.locator('.why-row').first().locator('.why-prompt').first().click();
+  const pre = await pg.locator('.why-row').first().locator('.why-input').inputValue();
+  await pg.locator('.why-row').first().locator('.why-input').fill(pre + '记得那个下雨的镜头');
+  await pg.locator('.why-row').first().locator('.why-input').press('Enter');
+  await pg.waitForSelector('.toast:has-text("补上了")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] why save toast missing`));
+  if (!((await dbRaw(pg, 'items')).find((x) => x.id === w1)?.why || '').endsWith('记得那个下雨的镜头')) errs.push(`[${tag}] why not saved for #${w1}`);
+  const w2 = Number(await pg.locator('.why-row').first().getAttribute('data-item-id'));
+  await pg.locator('.why-row').first().locator('.why-skip').click();
+  await pg.waitForTimeout(200);
+  if (Number(await pg.locator('.why-row').first().getAttribute('data-item-id')) === w2 && noWhy0 > 2) errs.push(`[${tag}] skip did not move on`);
+  const t2 = await pg.locator('.why-view .page-title').innerText();
+  if (!t2.includes(`(${noWhy0 - 1})`)) errs.push(`[${tag}] why title count ${t2} expected ${noWhy0 - 1}`);
+  await pg.click('.why-back');
+
+  // 5) 一次整理一把：选 → Shift 连选 → 加标签 → 改类型撤销 → 删除撤销
+  await pg.waitForSelector('.masonry .card');
+  await pg.click('.select-toggle');
+  const cards = pg.locator('.masonry .card');
+  const nCards = await cards.count();
+  await cards.nth(0).click();
+  await pg.keyboard.down('Shift');
+  await cards.nth(Math.min(4, nCards - 1)).click();
+  await pg.keyboard.up('Shift');
+  const nSel = await pg.locator('.masonry .card.selected').count();
+  if (nSel !== Math.min(5, nCards)) errs.push(`[${tag}] shift range select expected ${Math.min(5, nCards)} got ${nSel}`);
+  if (!(await pg.locator(`.select-bar .sb-n:has-text("${nSel}")`).count())) errs.push(`[${tag}] select bar count wrong`);
+  await pg.screenshot({ path: `${out}/inbox-4-select.png` });
+  const selIds = await pg.$$eval('.masonry .card.selected', (els) => els.map((e) => Number(e.dataset.itemId)));
+  await pg.click('.sb-tag');
+  await pg.fill('.sb-tag-input', '毕设参考');
+  await pg.press('.sb-tag-input', 'Enter');
+  await pg.waitForSelector('.toast:has-text("加上了 #毕设参考")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] batch tag toast missing`));
+  rows = await dbRaw(pg, 'items');
+  if (!selIds.every((id) => rows.find((x) => x.id === id)?.tags.includes('毕设参考'))) errs.push(`[${tag}] batch tag not on all selected`);
+  await pg.click('.sb-type');
+  await pg.click('.sb-type-opt[data-type="film"]');
+  await pg.waitForSelector('.toast:has-text("改成了电影")', { timeout: 3000 });
+  await pg.click('.toast:has-text("改成了电影") .toast-act:has-text("撤销")');
+  await pg.click('.sb-del');
+  await pg.waitForSelector(`.toast:has-text("删掉了 ${nSel} 穗")`, { timeout: 3000 }).catch(() => errs.push(`[${tag}] batch delete toast missing`));
+  if ((await dbRaw(pg, 'items')).some((x) => selIds.includes(x.id))) errs.push(`[${tag}] batch delete left rows`);
+  await pg.click(`.toast:has-text("删掉了 ${nSel} 穗") .toast-act:has-text("撤销")`);
+  await pg.waitForTimeout(400);
+  if ((await dbRaw(pg, 'items')).filter((x) => selIds.includes(x.id)).length !== selIds.length) errs.push(`[${tag}] batch delete undo failed`);
+  // Ctrl+A 全选当前筛选结果，Esc 退出
+  await pg.keyboard.press('Control+a');
+  await pg.waitForTimeout(150);
+  const shelfN = Number((await pg.locator('.chips.scroll .chip').first().innerText()).match(/\((\d+)\)/)?.[1]);
+  if (!(await pg.locator(`.select-bar .sb-n:has-text("${shelfN}")`).count())) errs.push(`[${tag}] Ctrl+A should select all ${shelfN}`);
+  await pg.keyboard.press('Escape');
+  await pg.waitForTimeout(150);
+  if (await pg.locator('.select-bar').count()) errs.push(`[${tag}] Esc should exit select`);
+
+  // 6) 详情 上一穗 / 下一穗：→ 键与按钮
+  await cards.nth(1).click();
+  await pg.waitForSelector('.detail .detail-step');
+  const pos0 = await pg.locator('.detail-step .meta-text').innerText();
+  await pg.keyboard.press('ArrowRight');
+  await pg.waitForTimeout(250);
+  const pos1 = await pg.locator('.detail-step .meta-text').innerText();
+  if (pos0.replace(/\s/g, '') !== `2/${shelfN}` || pos1.replace(/\s/g, '') !== `3/${shelfN}`) errs.push(`[${tag}] detail prev/next ${pos0} → ${pos1}`);
+  await pg.click('.detail-prev');
+  await pg.waitForTimeout(250);
+  if ((await pg.locator('.detail-step .meta-text').innerText()).replace(/\s/g, '') !== `2/${shelfN}`) errs.push(`[${tag}] detail prev button failed`);
+  await pg.click('.sheet .icon-btn[aria-label="关闭"]');
+
+  // 7) 搜索语法：tag: + type: + why:，补全
+  await pg.click('.search-toggle');
+  await pg.waitForSelector('.sq-input');
+  if (!(await pg.locator('.sq-syn').count())) errs.push(`[${tag}] syntax help chips missing`);
+  await pg.fill('.sq-input', 'tag:毕设');
+  await pg.waitForSelector('.sq-comp:has-text("tag:毕设参考")', { timeout: 2000 }).catch(() => errs.push(`[${tag}] syntax completion missing`));
+  await pg.click('.sq-comp:has-text("tag:毕设参考")');
+  await pg.waitForFunction(() => document.querySelector('.sq-count')?.dataset.q === 'tag:毕设参考 ', null, { timeout: 2000 }).catch(() => {});
+  let h = await sqHeads(pg);
+  if (h.items !== selIds.length) errs.push(`[${tag}] tag:毕设参考 expected ${selIds.length} got ${h.items}`);
+  rows = await dbRaw(pg, 'items');
+  const film = rows.filter((x) => x.type === 'film').length;
+  await sqType(pg, 'type:电影');
+  h = await sqHeads(pg);
+  if (h.items !== film) errs.push(`[${tag}] type:电影 expected ${film} got ${h.items}`);
+  const noWhy = rows.filter((x) => !(x.why || '').trim()).length;
+  await sqType(pg, 'why:空');
+  if ((await sqHeads(pg)).items !== noWhy) errs.push(`[${tag}] why:空 expected ${noWhy} got ${(await sqHeads(pg)).items}`);
+  await sqType(pg, '-type:电影 why:空');
+  const notFilmNoWhy = rows.filter((x) => x.type !== 'film' && !(x.why || '').trim()).length;
+  if ((await sqHeads(pg)).items !== notFilmNoWhy) errs.push(`[${tag}] -type:电影 why:空 expected ${notFilmNoWhy}`);
+  await pg.screenshot({ path: `${out}/inbox-5-syntax.png` });
+  await pg.click('.sq-cancel');
+
+  // 8) 设置 → 待理与标签：合并标签 + 以后自动用别名；关掉待理
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('#set-tags .tp-tag');
+  await pg.click('#set-tags .tp-tag[data-tag="毕设参考"]');
+  await pg.fill('#set-tags .tp-target', '毕设');
+  await pg.click('#set-tags .tp-merge-ok');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("合并好了")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] tag merge toast missing`));
+  rows = await dbRaw(pg, 'items');
+  if (rows.some((x) => x.tags.includes('毕设参考')) || rows.filter((x) => x.tags.includes('毕设')).length !== selIds.length) errs.push(`[${tag}] tag merge rewrite failed`);
+  if (!(await pg.locator('#set-tags .tp-al:has-text("毕设参考 → 毕设")').count())) errs.push(`[${tag}] alias not listed`);
+  await pg.locator('#set-tags').screenshot({ path: `${out}/inbox-6-tags.png` });
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await quickSave(pg, '别名测试 #毕设参考');
+  rows = await dbRaw(pg, 'items');
+  const al = rows.find((x) => x.title.startsWith('别名测试'));
+  if (!al || !al.tags.includes('毕设') || al.tags.includes('毕设参考')) errs.push(`[${tag}] alias not applied on input ${JSON.stringify(al?.tags)}`);
+  // 口味页：整理度（真实计数）
+  await pg.click('.nav-btn:has-text("口味")');
+  await pg.waitForSelector('.organize-sec', { timeout: 4000 }).catch(() => errs.push(`[${tag}] 整理度 missing on taste`));
+  const own = rows.filter((x) => !x.sample);
+  const want = `${own.filter((x) => (x.why || '').trim()).length}/${own.length}`;
+  const got = (await pg.locator('.organize-sec .org-why .tc-date').innerText().catch(() => '')).replace(/\s/g, '');
+  if (got !== want) errs.push(`[${tag}] 整理度 有为什么 ${got} expected ${want}`);
+  await pg.click('.organize-sec .org-why');
+  await pg.waitForSelector('.why-view', { timeout: 3000 }).catch(() => errs.push(`[${tag}] 整理度 → 缺为什么 jump failed`));
+  // 关掉待理：新穗直接进穗仓
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.click('#set-tags .inbox-switch');
+  await pg.click('.confirm-ok').catch(() => {});
+  await pg.waitForSelector('.toast:has-text("待理已关")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] inbox off toast missing`));
+  if ((await inboxCount(pg)) !== 0) errs.push(`[${tag}] turning off should move inbox to shelf`);
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await quickSave(pg, '关掉待理以后的一穗');
+  await pg.waitForSelector('.masonry .card:has-text("关掉待理以后的一穗")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] with inbox off quick item should be on shelf`));
+  if ((await inboxCount(pg)) !== 0) errs.push(`[${tag}] inbox off but row flagged`);
+  await noOverlap(pg, tag);
+  await ctx.close();
+}
+
+// 手机：待理三秒整理右滑留下、左滑丢掉；同一张图收两次提示；详情左右滑翻穗
+async function inboxMobile() {
+  const tag = 'inbox-m';
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, inbox: true, hasTouch: true, isMobile: true });
+  // 原生收件箱桥（空的）：后面模拟「App 在后台时半屏面板存了一穗」
+  await ctx.addInitScript(() => {
+    const w = window;
+    w.__inbox = [];
+    w.LinganInbox = { list: () => JSON.stringify(w.__inbox), image: () => '', ack: (u) => { w.__inbox = w.__inbox.filter((e) => e.uid !== u); return true; }, setHints: () => {} };
+  });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  // v0.23 后台同步：原生写进收件箱后发 glean:inbox（不是回到前台的 focus / visibilitychange），JS 立刻收进来，进待理
+  const bgUid = e2eUlid(Date.now() - 5000);
+  await pg.evaluate((uid) => { window.__inbox.push({ v: 1, uid, createdAt: Date.now() - 5000, kind: 'note', text: '后台收进来的一穗' }); window.dispatchEvent(new Event('glean:inbox')); }, bgUid);
+  await pg.waitForFunction(() => window.__inbox.length === 0, null, { timeout: 4000 }).catch(() => errs.push(`[${tag}] glean:inbox did not drain`));
+  await pg.waitForTimeout(300);
+  const bgRow = (await dbRaw(pg, 'items')).find((x) => x.uid === bgUid);
+  if (!bgRow || bgRow.inbox !== 1) errs.push(`[${tag}] background-drained item should be in 待理 ${JSON.stringify(bgRow && { inbox: bgRow.inbox })}`);
+  // 同一张图收两次（安卓分享桥带图），第二次出「收过了（同一张图）」
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  for (const subj of ['第一次的图', '第二次的同一张图']) {
+    await pg.evaluate(({ png, subj }) => { let n = 1; window.LinganShare = { take: () => (n-- > 0 ? JSON.stringify({ image: png, subject: subj }) : '') }; window.dispatchEvent(new Event('focus')); }, { png, subj });
+    await pg.waitForTimeout(900);
+  }
+  await pg.waitForSelector('.toast:has-text("收过了（同一张图）")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] same image dup toast missing`));
+  await quickSave(pg, '手机待理一');
+  await quickSave(pg, '手机待理二');
+  const n0 = await inboxCount(pg);
+  if (n0 < 3) errs.push(`[${tag}] expected ≥3 inbox rows got ${n0}`);
+  await pg.click('.inbox-open');
+  await pg.waitForSelector('.inbox-view .sort-card');
+  await pg.screenshot({ path: `${out}/inbox-m-1-list.png`, fullPage: true });
+  await pg.click('.inbox-focus');
+  await pg.waitForSelector('.sort-stage .sort-card');
+  const swipe = async (dx) => {
+    const box = await pg.locator('.sort-stage').boundingBox();
+    const y = box.y + 30;
+    const x = box.x + box.width / 2;
+    await pg.locator('.sort-stage').dispatchEvent('pointerdown', { clientX: x, clientY: y, pointerType: 'touch', isPrimary: true, pointerId: 1 });
+    for (let k = 1; k <= 6; k++) await pg.locator('.sort-stage').dispatchEvent('pointermove', { clientX: x + (dx * k) / 6, clientY: y + 2, pointerType: 'touch', isPrimary: true, pointerId: 1 });
+    await pg.locator('.sort-stage').dispatchEvent('pointerup', { clientX: x + dx, clientY: y + 2, pointerType: 'touch', isPrimary: true, pointerId: 1 });
+    await pg.waitForTimeout(400);
+  };
+  const a = Number(await pg.locator('.sort-stage .sort-card').getAttribute('data-item-id'));
+  await pg.screenshot({ path: `${out}/inbox-m-2-focus.png` });
+  await swipe(160);
+  let rows = await dbRaw(pg, 'items');
+  if (rows.find((x) => x.id === a)?.inbox) errs.push(`[${tag}] swipe right should keep`);
+  const c = Number(await pg.locator('.sort-stage .sort-card').getAttribute('data-item-id'));
+  await swipe(-160);
+  if (!(await dbRaw(pg, 'items', true)).find((x) => x.id === c)?.deletedAt) errs.push(`[${tag}] swipe left should drop`);
+  await pg.click('.inbox-back');
+  // 详情左滑 = 下一穗
+  await pg.locator('.masonry .card').first().click();
+  await pg.waitForSelector('.detail .detail-step');
+  const p0 = await pg.locator('.detail-step .meta-text').innerText();
+  const det = pg.locator('.detail');
+  const bb = await det.boundingBox();
+  await det.dispatchEvent('pointerdown', { clientX: bb.x + 300, clientY: bb.y + 200, pointerType: 'touch', pointerId: 2 });
+  await det.dispatchEvent('pointerup', { clientX: bb.x + 100, clientY: bb.y + 205, pointerType: 'touch', pointerId: 2 });
+  await pg.waitForTimeout(300);
+  const p1 = await pg.locator('.detail-step .meta-text').innerText();
+  if (p0.replace(/\s/g, '').split('/')[0] !== '1' || p1.replace(/\s/g, '').split('/')[0] !== '2') errs.push(`[${tag}] detail swipe ${p0} → ${p1}`);
+  await pg.screenshot({ path: `${out}/inbox-m-3-detail.png` });
+  await pg.click('.sheet .icon-btn[aria-label="关闭"]');
+  await pg.click('.why-open');
+  await pg.waitForSelector('.why-row');
+  await pg.screenshot({ path: `${out}/inbox-m-4-why.png`, fullPage: true });
+  await noOverlap(pg, tag);
+  await ctx.close();
+}
 async function heapStart(pg) {
   return pg.evaluate(() => {
     if (window.gc) window.gc();
@@ -1845,7 +2154,7 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 80) errs.push(`[legacy] db version expected 80 (Dexie v8) got ${ver}`);
+  if (ver !== 90) errs.push(`[legacy] db version expected 90 (Dexie v9) got ${ver}`);
   // v0.19 旧新枝里列过的套路迁移上墙
   const lw = (await dbRaw(pg, 'cliches')).map((c) => c.key).sort();
   if (JSON.stringify(lw) !== JSON.stringify(['旧套路乙', '旧套路甲'].sort())) errs.push(`[legacy] wall backfill ${JSON.stringify(lw)}`);
@@ -2084,7 +2393,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 80) errs.push(`[perf] db version (expected 80 = Dexie v8) ${integ.version}`);
+  if (integ.version !== 90) errs.push(`[perf] db version (expected 90 = Dexie v9) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
@@ -2284,6 +2593,11 @@ async function security() {
 }
 
 try {
+  if (process.env.E2E_ONLY === 'inbox') {
+    await inbox();
+    await inboxMobile();
+    throw Object.assign(new Error('inbox only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'capture') {
     await capture();
     throw Object.assign(new Error('capture only'), { only: true });
@@ -2302,6 +2616,9 @@ try {
   if (process.env.E2E_ONLY === 'datafound') throw Object.assign(new Error('datafound only'), { only: true });
   await capture();
   if (process.env.E2E_ONLY === 'capture') throw Object.assign(new Error('capture only'), { only: true });
+  await inbox();
+  await inboxMobile();
+  if (process.env.E2E_ONLY === 'inbox') throw Object.assign(new Error('inbox only'), { only: true });
   await modes();
   if (process.env.E2E_ONLY === 'modes') throw Object.assign(new Error('modes only'), { only: true });
   await wall();
