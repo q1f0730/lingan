@@ -1,0 +1,10 @@
+{
+  "_note": "v0.25 0742 首包体积预算：超了 CI 就失败。改预算要在发布说明里写原因；只许收紧，不许为了过 CI 放宽。字节数，gzip = gzip -9。",
+  "firstJs": 600000,
+  "firstJsGzip": 200000,
+  "firstCss": 140000,
+  "fontFirstSlice": 350000,
+  "fontInter": 64000,
+  "lazyChunkMax": 160000,
+  "totalAssets": 2300000
+}
