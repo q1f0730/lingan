@@ -29,8 +29,8 @@ function savedMode(): GraftMode {
 /** 嫁接：把几穗相距很远的东西接在一起，一次长三根新枝。v0.12 起至少 3 穗，好让每根新枝都能点回 3 穗。 */
 export function Develop({ preset, clearPreset }: { preset: number[] | null; clearPreset: () => void }) {
   const { settings, toast, openItem, go, desktop } = useApp();
-  const items = useLiveQuery(() => db.items.toArray(), []);
-  const nBranches = useLiveQuery(() => db.developments.count(), []);
+  const items = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  const nBranches = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt).length), []);
   // v0.19 我的套路墙：每次嫁接都带上（写进 FORBIDDEN + 生成后本地校验）
   const wall = useLiveQuery(() => db.cliches.toArray(), []);
   const [count, setCount] = useState<3 | 4 | 5>(3);
