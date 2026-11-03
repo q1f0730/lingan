@@ -1326,6 +1326,178 @@ async function datafound() {
 }
 
 // v0.21 大库备份：1000 穗（300 张各不相同的原图）流式导出 .glean，量 JS 堆峰值；再在新设备导入，量峰值和条数
+// v0.22 极速采集：安卓原生收件箱（半屏面板 / 选字菜单 / 磁贴 / 通知写进来的穗）、正在播放、常驻通知权限、快捷方式跳页、草稿永不丢
+function e2eUlid(t) {
+  const A = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  let x = t, time = '';
+  for (let i = 0; i < 10; i++) { time = A[x % 32] + time; x = Math.floor(x / 32); }
+  let r = '';
+  for (let i = 0; i < 16; i++) r += A[crypto.randomInt(32)];
+  return time + r;
+}
+async function capture() {
+  const tag = 'capture';
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const T = Date.now() - 3600_000;
+  const quote = { v: 1, uid: e2eUlid(T), createdAt: T, kind: 'quote', text: '人是为了活着本身而活着的，而不是为了活着之外的任何事物。', tags: ['夜读'], source: '微信读书', sourcePkg: 'com.tencent.weread' };
+  const song = { v: 1, uid: e2eUlid(T + 60_000), createdAt: T + 60_000, kind: 'music', title: '后来', artist: '刘若英', album: '我等你', source: '网易云音乐', why: '副歌那一下', image: true, mime: 'image/png' };
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  await ctx.addInitScript(({ quote, song, png }) => {
+    const w = window;
+    w.__inbox = [quote, song];
+    w.__imgs = { [song.uid]: png };
+    w.__acks = [];
+    w.__hints = '';
+    w.LinganInbox = {
+      list: () => JSON.stringify(w.__inbox),
+      image: (u) => w.__imgs[u] || '',
+      ack: (u) => { w.__acks.push(u); w.__inbox = w.__inbox.filter((e) => e.uid !== u); return true; },
+      setHints: (j) => { w.__hints = j; },
+    };
+    w.__np = { status: 'no-access', opened: 0, song: { title: '晴天', artist: '周杰伦', album: '叶惠美', pkg: 'com.tencent.qqmusic', app: '', image: png } };
+    w.LinganNowPlaying = {
+      status: () => w.__np.status,
+      read: () => (w.__np.status === 'ok' ? JSON.stringify(w.__np.song) : '{"error":"no-access"}'),
+      openAccess: () => { w.__np.opened++; return true; },
+    };
+    w.__nt = { perm: 'ask', on: false, last: '', req: 0, settings: 0 };
+    w.LinganNotify = {
+      status: () => JSON.stringify({ perm: w.__nt.perm, on: w.__nt.on, last: w.__nt.last }),
+      request: () => { w.__nt.req++; w.__nt.last = ''; setTimeout(() => { w.__nt.perm = 'granted'; w.__nt.last = 'granted'; }, 300); return true; },
+      setOn: (v) => { w.__nt.on = v; return true; },
+      openSettings: () => { w.__nt.settings++; return true; },
+    };
+    w.__go = '';
+    w.LinganShare = { take: () => '', go: () => { const g = w.__go; w.__go = ''; return g; } };
+  }, { quote, song, png });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('.view');
+  // 1) 打开即收：两条都进库，保留原生 uid 与按「存」的时间，来源 / 为什么 / 面板标签都在，收完 ack
+  await pg.waitForSelector('.toast:has-text("极速拾")', { timeout: 6000 }).catch(() => errs.push(`[${tag}] no intake toast`));
+  await pg.waitForTimeout(400);
+  let rows = await dbRaw(pg, 'items');
+  const rq = rows.find((x) => x.uid === quote.uid), rs = rows.find((x) => x.uid === song.uid);
+  if (!rq || !rs) errs.push(`[${tag}] inbox rows missing ${JSON.stringify(rows.map((x) => x.uid))}`);
+  else {
+    if (rq.createdAt !== quote.createdAt || rs.createdAt !== song.createdAt) errs.push(`[${tag}] createdAt not kept ${rq.createdAt} ${rs.createdAt}`);
+    if (rq.type !== 'text' || !rq.tags.includes('摘抄') || !rq.tags.includes('夜读') || rq.source !== '微信读书' || rq.creator) errs.push(`[${tag}] quote row wrong ${JSON.stringify({ t: rq.type, tags: rq.tags, s: rq.source, c: rq.creator })}`);
+    if (rs.type !== 'music' || rs.creator !== '刘若英' || rs.why !== '副歌那一下' || rs.source !== '网易云音乐' || rs.hasImage !== 1) errs.push(`[${tag}] song row wrong ${JSON.stringify({ t: rs.type, c: rs.creator, w: rs.why, s: rs.source, img: rs.hasImage })}`);
+    if (!ULID_RE.test(rq.uid) || !rq.deviceId || !(rq.updatedAt >= rq.createdAt)) errs.push(`[${tag}] v0.21 stamps missing`);
+  }
+  const st = await pg.evaluate(() => ({ inbox: window.__inbox.length, acks: window.__acks.length, hints: window.__hints }));
+  if (st.inbox !== 0 || st.acks !== 2) errs.push(`[${tag}] inbox not acked ${JSON.stringify(st)}`);
+  if (!/夜读/.test(st.hints)) errs.push(`[${tag}] hints not pushed ${st.hints}`);
+  // 2) 回到前台再收：重复 uid 不重复入库，新的一条进来
+  const note = { v: 1, uid: e2eUlid(Date.now() - 1000), createdAt: Date.now() - 1000, kind: 'note', text: '通知栏里打的一句 #通知' };
+  await pg.evaluate(({ quote, note }) => { window.__inbox.push(quote, note); window.dispatchEvent(new Event('focus')); }, { quote, note });
+  await pg.waitForSelector('.card:has-text("通知栏里打的一句")', { timeout: 6000 }).catch(() => errs.push(`[${tag}] second intake failed`));
+  rows = await dbRaw(pg, 'items');
+  if (rows.filter((x) => x.uid === quote.uid).length !== 1) errs.push(`[${tag}] duplicate uid ingested twice`);
+  if (await pg.evaluate(() => window.__inbox.length)) errs.push(`[${tag}] dup not acked`);
+  // 3) 详情：来自 微信读书、作者待补
+  await pg.click(cardSel(rq.id));
+  await pg.waitForSelector('.detail');
+  const det = await pg.evaluate(() => ({ src: document.querySelector('.kv-source dd')?.textContent, todo: !!document.querySelector('.kv-todo .todo'), line: document.querySelector('.detail-src')?.textContent }));
+  if (det.src !== '微信读书' || !det.todo || !/微信读书/.test(det.line || '')) errs.push(`[${tag}] detail source ${JSON.stringify(det)}`);
+  await pg.screenshot({ path: `${out}/${tag}-1-detail.png` });
+  await pg.click('.kv-todo .todo');
+  await pg.waitForSelector('.capture.editing');
+  await pg.keyboard.press('Escape');
+  await pg.waitForTimeout(400);
+  await pg.keyboard.press('Escape');
+  await pg.waitForTimeout(500);
+  // 4) 正在播放：没给通知使用权 → 先说明（不直接跳设置），点「去打开」才跳；给了以后一键填进表单
+  await pg.click('.quick-more');
+  await pg.waitForSelector('.capture .np-btn');
+  await pg.click('.capture .np-btn');
+  await pg.waitForSelector('.confirm:has-text("通知使用权")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] np: no explanation before asking`));
+  if ((await pg.evaluate(() => window.__np.opened)) !== 0) errs.push(`[${tag}] np: opened settings before explaining`);
+  await pg.click('.confirm-ok');
+  await pg.waitForTimeout(200);
+  if ((await pg.evaluate(() => window.__np.opened)) !== 1) errs.push(`[${tag}] np: 去打开 did not open access settings`);
+  await pg.evaluate(() => { window.__np.status = 'ok'; });
+  await pg.click('.capture .np-btn');
+  await pg.waitForFunction(() => document.querySelector('.capture .field.big input')?.value === '晴天', null, { timeout: 4000 }).catch(() => errs.push(`[${tag}] np: form not filled`));
+  await pg.screenshot({ path: `${out}/${tag}-2-np.png` });
+  await pg.click('.capture button[type=submit]');
+  await pg.waitForSelector('.card:has-text("晴天")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] np: song not saved`));
+  rows = await dbRaw(pg, 'items');
+  const np = rows.find((x) => x.title === '晴天');
+  if (!np || np.type !== 'music' || np.creator !== '周杰伦' || np.source !== 'QQ 音乐' || !np.tags.includes('正在听') || np.hasImage !== 1) errs.push(`[${tag}] np row ${JSON.stringify(np && { t: np.type, c: np.creator, s: np.source, tags: np.tags, img: np.hasImage })}`);
+  // 5) 设置 → 极速采集：常驻通知开关先说明再请求权限（0556），授权后打开；再点关掉
+  await openSettings(pg);
+  await pg.waitForSelector('#set-capture .cap-notify');
+  await studio(pg, tag + '-settings');
+  if (!(await pg.textContent('#set-capture .cap-notify .tc-date')).includes('关')) errs.push(`[${tag}] notify should start off`);
+  await pg.click('#set-capture .cap-notify');
+  await pg.waitForSelector('.confirm:has-text("常驻通知")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] notify: no explanation`));
+  if ((await pg.evaluate(() => window.__nt.req)) !== 0) errs.push(`[${tag}] notify: permission requested before explaining`);
+  await pg.click('.confirm-ok');
+  await pg.waitForFunction(() => window.__nt.on === true, null, { timeout: 6000 }).catch(() => errs.push(`[${tag}] notify: not turned on`));
+  await pg.waitForTimeout(200);
+  const nt = await pg.evaluate(() => ({ ...window.__nt, label: document.querySelector('#set-capture .cap-notify .tc-date')?.textContent }));
+  if (nt.req !== 1 || nt.label !== '开') errs.push(`[${tag}] notify state ${JSON.stringify(nt)}`);
+  await pg.locator('#set-capture').screenshot({ path: `${out}/${tag}-3-settings.png` });
+  await pg.click('#set-capture .cap-notify');
+  await pg.waitForFunction(() => window.__nt.on === false, null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] notify: not turned off`));
+  // 已授权后再开：不再弹说明
+  await pg.click('#set-capture .cap-notify');
+  await pg.waitForFunction(() => window.__nt.on === true, null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] notify: re-enable failed`));
+  if (await pg.locator('.confirm').count()) errs.push(`[${tag}] notify: explained again after granted`);
+  // 通知使用权状态跟着系统变
+  if ((await pg.textContent('#set-capture .cap-access .tc-date')) !== '已允许') errs.push(`[${tag}] access label should be 已允许`);
+  await pg.evaluate(() => { window.__np.status = 'no-access'; window.dispatchEvent(new Event('focus')); });
+  await pg.waitForFunction(() => document.querySelector('#set-capture .cap-access .tc-date')?.textContent === '未允许', null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] access label not refreshed`));
+  // 6) 长按图标快捷方式：带 glean_go 回来 → 跳到对应页
+  await pg.evaluate(() => { window.__go = 'library'; window.dispatchEvent(new Event('focus')); });
+  await pg.waitForFunction(() => !document.querySelector('.view.settings'), null, { timeout: 4000 }).catch(() => errs.push(`[${tag}] shortcut go=library ignored`));
+  // 7) 草稿永不丢：速记打一半刷新（模拟 App 被杀）→ 接着写；清掉后不再出现
+  await pg.fill('.quick-input', '写到一半的草稿 #未存');
+  await pg.waitForTimeout(800);
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  const qv = await pg.inputValue('.quick-input');
+  if (qv !== '写到一半的草稿 #未存') errs.push(`[${tag}] quick draft not restored: ${qv}`);
+  if (!(await pg.locator('.quick-draft').count())) errs.push(`[${tag}] draft banner missing`);
+  await pg.screenshot({ path: `${out}/${tag}-4-draft.png` });
+  await pg.click('.quick-draft-clear');
+  await pg.waitForTimeout(700);
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  if (await pg.inputValue('.quick-input')) errs.push(`[${tag}] cleared draft came back`);
+  // 速记表单也一样；存了以后不再恢复
+  await pg.click('.quick-more');
+  await pg.fill('.capture .field.big input', '表单草稿一穗');
+  await pg.waitForTimeout(800);
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  await pg.click('.quick-more');
+  await pg.waitForSelector('.capture');
+  const fv = await pg.inputValue('.capture .field.big input');
+  if (fv !== '表单草稿一穗' || !(await pg.locator('.capture-restored').count())) errs.push(`[${tag}] form draft not restored: ${fv}`);
+  await pg.click('.capture button[type=submit]');
+  await pg.waitForSelector('.card:has-text("表单草稿一穗")');
+  await pg.click('.quick-more');
+  await pg.waitForSelector('.capture');
+  if (await pg.inputValue('.capture .field.big input')) errs.push(`[${tag}] form draft survived save`);
+  // 速记栏存了也清草稿
+  await pg.keyboard.press('Escape');
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  await pg.fill('.quick-input', '存了就不留草稿');
+  await pg.press('.quick-input', 'Enter');
+  await pg.waitForSelector('.card:has-text("存了就不留草稿")');
+  await pg.waitForTimeout(700);
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  if (await pg.inputValue('.quick-input')) errs.push(`[${tag}] saved quick text restored as draft`);
+  const n = (await dbRaw(pg, 'items')).length;
+  console.log(`capture: ${n} items, inbox+np+notify+shortcut+drafts checked`);
+  await ctx.close();
+}
+
 async function heapStart(pg) {
   return pg.evaluate(() => {
     if (window.gc) window.gc();
@@ -2112,6 +2284,10 @@ async function security() {
 }
 
 try {
+  if (process.env.E2E_ONLY === 'capture') {
+    await capture();
+    throw Object.assign(new Error('capture only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'perf') {
     await perf();
     throw Object.assign(new Error('perf only'), { only: true });
@@ -2124,6 +2300,8 @@ try {
   if (process.env.E2E_ONLY === 'obsidian') throw Object.assign(new Error('obsidian only'), { only: true });
   await datafound();
   if (process.env.E2E_ONLY === 'datafound') throw Object.assign(new Error('datafound only'), { only: true });
+  await capture();
+  if (process.env.E2E_ONLY === 'capture') throw Object.assign(new Error('capture only'), { only: true });
   await modes();
   if (process.env.E2E_ONLY === 'modes') throw Object.assign(new Error('modes only'), { only: true });
   await wall();
