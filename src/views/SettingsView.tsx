@@ -14,6 +14,10 @@ import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
 import { db } from '../lib/db';
 import { PRESETS, aiReady, distinctOf, embedConfig, keyOptional, vaultKind, withPreset, type Settings } from '../lib/settings';
 import { LocalModelPanel } from '../components/LocalModelPanel';
+import { AgentPanel } from '../components/AgentPanel';
+import { UpdatePanel } from '../components/UpdatePanel';
+import { readAgentCfg } from '../lib/agent';
+import { readUpdatePrefs } from '../lib/update';
 import { VAULT_LABEL } from '../lib/vault';
 import { clearErrors, isSafeMode, readErrors, setSafeMode } from '../lib/errlog';
 import { collectDiagnostics } from '../lib/diagcollect';
@@ -178,6 +182,8 @@ export function SettingsView() {
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
+    ['set-agent', 'Agent 与 API', readAgentCfg().on ? (readAgentCfg().write ? '开 · 可写' : '开 · 只读') : '关'],
+    ['set-update', '更新', readUpdatePrefs().auto ? '自动检查' : '手动'],
     ['set-diag', '诊断', errCount ? `${errCount} 条错误` : '无错误'],
     ['set-about', '关于', `v${APP_VERSION}`],
   ];
@@ -441,6 +447,10 @@ export function SettingsView() {
               )}
             </div>
           </section>
+
+          <AgentPanel />
+
+          <UpdatePanel version={APP_VERSION} />
 
           <section className="set-sec" id="set-diag">
             <h2 className="sec-title">诊断</h2>
