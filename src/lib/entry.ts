@@ -6,6 +6,8 @@ export interface Hotkeys {
   quick: string;
   excerpt: string;
   grab: boolean;
+  /** v0.36 0005 框选截图热键（空 = 关） */
+  shot: string;
 }
 export interface EntryState {
   keys: Hotkeys;
@@ -16,6 +18,9 @@ export interface EntryState {
 export const getEntry = () => invoke<EntryState>('entry_get');
 export const setKeys = (keys: Hotkeys) => invoke<EntryState>('entry_set_keys', { keys });
 export const setAutostart = (on: boolean) => invoke<boolean>('entry_autostart', { on });
+/** v0.36 0005 现在就框选截图（托盘同款） */
+export const shotNow = () => invoke('shot_now');
+
 
 /** 安卓也是 Tauri，但这些命令只有桌面版有 */
 export const isDesktopApp = () => !('LinganShare' in window);
