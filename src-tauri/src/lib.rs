@@ -3,6 +3,10 @@ mod smtc;
 mod apicore;
 #[cfg(desktop)]
 mod api;
+#[cfg(desktop)]
+mod lancore;
+#[cfg(desktop)]
+mod lan;
 
 /// v0.22 正在播放一键拾（Windows SMTC）；其它平台返回 unsupported，安卓走 MainActivity 的 LinganNowPlaying 桥
 #[tauri::command]
@@ -38,7 +42,7 @@ fn show_view(app: &tauri::AppHandle, view: &str) {
 mod vault {
   const SERVICE: &str = "com.q1f730.lingan";
   fn entry(name: &str) -> Result<keyring::Entry, String> {
-    if !matches!(name, "chat.apiKey" | "embed.apiKey" | "sync.davPass" | "sync.key") {
+    if !matches!(name, "chat.apiKey" | "embed.apiKey" | "sync.davPass" | "sync.key" | "sync.lanKey") {
       return Err("bad secret name".into());
     }
     keyring::Entry::new(SERVICE, name).map_err(|_| "keychain unavailable".to_string())
@@ -111,7 +115,11 @@ pub fn run() {
       api::api_token,
       api::api_rotate,
       api::api_respond,
-      api::api_focus
+      api::api_focus,
+      lan::lan_start,
+      lan::lan_stop,
+      lan::lan_offer,
+      lan::lan_addrs
     ]);
 
   #[cfg(desktop)]
@@ -140,6 +148,7 @@ pub fn run() {
       #[cfg(desktop)]
       {
         api::init(app.handle());
+        { use tauri::Manager; app.manage(lan::Lan::default()); }
         use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
         use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
         let quick = MenuItem::with_id(app, "quick", "随手拾一穗\tCtrl+Shift+L", true, None::<&str>)?;
