@@ -350,5 +350,9 @@ class MainActivity : TauriActivity() {
     // v0.26 自动备份写进「下载/Glean」+ 应用内下载安装新版（见 GleanSafety.kt）
     webView.addJavascriptInterface(BackupBridge(this), "LinganBackup")
     webView.addJavascriptInterface(UpdateBridge(this), "LinganUpdate")
+    // v0.27 全面屏安全区 + 状态栏跟主题 + 键盘（见 GleanChrome.kt）
+    val chrome = ChromeBridge(this)
+    chrome.attach(webView)
+    webView.addJavascriptInterface(chrome, "LinganChrome")
   }
 }
