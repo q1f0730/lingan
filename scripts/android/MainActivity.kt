@@ -104,6 +104,13 @@ class MainActivity : TauriActivity() {
     return if (asked && !shouldShowRequestPermissionRationale("android.permission.POST_NOTIFICATIONS")) "blocked" else "ask"
   }
 
+  private var myPut: (() -> Unit)? = null
+
+  override fun onDestroy() {
+    if (Glean.onPut === myPut) Glean.onPut = null
+    super.onDestroy()
+  }
+
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     grab(intent)
@@ -111,6 +118,13 @@ class MainActivity : TauriActivity() {
 
   override fun onWebViewCreate(webView: WebView) {
     super.onWebViewCreate(webView)
+    // v0.23 后台同步：半屏面板 / 磁贴 / 通知写进收件箱时，若这个 WebView 还在就让 JS 马上收（弱引用，不拖住 Activity）
+    val ref = java.lang.ref.WeakReference(webView)
+    val put: () -> Unit = {
+      ref.get()?.let { w -> w.post { try { w.evaluateJavascript("window.dispatchEvent(new Event('glean:inbox'))", null) } catch (e: Exception) {} } }
+    }
+    myPut = put
+    Glean.onPut = put
     webView.addJavascriptInterface(object {
       @JavascriptInterface
       fun take(): String {
