@@ -1,5 +1,6 @@
 import { BUNDLE_EVENT, BUNDLE_OPEN_KEY, graftFromBundle } from '../lib/bundles';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useLibraryItems } from '../lib/libitems';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { HoverPreview, Hits, ItemCard, ItemRow } from '../components/ItemCard';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
@@ -68,7 +69,8 @@ function takeBundleOpen(): string | null {
 
 export function Library() {
   const { openItem, openCapture, toast, developFrom, desktop, go } = useApp();
-  const items = useLiveQuery(() => db.items.orderBy('createdAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  // v0.30：和 main.tsx 的 prime 共用一个订阅（读库不再排在外壳第一帧之后）
+  const items = useLibraryItems();
   const devs = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const q = '';
   const [searching, setSearching] = useState(false);
