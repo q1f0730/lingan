@@ -12,7 +12,9 @@ export async function collectDiagnostics(): Promise<string> {
   const counts = await withTimeout(
     (async () => {
       const { db } = await import('./db');
-      return { items: await db.items.count(), devs: await db.developments.count(), imgs: await db.images.count(), cliches: await db.cliches.count() };
+      const { liveCounts } = await import('./db');
+      const c = await liveCounts(db);
+      return { items: c.items, devs: c.devs, imgs: c.imgs, cliches: await db.cliches.count(), trash: c.trash };
     })(),
     2500,
   );
