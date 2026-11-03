@@ -41,6 +41,12 @@ export interface Item {
   uid?: string;
   /** v0.21 最后一次改它的设备（lib/device.ts） */
   deviceId?: string;
+  /** v0.31 HLC：行里最新一次修改 / 新建时 / 改过的字段 → 那次的 HLC（同步字段级合并） */
+  hlc?: string;
+  hc?: string;
+  fh?: Record<string, string>;
+  /** v0.31 原图内容哈希（同步时算、本机用，不参与合并） */
+  imgSha?: string;
   /** v0.21 墓碑：删除时间。有它 = 在回收站里（30 天后彻底清掉），所有列表 / 搜索 / 嫁接都看不到 */
   deletedAt?: number;
   /** v0.23 待理：刚收进来、还没整理（速记 / 分享 / 极速拾 / 选字 / 正在播放）。留下、编辑、一键入仓后去掉；超过 7 天自动出现在穗仓 */
@@ -146,6 +152,10 @@ export interface Development {
   uid?: string;
   /** v0.21 最后一次改它的设备（lib/device.ts） */
   deviceId?: string;
+  /** v0.31 HLC：行里最新一次修改 / 新建时 / 改过的字段 → 那次的 HLC（同步字段级合并） */
+  hlc?: string;
+  hc?: string;
+  fh?: Record<string, string>;
   /** v0.21 墓碑：删除时间。有它 = 在回收站里（30 天后彻底清掉），所有列表 / 搜索 / 嫁接都看不到 */
   deletedAt?: number;
   /** v0.21 最后修改时间（旧新枝迁移时 = createdAt） */
@@ -226,6 +236,10 @@ export interface Reject {
   devUid?: string;
   uid?: string;
   deviceId?: string;
+  /** v0.31 HLC：行里最新一次修改 / 新建时 / 改过的字段 → 那次的 HLC（同步字段级合并） */
+  hlc?: string;
+  hc?: string;
+  fh?: Record<string, string>;
   updatedAt?: number;
   createdAt: number;
 }
@@ -291,6 +305,10 @@ export interface Work {
   board?: { nodes: BoardNode[] };
   uid?: string;
   deviceId?: string;
+  /** v0.31 HLC：行里最新一次修改 / 新建时 / 改过的字段 → 那次的 HLC（同步字段级合并） */
+  hlc?: string;
+  hc?: string;
+  fh?: Record<string, string>;
   deletedAt?: number;
   updatedAt?: number;
   createdAt: number;
