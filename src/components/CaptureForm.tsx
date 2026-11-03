@@ -3,6 +3,28 @@ import { compressImage } from '../lib/image';
 import { normalizeTags } from '../lib/db';
 import { extractUrl, fetchLinkMeta } from '../lib/linkmeta';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
+import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
+import { nowPlayingDraft } from '../lib/nowplaying';
+import { useNowPlaying } from './NowPlaying';
+
+const DRAFT_KEY = 'capture';
+const DRAFT_FIELDS = ['type', 'title', 'creator', 'year', 'content', 'url', 'why'] as const;
+type DraftText = Partial<Pick<Item, (typeof DRAFT_FIELDS)[number]>> & { tags?: string };
+
+/** v0.22 速记表单草稿（只存文字字段，图片不存）：被杀 / 崩溃后下次打开接着写 */
+function readFormDraft(): DraftText | null {
+  const raw = loadDraft(DRAFT_KEY);
+  if (!raw) return null;
+  try {
+    const o = JSON.parse(raw);
+    if (!o || typeof o !== 'object') return null;
+    if (o.type && !TYPE_ORDER.includes(o.type)) delete o.type;
+    return o;
+  } catch {
+    return null;
+  }
+}
+const isBlank = (x: Draft) => !x.title && !x.content && !x.why && !x.url && !x.image && !x.creator;
 
 export type Draft = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -27,6 +49,41 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
   const fileRef = useRef<HTMLInputElement>(null);
   const [sniff, setSniff] = useState<'' | 'busy' | 'ok' | 'fail'>('');
   const [more, setMore] = useState(!!(initial.why || initial.tags.length));
+  const np = useNowPlaying();
+  const [restored, setRestored] = useState(false);
+  const writer = useRef(draftWriter(DRAFT_KEY));
+  // 新建速记：打开时恢复上次没存的草稿；之后每次改动防抖写回
+  useEffect(() => {
+    if (editing || !isBlank(initial)) return;
+    const o = readFormDraft();
+    if (!o) return;
+    const { tags, ...rest } = o;
+    setD((x) => ({ ...x, ...rest }));
+    if (tags) setTagText(tags);
+    if (rest.why || tags) setMore(true);
+    setRestored(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (editing) return;
+    const o: DraftText = {};
+    for (const k of DRAFT_FIELDS) if (d[k]) (o as Record<string, unknown>)[k] = d[k];
+    if (tagText.trim()) o.tags = tagText;
+    const empty = !o.title && !o.content && !o.why && !o.url && !o.creator && !o.tags;
+    writer.current.write(empty ? '' : JSON.stringify(o));
+  }, [d, tagText, editing]);
+  useEffect(() => {
+    const w = writer.current;
+    return () => w.flush();
+  }, []);
+
+  async function fillNowPlaying() {
+    const got = await np.read();
+    if (!got) return;
+    const nd = nowPlayingDraft(got);
+    setD((x) => ({ ...x, type: 'music', title: nd.title, creator: nd.creator, content: x.content || nd.content, image: x.image || nd.image, source: nd.source }));
+    setTagText((t) => (t.split(/\s+/).includes('正在听') ? t : (t + ' 正在听').trim()));
+  }
 
   async function recognize(raw: string) {
     const url = extractUrl(raw);
@@ -50,7 +107,13 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
       setSniff('fail');
     }
   }
+  const firstInit = useRef(true);
   useEffect(() => {
+    // 首次挂载时 state 已经是 initial：跳过，免得盖掉刚恢复的草稿
+    if (firstInit.current) {
+      firstInit.current = false;
+      return;
+    }
     setD(initial);
     setTagText(initial.tags.join(' '));
     setMore(!!(initial.why || initial.tags.length));
@@ -89,6 +152,10 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
       return;
     }
     const url = d.url?.trim() ? (/^https?:\/\//i.test(d.url.trim()) ? d.url.trim() : 'https://' + d.url.trim()) : '';
+    if (!editing) {
+      writer.current.cancel();
+      clearDraft(DRAFT_KEY);
+    }
     onSave({ ...d, title, url, tags: normalizeTags(tagText), creator: d.creator?.trim(), year: d.year?.trim(), why: d.why?.trim(), content: d.content?.trim() });
   }
 
@@ -102,6 +169,35 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
           </button>
         ))}
       </div>
+      {!editing && (np.support || restored) && (
+        <div className="capture-np">
+          {np.support && (
+            <button type="button" className="chip np-btn" onClick={fillNowPlaying} disabled={np.busy}>
+              ♪ 当前歌曲
+            </button>
+          )}
+          {restored ? (
+            <span className="meta-text capture-restored">
+              接着写 · 上次没存的草稿{' '}
+              <button
+                type="button"
+                className="btn text faint"
+                onClick={() => {
+                  writer.current.cancel();
+                  clearDraft(DRAFT_KEY);
+                  setD(initial);
+                  setTagText(initial.tags.join(' '));
+                  setRestored(false);
+                }}
+              >
+                清掉
+              </button>
+            </span>
+          ) : (
+            <span className="meta-text">把正在播放的歌填进来</span>
+          )}
+        </div>
+      )}
       <label className="field big">
         <span className="label">{editing ? '标题' : '此刻戳到你的是什么'}</span>
         <input
