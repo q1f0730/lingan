@@ -1,24 +1,13 @@
 import { useState } from 'react';
-import { db } from '../lib/db';
+import { addItem } from '../lib/db';
+import { ONBOARD_KEY } from '../lib/onboard';
+import { parseQuick } from '../lib/quick';
+import { TYPE_LABEL, type ItemType } from '../lib/types';
 import { PRESETS, withPreset } from '../lib/settings';
 import { useApp } from '../lib/store';
 
-const KEY = 'glean.onboarded';
-
-/** 只有第一次打开、穗仓还是空的时候才走引导；老用户升级、已有穗的直接进穗仓 */
-export async function needsOnboarding(): Promise<boolean> {
-  try {
-    if (localStorage.getItem(KEY)) return false;
-    const n = await db.items.count(); // 回收站里的也算「用过」
-    if (n > 0 || localStorage.getItem('lingan.settings.v1')) {
-      localStorage.setItem(KEY, '1');
-      return false;
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
+/** 0404 试试这样写：顺便教 v0.28 的行内语法（《片名》 @作者 > 为什么） */
+const EXAMPLES = ['《重庆森林》 @王家卫 > 雨夜里的霓虹', '想做一个只在下雨天更新的网站 #点子'];
 
 const PROMISES: Array<[string, string]> = [
   ['只读你拾的穗', '不联网搜、不拿别人的收藏凑数。'],
@@ -33,12 +22,31 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
   const [preset, setPreset] = useState<string | null>(null);
   const [key, setKey] = useState('');
+  // v0.28 0404 第一屏就真的拾第一穗（可不拾，直接「开始」）
+  const [first, setFirst] = useState('');
+  const [got, setGot] = useState<{ type: ItemType; title: string; creator?: string; why?: string; tags: string[] } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const guess = first.trim() ? parseQuick(first) : null;
+  async function pickFirst() {
+    const d = parseQuick(first);
+    if (!d || busy) return;
+    setBusy(true);
+    try {
+      await addItem(d);
+      setGot({ type: d.type, title: d.title, creator: d.creator, why: d.why, tags: d.tags });
+      setFirst('');
+    } catch {
+      /* 写不进也不拦着引导：进穗仓后照常能拾 */
+    } finally {
+      setBusy(false);
+    }
+  }
   const finish = (useAI: boolean) => {
     if (useAI && preset) {
       const s = withPreset(settings, preset);
       setSettings({ ...s, chat: { ...s.chat, apiKey: key.trim() } });
     }
-    localStorage.setItem(KEY, '1');
+    localStorage.setItem(ONBOARD_KEY, '1');
     onDone();
   };
   return (
@@ -62,6 +70,48 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             <h1 className="page-title">拾穗</h1>
             <p className="lead">把零碎的喜欢拾起来，让它们自己长出新东西。</p>
             <p className="meta-text">照片、电影、歌、摘抄、链接、一闪而过的想法，都可以一穗一穗拾进来。拾够了，让它们嫁接出新枝。</p>
+            {got ? (
+              <div className="onboard-first-card" role="status">
+                <div className="label">第 1 穗 · 已拾进穗仓</div>
+                <p className="onboard-first-title">
+                  <span className="chip on">{TYPE_LABEL[got.type]}</span> {got.title}
+                  {got.creator ? <span className="dim"> — {got.creator}</span> : null}
+                </p>
+                {got.why ? <p className="meta-text">为什么：{got.why}</p> : null}
+                {got.tags.length ? <p className="meta-text">{got.tags.map((x) => '#' + x).join(' ')}</p> : null}
+                <p className="meta-text">就这么简单：打一句，回车。以后在底栏 / 顶栏的速记条里随手拾。</p>
+              </div>
+            ) : (
+              <div className="onboard-first">
+                <div className="label">现在就拾第一穗</div>
+                <form
+                  className="onboard-first-row"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void pickFirst();
+                  }}
+                >
+                  <input className="line-input onboard-first-input" value={first} onChange={(e) => setFirst(e.target.value)} placeholder="一句话、片名、链接都行，回车就存" aria-label="拾第一穗" enterKeyHint="done" maxLength={500} />
+                  <button className="btn primary onboard-first-save" disabled={!guess || busy}>
+                    拾
+                  </button>
+                </form>
+                {guess ? (
+                  <p className="meta-text onboard-first-guess">
+                    会存成「{TYPE_LABEL[guess.type]}」{guess.creator ? ` · 作者 ${guess.creator}` : ''}
+                    {guess.why ? ' · 带一句为什么' : ''}
+                  </p>
+                ) : (
+                  <div className="chips onboard-first-eg">
+                    {EXAMPLES.map((x) => (
+                      <button key={x} className="chip" onClick={() => setFirst(x)}>
+                        {x}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
         {step === 1 && (
@@ -104,7 +154,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       <footer className="onboard-foot">
         {step < 2 ? (
           <button className="btn primary block onboard-next" onClick={() => setStep(step + 1)}>
-            {step === 0 ? '开始' : '知道了'}
+            {step === 0 ? (got ? '下一步' : '开始') : '知道了'}
           </button>
         ) : (
           <>
