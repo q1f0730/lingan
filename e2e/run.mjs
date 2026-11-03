@@ -276,7 +276,8 @@ async function run(name, viewport) {
   await pg.waitForSelector('.confirm:has-text("清空所有穗和新枝")');
   await studio(pg, name + '-confirm');
   await pg.click('.confirm-ok');
-  await pg.waitForSelector('.confirm:has-text("再确认一次")');
+  // v0.26 0622：先导出备份，存好了才问第二次
+  await pg.waitForSelector('.confirm:has-text("备份存好了")');
   await pg.click('.confirm-ok');
   await pg.waitForSelector('.toast:has-text("已清空")');
   await pg.click('.nav-btn:has-text("穗仓")');
@@ -1829,12 +1830,24 @@ async function perfBackup(ctx) {
   await pg.waitForFunction(() => window.__gleanReady && document.querySelectorAll('.masonry .card').length > 0, null, { timeout: 30000 });
   await openSettings(pg);
   await pg.waitForSelector('.backup-counts:has-text("1000 穗")');
-  await heapStart(pg);
-  const t0 = Date.now();
-  const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 150000 }), pg.click('.backup-export')]);
-  await pg.waitForSelector('.toast:has-text("已导出 1000 穗")', { timeout: 150000 }).catch(() => errs.push('[perf-backup] export toast'));
-  const heap = await heapStop(pg);
-  const ms = Date.now() - t0;
+  // v0.26：堆峰值取决于 GC 什么时候来（同一构建 34–64MB 都见过），单次判定会误报：
+  // 同一页连续导出 3 次，每次前强制 GC 并等后台空闲，取中位数和阈值比（阈值不变），三次都记进 perf.json
+  const runs = [];
+  let dl = null;
+  for (let i = 0; i < 3; i++) {
+    await pg.waitForTimeout(400);
+    await heapStart(pg);
+    const t0 = Date.now();
+    const [d] = await Promise.all([pg.waitForEvent('download', { timeout: 150000 }), pg.click('.backup-export')]);
+    await pg.waitForSelector('.toast:has-text("已导出 1000 穗")', { timeout: 150000 }).catch(() => errs.push('[perf-backup] export toast'));
+    const h = await heapStop(pg);
+    runs.push({ ms: Date.now() - t0, ...h });
+    if (!dl) dl = d;
+    await pg.locator('.toast').first().waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
+  }
+  const mid = (k) => [...runs].sort((a, b) => a[k] - b[k])[1][k];
+  const heap = { baseMB: mid('baseMB'), peakMB: mid('peakMB'), deltaMB: mid('deltaMB'), runs: runs.map((r) => r.deltaMB) };
+  const ms = mid('ms');
   const file = await dl.path();
   const buf = fs.readFileSync(file);
   const z = readZipBuf(buf);
@@ -2321,7 +2334,7 @@ async function graft24() {
 }
 
 async function legacy() {
-  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
   const pg = await ctx.newPage();
   pg.on('pageerror', (e) => errs.push(`[legacy] pageerror ${e.message}`));
   await pg.goto(new URL('favicon.svg', base).href);
@@ -2366,6 +2379,22 @@ async function legacy() {
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
   if (ver !== 100) errs.push(`[legacy] db version expected 100 (Dexie v10) got ${ver}`);
+  // v0.26 0624：迁移前先把旧库原样存了一份（glean-snap 里的 pre-upgrade），记下当前库版本；再打开不会重复存
+  const pu = await pg.evaluate(() => ({ g: window.__gleanPreUpgrade, seen: localStorage.getItem('glean.schema.v1') }));
+  if (!pu.g || pu.g.from !== 1 || pu.g.to !== 10 || !pu.g.id || pu.seen !== '10') errs.push(`[legacy] pre-upgrade dump ${JSON.stringify(pu)}`);
+  const snaps = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('glean-snap'); r.onsuccess = () => { const q = r.result.transaction('snaps').objectStore('snaps').getAll(); q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ kind: x.kind, schema: x.schema, items: x.items.map((i) => i.title), devs: x.developments.length, graft: x.items.map((i) => i.graftCount) }))); }; }; }));
+  const pre = snaps.filter((x) => x.kind === 'pre-upgrade');
+  if (pre.length !== 1 || pre[0].schema !== 1 || pre[0].items.join() !== '旧片子,旧歌,旧念头' || pre[0].devs !== 2 || pre[0].graft.some((x) => x != null)) errs.push(`[legacy] pre-upgrade snapshot should hold the untouched v1 rows ${JSON.stringify(snaps)}`);
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  if (await pg.evaluate(() => window.__gleanPreUpgrade)) errs.push('[legacy] pre-upgrade dump ran again on a normal start');
+  await openSettings(pg);
+  await pg.locator('#set-snap').scrollIntoViewIfNeeded();
+  if ((await pg.locator('.snap-row[data-kind="pre-upgrade"]').count()) !== 1) errs.push('[legacy] settings should list the pre-upgrade copy');
+  const [pdl] = await Promise.all([pg.waitForEvent('download', { timeout: 10000 }), pg.click('.snap-row[data-kind="pre-upgrade"] .snap-save')]);
+  const pj = JSON.parse(fs.readFileSync(await pdl.path(), 'utf8'));
+  if (pj.app !== 'lingan' || !pj.raw || pj.items.length !== 3 || pj.developments.length !== 2 || !/^glean-pre-upgrade-v1-/.test(pdl.suggestedFilename())) errs.push(`[legacy] pre-upgrade file ${pdl.suggestedFilename()} ${JSON.stringify({ app: pj.app, n: pj.items?.length })}`);
+  await pg.click('.nav-btn:has-text("新枝")');
   // v0.19 旧新枝里列过的套路迁移上墙
   const lw = (await dbRaw(pg, 'cliches')).map((c) => c.key).sort();
   if (JSON.stringify(lw) !== JSON.stringify(['旧套路乙', '旧套路甲'].sort())) errs.push(`[legacy] wall backfill ${JSON.stringify(lw)}`);
@@ -2867,6 +2896,138 @@ async function agent() {
   console.log('agent: settings panels ok');
 }
 
+// v0.26 数据保险：自动备份（安卓桥模拟：写 → 回读校验 → 列表 → 恢复预览）、操作前快照（清空回收站 / 清空 → 回到那之前）、
+// 清空先导出（0622）、写入失败兜底（0605：IndexedDB 抛 QuotaExceeded → 暂存 → 重开自动补上）
+const MOCK_BACKUP = () => {
+  const files = new Map();
+  let cur = null;
+  let curName = '';
+  const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+  const unb64 = (s) => { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+  window.__bak = files;
+  window.LinganBackup = {
+    where: () => '下载/Glean',
+    begin: (n) => { cur = []; curName = n; return true; },
+    append: (s) => { cur.push(unb64(s)); return true; },
+    commit: () => { const len = cur.reduce((a, x) => a + x.length, 0); const all = new Uint8Array(len); let p = 0; for (const x of cur) { all.set(x, p); p += x.length; } files.set(curName, all); cur = null; return '下载/Glean'; },
+    abort: () => { cur = null; },
+    list: () => JSON.stringify([...files].map(([name, u]) => ({ name, bytes: u.length }))),
+    remove: (n) => files.delete(n),
+    readAt: (n, off, len) => { const u = files.get(n); return u ? b64(u.subarray(off, off + len)) : ''; },
+  };
+};
+async function snapRows(pg) {
+  return pg.locator('.snap-row').evaluateAll((els) => els.map((e) => ({ kind: e.dataset.kind, label: e.querySelector('.tc-title').textContent, src: e.querySelector('.tc-src').textContent })));
+}
+async function safety() {
+  const tag = 'safety';
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+  await ctx.addInitScript(MOCK_BACKUP);
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  for (const t of ['安全一', '安全二', '安全三']) await quickSave(pg, t);
+  if ((await dbItems(pg)).length !== 3) errs.push(`[${tag}] seed failed`);
+  // 1) 自动备份（安卓桥）：立即备份 → 回读校验通过 → 列表标「已验证」→ 恢复…出导入预览
+  await openSettings(pg);
+  const idx = await pg.locator('.set-link-k').allTextContents();
+  if (!idx.includes('自动备份') || !idx.includes('操作前快照')) errs.push(`[${tag}] settings index missing new sections ${idx.join('|')}`);
+  await pg.locator('#set-autobak').scrollIntoViewIfNeeded();
+  if (await pg.locator('.autobak-web').count()) errs.push(`[${tag}] bridge present but panel shows web note`);
+  await pg.click('.autobak-now');
+  await pg.waitForSelector('.toast:has-text("回读校验通过")', { timeout: 20000 }).catch(() => errs.push(`[${tag}] backup toast`));
+  await pg.waitForSelector('.autobak-row[data-verified="ok"]', { timeout: 5000 }).catch(() => errs.push(`[${tag}] backup row not verified`));
+  const bk = await pg.evaluate(() => [...window.__bak.keys()]);
+  if (bk.length !== 1 || !/^glean-manual-\d{4}-\d\d-\d\d-\d{6}\.glean$/.test(bk[0])) errs.push(`[${tag}] backup files ${JSON.stringify(bk)}`);
+  if (!(await pg.locator('.autobak-where:has-text("下载/Glean")').count())) errs.push(`[${tag}] backup location not shown`);
+  await pg.click('.autobak-restore');
+  await pg.waitForSelector('.import-preview', { timeout: 10000 }).catch(() => errs.push(`[${tag}] restore preview`));
+  const pv = await importNote(pg, 'merge').catch(() => ({}));
+  if (pv.add !== 0 || pv.skip !== 3) errs.push(`[${tag}] restore preview counts ${JSON.stringify(pv)}`);
+  await pg.click('.import-cancel');
+  // 保留策略切换
+  await pg.click('.autobak-policy button:has-text("最近 7 份")');
+  const pol = await pg.evaluate(() => JSON.parse(localStorage.getItem('glean.autobak.v1') || '{}').policy);
+  if (pol !== 'last7') errs.push(`[${tag}] policy not saved ${pol}`);
+  await pg.locator('#set-autobak').screenshot({ path: `${out}/safety-autobak.png` });
+  const ov = await pg.evaluate(() => [...document.querySelectorAll('#set-autobak, #set-snap')].some((e) => e.scrollWidth > e.clientWidth + 1));
+  if (ov) errs.push(`[${tag}] safety panels overflow on mobile`);
+  // 2) 回收站里一穗 → 清空回收站（先拍快照，连原图）→ 回到那之前：它又回到回收站
+  await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const tx = r.result.transaction('items', 'readwrite'); const st = tx.objectStore('items'); st.getAll().onsuccess = (e) => { const it = e.target.result.find((x) => x.title === '安全一'); it.deletedAt = Date.now(); st.put(it); }; tx.oncomplete = () => { r.result.close(); res(); }; }; }));
+  await pg.reload();
+  await pg.waitForSelector('.view');
+  await openSettings(pg);
+  await pg.locator('#set-trash').scrollIntoViewIfNeeded();
+  await pg.click('.trash-empty');
+  await pg.waitForSelector('.confirm');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("已彻底删掉 1 件")');
+  if ((await dbRaw(pg, 'items', true)).length !== 2) errs.push(`[${tag}] purge should drop the trashed ear`);
+  await pg.locator('#set-snap').scrollIntoViewIfNeeded();
+  await pg.waitForSelector('.snap-row:has-text("清空回收站前")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] no snapshot before emptying trash`));
+  await pg.locator('.snap-row:has-text("清空回收站前") .snap-back').first().click();
+  await pg.waitForSelector('.confirm:has-text("回到「清空回收站前」")');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("已回到「清空回收站前」")', { timeout: 8000 }).catch(() => errs.push(`[${tag}] restore toast`));
+  const back = await dbRaw(pg, 'items', true);
+  if (back.length !== 3 || back.filter((x) => x.deletedAt).length !== 1) errs.push(`[${tag}] after restore expected 3 rows (1 in trash) got ${JSON.stringify(back.map((x) => [x.title, !!x.deletedAt]))}`);
+  const sr = await snapRows(pg);
+  if (!sr[0]?.label.includes('恢复「清空回收站前」前')) errs.push(`[${tag}] restore should snapshot the present first ${JSON.stringify(sr)}`);
+  // 3) 清空：第一步点「算了」什么都不发生；确认后先导出 .glean（下载），存好了才问第二次；清空后能从快照回来
+  await pg.click('.trow.danger');
+  await pg.waitForSelector('.confirm:has-text("清空所有穗和新枝")');
+  await pg.click('.confirm-cancel');
+  if ((await dbRaw(pg, 'items', true)).length !== 3) errs.push(`[${tag}] cancel should keep everything`);
+  await pg.click('.trow.danger');
+  await pg.waitForSelector('.confirm:has-text("清空所有穗和新枝")');
+  const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 15000 }), pg.click('.confirm-ok')]);
+  await pg.waitForSelector('.confirm:has-text("备份存好了")');
+  const z = readZipBuf(fs.readFileSync(await dl.path()));
+  const man = JSON.parse(new TextDecoder().decode(z.get('manifest.json')));
+  if (man.counts.items !== 3 || !/\.glean$/.test(dl.suggestedFilename())) errs.push(`[${tag}] wipe export ${dl.suggestedFilename()} ${JSON.stringify(man.counts)}`);
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("已清空")');
+  if ((await dbRaw(pg, 'items', true)).length !== 0) errs.push(`[${tag}] wipe left rows`);
+  await pg.locator('.snap-row:has-text("清空所有前") .snap-back').first().click();
+  await pg.waitForSelector('.confirm');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("已回到「清空所有前」")', { timeout: 8000 }).catch(() => errs.push(`[${tag}] restore after wipe`));
+  if ((await dbRaw(pg, 'items', true)).length !== 3) errs.push(`[${tag}] wipe snapshot did not bring rows back`);
+  await pg.locator('#set-snap').screenshot({ path: `${out}/safety-snap.png` });
+  // 4) 写入失败兜底：items 写入抛 QuotaExceeded → 提示已暂存、输入清空 → 重开后自动补上
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.evaluate(() => {
+    const P = IDBObjectStore.prototype;
+    const add = P.add;
+    const put = P.put;
+    const undo = () => { P.add = add; P.put = put; };
+    P.add = function (...a) { if (this.name === 'items') { undo(); throw new DOMException('full', 'QuotaExceededError'); } return add.apply(this, a); };
+    P.put = function (...a) { if (this.name === 'items') { undo(); throw new DOMException('full', 'QuotaExceededError'); } return put.apply(this, a); };
+  });
+  await pg.fill('.quick-input', '空间满时收的');
+  await pg.press('.quick-input', 'Enter');
+  await pg.waitForSelector('.toast:has-text("已暂存在本机")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] pending toast`));
+  const pend = await pg.evaluate(() => ({ q: JSON.parse(localStorage.getItem('glean.pending.v1') || '[]'), v: document.querySelector('.quick-input')?.value }));
+  if (pend.q.length !== 1 || pend.q[0].data.title !== '空间满时收的' || pend.v) errs.push(`[${tag}] pending queue ${JSON.stringify(pend)}`);
+  await pg.reload();
+  await pg.waitForSelector('.toast:has-text("上次没存进去的 1 穗已补进穗仓")', { timeout: 10000 }).catch(() => errs.push(`[${tag}] replay toast`));
+  const after = await dbItems(pg);
+  if (!after.some((x) => x.title === '空间满时收的') || (await pg.evaluate(() => localStorage.getItem('glean.pending.v1')))) errs.push(`[${tag}] replay did not land ${JSON.stringify(after.map((x) => x.title))}`);
+  await ctx.close();
+  // 5) 网页版（没有桥）：自动备份说明白只在 App 里有
+  const wctx = await b.newContext({ viewport: { width: 1280, height: 900 } });
+  const wp = await wctx.newPage();
+  await wp.goto(base);
+  await wp.waitForSelector('.view');
+  await openSettings(wp);
+  await wp.locator('#set-autobak').scrollIntoViewIfNeeded();
+  if (!(await wp.locator('.autobak-web').count()) || (await wp.locator('.autobak-now').count())) errs.push(`[${tag}] web should explain auto backup is app-only`);
+  await wp.locator('#set-autobak').screenshot({ path: `${out}/safety-web.png` });
+  await wctx.close();
+  console.log('safety: backup / snapshots / wipe / pending ok');
+}
+
 try {
   if (process.env.E2E_ONLY === 'graft24') {
     await graft24();
@@ -2889,7 +3050,16 @@ try {
     await agent();
     throw Object.assign(new Error('agent only'), { only: true });
   }
+  if (process.env.E2E_ONLY === 'safety') {
+    await safety();
+    throw Object.assign(new Error('safety only'), { only: true });
+  }
+  if (process.env.E2E_ONLY === 'legacy') {
+    await legacy();
+    throw Object.assign(new Error('legacy only'), { only: true });
+  }
   await security();
+  await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
   await onboarding();
