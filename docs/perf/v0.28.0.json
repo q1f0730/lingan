@@ -1,0 +1,275 @@
+{
+  "touchTargets": {
+    "small": 0,
+    "list": []
+  },
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 2010,
+  "preUpgrade": {
+    "from": 2,
+    "to": 10,
+    "id": 1
+  },
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 7510,
+    "wallMs": 9014
+  },
+  "storage": {
+    "version": 100,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102224504,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 52,
+    "rows": 1000,
+    "reopenLoadMs": 14,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 22.2,
+        "results": 176,
+        "coreMs": 2
+      },
+      {
+        "q": "海边",
+        "ms": 18.4,
+        "results": 178,
+        "coreMs": 0.8
+      },
+      {
+        "q": "钢琴",
+        "ms": 16.7,
+        "results": 172,
+        "coreMs": 0.7
+      },
+      {
+        "q": "夜车",
+        "ms": 17.3,
+        "results": 174,
+        "coreMs": 0.8
+      },
+      {
+        "q": "麦田",
+        "ms": 17.1,
+        "results": 63,
+        "coreMs": 0.6
+      },
+      {
+        "q": "黄昏",
+        "ms": 18.8,
+        "results": 176,
+        "coreMs": 0.7
+      }
+    ],
+    "maxMs": 22.2,
+    "medianMs": 18.4,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 49.8,
+        "results": 176,
+        "coreMs": 1.8
+      },
+      {
+        "q": "便利",
+        "ms": 54.8,
+        "results": 125,
+        "coreMs": 2.2
+      },
+      {
+        "q": "霓虹",
+        "ms": 44.3,
+        "results": 176,
+        "coreMs": 1.9
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 229,
+    "runs": [
+      229,
+      227,
+      251
+    ],
+    "firstThumbsDecodedMedian": 271,
+    "cardsOnFirstScreen": 12
+  },
+  "coldStartCpu4xMs": {
+    "median": 739,
+    "runs": [
+      779,
+      666,
+      739
+    ],
+    "firstThumbsDecodedMedian": 887
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16836,
+    "scrollHeight": 115306,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 24,
+    "maxLiveObjectUrls": 10,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 4,
+    "objectUrlsCreated": 60
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14410,
+    "scrollHeight": 66314,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 27,
+    "virtual": {
+      "total": 38,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14433,
+    "scrollHeight": 45355,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 58,
+    "maxLiveObjectUrls": 1,
+    "virtual": {
+      "total": 1000,
+      "mounted": 58
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 293,
+    "scrolledPx": 8016,
+    "scrollHeight": 115306,
+    "avgFps": 59,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 33.4,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400,
+  "backup": {
+    "ms": 854,
+    "bytes": 102748606,
+    "items": 1000,
+    "images": 300,
+    "imageMB": 97.5,
+    "heap": {
+      "baseMB": 22.9,
+      "peakMB": 54.7,
+      "deltaMB": 23.5,
+      "runs": [
+        45.8,
+        16,
+        23.5
+      ]
+    },
+    "badHashes": 0
+  },
+  "restore": {
+    "ms": 1246,
+    "heap": {
+      "baseMB": 6.5,
+      "peakMB": 49.1,
+      "deltaMB": 42.6
+    },
+    "items": 1000,
+    "images": 300
+  },
+  "interleavedBench": {
+    "note": "InstaBox 同一会话交替 7 轮（bench3.mjs，轮流换先后），1000 穗 / 300 图。这一会话机器整体比 v0.27 发版时慢约 15%，以同会话对比为准",
+    "v27": {
+      "normalMedian": 220,
+      "cpu4xMedian": 681,
+      "normalRuns": [
+        198,
+        220,
+        207,
+        222,
+        217,
+        226,
+        221
+      ],
+      "cpu4xRuns": [
+        618,
+        681,
+        662,
+        729,
+        701,
+        699,
+        661
+      ]
+    },
+    "v28": {
+      "normalMedian": 215,
+      "cpu4xMedian": 682,
+      "normalRuns": [
+        209,
+        208,
+        231,
+        243,
+        241,
+        202,
+        215
+      ],
+      "cpu4xRuns": [
+        645,
+        651,
+        682,
+        746,
+        665,
+        707,
+        691
+      ]
+    }
+  },
+  "sizeBudget": {
+    "firstScreenJsKB": 551.9,
+    "firstScreenJsGzipKB": 186.7,
+    "firstScreenCssKB": 126.5
+  }
+}
