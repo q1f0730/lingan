@@ -1,0 +1,92 @@
+{
+ "version": "0.34.0",
+ "date": "2026-11-04",
+ "machine": "InstaBox（同一会话）",
+ "dist": "app-MTXRSHAa.js（发布用的同一份构建）",
+ "e2e": {
+  "coldStartMs": 192,
+  "coldStartCpu4xMs": 520,
+  "searchMaxMs": 17.9,
+  "searchCpu4xMaxMs": 35.3,
+  "scroll": "masonry/timeline/list 60fps jank 0%",
+  "backup": {
+   "ms": 608,
+   "heapDeltaMB": 34.8,
+   "peakMB": 44.7
+  },
+  "restore": {
+   "ms": 943,
+   "heapDeltaMB": 43.4
+  },
+  "note": "定稿 dist 重跑完整 InstaBox e2e ALL PASS（含 v034 组）；前一次 e2e（同一 dist 之前的构建）冷启动 183ms / 4× 559ms"
+ },
+ "interleavedBench": {
+  "script": "/workspace/work/v030/bench5.mjs（painted）",
+  "rounds": 9,
+  "run1": {
+   "v033": {
+    "normalMedian": 195,
+    "cpu4xMedian": 564,
+    "normalRuns": [
+     203,
+     195,
+     205,
+     194,
+     194,
+     196,
+     192,
+     203,
+     185
+    ],
+    "cpu4xRuns": [
+     585,
+     579,
+     564,
+     526,
+     533,
+     539,
+     597,
+     592,
+     515
+    ]
+   },
+   "v034": {
+    "normalMedian": 188,
+    "cpu4xMedian": 588,
+    "normalRuns": [
+     185,
+     194,
+     176,
+     192,
+     186,
+     188,
+     191,
+     216,
+     185
+    ],
+    "cpu4xRuns": [
+     533,
+     540,
+     588,
+     611,
+     593,
+     595,
+     576,
+     612,
+     586
+    ]
+   }
+  },
+  "mannWhitney": {
+   "normal": "U(v034 慢于 v033)=17.5/81，v034 略快但未达显著（临界 ≤17 / ≥64）",
+   "cpu4x": "U=59.5/81，中位 +24ms 未达显著"
+  }
+ },
+ "size": {
+  "firstJsKB": 563.3,
+  "firstJsGzipKB": 191.0,
+  "firstCssKB": 126.9,
+  "totalAssetsKB": 2217.6,
+  "note": "motion domMax → domAnimation + 自写 Glide，总资源比 v0.33 小约 19KB"
+ }
+}
