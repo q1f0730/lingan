@@ -1,0 +1,312 @@
+{
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 1713,
+  "preUpgrade": {
+    "from": 2,
+    "to": 10,
+    "id": 1
+  },
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 6712,
+    "wallMs": 8183
+  },
+  "storage": {
+    "version": 100,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102224504,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 46,
+    "rows": 1000,
+    "reopenLoadMs": 14,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 18.9,
+        "results": 176,
+        "coreMs": 2.1
+      },
+      {
+        "q": "海边",
+        "ms": 16.7,
+        "results": 178,
+        "coreMs": 1
+      },
+      {
+        "q": "钢琴",
+        "ms": 16.6,
+        "results": 172,
+        "coreMs": 0.5
+      },
+      {
+        "q": "夜车",
+        "ms": 16.6,
+        "results": 174,
+        "coreMs": 0.8
+      },
+      {
+        "q": "麦田",
+        "ms": 16.7,
+        "results": 63,
+        "coreMs": 0.5
+      },
+      {
+        "q": "黄昏",
+        "ms": 16.9,
+        "results": 176,
+        "coreMs": 0.5
+      }
+    ],
+    "maxMs": 18.9,
+    "medianMs": 16.7,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 39.7,
+        "results": 176,
+        "coreMs": 0.4
+      },
+      {
+        "q": "便利",
+        "ms": 40.9,
+        "results": 125,
+        "coreMs": 2
+      },
+      {
+        "q": "霓虹",
+        "ms": 37.3,
+        "results": 176,
+        "coreMs": 1.8
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 195,
+    "runs": [
+      198,
+      195,
+      194
+    ],
+    "firstThumbsDecodedMedian": 230,
+    "cardsOnFirstScreen": 12
+  },
+  "coldStartCpu4xMs": {
+    "median": 657,
+    "runs": [
+      618,
+      666,
+      657
+    ],
+    "firstThumbsDecodedMedian": 765
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16807,
+    "scrollHeight": 115306,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 4,
+    "objectUrlsCreated": 60
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14433,
+    "scrollHeight": 66314,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 27,
+    "virtual": {
+      "total": 38,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14439,
+    "scrollHeight": 45355,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 58,
+    "maxLiveObjectUrls": 1,
+    "virtual": {
+      "total": 1000,
+      "mounted": 58
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 300,
+    "scrolledPx": 8026,
+    "scrollHeight": 115306,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400,
+  "backup": {
+    "ms": 710,
+    "bytes": 102748606,
+    "items": 1000,
+    "images": 300,
+    "imageMB": 97.5,
+    "heap": {
+      "baseMB": 34.6,
+      "peakMB": 49.4,
+      "deltaMB": 16.2,
+      "runs": [
+        35.7,
+        14.6,
+        16.2
+      ]
+    },
+    "badHashes": 0
+  },
+  "restore": {
+    "ms": 2785,
+    "heap": {
+      "baseMB": 6.2,
+      "peakMB": 39.6,
+      "deltaMB": 33.4
+    },
+    "items": 1000,
+    "images": 300
+  },
+  "interleavedBench": {
+    "note": "InstaBox 同一会话交替 7 轮（bench3.mjs，轮流换先后），1000 穗 / 300 图",
+    "v25": {
+      "normalMedian": 197,
+      "cpu4xMedian": 580,
+      "normalRuns": [
+        197,
+        183,
+        205,
+        212,
+        264,
+        194,
+        188
+      ],
+      "cpu4xRuns": [
+        558,
+        580,
+        549,
+        598,
+        589,
+        619,
+        547
+      ]
+    },
+    "v26": {
+      "normalMedian": 181,
+      "cpu4xMedian": 575,
+      "normalRuns": [
+        181,
+        187,
+        192,
+        194,
+        178,
+        174,
+        162
+      ],
+      "cpu4xRuns": [
+        560,
+        580,
+        601,
+        575,
+        608,
+        554,
+        541
+      ]
+    }
+  },
+  "perfBackupAB": {
+    "note": "InstaBox 同一会话交替跑 E2E_ONLY=perf 各 5 次（v0.26 的 e2e：每次同页连续导出 3 次、导出前 window.gc()，取中位数；奇偶轮换先后）。v0.25 那 5 次只因「升级前副本」检查不过（v0.25 没这功能）而非 ALL PASS，堆增长都在 48MB 内",
+    "exportHeapDeltaMB": {
+      "v25": [
+        39,
+        23,
+        35.7,
+        26.2,
+        36.4
+      ],
+      "v26": [
+        16.8,
+        34.1,
+        18,
+        23.3,
+        29.1
+      ]
+    },
+    "median": {
+      "v25": 35.7,
+      "v26": 23.3
+    },
+    "mannWhitneyU": "20/25（v0.25 > v0.26 的配对占比 0.8；n=5+5，单侧 p≈0.075，未到 0.05）",
+    "v26AllPass": "5/5",
+    "coldStartCpu4xMs": {
+      "v25": [
+        554,
+        573,
+        608,
+        551,
+        524
+      ],
+      "v26": [
+        636,
+        663,
+        588,
+        556,
+        540
+      ]
+    }
+  },
+  "sizeBudget": {
+    "firstScreenJsKB": 543.8,
+    "firstScreenJsGzipKB": 182.9,
+    "firstScreenCssKB": 117.1
+  }
+}
