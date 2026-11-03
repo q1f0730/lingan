@@ -1,6 +1,6 @@
 // 后台补缩略图：启动后先让首屏画完，再在空闲时分批做；有新图入库时立刻排一轮。
 import { db, onNewImage } from './db';
-import { browserThumbMaker, healImages, type HealReport } from './imagestore';
+import { backfillMid, browserMidMaker, browserThumbMaker, healImages, type HealReport } from './imagestore';
 
 declare global {
   interface Window {
@@ -12,6 +12,7 @@ const status = { running: false, runs: 0, made: 0, failed: 0, detached: 0, left:
 if (typeof window !== 'undefined') window.__gleanThumbs = status;
 
 let again = false;
+const MID_KEY = 'glean.mid.v1';
 
 function idle(): Promise<void> {
   return new Promise((res) => {
@@ -40,6 +41,8 @@ export async function runThumbs(): Promise<void> {
       status.detached += r.detached;
       status.left = r.left;
     } while (again);
+    // v0.37 0713 旧图补详情档：一次性，做完记下
+    if (localStorage.getItem(MID_KEY) !== '1' && (await backfillMid(db, browserMidMaker, { yieldFn: idle, shouldStop: () => again })) >= 0) localStorage.setItem(MID_KEY, '1');
   } catch (e) {
     console.warn('[glean] thumbs', e);
   } finally {
