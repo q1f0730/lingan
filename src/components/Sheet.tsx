@@ -1,4 +1,4 @@
-import { m } from 'framer-motion';
+import { m } from './rw/lite';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { IconPlus } from './rw/icons';
 
