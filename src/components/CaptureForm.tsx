@@ -2,7 +2,8 @@ import { useTagSuggest } from './TagSuggest';
 import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '../lib/image';
 import { normalizeTags } from '../lib/db';
-import { extractUrl, fetchLinkMeta } from '../lib/linkmeta';
+import { extractUrl, fetchLinkMeta, snapOn } from '../lib/linkmeta';
+import { lockReady } from '../lib/lock';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
 import { useNowPlaying } from './NowPlaying';
@@ -50,7 +51,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
   const [imgBusy, setImgBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [sniff, setSniff] = useState<'' | 'busy' | 'ok' | 'fail'>('');
-  const [more, setMore] = useState(!!(initial.why || initial.tags.length || initial.polarity || initial.private));
+  const [more, setMore] = useState(!!(initial.why || initial.tags.length || initial.polarity || initial.private || initial.locked));
   const np = useNowPlaying();
   const [restored, setRestored] = useState(false);
   const writer = useRef(draftWriter(DRAFT_KEY));
@@ -92,7 +93,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
     if (!url) return;
     setSniff('busy');
     try {
-      const m = await fetchLinkMeta(url);
+      const m = await fetchLinkMeta(url, { snap: snapOn() });
       setD((x) => ({
         ...x,
         url: m.url,
@@ -102,6 +103,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
         creator: x.creator || m.creator || m.siteName || '',
         content: x.content || m.description || '',
         image: x.image || m.imageData,
+        ...(m.snap ? { snap: m.snap, snapAt: Date.now() } : {}),
       }));
       setSniff('ok');
     } catch {
@@ -118,7 +120,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
     }
     setD(initial);
     setTagText(initial.tags.join(' '));
-    setMore(!!(initial.why || initial.tags.length || initial.polarity || initial.private));
+    setMore(!!(initial.why || initial.tags.length || initial.polarity || initial.private || initial.locked));
   }, [initial]);
   const ph = PH[d.type];
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
@@ -217,6 +219,15 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
       {sniff && (
         <div className={`sniff${sniff === "fail" ? " warn" : ""}`}>
           {sniff === 'busy' ? '正在读取链接…' : sniff === 'ok' ? '已从链接读取标题和封面' : '读不到这个网页的信息，已保存链接，其余请手填'}
+          {sniff === 'ok' && d.snap && (
+            <>
+              {' · '}
+              <span className="snap-note">存了正文快照 {d.snap.length} 字</span>{' '}
+              <button type="button" className="linklike snap-drop" onClick={() => setD((x) => ({ ...x, snap: undefined, snapAt: undefined }))}>
+                不存
+              </button>
+            </>
+          )}
         </div>
       )}
       <div className="row2">
@@ -293,7 +304,10 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
         <button type="button" className={`chip flag-private${d.private ? ' on' : ''}`} aria-pressed={!!d.private} onClick={() => set('private', d.private ? undefined : 1)} title="不发给云端 AI（嫁接 / 看图 / 向量 / 侧写都跳过它）">
           私密
         </button>
-        <span className="meta-text flag-note">{d.polarity === -1 ? '记成「我讨厌的」：嫁接不拿它当素材。' : d.private ? '只留在本机，不发给云端 AI。' : '讨厌的东西也值得记；私密的不发给云端 AI。'}</span>
+        <button type="button" className={`chip flag-lock${d.locked ? ' on' : ''}`} aria-pressed={!!d.locked} disabled={!d.locked && !lockReady()} onClick={() => set('locked', d.locked ? undefined : 1)} title={lockReady() ? '上锁：要输入 PIN 才显示，永远不进分享、花园、Agent 和 AI' : '先在 设置 → 上锁 里设一个 PIN'}>
+          上锁
+        </button>
+        <span className="meta-text flag-note">{d.locked ? '上锁：要输入 PIN 才显示，不进分享、花园、Agent 和 AI。' : d.polarity === -1 ? '记成「我讨厌的」：嫁接不拿它当素材。' : d.private ? '只留在本机，不发给云端 AI。' : '讨厌的东西也值得记；私密的不发给云端 AI。'}</span>
       </div>
       </>)}
       {err && <div className="error">{err}</div>}
