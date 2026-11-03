@@ -12,7 +12,8 @@ import { embedAllMissing } from '../lib/enrich';
 import { androidFiles, deliverZip, openFileSink, type ZipTarget } from '../lib/files';
 import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
 import { db } from '../lib/db';
-import { PRESETS, embedConfig, vaultKind, withPreset, type Settings } from '../lib/settings';
+import { PRESETS, aiReady, distinctOf, embedConfig, keyOptional, vaultKind, withPreset, type Settings } from '../lib/settings';
+import { LocalModelPanel } from '../components/LocalModelPanel';
 import { VAULT_LABEL } from '../lib/vault';
 import { clearErrors, isSafeMode, readErrors, setSafeMode } from '../lib/errlog';
 import { collectDiagnostics } from '../lib/diagcollect';
@@ -24,7 +25,7 @@ import { THEME_LABEL, THEME_ORDER } from '../lib/theme';
 export const APP_VERSION = __APP_VERSION__;
 
 export function SettingsView() {
-  const { settings, setSettings, toast, confirm } = useApp();
+  const { settings, setSettings, toast, confirm, desktop } = useApp();
   const counts = useLiveQuery(() => liveCounts(db), []);
   const [backing, setBacking] = useState('');
   const [pending, setPending] = useState<{ name: string; inc: Incoming; preview: Record<ImportMode, ImportCounts>; mode: ImportMode } | null>(null);
@@ -212,6 +213,7 @@ export function SettingsView() {
                 </>
               )}
             </p>
+            {(s.preset === 'local' || (desktop && !aiReady(settings))) && <LocalModelPanel s={s} setS={setS} desktop={desktop} auto={desktop && !aiReady(settings) && typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window} />}
             <label className="field">
               <span className="label">接口地址</span>
               <input value={s.chat.baseUrl} onChange={(e) => setChat('baseUrl', e.target.value.trim())} placeholder="https://…/v1" />
@@ -239,6 +241,12 @@ export function SettingsView() {
               <span className="label">创意温度 <span className="num">{s.temperature.toFixed(1)}</span>（越高越野）</span>
               <input type="range" min={0.3} max={1.5} step={0.1} value={s.temperature} onChange={(e) => setS((x) => ({ ...x, temperature: parseFloat(e.target.value) }))} />
             </label>
+            <label className="field distinct-field">
+              <span className="label">
+                三枝不撞车 · 两根新枝最多像到 <span className="num distinct-val">{Math.round(distinctOf(s).text * 100)}%</span>（越低越要求三根各不相同）
+              </span>
+              <input className="distinct-range" type="range" min={0.2} max={0.8} step={0.05} value={distinctOf(s).text} onChange={(e) => setS((x) => ({ ...x, distinct: { ...distinctOf(x), text: parseFloat(e.target.value) } }))} />
+            </label>
             <details>
               <summary>高级</summary>
               <label className="field">
@@ -248,12 +256,18 @@ export function SettingsView() {
               <label className="check">
                 <input type="checkbox" checked={s.autoCaption} onChange={(e) => setS((x) => ({ ...x, autoCaption: e.target.checked }))} /> 保存图片后自动让 AI 看图打标签
               </label>
+              <label className="field">
+                <span className="label">
+                  三枝不撞车 · 有向量模型时的余弦上限 <span className="num">{distinctOf(s).vector.toFixed(2)}</span>
+                </span>
+                <input className="distinct-vec" type="range" min={0.7} max={0.98} step={0.01} value={distinctOf(s).vector} onChange={(e) => setS((x) => ({ ...x, distinct: { ...distinctOf(x), vector: parseFloat(e.target.value) } }))} />
+              </label>
             </details>
             <div className="actions">
               <button className="btn primary" onClick={save} disabled={!dirty}>
                 保存
               </button>
-              <button className="btn text" onClick={test} disabled={testing || !s.chat.apiKey}>
+              <button className="btn text test-conn" onClick={test} disabled={testing || (!s.chat.apiKey && !keyOptional(s)) || !s.chat.chatModel}>
                 {testing ? '测试中…' : '测试连接'}
               </button>
             </div>
