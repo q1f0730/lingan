@@ -1,6 +1,6 @@
 // v0.23 一次整理一把（ROADMAP v0.40 / 0159）：多选后批量 加标签 · 改类型 · 入仓 · 删除（可撤销）· 带进嫁接。
 import { useState } from 'react';
-import { keepItems, reInbox, trashItems, untrashItems } from '../lib/db';
+import { db, keepItems, reInbox, trashItems, untrashItems } from '../lib/db';
 import { addTagsTo, removeTagFrom, restoreTypes, setTypeOf } from '../lib/batch';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER } from '../lib/types';
@@ -28,7 +28,11 @@ export function SelectBar({ ids, total, onAll, onNone, onDone }: { ids: number[]
   }
   async function del() {
     const list = [...ids];
-    await trashItems(list);
+    // v0.26 0621：一次删 2 穗以上先拍快照（撤销之外的第二道保险）
+    if (list.length >= 2) {
+      const { withSnapshot } = await import('../lib/snapshots');
+      await withSnapshot(`批量删除 ${list.length} 穗前`, db, () => trashItems(list), { required: false });
+    } else await trashItems(list);
     onNone();
     toast(`删掉了 ${list.length} 穗（在回收站）`, 'ok', { label: '撤销', run: () => void untrashItems(list).then(() => toast('已放回穗仓')) });
   }
