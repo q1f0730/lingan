@@ -23,8 +23,12 @@ export function isLocalBaseUrl(baseUrl: string): boolean {
 
 /** v0.24 0242 私密穗能不能发给当前的模型：只有「接口在本机 / 局域网」且设置里允许时才行；云端永远不行 */
 export function allowPrivate(s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl = s.chat.baseUrl): boolean {
-  return !!s.privateLocal && isLocalBaseUrl(baseUrl);
+  return baseUrl === MINI || (!!s.privateLocal && isLocalBaseUrl(baseUrl));
 }
 export function aiVisible(it: { private?: 1 }, s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl?: string): boolean {
   return !it.private || allowPrivate(s, baseUrl);
 }
+
+/** v0.38 端侧向量：本机小模型（lib/mini.ts）的「接口地址」——不出设备，私密穗也能算 */
+export const MINI = 'local:mini';
+export const MINI_KEY = 'glean.mini';
