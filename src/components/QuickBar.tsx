@@ -46,6 +46,8 @@ function useDraft(key: string, text: string, setText: (t: string) => void): [boo
   return [restored, done];
 }
 
+const isPending = (e: unknown) => (e as { name?: string } | null)?.name === 'PendingWriteError';
+
 /** Save a quick draft, then fill link metadata + AI enrichment in the background. */
 export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) => void): Promise<number> {
   // v0.23 速记 / 剪贴板 / 速记小窗收进来的先进待理
@@ -148,7 +150,13 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
       setLast(id);
       setDone(Date.now());
     } catch (e) {
-      toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+      // v0.26 0605：写不进库但已暂存 = 算收下了（清掉输入，免得再按一次存成两份）
+      if (isPending(e)) {
+        dropDraft();
+        setText('');
+        setWhy('');
+        toast((e as Error).message, 'err');
+      } else toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
     } finally {
       setBusy(false);
     }
@@ -295,7 +303,11 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
       void notifyDupe(id, toast);
       onClose();
     } catch (e) {
-      toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+      if (isPending(e)) {
+        dropDraft();
+        toast((e as Error).message, 'err');
+        onClose();
+      } else toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
     } finally {
       setBusy(false);
     }
