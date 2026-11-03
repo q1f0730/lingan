@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useRef, useState } from 'react';
 import { db, findDupes, keepItems, reInbox, updateItem } from '../lib/db';
 import { InlineText } from './InlineText';
+import { Relations } from './Relations';
 import { basketHint, toggleBasket, useBasket } from '../lib/basket';
 import { BUNDLE_EVENT, BUNDLE_OPEN_KEY, splitBundles, withBundles } from '../lib/bundles';
 // v0.23 瘦首包：batch / organize 点到才加载（详情首屏不需要）
@@ -343,6 +344,7 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
             </ul>
           </section>
         )}
+        {it.id != null && <Relations it={it} />}
         <div className="actions text-actions">
           <button className="btn text strong detail-graft" onClick={onDevelop}>
             拿去嫁接
