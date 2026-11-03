@@ -9,6 +9,7 @@ import { LinganDB } from '../lib/db';
 import { applyImport, BlobSink, exportGlean, planImport, readBackupFile } from '../lib/backup';
 import { dataUrlToBlob } from '../lib/imagestore';
 import { isUlid, ulidTime } from '../lib/ulid';
+import { hlcFromWall } from '../lib/hlc';
 import type { Development, Item } from '../lib/types';
 import type { Cliche } from '../lib/wall';
 
@@ -25,9 +26,10 @@ interface Fixture {
     cliches?: Cliche[];
     meta?: Array<{ k: string; v: unknown }>;
     rejects?: Array<Record<string, unknown>>;
+    works?: Array<Record<string, unknown>>;
   };
 }
-const LATEST = 11;
+const LATEST = 12;
 // 夹具按原文读进来（vite 的 ?raw），不依赖 node:fs
 const raw = import.meta.glob('./fixtures/dexie/v*.json', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const fixtures: Fixture[] = Object.values(raw)
@@ -51,6 +53,7 @@ async function seedFixture(name: string, fx: Fixture) {
   if (fx.data.cliches) await t('cliches').bulkAdd(fx.data.cliches);
   if (fx.data.meta) await t('meta').bulkAdd(fx.data.meta);
   if (fx.data.rejects) await t('rejects').bulkAdd(fx.data.rejects);
+  if (fx.data.works) await t('works').bulkAdd(fx.data.works);
   expect(raw.verno).toBe(fx.version);
   raw.close();
 }
@@ -63,9 +66,9 @@ function expectedImages(fx: Fixture): Map<number, string> {
   return m;
 }
 
-describe('0710 Dexie 迁移回归：v1–v10 夹具库逐个升级到最新', () => {
-  it('夹具齐全：v1 到 v10 每版一份', () => {
-    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+describe('0710 Dexie 迁移回归：v1–v11 夹具库逐个升级到最新', () => {
+  it('夹具齐全：v1 到 v11 每版一份', () => {
+    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     expect(new LinganDB(uniq('probe')).verno).toBe(LATEST);
   });
 
@@ -150,8 +153,16 @@ describe('0710 Dexie 迁移回归：v1–v10 夹具库逐个升级到最新', ()
       // v0.24：新表 rejects（不要的理由）建好了；v10 夹具里的理由原样保留
       const rj = await d.rejects.orderBy(':id').toArray();
       expect(rj.map((r) => [r.uid, r.reason, r.title, r.text])).toEqual((fx.data.rejects || []).map((r) => [r.uid, r.reason, r.title, r.text]));
-      // v0.29：新表 works（作品）建好了，空的；升级不动任何旧数据
-      expect(await d.works.count()).toBe(0);
+      // v0.29：新表 works（作品）建好了；v11 夹具里的作品原样保留
+      const wk = await d.works.toArray();
+      expect(wk.map((w) => [w.uid, w.title, w.draft, w.itemUids])).toEqual((fx.data.works || []).map((w) => [w.uid, w.title, w.draft, w.itemUids]));
+      // v0.31：五张同步表每行都有 hlc = hc，按这一行自己的 updatedAt + deviceId 换算（升级不动内容）
+      for (const t of ['items', 'developments', 'cliches', 'rejects', 'works'] as const) {
+        for (const r of (await d.table(t).toArray()) as Array<{ hlc?: string; hc?: string; updatedAt?: number; lastAt?: number; createdAt?: number; deviceId?: string }>) {
+          expect(r.hlc).toBe(hlcFromWall(r.updatedAt || r.lastAt || r.createdAt || 0, r.deviceId!));
+          expect(r.hc).toBe(r.hlc);
+        }
+      }
 
       // 升级后的库导出 .glean → 导进空库：一样
       const sink = new BlobSink();
