@@ -126,6 +126,7 @@ export default function App() {
   const [confirmReq, setConfirmReq] = useState<ConfirmReq | null>(null);
   const [onboard, setOnboard] = useState<boolean | null>(null);
   const [quickWin, setQuickWin] = useState(false);
+  const [quickText, setQuickText] = useState('');
   // 首屏画完、空闲后才挂拖放 / 长按菜单（main.tsx afterFirstPaint → prefetchViews 发 IDLE_READY；兜底 4 秒）
   const [idle, setIdle] = useState(false);
   useEffect(() => {
@@ -439,12 +440,15 @@ export default function App() {
     let off = () => {};
     let dead = false;
     const goTo = (v: string) => {
+      // v0.33 0510 glean:// 深链接（托盘 / 单实例 / 安卓 intent 都走这里）
+      if (/^glean:/i.test(v)) return void window.dispatchEvent(new CustomEvent('glean:link', { detail: v }));
       setCapture(null);
       setDetail(null);
       if (v === 'settings') setView('settings');
       else {
         setView('library');
         if (v === 'daily') setTimeout(() => document.querySelector('.daily-ear')?.scrollIntoView({ block: 'start' }), 300);
+        if (v === 'search') setTimeout(() => window.dispatchEvent(new Event(SEARCH_EVENT)), 300);
       }
     };
     goRef.current = goTo;
@@ -455,9 +459,19 @@ export default function App() {
     };
   }, []);
 
+  // v0.33 深链接 / 系统入口：路由代码懒加载（桌面与安卓在空闲后起 entryboot）
+  const linkCtx = useRef<unknown>(null);
+  linkCtx.current = { openItem, developFrom, toast, settings, goTo: (v: string) => goRef.current(v), quick: (t: string) => (setQuickText(t), setQuickWin(true)) };
+  useEffect(() => {
+    const on = (e: Event) => void import('./lib/deeplink').then((m) => m.routeLink(String((e as CustomEvent).detail || ''), linkCtx.current as never));
+    window.addEventListener('glean:link', on);
+    if (idle && isTauriEnv()) void import('./lib/entryboot').then((m) => m.boot(linkCtx as never));
+    return () => window.removeEventListener('glean:link', on);
+  }, [idle]);
+
   // 全局速记小窗（托盘 / Ctrl+Shift+L 唤出；浏览器里由 glean:quick 事件唤出）
   useEffect(() => {
-    const on = () => setQuickWin(true);
+    const on = (t?: unknown) => (setQuickText(typeof t == 'string' ? t : ''), setQuickWin(true));
     window.addEventListener('glean:quick', on);
     let off = () => {};
     let dead = false;
@@ -714,7 +728,7 @@ export default function App() {
           )}
         </Sheet>
 
-        {quickWin && <QuickWindow onClose={() => setQuickWin(false)} />}
+        {quickWin && <QuickWindow key={quickText} initial={quickText} onClose={() => setQuickWin(false)} />}
         {idle && (
           <Suspense fallback={null}>
             <DropIn blocked={!!capture || !!detail || !!confirmReq || quickWin} />
