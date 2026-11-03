@@ -14,6 +14,7 @@ import { bookTitle, branchesFrom, displayTitle, quoteSource, shortDate } from '.
 import { TYPE_LABEL, type Item, type ItemType } from '../lib/types';
 import { useOriginalSrc } from '../lib/useImage';
 import { safeHost } from './ItemCard';
+import { clock, timeMark } from '../lib/platforms';
 
 const CREATOR: Record<ItemType, string> = { music: '歌手', film: '导演', image: '来源', text: '作者', link: '来源', idea: '来源' };
 
@@ -140,7 +141,7 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
         )}
         <dl className="kv">
           <div>
-            <dt>拾于</dt>
+            <dt>{it.meets?.length ? '首次拾于' : '拾于'}</dt>
             <dd>
               <input
                 type="datetime-local"
@@ -173,7 +174,7 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
           )}
           {it.creator && !quote && (
             <div>
-              <dt>{CREATOR[it.type]}</dt>
+              <dt>{it.source === '哔哩哔哩' ? 'UP 主' : CREATOR[it.type]}</dt>
               <dd>
                 <InlineText value={it.creator} label={CREATOR[it.type]} maxLength={80} onSave={(v) => save({ creator: v })} />
               </dd>
@@ -200,6 +201,22 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
                 <a className="detail-url" href={it.url} target="_blank" rel="noreferrer">
                   {safeHost(it.url)}
                 </a>
+                {timeMark(it.url) > 0 && (
+                  <>
+                    {' · '}
+                    <a className="detail-at" href={it.url} target="_blank" rel="noreferrer">
+                      从 {clock(timeMark(it.url))} {it.type === 'film' ? '看' : '听'}
+                    </a>
+                  </>
+                )}
+              </dd>
+            </div>
+          )}
+          {!!it.meets?.length && (
+            <div className="kv-meets">
+              <dt>重逢</dt>
+              <dd className="num">
+                {it.meets.length} 次 · 最近 {shortDate(it.meets[it.meets.length - 1])}
               </dd>
             </div>
           )}
