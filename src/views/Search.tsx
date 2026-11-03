@@ -11,6 +11,7 @@ import { DATE_LABEL, FIELD_LABEL, FOCUS_BRANCH_KEY, dateBounds, parseQuery, push
 import { displayTitle, shortDate } from '../lib/studio';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type Development, type Item, type ItemType } from '../lib/types';
+import { completeSyntax, matchFilters, parseSyntax, SYNTAX_HELP } from '../lib/qsyntax';
 
 const RECENT_KEY = 'glean.recentq';
 const RANGES: DateRange[] = ['all', '7d', '30d', 'year', 'custom'];
@@ -80,7 +81,20 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
 
   const itemDocs = useMemo(() => items.filter((i) => i.id != null).map((i) => toDoc('i', i)), [items]);
   const devDocs = useMemo(() => devs.filter((d) => d.id != null && d.idea).map((d) => toDoc('b', d)), [devs]);
-  const terms = useMemo(() => parseQuery(q), [q]);
+  // v0.23 0111 搜索语法：type: tag: year: from: why: before: after: inbox: 先拆出来当筛选，剩下的字照常全文搜
+  const parsed = useMemo(() => parseSyntax(q), [q]);
+  const filters = parsed.filters;
+  const terms = useMemo(() => parseQuery(parsed.text), [parsed.text]);
+  const complete = useMemo(() => {
+    if (!/[:：][^\s]*$/.test(q)) return [];
+    const tags = new Map<string, number>();
+    const srcs = new Set<string>();
+    for (const it of items) {
+      for (const t of it.tags) tags.set(t, (tags.get(t) || 0) + 1);
+      if (it.source) srcs.add(it.source);
+    }
+    return completeSyntax(q, { tags: [...tags.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t), sources: [...srcs] });
+  }, [q, items]);
 
   // 搜索本身（索引候选 + 原文核对），记下计算耗时
   const base = useMemo(() => {
@@ -97,8 +111,12 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
 
   const [lo, hi] = useMemo(() => dateBounds(range, Date.now(), from, to), [range, from, to]);
   const inRange = useCallback((t: number) => t >= lo && t < hi, [lo, hi]);
-  const allI = useMemo<Array<SearchHit<Item>>>(() => (base ? (base.ih as Array<SearchHit<Item>>) : itemDocs.map((doc) => ({ doc, score: 0, fields: [] }))).filter((h) => inRange(h.doc.createdAt)), [base, itemDocs, inRange]);
-  const allB = useMemo<Array<SearchHit<Development>>>(() => (base ? (base.bh as Array<SearchHit<Development>>) : devDocs.map((doc) => ({ doc, score: 0, fields: [] }))).filter((h) => inRange(h.doc.createdAt)), [base, devDocs, inRange]);
+  const allI = useMemo<Array<SearchHit<Item>>>(
+    () => (base ? (base.ih as Array<SearchHit<Item>>) : itemDocs.map((doc) => ({ doc, score: 0, fields: [] }))).filter((h) => inRange(h.doc.createdAt) && (!filters.length || matchFilters(h.doc.obj, filters))),
+    [base, itemDocs, inRange, filters],
+  );
+  // 语法筛选都是穗的属性：用了语法就不列新枝
+  const allB = useMemo<Array<SearchHit<Development>>>(() => (filters.length ? [] : (base ? (base.bh as Array<SearchHit<Development>>) : devDocs.map((doc) => ({ doc, score: 0, fields: [] }))).filter((h) => inRange(h.doc.createdAt))), [base, devDocs, inRange, filters]);
 
   const typeN = useMemo(() => {
     const m = new Map<ItemType, number>();
@@ -113,7 +131,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   const iHits = useMemo(() => (type === 'branch' ? [] : allI.filter((h) => (type === 'all' || h.doc.obj.type === type) && (!tag || h.doc.obj.tags.includes(tag)))), [allI, type, tag]);
   const bHits = type === 'all' || type === 'branch' ? (tag ? [] : allB) : [];
   const nBranchFacet = tag ? 0 : allB.length;
-  const active = terms.length > 0 || type !== 'all' || !!tag || range !== 'all';
+  const active = terms.length > 0 || filters.length > 0 || type !== 'all' || !!tag || range !== 'all';
   const total = iHits.length + bHits.length;
 
   // 输入 → 结果画到屏幕上的耗时（e2e 读它，也读自己量的）
@@ -129,10 +147,10 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
 
   // 搜过的词：停下来 1.5 秒且有结果就记进「最近搜过」
   useEffect(() => {
-    if (!terms.length || !total) return;
+    if ((!terms.length && !filters.length) || !total) return;
     const t = setTimeout(() => remember(q), 1500);
     return () => clearTimeout(t);
-  }, [q, terms.length, total, remember]);
+  }, [q, terms.length, filters.length, total, remember]);
 
   // 已选的标签不在结果里了就放掉
   useEffect(() => {
@@ -140,8 +158,8 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   }, [tag, tagN, allI]);
 
   const openHit = (it: Item) => {
-    if (terms.length) remember();
-    openItem(it);
+    if (terms.length || filters.length) remember();
+    openItem(it, iHits.map((h) => h.doc.obj.id!));
   };
   const openBranch = (d: Development) => {
     if (terms.length) remember();
@@ -184,7 +202,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Escape') onClose();
-                if (e.key === 'Enter' && terms.length) {
+                if (e.key === 'Enter' && (terms.length || filters.length)) {
                   remember();
                   if (!desktop) inputRef.current?.blur();
                 }
@@ -216,7 +234,22 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
         </div>
         <p className="sq-count meta-text" data-q={q} data-n={total} aria-live="polite">
           {countText}
+          {filters.length > 0 && (
+            <span className="sq-syntax-on">
+              {' · '}
+              {filters.map((f) => `${f.neg ? '不是 ' : ''}${f.key}:${f.value}`).join(' · ')}
+            </span>
+          )}
         </p>
+        {complete.length > 0 && (
+          <div className="sq-complete" role="listbox" aria-label="补全">
+            {complete.map((c) => (
+              <button key={c.label} className="chip sq-comp" onClick={() => (setQuery(c.insert), inputRef.current?.focus())}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       <div className="sq-filters">
@@ -275,6 +308,16 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
       {!active ? (
         <div className="sq-idle">
           <p className="meta-text">输入就出结果：标题、作者、句子、为什么、标签，连新枝一起找。中文连着的字要连着出现，英文按词首。</p>
+          <section className="sq-syntax">
+            <div className="label">还可以这样筛（能叠加，前面加 - 是排除）</div>
+            <div className="sq-recent-row">
+              {SYNTAX_HELP.map(([k, v]) => (
+                <button key={k} className="chip sq-syn" onClick={() => (setQuery((q ? q.trimEnd() + ' ' : '') + k + ' '), inputRef.current?.focus())}>
+                  <b>{k}</b> <span className="n">{v}</span>
+                </button>
+              ))}
+            </div>
+          </section>
           {recent.length > 0 && (
             <section className="sq-recent">
               <div className="label">最近搜过</div>
