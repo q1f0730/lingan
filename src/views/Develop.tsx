@@ -21,6 +21,7 @@ import { bundleCounts, inBundle, takePool } from '../lib/bundles';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, type Development, type GraftBatch, type GraftTension, type Item } from '../lib/types';
 import { displayTitle, nn, shortDate } from '../lib/studio';
+import { isTauriEnv } from '../lib/desktop';
 
 const TASTE_KEY = 'lingan.taste.ai';
 const MODE_KEY = 'glean.graft.mode';
@@ -275,6 +276,9 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       setProgress(null);
       return;
     }
+    // v0.36 0527：嫁接时切走了（窗口在后台 / 手机锁屏）→ 系统通知，点开回到拾穗就是结果
+    if (isTauriEnv())
+      void import('../lib/sysnotify').then((n) => n.inBackground() && n.notify('graft', '新枝长出来了', `${sel.map((x) => x.title).slice(0, 3).join(' × ')} → ${run.branches.map((b) => b.title).filter(Boolean).slice(0, 3).join(' / ')}`));
     const now = Date.now();
     const bid = `g${now.toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
     const size = run.branches.length;
