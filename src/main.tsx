@@ -4,7 +4,7 @@ import './index.css';
 import './styles/rewamp.css';
 import App, { prefetchViews } from './App';
 import { startThumbJob } from './lib/thumbjob';
-import { db } from './lib/db';
+import { db, ensureUids, purgeExpired } from './lib/db';
 import { ftShared, startSearchIndex } from './lib/ftsync';
 import { afterFirstPaint } from './lib/motion';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -45,6 +45,11 @@ function start() {
   startThumbJob();
   // v0.17：首屏之后读入全文索引，空闲时给旧数据补索引
   startSearchIndex(db);
+  // v0.21：空闲时给没有 uid 的行补上（直接写库的、极旧备份），回收站里超过 30 天的彻底清掉
+  void afterFirstPaint(3000).then(async () => {
+    await ensureUids(db).catch((e) => logError(e, 'error', { view: 'ensureUids' }));
+    await purgeExpired(db).catch((e) => logError(e, 'error', { view: 'purgeExpired' }));
+  });
   // v0.20：其余四页的包在穗仓首屏画完之后预取
   void afterFirstPaint(2500).then(prefetchViews);
   // v0.20：申请持久存储（浏览器 / WebView 在空间紧张时不清本库）
