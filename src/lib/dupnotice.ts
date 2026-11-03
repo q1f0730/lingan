@@ -1,5 +1,5 @@
 // v0.23 这穗收过了（ROADMAP v0.31）：刚存下的穗如果和旧穗重复，轻轻提一句「这穗 10/19 收过了」，可以一键合并（可撤销），不理它就是仍然保存。
-import { db, ensureImageDup, findDupes, inboxEnabled, mergeInto, restoreItem, snapshotItem, untrashItems } from './db';
+import { db, ensureImageDup, ensureMediaDup, findDupes, inboxEnabled, mergeInto, restoreItem, snapshotItem, untrashItems } from './db';
 import { dupReason } from './dupe';
 import { shortDate } from './studio';
 import type { Item } from './types';
@@ -16,11 +16,15 @@ export async function notifyDupe(id: number, toast: Toast): Promise<Item | null>
   const me = await db.items.get(id);
   // 收进一张图：先确保老原图都有哈希（升级后第一次会慢一点，以后直接查索引）
   if (me?.dup?.some((k) => k.startsWith('i:'))) await ensureImageDup();
+  const media = me?.type === 'music' || me?.type === 'film';
+  if (media) await ensureMediaDup().catch(() => {});
   const [old] = await findDupes(id).catch(() => [] as Item[]);
   if (!old) return null;
-  const why = dupReason(me?.dup, old.dup);
+  let why = dupReason(me?.dup, old.dup);
+  if (media && why === '几乎一样的文字') why = '同一件作品';
+  // v0.35 0016 再次遇见：合并进旧穗 = 记一次重逢（新写的为什么接在后面）
   toast(`这穗 ${shortDate(old.createdAt)} 收过了${why ? `（${why}）` : ''}`, 'ok', {
-    label: '合并',
+    label: '记一次重逢',
     run: () => void mergeDupe(old.id!, id, toast),
   });
   return old;
@@ -31,7 +35,7 @@ export async function mergeDupe(keepId: number, dropId: number, toast: Toast) {
   const snap = await snapshotItem(keepId);
   await mergeInto(keepId, dropId);
   const keep = await db.items.get(keepId);
-  toast(`已合并进「${(keep?.title || '').slice(0, 16)}」`, 'ok', {
+  toast(`已记一次重逢：「${(keep?.title || '').slice(0, 16)}」第 ${(keep?.meets?.length || 0) + 1} 次遇见`, 'ok', {
     label: '撤销',
     run: () =>
       void (async () => {
