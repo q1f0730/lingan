@@ -2,6 +2,7 @@ import type { Settings } from './settings';
 import { embedConfig } from './settings';
 import type { ChatBody, OutKind } from './outbound';
 import { assertReach } from './gate';
+import { MINI } from './privacy';
 
 type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -170,6 +171,7 @@ export async function caption(s: Settings, imageDataUrl: string, vocab: string[]
 export async function embed(s: Settings, texts: string[]): Promise<number[][]> {
   const c = embedConfig(s);
   if (!c) throw new AIError('没有配置向量模型');
+  if (c.baseUrl === MINI) return (await import('./mini')).embedTexts(texts);
   const j = (await postJSON(joinUrl(c.baseUrl, '/embeddings'), c.apiKey, { model: c.model, input: texts }, 90000, undefined, 'embed')) as {
     data?: Array<{ embedding: number[]; index?: number }>;
   };
