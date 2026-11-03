@@ -3,7 +3,8 @@
 //! - 0004 唤出速记小窗时带上选中的文字；0507 摘抄热键（默认关）选中即存
 //! - 0018 剪贴板守望跳过密码管理器标记的内容；0003 剪贴板里是图片时给小窗一张图
 //! - 0510 glean:// 深链接 / 0517 单实例 / 0518 「发送到 → 拾穗」 / 0516 开机静默启动 / 0520 外链交给系统
-//! 纯逻辑（解析参数、猜类型、校验热键）在 entrylogic.rs，不依赖 tauri，能单测。
+//! v0.36：0005 框选截图热键（调系统截图 ms-screenclip:，截完小窗带图）、0509 冷启动链接 / 发送到先落盘、Win+H 系统听写
+//! 纯逻辑（解析参数、猜类型、校验热键、收件队列）在 entrylogic.rs，不依赖 tauri，能单测。
 
 use crate::entrylogic::{self, Hotkeys};
 use std::sync::Mutex;
@@ -22,6 +23,38 @@ pub struct Entry {
   files: Mutex<Vec<(String, String, Vec<u8>)>>,
   /// 正在抓选中文字（连按热键不叠）
   busy: Mutex<bool>,
+  /// v0.36 0509 落盘的收件队列（和 links / files 同步）
+  inbox: Mutex<entrylogic::Inbox>,
+  /// v0.36 0005 正在等截图（连按不叠）
+  shooting: Mutex<bool>,
+}
+
+fn inbox_path(app: &AppHandle) -> Option<std::path::PathBuf> {
+  app.path().app_local_data_dir().ok().map(|d| d.join("glean_inbox.json"))
+}
+
+fn inbox_save(app: &AppHandle) {
+  let Some(p) = inbox_path(app) else { return };
+  let b = app.state::<Entry>().inbox.lock().unwrap().clone();
+  if b.is_empty() {
+    let _ = std::fs::remove_file(p);
+    return;
+  }
+  if let Some(d) = p.parent() {
+    let _ = std::fs::create_dir_all(d);
+  }
+  let _ = std::fs::write(p, serde_json::to_string(&b).unwrap_or_default());
+}
+
+/// 读一个「发送到」的文件进内存（图片 / 纯文字，≤12MB）
+fn read_send(p: &str) -> Option<(String, String, Vec<u8>)> {
+  let meta = std::fs::metadata(p).ok()?;
+  if !meta.is_file() || meta.len() > entrylogic::MAX_BYTES {
+    return None;
+  }
+  let name = std::path::Path::new(p).file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default();
+  let mime = entrylogic::guess_mime(&name)?;
+  std::fs::read(p).ok().map(|b| (name, mime.to_string(), b))
 }
 
 fn cfg_path(app: &AppHandle) -> Option<std::path::PathBuf> {
@@ -45,6 +78,18 @@ pub fn init(app: &AppHandle) {
     .unwrap_or_default();
   *e.keys.lock().unwrap() = keys.clone();
   let _ = apply(app, &keys);
+  // 0509：上次没被前端取走的链接 / 发送到的文件
+  let left = inbox_path(app).and_then(|p| std::fs::read_to_string(p).ok()).map(|s| entrylogic::Inbox::parse(&s)).unwrap_or_default();
+  if !left.is_empty() {
+    e.links.lock().unwrap().extend(left.links.iter().cloned());
+    let mut files = e.files.lock().unwrap();
+    for p in &left.send {
+      if let Some(f) = read_send(p) {
+        files.push(f);
+      }
+    }
+    *e.inbox.lock().unwrap() = left;
+  }
   let args: Vec<String> = std::env::args().collect();
   take_args(app, &args, false);
 }
@@ -58,7 +103,7 @@ fn apply(app: &AppHandle, keys: &Hotkeys) -> Vec<(String, String)> {
     let _ = gs.unregister(s);
   }
   let mut errs = Vec::new();
-  for (act, acc) in [("quick", &keys.quick), ("excerpt", &keys.excerpt)] {
+  for (act, acc) in [("quick", &keys.quick), ("excerpt", &keys.excerpt), ("shot", &keys.shot)] {
     if acc.is_empty() {
       continue;
     }
@@ -115,6 +160,10 @@ pub fn on_shortcut(app: &AppHandle, s: &Shortcut, state: ShortcutState) {
           let _ = app.emit("glean-excerpt", t);
         }
       });
+    }
+    Some("shot") => {
+      let app = app.clone();
+      std::thread::spawn(move || shoot(&app));
     }
     _ => {}
   }
@@ -178,6 +227,66 @@ fn grab_selection(app: &AppHandle) -> Option<String> {
   got.map(|t| entrylogic::clip_text(&t)).filter(|t| !t.is_empty())
 }
 
+/// 0005：调系统自带的框选截图（ms-screenclip:，Win10 1809+ / Win11），等剪贴板出现新图（最多 90 秒），
+/// 再唤出速记小窗：payload 以 \u{1}shot 开头 = 小窗直接带上这张图（前端再交给 OCR）。取消截图 = 什么都不发生。
+#[cfg(windows)]
+fn shoot(app: &AppHandle) {
+  use tauri_plugin_opener::OpenerExt;
+  use windows::Win32::System::DataExchange::GetClipboardSequenceNumber;
+  let e = app.state::<Entry>();
+  {
+    let mut b = e.shooting.lock().unwrap();
+    if *b {
+      return;
+    }
+    *b = true;
+  }
+  let before = unsafe { GetClipboardSequenceNumber() };
+  if app.opener().open_url("ms-screenclip:", None::<&str>).is_ok() {
+    for _ in 0..450 {
+      std::thread::sleep(std::time::Duration::from_millis(200));
+      let now = unsafe { GetClipboardSequenceNumber() };
+      if now != before {
+        // 截图工具会连写几种格式，稍等它写完
+        std::thread::sleep(std::time::Duration::from_millis(250));
+        if clip_peek_os().image {
+          show_main(app);
+          let _ = app.emit("quick-focus", format!("\u{1}shot:{now}"));
+        }
+        break;
+      }
+    }
+  }
+  *e.shooting.lock().unwrap() = false;
+}
+
+#[cfg(not(windows))]
+fn shoot(_app: &AppHandle) {}
+
+/// 托盘「框选截图拾」/ 设置里试一下
+#[tauri::command]
+pub fn shot_now(app: AppHandle) {
+  std::thread::spawn(move || shoot(&app));
+}
+
+/// Win+H：唤出 Windows 自带的语音输入（听写），字会打进当前有焦点的输入框（前端先把焦点放进速记框）
+#[tauri::command]
+pub fn dictate() -> bool {
+  #[cfg(windows)]
+  {
+    use windows::Win32::UI::Input::KeyboardAndMouse::*;
+    let key = |k: VIRTUAL_KEY, up: bool| INPUT {
+      r#type: INPUT_KEYBOARD,
+      Anonymous: INPUT_0 { ki: KEYBDINPUT { wVk: k, wScan: 0, dwFlags: if up { KEYEVENTF_KEYUP } else { KEYBD_EVENT_FLAGS(0) }, time: 0, dwExtraInfo: 0 } },
+    };
+    let h = VIRTUAL_KEY(0x48);
+    let seq = [key(VK_LWIN, false), key(h, false), key(h, true), key(VK_LWIN, true)];
+    return unsafe { SendInput(&seq, std::mem::size_of::<INPUT>() as i32) } == 4;
+  }
+  #[allow(unreachable_code)]
+  false
+}
+
 #[cfg(not(windows))]
 fn grab_selection(_app: &AppHandle) -> Option<String> {
   None
@@ -189,18 +298,16 @@ pub fn take_args(app: &AppHandle, args: &[String], second: bool) {
   if !a.send.is_empty() {
     let e = app.state::<Entry>();
     let mut files = e.files.lock().unwrap();
+    let mut inbox = e.inbox.lock().unwrap();
     for p in a.send.iter().take(entrylogic::MAX_FILES) {
-      let Ok(meta) = std::fs::metadata(p) else { continue };
-      if !meta.is_file() || meta.len() > entrylogic::MAX_BYTES {
-        continue;
-      }
-      let name = std::path::Path::new(p).file_name().map(|x| x.to_string_lossy().to_string()).unwrap_or_default();
-      let Some(mime) = entrylogic::guess_mime(&name) else { continue };
-      if let Ok(b) = std::fs::read(p) {
-        files.push((name, mime.to_string(), b));
+      if let Some(f) = read_send(p) {
+        files.push(f);
+        inbox.add_send(p);
       }
     }
     drop(files);
+    drop(inbox);
+    inbox_save(app);
     show_main(app);
     let _ = app.emit("glean-send", ());
   } else if second && a.links.is_empty() && !a.hidden {
@@ -218,7 +325,9 @@ pub fn on_link(app: &AppHandle, url: String) {
   if *e.ready.lock().unwrap() {
     let _ = app.emit("glean-go", url);
   } else {
+    e.inbox.lock().unwrap().add_link(&url);
     e.links.lock().unwrap().push(url);
+    inbox_save(app);
   }
 }
 
@@ -245,6 +354,9 @@ pub fn entry_get(app: AppHandle) -> EntryState {
   }
   if !keys.excerpt.is_empty() && !live.contains(&"excerpt") {
     errors.push(("excerpt".into(), "没注册上".into()));
+  }
+  if !keys.shot.is_empty() && !live.contains(&"shot") {
+    errors.push(("shot".into(), "没注册上".into()));
   }
   EntryState { keys, errors, autostart: autostart_on(&app) }
 }
@@ -285,7 +397,10 @@ pub fn entry_autostart(app: AppHandle, on: bool) -> Result<bool, String> {
 pub fn link_take(app: AppHandle) -> Vec<String> {
   let e = app.state::<Entry>();
   *e.ready.lock().unwrap() = true;
-  std::mem::take(&mut *e.links.lock().unwrap())
+  let out = std::mem::take(&mut *e.links.lock().unwrap());
+  e.inbox.lock().unwrap().links.clear();
+  inbox_save(&app);
+  out
 }
 
 #[derive(serde::Serialize)]
@@ -310,7 +425,10 @@ pub fn send_read(app: AppHandle, index: usize) -> tauri::ipc::Response {
 
 #[tauri::command]
 pub fn send_clear(app: AppHandle) {
-  app.state::<Entry>().files.lock().unwrap().clear();
+  let e = app.state::<Entry>();
+  e.files.lock().unwrap().clear();
+  e.inbox.lock().unwrap().send.clear();
+  inbox_save(&app);
 }
 
 /// 0520：外链交给系统默认程序（网易云 / B 站等装了 App 的会被它们接走）。只放行 http / https。
