@@ -2,7 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { GraftTrail, HistoryRow } from '../components/IdeaCard';
-import { db, trashDevelopments, untrashDevelopments } from '../lib/db';
+import { db } from '../lib/db';
+import { dropWithReason } from '../lib/feedback';
 import { groupBranches } from '../lib/branches';
 import { transformName } from '../lib/graft';
 import { evidenceOf, sourceIds, splitMentions } from '../lib/provenance';
@@ -182,13 +183,7 @@ function Manifesto({ groups, byId }: { groups: ReturnType<typeof groupBranches>;
           </button>
           <button
             className="btn text faint"
-            onClick={async () => {
-              if (await confirm({ title: '不要这根新枝？', ok: '不要了', cancel: '留着', danger: true })) {
-                const id = dev.id!;
-                await trashDevelopments([id]);
-                toast('已删掉这根新枝（在回收站）', 'ok', { label: '撤销', run: () => void untrashDevelopments([id]).then(() => toast('已放回新枝')) });
-              }
-            }}
+            onClick={() => void dropWithReason({ ...dev, id: dev.id! }, confirm, toast)}
           >
             不要
           </button>
