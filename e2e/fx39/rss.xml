@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel>
+<title><![CDATA[某某的播客]]></title><link>https://example.com/</link><atom:link href="https://example.com/feed" rel="self"/>
+<item><title><![CDATA[第 12 期：城市夜晚 & 声音]]></title><link>https://example.com/ep12</link><guid isPermaLink="false">ep-12</guid><pubDate>Mon, 02 Nov 2026 10:00:00 +0800</pubDate><description><![CDATA[<p>我们聊了<b>夜班公交</b>和便利店的白光。</p>]]></description></item>
+<item><title>第 11 期</title><link>https://example.com/ep11</link><dc:date>2026-10-26T10:00:00+08:00</dc:date><description>&lt;p&gt;转义过的 HTML 摘要&lt;/p&gt;</description></item>
+</channel></rss>
