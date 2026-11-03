@@ -1,3 +1,4 @@
+import { withBundles } from './bundles';
 // v0.21 数据地基：.glean 备份（流式 ZIP）+ 按 uid 去重的导入（合并 / 替换 / 只补缺，先预览条数）。
 //
 // .glean = ZIP（只存储不压缩）：
@@ -498,6 +499,12 @@ function cleanRow(x: InItem): Item {
   for (const k of ['t', 'imageRef', 'id', 'thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage']) delete row[k];
   const it = row as unknown as Item;
   it.tags = normalizeTags(Array.isArray(it.tags) ? it.tags : []);
+  // v0.28 穗束：只认字符串数组
+  if (it.bundles !== undefined) {
+    const b = Array.isArray(it.bundles) ? withBundles([], it.bundles.filter((x): x is string => typeof x === 'string')) : [];
+    if (b.length) it.bundles = b;
+    else delete it.bundles;
+  }
   if (typeof it.createdAt !== 'number') it.createdAt = Date.now();
   if (typeof it.updatedAt !== 'number') it.updatedAt = it.createdAt;
   if (!isUlid(it.uid)) it.uid = ulid(it.createdAt);
