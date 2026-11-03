@@ -1,0 +1,110 @@
+{
+  "version": "0.38.0",
+  "date": "2026-11-04",
+  "build": "app-Zs8mGSLv.js",
+  "e2e": {
+    "coldStartMs": 189,
+    "coldStartCpu4xMs": 503,
+    "searchMaxMs": 18.8,
+    "searchMedianMs": 17.3,
+    "quickEnterToCardMs": {
+      "median": 9,
+      "runs": [
+        13,
+        7,
+        19,
+        9,
+        9
+      ],
+      "items": 1000
+    },
+    "backup": {
+      "items": 1000,
+      "images": 300,
+      "ms": 599,
+      "heapDeltaMB": 34.4,
+      "peakMB": 43.8,
+      "heapRuns": [
+        53.7,
+        33.2,
+        34.4
+      ]
+    },
+    "restoreMs": 960,
+    "scroll": "masonry/timeline/list 60fps jank 0%",
+    "touchTargetsSmall": 0
+  },
+  "interleavedBench": {
+    "script": "e2e/bench5.mjs (painted)，InstaBox 4441=d37 app-CXyGB7J3 / 4440=d38 app-Zs8mGSLv（哈希已核对）",
+    "rounds": 9,
+    "v037": {
+      "normalMedian": 190,
+      "cpu4xMedian": 575,
+      "normalRuns": [
+        199,
+        180,
+        190,
+        190,
+        194,
+        179,
+        176,
+        216,
+        204
+      ],
+      "cpu4xRuns": [
+        540,
+        541,
+        578,
+        581,
+        582,
+        528,
+        539,
+        583,
+        575
+      ]
+    },
+    "v038": {
+      "normalMedian": 195,
+      "cpu4xMedian": 586,
+      "normalRuns": [
+        202,
+        181,
+        199,
+        183,
+        199,
+        195,
+        183,
+        204,
+        183
+      ],
+      "cpu4xRuns": [
+        595,
+        613,
+        550,
+        586,
+        548,
+        549,
+        568,
+        607,
+        592
+      ]
+    },
+    "perfGate": {
+      "normal": "190 → 195ms（+2.6%，U=35.5/81，z=0.44）OK",
+      "cpu4x": "575 → 586ms（+1.9%，U=20/81，z=1.81）OK"
+    },
+    "verdict": "持平，性能回归门 OK"
+  },
+  "bundle": {
+    "firstScreenJsKB": "570 → 530",
+    "firstScreenJsGzipKB": "194 → 179",
+    "totalKB": "2223.5 → 2167",
+    "note": "Framer Motion 换成自写 rw/lite.ts"
+  },
+  "model": {
+    "file": "models/mini-zh-v1.bin",
+    "bytes": 8799540,
+    "sha256": "34ac606785ca9f6321807169811905d268b64fa9b199d86015db7e56a8f493d1",
+    "lazyChunkKB": 2.8
+  }
+}
