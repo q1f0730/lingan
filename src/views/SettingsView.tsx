@@ -1,5 +1,6 @@
 import { Seg } from '../components/rw/Seg';
 import { GardenPanel } from '../components/GardenPanel';
+import { MoveIn } from '../components/MoveIn';
 import { readSharePrefs } from '../lib/sharekit';
 import { outboundOff } from '../lib/gate';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -49,6 +50,7 @@ const SnapshotP = memo(SnapshotPanel);
 const OutboundP = memo(OutboundPanel);
 const SyncP = memo(SyncPanel);
 const GardenP = memo(GardenPanel);
+const MoveInP = memo(MoveIn);
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm, desktop } = useApp();
@@ -470,6 +472,7 @@ export function SettingsView() {
                 </div>
               </div>
             )}
+            <MoveInP />
             <p className="hint meta-text">手机和电脑之间可以用「导出 → 导入」搬运。旧版的 .json 备份照样能导入。</p>
           </section>
 
