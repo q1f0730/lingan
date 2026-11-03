@@ -18,6 +18,8 @@
 | 嫁接 | 3–5 穗、跳跃度、四步（找张力 → 撒种子 → 换掉相像的 → 留三根）、离线同样可用、来源溯源 |
 | 新枝 | 按批次成捆、留下 / 再接一次 / 不要、黑底「宣言」大字视图 |
 | 口味 | 倾向与来源表、构成、最近冷下来的、365 天拾穗日子、AI 侧写 |
+| Agent 与 API | Windows 版本机 MCP / REST（Claude Code、Cherry Studio 等）：默认只读、私密穗不给、写入逐次确认，见 `docs/agent.md` |
+| 更新 | Windows 自动更新（签名校验）、安卓提示新版 |
 | 设置 | 智谱 GLM（免费，默认）/ 硅基流动 / Gemini / 任意 OpenAI 兼容接口、可选向量模型、白 / 黑主题（跟随系统）、JSON 备份导入、搬去 Obsidian（Markdown + 图片 ZIP） |
 
 数据全部保存在本机（IndexedDB）。API Key 只存在你的设备上，不会打包进安装包。
@@ -33,7 +35,7 @@ npm run dev        # 浏览器里开发
 npm test           # 单元测试
 npm run tauri dev  # 桌面壳
 ```
-技术栈：Tauri v2 + React + TypeScript + Vite + Dexie(IndexedDB)。安装包由 GitHub Actions 构建（`.github/workflows/release.yml`）。
+技术栈：Tauri v2 + React + TypeScript + Vite + Dexie(IndexedDB)。每次推送由 `.github/workflows/ci.yml` 跑质量门与体积预算；安装包由 `.github/workflows/release.yml` 构建。给 AI 编码助手的仓库指南见 `AGENTS.md`。
 视觉规范与设计稿见 `docs/design/studio/`（STYLE.md、SCREENS.md）。技术选型参考了 Gemini 与 Perplexity 的深度研究。
 
 ## 致谢
