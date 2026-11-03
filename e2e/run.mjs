@@ -107,11 +107,11 @@ function withIds(obj, ids, titles, cMode) {
   });
   return o;
 }
-async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok' } = {}) {
-  const log = { calls: 0, phases: [] };
+async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok', conv = null, pattern = '**/mock-ai/v1/chat/completions' } = {}) {
+  const log = { calls: 0, phases: [], users: [], systems: [] };
   let left = fail429;
   let cCalls = 0;
-  await pg.route('**/mock-ai/v1/chat/completions', async (route) => {
+  await pg.route(pattern, async (route) => {
     const body = JSON.parse(route.request().postData() || '{}');
     const sys = String(body.messages?.[0]?.content || '');
     log.calls++;
@@ -120,6 +120,8 @@ async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok' } = {}) {
     const a = sys.includes('PHASE A');
     log.phases.push(a ? 'A' : sys.includes('PHASE C') ? 'C' : '?');
     const user = String(body.messages?.[1]?.content || '');
+    log.users.push(user);
+    log.systems.push(sys);
     const found = [...user.matchAll(/\[#(\d+) \|[^\]]*\] ([^\n]+)/g)];
     const ids = [...new Set(found.map((m) => Number(m[1])))];
     const titles = found.map((m) => m[2].trim());
@@ -129,8 +131,8 @@ async function mockAI(pg, { fail429 = 0, delay = 500, evidence = 'ok' } = {}) {
     if (!a) cCalls++;
     if (!a && sys.includes('上一次的回答里')) log.recheckPrompt = true;
     const cMode = a ? 'ok' : evidence === 'recheck' && cCalls === 1 ? 'noid' : evidence === 'weak' ? (cCalls === 1 ? 'noid' : 'weak') : 'ok';
-    const payload = withIds(a ? MOCK_MAP : MOCK_CONV, ids, titles, cMode);
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message: { content: '```json\n' + JSON.stringify(payload) + '\n```' } }] }) });
+    const payload = withIds(a ? MOCK_MAP : conv || MOCK_CONV, ids, titles, cMode);
+    await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ choices: [{ message: { content: '```json\n' + JSON.stringify(payload) + '\n```' } }] }) });
   });
   return log;
 }
@@ -736,7 +738,8 @@ async function onboarding() {
       await pg.waitForSelector('.onboard:has-text("AI 只用你的素材")');
       if ((await pg.locator('.promise-list li').count()) !== 4) errs.push(`[${tag}] expected 4 promises`);
       await pg.click('.onboard-next');
-      if ((await pg.locator('.radio-list .radio').count()) !== 4) errs.push(`[${tag}] expected 4 AI services`);
+      // v0.24 多了「本地模型（LM Studio / Ollama）」
+      if ((await pg.locator('.radio-list .radio').count()) !== 5) errs.push(`[${tag}] expected 5 AI services`);
       await pg.click('.radio-list .radio:has-text("智谱")');
       await pg.fill('.radio-item input', 'e2e-onboard-key');
       await pg.screenshot({ path: `${out}/${tag}-3.png` });
@@ -1251,7 +1254,7 @@ async function datafound() {
   const z = readZipBuf(gbuf);
   const man = JSON.parse(new TextDecoder().decode(z.get('manifest.json')));
   const imgs = [...z.keys()].filter((k) => k.startsWith('images/'));
-  if (man.format !== 'glean' || man.schema !== 9 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
+  if (man.format !== 'glean' || man.schema !== 10 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
   for (const [k, v] of z) if (k !== 'manifest.json' && man.files[k]?.sha256 !== sha256(v)) errs.push(`[datafound] sha256 mismatch ${k}`);
   if (imgs[0] && imgs[0] !== `images/${sha256(z.get(imgs[0]))}.png`) errs.push(`[datafound] image not named by content hash ${imgs[0]}`);
   const lines = new TextDecoder().decode(z.get('data.jsonl')).trim().split('\n').map((l) => JSON.parse(l));
@@ -2109,6 +2112,214 @@ async function wall() {
   await c2.close();
 }
 
+// v0.24 嫁接反馈与本地模型：三枝不撞车 / 新颖度 / 去 AI 腔 / 主干 / 讨厌 / 私密 / 文风 / 不要的理由 / 本地模型探测
+const DUP_IDEA = '一分钟短片：雨夜的公交站，两个陌生人共用一把伞，一直等到末班车开走也没有上车，镜头只拍伞下的鞋。';
+const MOCK_CONV_DUP = {
+  pattern: '好几粒都落在「雨夜」',
+  replaced: [],
+  branches: [
+    { seed: 1, title: '伞下的鞋', idea: DUP_IDEA, form: '一分钟短片', refs: [1, 2], unlike: '只拍鞋', experiment: '拍 20 分钟路人的鞋。' },
+    { seed: 2, title: '伞下的鞋子', idea: DUP_IDEA.replace('也没有', '都没有'), form: '一分钟短片', refs: [2, 1], unlike: '也只拍鞋', experiment: '拍 20 分钟路人的鞋子。' },
+    { seed: 6, title: '小票上的情书', idea: '值得一提的是，一本用便利店小票装订的小书：每张小票记录一次路过，商品名连起来读是一封没寄出的信。', form: '手作小书', refs: [1, 2], unlike: '能拿在手里', experiment: '收集今天的三张小票，改写成三行诗。' },
+  ],
+  cliches: [],
+};
+function e2eCore(t, idea) {
+  return [t, idea].filter(Boolean).join('。').replace(/《[^》]{0,40}》/g, '').replace(/做成[^。]*?[：:][^。]*。/g, '').replace(/这一根的变形是「[^」]*」[^。]*。/g, '').replace(/接法「[^」]*」[^。]*。/g, '').replace(/约束[：:][^。]*。/g, '').replace(/方向[：:][^。]*。/g, '');
+}
+function e2eBig(s) {
+  const t = s.replace(/[\s，。、《》「」『』“”"'：:；;！!？?,.\-—…·（）()[\]【】]/g, '').toLowerCase();
+  const o = new Set();
+  for (let i = 0; i < t.length - 1; i++) o.add(t.slice(i, i + 2));
+  return o;
+}
+function e2eSim(a, b) {
+  const A = e2eBig(e2eCore(a.title, a.idea));
+  const B = e2eBig(e2eCore(b.title, b.idea));
+  if (!A.size || !B.size) return 0;
+  let n = 0;
+  for (const x of A) if (B.has(x)) n++;
+  return n / (A.size + B.size - n);
+}
+async function quickCapture(pg, title, flag) {
+  await pg.click('.quick-more');
+  await pg.fill('.capture .field.big input', title);
+  await pg.click('.capture .more-toggle');
+  await pg.fill('.capture .field.why input', `${title}的理由`);
+  await pg.click(`.capture .${flag}`);
+  await pg.click('.capture button[type=submit]');
+  await pg.waitForSelector(`.card:has-text("${title}")`, { timeout: 5000 }).catch(() => errs.push(`[graft24] captured ${title} not in library`));
+}
+async function graft24() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[graft24] pageerror ${e.message}`));
+  const origin = new URL(base).origin;
+  await pg.goto(base);
+  await pg.evaluate((v) => localStorage.setItem('lingan.settings.v1', v), MOCK_SETTINGS(origin, { style: { on: true, samples: ['短句。不解释。只说看见的。'] } }));
+  const log = await mockAI(pg, { delay: 80, conv: MOCK_CONV_DUP });
+  await pg.reload();
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  // 0206 / 0242：速记里点「讨厌」「私密」
+  await quickCapture(pg, '烂俗鸡汤语录', 'flag-dislike');
+  await quickCapture(pg, '日记里的一句', 'flag-private');
+  const rows = await dbRaw(pg, 'items');
+  const bad = rows.find((x) => x.title === '烂俗鸡汤语录');
+  const priv = rows.find((x) => x.title === '日记里的一句');
+  if (bad?.polarity !== -1) errs.push(`[graft24] dislike flag not stored ${JSON.stringify(bad?.polarity)}`);
+  if (priv?.private !== 1) errs.push(`[graft24] private flag not stored ${JSON.stringify(priv?.private)}`);
+  if (!(await pg.locator('.card:has-text("烂俗鸡汤语录") .dislike-mark').count())) errs.push('[graft24] dislike mark missing on card');
+  if (!(await pg.locator('.card:has-text("日记里的一句") .private-mark').count())) errs.push('[graft24] private mark missing on card');
+  // 嫁接页：讨厌的 / 私密的（云端模型）都不会被抽到
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls button:has-text("抽几穗")');
+  for (let k = 0; k < 6; k++) {
+    const names = await pg.locator('.pick-table .pair-item .card-title').allInnerTexts();
+    if (names.some((n) => n.includes('烂俗鸡汤') || n.includes('日记里的一句'))) errs.push(`[graft24] drew a disliked / private item: ${names.join(' / ')}`);
+    await pg.click('.controls .shuffle');
+  }
+  // 0203：没写为什么的提示（示例里有缺为什么的就出现；不强求）
+  // 0202：钉住第一穗为主干
+  const anchorTitle = (await pg.locator('.pick-table .pair-item .card-title').first().innerText()).trim();
+  await pg.click('.pick-table .pair-item >> nth=0 >> .pin-anchor');
+  await pg.waitForSelector('.pick-table .anchor-badge', { timeout: 3000 }).catch(() => errs.push('[graft24] anchor badge missing'));
+  if (!(await pg.locator('.anchor-note').count())) errs.push('[graft24] anchor note missing');
+  await pg.screenshot({ path: `${out}/graft24-picked.png`, fullPage: true });
+  log.users.length = 0;
+  log.systems.length = 0;
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 20000 }).catch(() => errs.push('[graft24] graft did not finish'));
+  await pg.waitForTimeout(300);
+  if ((await pg.locator('.three .idea').count()) !== 3) errs.push('[graft24] expected 3 branches');
+  // 三枝不撞车：模型给了两根几乎一样的 → 换掉一根，提示「换掉了一根太像的」，三根两两 < 阈值（默认 0.45）
+  if ((await pg.locator('.three .distinct-badge').count()) !== 1) errs.push(`[graft24] expected exactly 1 「换掉了一根太像的」 badge, got ${await pg.locator('.three .distinct-badge').count()}`);
+  if (!(await pg.locator('.three-head .distinct-note').count())) errs.push('[graft24] distinct note missing in three-head');
+  await pg.waitForSelector('.toast:has-text("换掉了一根太像的")', { timeout: 3000 }).catch(() => errs.push('[graft24] distinct toast missing'));
+  const devs = (await dbRaw(pg, 'developments')).sort((x, y) => y.createdAt - x.createdAt).slice(0, 3);
+  for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) {
+    const sim = e2eSim(devs[i].idea, devs[j].idea);
+    if (sim >= 0.45) errs.push(`[graft24] branches ${i}/${j} still too similar ${sim.toFixed(2)}`);
+  }
+  if (devs.filter((d) => d.idea.distinct === 'replaced').length !== 1) errs.push('[graft24] stored branches should have 1 distinct=replaced');
+  // 0241 新颖度：三根都有角标；0234 去 AI 腔：「值得一提的是」被删
+  if ((await pg.locator('.three .novelty').count()) !== 3) errs.push('[graft24] novelty line missing');
+  if (devs.some((d) => typeof d.idea.nearest?.sim !== 'number')) errs.push('[graft24] stored nearest sim missing');
+  if ((await branchOwnText(pg)).includes('值得一提的是')) errs.push('[graft24] AI-tone phrase not removed');
+  if (!devs.some((d) => d.idea.deai >= 1)) errs.push('[graft24] deai count not stored');
+  // 0202 主干：存了 anchorId；每根新枝的「因为这几穗」里主干加粗
+  if (!devs.every((d) => typeof d.anchorId === 'number')) errs.push('[graft24] anchorId not stored');
+  const anc = await pg.locator('.three .idea .sprig.anchor').count();
+  if (anc < 3) errs.push(`[graft24] anchor sprig should be marked on every branch, got ${anc}`);
+  // 提示词：主干 / AVOID（讨厌的，不带 ID）/ STYLE；私密穗一个字都不出现
+  if (log.users.length < 2) errs.push(`[graft24] expected 2 AI calls, got ${log.users.length}`);
+  for (const u of log.users) {
+    if (!/\| 主干/.test(u)) errs.push('[graft24] prompt lacks 主干 mark');
+    if (!u.includes('AVOID') || !u.includes('《烂俗鸡汤语录》')) errs.push('[graft24] prompt lacks AVOID with the disliked item');
+    if (!u.includes('STYLE') || !u.includes('短句。不解释。')) errs.push('[graft24] prompt lacks STYLE sample');
+    if (u.includes('日记里的一句')) errs.push('[graft24] private item leaked into prompt');
+    if (!u.includes('为什么打动我')) errs.push('[graft24] why not in prompt');
+  }
+  if (!log.systems.every((x) => x.includes('是主干'))) errs.push('[graft24] system prompt lacks anchor rule');
+  void anchorTitle;
+  await pg.screenshot({ path: `${out}/graft24-result.png`, fullPage: true });
+  // 0212 不要 + 理由：快捷理由
+  await pg.locator('.three .idea-drop').first().click();
+  await pg.waitForSelector('.confirm .reason-chips', { timeout: 3000 }).catch(() => errs.push('[graft24] reason chips missing in confirm'));
+  if ((await pg.locator('.confirm .chip.reason').count()) !== 5) errs.push(`[graft24] expected 5 reason chips, got ${await pg.locator('.confirm .chip.reason').count()}`);
+  await pg.click('.confirm .chip.reason[data-reason="cliche"]');
+  await pg.waitForSelector('.confirm .chip.reason.on[data-reason="cliche"][aria-checked="true"]', { timeout: 2000 }).catch(() => errs.push('[graft24] picked reason not highlighted'));
+  await studio(pg, 'graft24-confirm');
+  await pg.screenshot({ path: `${out}/graft24-reason.png` });
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("记下了「太俗」")', { timeout: 3000 }).catch(() => errs.push('[graft24] reason toast missing'));
+  // 自定义理由
+  await pg.locator('.three .idea-drop').nth(1).click();
+  await pg.click('.confirm .chip.reason[data-reason="custom"]');
+  await pg.fill('.confirm .reason-input', '太像广告');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("太像广告")', { timeout: 3000 }).catch(() => errs.push('[graft24] custom reason toast missing'));
+  // 不选理由也能删
+  const before = (await dbRaw(pg, 'rejects')).length;
+  if (before !== 2) errs.push(`[graft24] rejects in db expected 2 got ${before}`);
+  // 口味页：可见可删
+  await pg.click('.nav-btn:has-text("口味")');
+  await pg.waitForSelector('.rejects');
+  if ((await pg.locator('.rejects .reject-row').count()) !== 2) errs.push('[graft24] taste should list 2 reasons');
+  const tt = await pg.locator('.rejects').innerText();
+  if (!tt.includes('太俗') || !tt.includes('太像广告')) errs.push('[graft24] reasons text missing on taste page');
+  if (!(await pg.locator('.style-panel[data-on="1"]').count())) errs.push('[graft24] style panel should be on');
+  if (!(await pg.locator('.dislikes[data-count="1"]').count())) errs.push('[graft24] dislike panel should list 1');
+  await studio(pg, 'graft24-taste');
+  await pg.screenshot({ path: `${out}/graft24-taste.png`, fullPage: true });
+  await pg.click('.reject-row[data-reason="custom"] .reject-del');
+  await pg.waitForFunction(() => document.querySelectorAll('.rejects .reject-row').length === 1, null, { timeout: 3000 }).catch(() => errs.push('[graft24] delete reason did not work'));
+  // 下次嫁接：FEEDBACK 里有剩下的「太俗」，没有删掉的「太像广告」
+  log.users.length = 0;
+  await pg.click('.nav-btn:has-text("嫁接")');
+  await pg.click('.controls .shuffle');
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 20000 });
+  await pg.waitForTimeout(300);
+  const u2 = log.users.join('\n');
+  if (!u2.includes('FEEDBACK') || !u2.includes('太俗、太常见')) errs.push('[graft24] next graft prompt lacks FEEDBACK');
+  if (u2.includes('太像广告')) errs.push('[graft24] deleted reason still in prompt');
+  await ctx.close();
+
+  // 0208 / 0209 本地模型：探测本机 LM Studio（有模型）/ Ollama（没开），局域网地址探测，公网地址拒绝
+  const c2 = await b.newContext({ viewport: { width: 1366, height: 860 } });
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[local] pageerror ${e.message}`));
+  const json = (r, o) => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(o) });
+  const probes = [];
+  await c2.route('http://127.0.0.1:1234/**', (r) => (probes.push(r.request().url()), json(r, { data: [{ id: 'qwen2.5-7b-instruct' }, { id: 'text-embedding-nomic-embed-text-v1.5' }] })));
+  await c2.route('http://127.0.0.1:11434/**', (r) => (probes.push(r.request().url()), r.abort('connectionrefused')));
+  await c2.route('http://192.168.1.23:1234/**', (r) => (probes.push(r.request().url()), r.abort('connectionrefused')));
+  await c2.route('http://192.168.1.23:11434/**', (r) => (probes.push(r.request().url()), r.request().url().endsWith('/api/tags') ? json(r, { models: [{ name: 'qwen3:8b' }] }) : r.fulfill({ status: 404, headers: { 'access-control-allow-origin': '*' }, body: 'no' })));
+  p2.on('console', (m) => m.type() === 'error' && !/Failed to load resource|ERR_|CORS/.test(m.text()) && errs.push(`[local] console ${m.text()}`));
+  await p2.goto(base);
+  await p2.click('.nav-btn:has-text("设置")');
+  await p2.click('.radio-list .radio:has-text("本地模型")');
+  await p2.waitForSelector('.local-panel');
+  await p2.click('.local-probe');
+  await p2.waitForSelector('.local-row.ok[data-kind="lmstudio"]', { timeout: 6000 }).catch(() => errs.push('[local] LM Studio not found'));
+  await p2.waitForSelector('.local-row.off[data-kind="ollama"]', { timeout: 6000 }).catch(() => errs.push('[local] Ollama off row missing'));
+  if ((await p2.locator('.local-row[data-kind="lmstudio"] .chip.local-model').count()) !== 1) errs.push('[local] should list 1 chat model (embedding filtered)');
+  await p2.click('.chip.local-model:has-text("qwen2.5-7b-instruct")');
+  const base1 = await p2.locator('#set-ai input[placeholder="https://…/v1"]').inputValue();
+  if (base1 !== 'http://127.0.0.1:1234/v1') errs.push(`[local] baseUrl not set: ${base1}`);
+  await studio(p2, 'local-settings');
+  await p2.screenshot({ path: `${out}/local-probe.png`, fullPage: true });
+  // 测试连接按钮：本地模型不要密钥也能点
+  if (await p2.locator('.test-conn').isDisabled()) errs.push('[local] test connection disabled without key');
+  // 公网地址不探测
+  const n0 = probes.length;
+  await p2.fill('.local-host input', 'example.com');
+  await p2.click('.local-probe-host');
+  await p2.waitForSelector('.local-err', { timeout: 2000 }).catch(() => errs.push('[local] public host not refused'));
+  if (probes.length !== n0) errs.push('[local] probed a public host');
+  // 局域网电脑：Ollama /v1/models 404 → /api/tags
+  await p2.fill('.local-host input', '192.168.1.23');
+  await p2.click('.local-probe-host');
+  await p2.waitForSelector('.local-row.ok[data-kind="ollama"]:has-text("192.168.1.23")', { timeout: 6000 }).catch(() => errs.push('[local] LAN Ollama not found via /api/tags'));
+  await p2.click('#set-ai .btn.primary:has-text("保存")');
+  const saved = await p2.evaluate(() => JSON.parse(localStorage.getItem('lingan.settings.v1') || '{}'));
+  if (saved.preset !== 'local' || saved.localHost !== '192.168.1.23' || saved.chat?.chatModel !== 'qwen2.5-7b-instruct') errs.push(`[local] settings not saved ${JSON.stringify({ p: saved.preset, h: saved.localHost, m: saved.chat?.chatModel })}`);
+  if (JSON.stringify(saved).includes('apiKey":"e2e')) errs.push('[local] key leaked');
+  // 三枝不撞车阈值可调
+  const v0 = await p2.locator('.distinct-val').innerText();
+  await p2.locator('.distinct-range').fill('0.3');
+  if ((await p2.locator('.distinct-val').innerText()) === v0) errs.push('[local] distinct threshold slider did not change');
+  await p2.click('#set-ai .btn.primary:has-text("保存")');
+  const saved2 = await p2.evaluate(() => JSON.parse(localStorage.getItem('lingan.settings.v1') || '{}'));
+  if (Math.abs((saved2.distinct?.text ?? 0) - 0.3) > 1e-6) errs.push(`[local] distinct threshold not saved ${JSON.stringify(saved2.distinct)}`);
+  // 离线：本地模型照常可用的提示
+  await c2.setOffline(true);
+  await p2.waitForSelector('.offline-bar:has-text("本地模型照常嫁接")', { timeout: 3000 }).catch(() => errs.push('[local] offline bar should say local model works'));
+  await c2.setOffline(false);
+  await c2.close();
+}
+
 async function legacy() {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
   const pg = await ctx.newPage();
@@ -2154,7 +2365,7 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 90) errs.push(`[legacy] db version expected 90 (Dexie v9) got ${ver}`);
+  if (ver !== 100) errs.push(`[legacy] db version expected 100 (Dexie v10) got ${ver}`);
   // v0.19 旧新枝里列过的套路迁移上墙
   const lw = (await dbRaw(pg, 'cliches')).map((c) => c.key).sort();
   if (JSON.stringify(lw) !== JSON.stringify(['旧套路乙', '旧套路甲'].sort())) errs.push(`[legacy] wall backfill ${JSON.stringify(lw)}`);
@@ -2393,7 +2604,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 90) errs.push(`[perf] db version (expected 90 = Dexie v9) ${integ.version}`);
+  if (integ.version !== 100) errs.push(`[perf] db version (expected 100 = Dexie v10) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
@@ -2593,6 +2804,10 @@ async function security() {
 }
 
 try {
+  if (process.env.E2E_ONLY === 'graft24') {
+    await graft24();
+    throw Object.assign(new Error('graft24 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'inbox') {
     await inbox();
     await inboxMobile();
@@ -2623,6 +2838,8 @@ try {
   if (process.env.E2E_ONLY === 'modes') throw Object.assign(new Error('modes only'), { only: true });
   await wall();
   if (process.env.E2E_ONLY === 'wall') throw Object.assign(new Error('wall only'), { only: true });
+  await graft24();
+  if (process.env.E2E_ONLY === 'graft24') throw Object.assign(new Error('graft24 only'), { only: true });
   await legacy();
   await daily();
   if (process.env.E2E_ONLY === 'daily') throw Object.assign(new Error('daily only'), { only: true });
