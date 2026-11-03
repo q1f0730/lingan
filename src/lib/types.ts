@@ -63,6 +63,8 @@ export interface Item {
   bundles?: string[];
   /** v0.34 0902 公开花园：标了才会进「生成花园页」（默认私有）；私密穗永远不进。没加索引，不是 schema 变更 */
   garden?: 1;
+  /** v0.35 0016 再次遇见：同一件东西又收了一次、合并进来时记下那次的时间（最早拾于 = createdAt）。没加索引，随同步 */
+  meets?: number[];
   createdAt: number;
   updatedAt: number;
 }
