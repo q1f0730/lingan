@@ -342,7 +342,7 @@ describe('Dexie v10：rejects 表', () => {
   it('新库有 rejects 表，清空全部时一起清', async () => {
     const d = fresh();
     await d.open();
-    expect(d.verno).toBe(10);
+    expect(d.verno).toBe(11); // v0.29 起是 11（作品）
     await d.rejects.add({ reason: 'far', title: 't', createdAt: 1 });
     const { clearAll } = await import('../lib/db');
     await clearAll(d);
