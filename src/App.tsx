@@ -410,7 +410,7 @@ export default function App() {
           {!online && (
             <div className="offline-bar" role="status">
               <span className="offline-dot" aria-hidden />
-              离线 · 拾穗照常保存，嫁接会改用离线方式
+              {settings.preset === 'local' ? '离线 · 拾穗照常保存，本地模型照常嫁接' : '离线 · 拾穗照常保存，嫁接会改用离线方式'}
             </div>
           )}
           <header className="topbar">
