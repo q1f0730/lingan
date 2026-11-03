@@ -11,6 +11,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { installGlobalErrorHandlers, isSafeMode, logError, setSecretProvider } from './lib/errlog';
 import { initSecrets, loadSettings } from './lib/settings';
 import { collectDiagnostics } from './lib/diagcollect';
+import { guardUpgrade, markSchema } from './lib/upgradeguard';
+import { PENDING_KEY } from './lib/safewrite';
+import { isTauriEnv } from './lib/desktop';
 
 // v0.20：全局错误先挂上（之后任何未捕获的错误 / Promise 拒绝都进本地日志），日志脱敏认得当前密钥
 installGlobalErrorHandlers();
@@ -35,7 +38,7 @@ function start() {
     </StrictMode>,
   );
   // v0.20 数据库打不开（迁移失败等）：不白屏，换成能导出原始数据的兜底页
-  db.open().catch(async (e) => {
+  db.open().then(() => markSchema(db.verno), async (e) => {
     logError(e, 'error', { view: 'db.open' });
     const { renderDbFailure } = await import('./views/DbFailure');
     renderDbFailure(root, e);
@@ -50,6 +53,18 @@ function start() {
     await ensureUids(db).catch((e) => logError(e, 'error', { view: 'ensureUids' }));
     await purgeExpired(db).catch((e) => logError(e, 'error', { view: 'purgeExpired' }));
   });
+  // v0.26 0605：上次有写不进库的穗暂存着 → 空闲时补进去（没有暂存就不加载、不碰库）
+  if (localStorage.getItem(PENDING_KEY))
+    void afterFirstPaint(3500).then(async () => {
+      const { replayPendingWrites } = await import('./lib/db');
+      const r = await replayPendingWrites(db).catch((e) => (logError(e, 'error', { view: 'replayPending' }), null));
+      if (r?.done) window.dispatchEvent(new CustomEvent('glean:replayed', { detail: r }));
+    });
+  // v0.26 0606 / 0508：桌面与安卓每天一次自动备份（库没变就跳过），启动 20 秒后空闲时才加载
+  if (isTauriEnv())
+    void afterFirstPaint(3000)
+      .then(() => new Promise((r) => setTimeout(r, 20000)))
+      .then(() => import('./lib/autobackup').then((m) => m.autoBackupTick(__APP_VERSION__)).catch((e) => logError(e, 'error', { view: 'autobackup' })));
   // v0.20：其余四页的包在穗仓首屏画完之后预取
   void afterFirstPaint(2500).then(prefetchViews);
   // v0.20：申请持久存储（浏览器 / WebView 在空间紧张时不清本库）
@@ -59,4 +74,5 @@ function start() {
 // v0.20：AI 密钥从系统钥匙串读进内存（旧版 localStorage 里的 key 首次启动时搬过去并清掉），再渲染
 initSecrets()
   .catch((e) => logError(e, 'error', { view: 'vault' }))
-  .finally(start);
+  // v0.26 0624：库要升级时先存一份原始库（平常启动直接跳过，不碰 IndexedDB）
+  .finally(() => guardUpgrade('lingan', db.verno, __APP_VERSION__).finally(start));
