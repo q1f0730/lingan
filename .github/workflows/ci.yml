@@ -37,3 +37,24 @@ jobs:
           name: size-report
           path: size-report.*
           if-no-files-found: ignore
+  # v0.37 0705：e2e 搬进 Actions（每次推送都跑；性能组只在 InstaBox 上当门，这里 E2E_SKIP=perf）。失败时上传出错上下文的 Playwright trace
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx vite build
+      - name: e2e
+        env: { E2E_CHROMIUM: /usr/bin/google-chrome, E2E_SKIP: perf, E2E_TRACE: '1' }
+        run: |
+          npm i --no-save playwright-core@1.64.1
+          (npx vite preview --host 127.0.0.1 --port 4173 --strictPort >/tmp/preview.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          node e2e/run.mjs http://127.0.0.1:4173/ e2e-out 2>&1 | tee e2e.log
+          tail -1 e2e.log | grep -qx 'ALL PASS'
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: e2e-failure, path: 'e2e-out/trace-*.zip', if-no-files-found: ignore }
