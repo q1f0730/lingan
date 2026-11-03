@@ -1297,7 +1297,8 @@ async function datafound() {
   const lj = await importNote(p2, 'merge');
   if (lj.add !== 2 || (await p2.locator('.import-preview').getAttribute('data-format')) !== 'json') errs.push(`[datafound] legacy json preview ${JSON.stringify(lj)}`);
   await p2.click('.import-go');
-  await p2.waitForSelector('.toast:has-text("已合并")');
+  // v0.26 导入前先拍快照，导入稍慢：等这次导入自己的提示（上一次的「已合并」可能还在屏幕上）
+  await p2.waitForSelector('.toast:has-text("已合并：新增 2 穗")');
   const afterOld = await dbRaw(p2, 'items');
   const oldImg = afterOld.find((x) => x.title === '旧备份里的图');
   if (afterOld.length !== live.length + 2 || !oldImg?.hasImage || !ULID_RE.test(oldImg.uid || '')) errs.push(`[datafound] legacy import ${afterOld.length}`);
@@ -2597,6 +2598,9 @@ async function perf() {
   await pg.goto(base);
   await pg.waitForFunction(() => window.__gleanReady && document.querySelectorAll('.masonry .card').length > 0, null, { timeout: 60000 });
   PERF.firstOpenWithMigrationMs = await pg.evaluate(() => Math.round(window.__gleanReady));
+  // v0.26 0624：迁移前存了升级前副本（内联大原图不复制，不能让第一次打开卡住）
+  PERF.preUpgrade = await pg.evaluate(() => window.__gleanPreUpgrade || null);
+  if (!PERF.preUpgrade?.id) errs.push(`[perf] pre-upgrade copy missing ${JSON.stringify(PERF.preUpgrade)}`);
   // 后台补 300 张缩略图
   await pg.waitForFunction(() => window.__gleanThumbs && window.__gleanThumbs.runs > 0 && !window.__gleanThumbs.running && window.__gleanThumbs.left === 0, null, { timeout: 150000 }).catch(() => errs.push('[perf] thumbnails never finished'));
   const th = await pg.evaluate(() => ({ ...window.__gleanThumbs }));
@@ -3114,7 +3118,7 @@ try {
   await perf();
 } catch (e) {
   if (Object.keys(PERF).length) console.log('PERF partial ' + JSON.stringify(PERF).slice(0, 600));
-  if (!e.only) errs.push('FATAL ' + e.message);
+  if (!e.only) errs.push('FATAL ' + e.message + ' @ ' + ((e.stack || '').split('\n').find((l) => l.includes('run.mjs')) || '').trim());
 }
 await b.close();
 if (PERF.scrollMasonryCpu4x && PERF.scrollTimeline) {
