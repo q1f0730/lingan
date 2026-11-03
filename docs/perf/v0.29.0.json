@@ -1,0 +1,503 @@
+{
+  "touchTargets": {
+    "small": 0,
+    "list": []
+  },
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 2617,
+  "preUpgrade": {
+    "from": 2,
+    "to": 11,
+    "id": 1
+  },
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 7347,
+    "wallMs": 8773
+  },
+  "storage": {
+    "version": 110,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102224504,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 19,
+    "rows": 1000,
+    "reopenLoadMs": 12,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 17.6,
+        "results": 176,
+        "coreMs": 2
+      },
+      {
+        "q": "海边",
+        "ms": 17.1,
+        "results": 178,
+        "coreMs": 0.7
+      },
+      {
+        "q": "钢琴",
+        "ms": 16.8,
+        "results": 172,
+        "coreMs": 0.6
+      },
+      {
+        "q": "夜车",
+        "ms": 17.1,
+        "results": 174,
+        "coreMs": 0.5
+      },
+      {
+        "q": "麦田",
+        "ms": 17,
+        "results": 63,
+        "coreMs": 0.4
+      },
+      {
+        "q": "黄昏",
+        "ms": 16.9,
+        "results": 176,
+        "coreMs": 0.4
+      }
+    ],
+    "maxMs": 17.6,
+    "medianMs": 17.1,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 31.3,
+        "results": 176,
+        "coreMs": 1.8
+      },
+      {
+        "q": "便利",
+        "ms": 35.2,
+        "results": 125,
+        "coreMs": 1.9
+      },
+      {
+        "q": "霓虹",
+        "ms": 35.9,
+        "results": 176,
+        "coreMs": 1.4
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 178,
+    "runs": [
+      178,
+      201,
+      170
+    ],
+    "firstThumbsDecodedMedian": 210,
+    "cardsOnFirstScreen": 12
+  },
+  "coldStartCpu4xMs": {
+    "median": 517,
+    "runs": [
+      517,
+      558,
+      505
+    ],
+    "firstThumbsDecodedMedian": 639
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16824,
+    "scrollHeight": 115306,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 4,
+    "objectUrlsCreated": 60
+  },
+  "scrollTimeline": {
+    "frames": 359,
+    "scrolledPx": 14401,
+    "scrollHeight": 66314,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 27,
+    "virtual": {
+      "total": 38,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14409,
+    "scrollHeight": 45355,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 58,
+    "maxLiveObjectUrls": 1,
+    "virtual": {
+      "total": 1000,
+      "mounted": 57
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 300,
+    "scrolledPx": 8004,
+    "scrollHeight": 115306,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400,
+  "backup": {
+    "ms": 643,
+    "bytes": 102748622,
+    "items": 1000,
+    "images": 300,
+    "imageMB": 97.5,
+    "heap": {
+      "baseMB": 19.5,
+      "peakMB": 48.1,
+      "deltaMB": 22,
+      "runs": [
+        44.7,
+        22,
+        15.7
+      ]
+    },
+    "badHashes": 0
+  },
+  "restore": {
+    "ms": 1011,
+    "heap": {
+      "baseMB": 6.6,
+      "peakMB": 44.9,
+      "deltaMB": 38.3
+    },
+    "items": 1000,
+    "images": 300
+  },
+  "interleavedBench": {
+    "note": "InstaBox 同一会话（e2e ALL PASS 之后），bench3.mjs 交替测、轮流换先后，1000 穗 / 300 图。两组共 16 轮：第一组 7 轮 v028 先，第二组 9 轮 v029 先",
+    "run1": {
+      "v028": {
+        "normalMedian": 193,
+        "cpu4xMedian": 545,
+        "normalRuns": [
+          169,
+          177,
+          171,
+          208,
+          193,
+          199,
+          196
+        ],
+        "cpu4xRuns": [
+          545,
+          482,
+          513,
+          518,
+          571,
+          581,
+          561
+        ]
+      },
+      "v029": {
+        "normalMedian": 195,
+        "cpu4xMedian": 575,
+        "normalRuns": [
+          208,
+          206,
+          190,
+          195,
+          190,
+          208,
+          194
+        ],
+        "cpu4xRuns": [
+          575,
+          609,
+          519,
+          566,
+          580,
+          590,
+          568
+        ]
+      }
+    },
+    "run2": {
+      "v029": {
+        "normalMedian": 186,
+        "cpu4xMedian": 556,
+        "normalRuns": [
+          179,
+          174,
+          195,
+          179,
+          211,
+          195,
+          186,
+          186,
+          207
+        ],
+        "cpu4xRuns": [
+          512,
+          556,
+          571,
+          556,
+          521,
+          577,
+          566,
+          502,
+          585
+        ]
+      },
+      "v028": {
+        "normalMedian": 176,
+        "cpu4xMedian": 562,
+        "normalRuns": [
+          166,
+          166,
+          184,
+          183,
+          169,
+          176,
+          200,
+          190,
+          175
+        ],
+        "cpu4xRuns": [
+          529,
+          493,
+          576,
+          529,
+          574,
+          562,
+          594,
+          547,
+          608
+        ]
+      }
+    },
+    "run3_noiseFloor": {
+      "v028": {
+        "normalMedian": 183,
+        "cpu4xMedian": 577,
+        "normalRuns": [
+          212,
+          201,
+          182,
+          183,
+          190,
+          176,
+          182
+        ],
+        "cpu4xRuns": [
+          619,
+          651,
+          577,
+          522,
+          566,
+          560,
+          601
+        ]
+      },
+      "v029": {
+        "normalMedian": 207,
+        "cpu4xMedian": 600,
+        "normalRuns": [
+          210,
+          213,
+          221,
+          184,
+          195,
+          176,
+          207
+        ],
+        "cpu4xRuns": [
+          608,
+          620,
+          566,
+          600,
+          581,
+          589,
+          616
+        ]
+      },
+      "v029copy": {
+        "normalMedian": 202,
+        "cpu4xMedian": 612,
+        "normalRuns": [
+          222,
+          209,
+          220,
+          191,
+          196,
+          202,
+          194
+        ],
+        "cpu4xRuns": [
+          620,
+          632,
+          612,
+          646,
+          604,
+          596,
+          609
+        ]
+      }
+    },
+    "run4_attribution": {
+      "note": "nonav = v0.29 去掉导航「作品」项；nov11 = v0.29 去掉 Dexie version(11)",
+      "v028": {
+        "normalMedian": 174,
+        "cpu4xMedian": 538,
+        "normalRuns": [
+          160,
+          174,
+          185,
+          202,
+          163,
+          184,
+          157
+        ],
+        "cpu4xRuns": [
+          499,
+          550,
+          539,
+          602,
+          538,
+          531,
+          488
+        ]
+      },
+      "v029": {
+        "normalMedian": 179,
+        "cpu4xMedian": 559,
+        "normalRuns": [
+          171,
+          179,
+          166,
+          222,
+          197,
+          196,
+          175
+        ],
+        "cpu4xRuns": [
+          501,
+          559,
+          561,
+          613,
+          550,
+          588,
+          505
+        ]
+      },
+      "nonav": {
+        "normalMedian": 187,
+        "cpu4xMedian": 531,
+        "normalRuns": [
+          167,
+          187,
+          183,
+          193,
+          202,
+          191,
+          177
+        ],
+        "cpu4xRuns": [
+          523,
+          612,
+          551,
+          543,
+          528,
+          528,
+          531
+        ]
+      },
+      "nov11": {
+        "normalMedian": 184,
+        "cpu4xMedian": 540,
+        "normalRuns": [
+          181,
+          199,
+          174,
+          203,
+          180,
+          184,
+          195
+        ],
+        "cpu4xRuns": [
+          540,
+          597,
+          596,
+          525,
+          534,
+          555,
+          516
+        ]
+      }
+    },
+    "combined30": {
+      "v028": {
+        "normalMedian": 182.5,
+        "cpu4xMedian": 555
+      },
+      "v029": {
+        "normalMedian": 195,
+        "cpu4xMedian": 569.5
+      },
+      "P(v029>v028)_normal": 0.7,
+      "P(v029>v028)_cpu4x": 0.61,
+      "verdict": "普通冷启动慢约 12ms（z≈2.7 显著）；4× 不显著；去掉导航项 / Dexie v11 的对照都没有恢复，原因未定位"
+    }
+  },
+  "sizeBudget": {
+    "firstScreenJsKB": 552.6,
+    "firstScreenJsGzipKB": 186.9,
+    "firstScreenCssKB": 126.5
+  }
+}
