@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { hidden } from './lib/lock';
 import { CaptureForm, emptyDraft, type Draft } from './components/CaptureForm';
 import { ClipOffer, QuickBar, QuickWindow } from './components/QuickBar';
 import { ConfirmLayer, type ConfirmReq } from './components/Confirm';
@@ -793,6 +794,8 @@ export default function App() {
   async function editDetail(it0: Item) {
     // 详情里可能刚改过（加标签 / 留下 / 合并）：编辑前读最新的
     const it = (it0.id != null ? await db.items.get(it0.id) : null) || it0;
+    // v0.39 0907 上锁且没解锁：不给编辑（表单里会露内容）
+    if (hidden(it)) return toast('这一穗上锁了：先输 PIN 解锁', 'err');
     const { id, createdAt: _c, updatedAt: _u, thumb: _t, thumbW: _w, thumbH: _h, thumbTodo: _td, thumbFail: _f, hasImage: _hi, dup: _dp, inbox: _ib, ...rest } = it;
     void _c, void _u, void _t, void _w, void _h, void _td, void _f, void _hi, void _dp, void _ib;
     // 编辑时才把原图读出来给表单预览
