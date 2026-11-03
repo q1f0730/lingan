@@ -9,6 +9,10 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   clearScreen: false,
   server: { port: 5173, strictPort: true, host: process.env.TAURI_DEV_HOST || false },
-  build: { target: ['es2021', 'chrome100', 'safari15'], chunkSizeWarningLimit: 1200 },
+  build: { target: ['es2021', 'chrome100', 'safari15'], chunkSizeWarningLimit: 1200, 
+    // v0.23：首屏一个 app 块 = main.tsx 的全部静态依赖（含库层 db / Dexie）。点开才用的视图（搜索、待理、缺为什么、多选工具条…）
+    // 各自单独成块。不这么写的话，打包器在视图改成懒加载后会把 db + Dexie 拆成单独的首屏块
+    rolldownOptions: { output: { advancedChunks: { groups: [{ name: 'app', test: /src[\/]main\.tsx$/, includeDependenciesRecursively: true }] } } },
+  },
   test: { environment: 'node' },
 } as never);
