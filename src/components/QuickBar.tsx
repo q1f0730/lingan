@@ -92,6 +92,8 @@ export function afterAdd(id: number, d: QuickDraft, s: Settings, onErr?: (m: str
         /* link kept as is */
       }
     }
+    // v0.36 0020 桌面版：图里的字交给系统 OCR（懒加载），进秒搜
+    if (d.image && isTauriEnv() && !('LinganShare' in window)) void import('../lib/ocr').then((m) => m.ocrAfterAdd(id, onErr));
     const err = await enrichItem(id, s);
     if (err) onErr?.('AI 整理失败：' + err);
   })();
@@ -157,6 +159,22 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   }, [text]);
   const ts = useTagSuggest(text, setText, inputRef, { className: 'tag-suggest-quick' });
   const tsWhy = useTagSuggest(why, setWhy, whyRef, { className: 'tag-suggest-quick' });
+  // v0.36「说一句就收」：安卓按住说话松手成穗（系统语音识别），Windows 点一下 Win+H 听写（lib/voice.ts 懒加载）
+  const [talk, setTalk] = useState(false);
+  const voiceOK = useMemo(() => 'LinganVoice' in window || (isTauriEnv() && !('LinganShare' in window)), []);
+  const voice = (down: boolean) => {
+    setTalk(down);
+    void import('../lib/voice').then((v) => {
+      if (!down) return v.letGo();
+      return v.hold(inputRef.current, async (t) => {
+        const d = parseQuick(t);
+        if (!d) return;
+        const id = await quickAdd(d, settings, (m) => toast(m, 'err'));
+        setLast(id);
+        setDone(Date.now());
+      }, (m) => toast(m, 'err'));
+    });
+  };
 
   async function save() {
     // v0.34 0900：粘进来的是别人「递一穗」的整段话，按 glean:// 链接收（进 待理 · 递来的）
@@ -310,9 +328,23 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
             拾 <IconEnter size={14} />
           </button>
         ) : (
-          <button className="btn quick-more" onClick={openCapture} title="展开速记（N）">
-            展开
-          </button>
+          <>
+            {voiceOK && (
+              <button
+                className={`btn quick-more quick-mic${talk ? ' on' : ''}`}
+                aria-label="按住说话，松手成一穗"
+                onPointerDown={(e) => (e.preventDefault(), voice(true))}
+                onPointerUp={() => voice(false)}
+                onPointerCancel={() => talk && voice(false)}
+                onContextMenu={(e) => e.preventDefault()}
+              >
+                {talk ? '松手' : '说'}
+              </button>
+            )}
+            <button className="btn quick-more" onClick={openCapture} title="展开速记（N）">
+              展开
+            </button>
+          </>
         )}
       </m.div>
       {ts.box}
@@ -338,11 +370,13 @@ export function QuickWindow({ onClose, initial = '' }: { onClose: () => void; in
   // v0.33 0004 热键唤出时带上选中的文字；0003 剪贴板里有图 → 给一张缩略图「拾这张图」
   const [clip, setClip] = useState<{ file: File; url: string } | null>(null);
   useEffect(() => {
-    if (initial) setText(initial.replace(/\s+/g, ' ').slice(0, 4000));
+    // v0.36 0005 截图热键：payload 以 \u0001shot 开头 = 刚框选的截图，直接带上
+    const shot = initial.startsWith('\u0001shot');
+    if (initial && !shot) setText(initial.replace(/\s+/g, ' ').slice(0, 4000));
     if (isTauriEnv())
       void import('../lib/entry')
         .then((m) => m.clipImageOffer())
-        .then(setClip, () => {});
+        .then((c) => (shot && c ? void takeImage(c.file) : setClip(c)), () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   async function takeImage(f: File) {
