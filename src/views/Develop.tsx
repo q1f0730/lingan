@@ -55,7 +55,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const all = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   // v0.24 0206 我讨厌的不当素材；0242 私密穗在用云端模型时不抽（本地模型且允许时照常）
   const ai = aiReady(settings);
-  const usable = useMemo(() => all?.filter((x) => x.polarity !== -1 && (!ai || aiVisible(x, settings))), [all, ai, settings]);
+  const usable = useMemo(() => all?.filter((x) => x.polarity !== -1 && !x.locked && (!ai || aiVisible(x, settings))), [all, ai, settings]);
   // v0.28 0108 嫁接池：只在某个穗束里抽（null = 整个穗仓）
   const [pool, setPool] = useState<string | null>(takePool);
   const pools = useMemo(() => bundleCounts(usable || []).filter(([, n]) => n >= MIN_EVIDENCE), [usable]);
@@ -113,7 +113,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   useEffect(() => {
     if (preset && items && all) {
       // 从详情 / 每日一穗带进来的：私密 / 讨厌的穗也照带（嫁接时私密的会改走离线）
-      const allById = new Map(all.map((i) => [i.id!, i]));
+      const allById = new Map(all.filter((i) => !i.locked).map((i) => [i.id!, i]));
       const sel = preset.map((id) => byId.get(id) || allById.get(id)).filter(Boolean) as Item[];
       if (sel.length) {
         let full = sel;
@@ -137,7 +137,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   // 被编辑 / 删除时保持同步
   useEffect(() => {
     if (picked && all) {
-      const allById = new Map(all.map((i) => [i.id!, i]));
+      const allById = new Map(all.filter((i) => !i.locked).map((i) => [i.id!, i]));
       const fresh = picked.map((p) => allById.get(p.id!)).filter(Boolean) as Item[];
       if (fresh.length !== picked.length || fresh.some((f, i) => f !== picked[i])) setPicked(fresh.length ? fresh : null);
     }
