@@ -2999,6 +2999,10 @@ async function safety() {
   await pg.waitForSelector('.toast:has-text("已回到「清空所有前」")', { timeout: 8000 }).catch(() => errs.push(`[${tag}] restore after wipe`));
   if ((await dbRaw(pg, 'items', true)).length !== 3) errs.push(`[${tag}] wipe snapshot did not bring rows back`);
   await pg.locator('#set-snap').screenshot({ path: `${out}/safety-snap.png` });
+  // v0.27：手机上快照 / 备份列表的说明和时间折行显示，不截成「…」
+  const trunc = await pg.evaluate(() => [...document.querySelectorAll('.snap-row .tc-title, .snap-row .tc-src, .autobak-row .tc-title, .autobak-row .tc-src')].filter((e) => getComputedStyle(e).whiteSpace === 'nowrap' || getComputedStyle(e).textOverflow === 'ellipsis' || e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent));
+  const nRows = await pg.locator('.snap-row').count();
+  if (trunc.length || !nRows) errs.push(`[${tag}] snapshot / backup rows truncated on mobile (${nRows} rows) ${JSON.stringify(trunc.slice(0, 4))}`);
   // 4) 写入失败兜底：items 写入抛 QuotaExceeded → 提示已暂存、输入清空 → 重开后自动补上
   await pg.click('.nav-btn:has-text("穗仓")');
   await pg.evaluate(() => {
@@ -3032,7 +3036,244 @@ async function safety() {
   console.log('safety: backup / snapshots / wipe / pending ok');
 }
 
+// v0.27 界面交互（C1）：安全区 / 主题桥、键盘贴底、类型小标、#标签补全、长按 / 右键菜单、返回原位、详情就地改、Ctrl+V / 拖放 / 小窗粘图、Ctrl+N、多窗口同步、触达区 ≥44
+const MOCK_CHROME = () => {
+  window.__theme = [];
+  window.LinganChrome = { insets: () => '{"t":32,"b":20,"l":0,"r":0}', setTheme: (d, bg) => window.__theme.push([d, bg]) };
+};
+async function seedMany(pg, n) {
+  await pg.evaluate((n) => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const tx = r.result.transaction('items', 'readwrite'); const st = tx.objectStore('items'); const now = Date.now(); for (let i = 0; i < n; i++) st.add({ type: 'idea', title: `批量穗 ${i}`, content: '', creator: '', year: '', url: '', why: i % 2 ? '' : '因为好看', tags: i % 3 ? ['夜车'] : ['城市'], createdAt: now - i * 60000, updatedAt: now - i * 60000, uid: `01SEED${String(i).padStart(20, '0')}` }); tx.oncomplete = () => { r.result.close(); res(); }; }; }), n);
+}
+async function pngFileJs(pg) {
+  // 页面里画一张真 PNG，返回 dataURL（粘贴 / 拖放用）
+  return pg.evaluate(() => { const c = document.createElement('canvas'); c.width = 40; c.height = 30; const g = c.getContext('2d'); g.fillStyle = '#c96'; g.fillRect(0, 0, 40, 30); return c.toDataURL('image/png'); });
+}
+async function smallTargets(pg) {
+  return pg.evaluate(() => {
+    const bad = [];
+    for (const el of document.querySelectorAll('button, a[href], [role="button"], [role="switch"], [role="radio"], [role="tab"], [role="menuitem"], [role="option"], summary')) {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === 'hidden' || cs.pointerEvents === 'none' || el.closest('[aria-hidden="true"]')) continue;
+      const a = getComputedStyle(el, '::after');
+      let w = r.width;
+      let h = r.height;
+      if (a.content !== 'none' && a.position === 'absolute') {
+        w = Math.max(w, parseFloat(a.width) || 0);
+        h = Math.max(h, parseFloat(a.height) || 0);
+      }
+      if (w < 43.5 || h < 43.5) bad.push(`${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ')[0]} ${Math.round(w)}x${Math.round(h)} "${(el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 10)}"`);
+    }
+    return bad;
+  });
+}
+async function ui27() {
+  const tag = 'ui27';
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await ctx.addInitScript(MOCK_CHROME);
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  // 0410 / 0416：原生安全区写进 CSS 变量，顶栏让开状态栏；主题同步给状态栏
+  const edge = await pg.evaluate(() => ({ e: document.documentElement.dataset.edge, top: getComputedStyle(document.querySelector('.topbar')).paddingTop, dock: getComputedStyle(document.querySelector('.dock')).paddingBottom, th: window.__theme.at(-1) }));
+  if (edge.e !== '1' || edge.top !== '32px' || !edge.dock.includes('30px') || JSON.stringify(edge.th) !== '[false,"#f7f5f1"]') errs.push(`[${tag}] safe area / theme bridge ${JSON.stringify(edge)}`);
+  await pg.evaluate(() => window.dispatchEvent(new CustomEvent('glean:insets', { detail: { t: 40, b: 0, l: 0, r: 0 } })));
+  if ((await pg.evaluate(() => getComputedStyle(document.querySelector('.topbar')).paddingTop)) !== '40px') errs.push(`[${tag}] insets event not applied`);
+  for (const t of ['夜车上睡着 #夜车', '雨夜的霓虹 #雨夜', '城市天际线 #城市']) await quickSave(pg, t);
+  // 0412：类型小标，点一下换类型，存的就是换过的
+  await pg.fill('.quick-input', 'https://music.163.com/song?id=9');
+  const t1 = await pg.textContent('.quick-type');
+  await pg.click('.quick-type');
+  const t2 = await pg.textContent('.quick-type');
+  await pg.press('.quick-input', 'Enter');
+  await pg.waitForTimeout(400);
+  const last = (await dbRaw(pg, 'items')).find((x) => x.url === 'https://music.163.com/song?id=9');
+  if (t1 !== '音乐' || t2 !== '电影' || last?.type !== 'film') errs.push(`[${tag}] type chip ${t1} → ${t2} saved ${last?.type}`);
+  // 0413：#标签补全（Tab 填第一个；回车不抢存）
+  await pg.click('.quick-input');
+  await pg.keyboard.type('新的一穗 #夜');
+  await pg.waitForSelector('.tag-suggest-opt', { timeout: 3000 }).catch(() => errs.push(`[${tag}] no tag suggestions`));
+  const sugg = await pg.locator('.tag-suggest-opt').allTextContents();
+  if (sugg[0] !== '#夜车' || !sugg.includes('#雨夜')) errs.push(`[${tag}] suggestions ${JSON.stringify(sugg)}`);
+  await pg.keyboard.press('Tab');
+  await pg.waitForTimeout(100);
+  const qv = await pg.inputValue('.quick-input');
+  if (qv !== '新的一穗 #夜车 ') errs.push(`[${tag}] tab fill ${JSON.stringify(qv)}`);
+  await pg.keyboard.press('Enter');
+  await pg.waitForTimeout(400);
+  const nt = (await dbItems(pg)).find((x) => x.title === '新的一穗');
+  if (!nt || nt.tags.join() !== '夜车') errs.push(`[${tag}] tag fill save ${JSON.stringify(nt)}`);
+  // 0401：输入框聚焦、视口被键盘压矮 → 底栏只留速记条，贴着可见区底边
+  await pg.focus('.quick-input');
+  await pg.setViewportSize({ width: 390, height: 520 });
+  await pg.waitForTimeout(300);
+  const kb = await pg.evaluate(() => ({ kb: document.documentElement.dataset.kb, nav: getComputedStyle(document.querySelector('.dock .nav')).display, bottom: Math.round(document.querySelector('.quick-dock .quick-bar').getBoundingClientRect().bottom), h: innerHeight }));
+  if (kb.kb !== '1' || kb.nav !== 'none' || kb.bottom > kb.h || kb.h - kb.bottom > 40) errs.push(`[${tag}] keyboard dock ${JSON.stringify(kb)}`);
+  await pg.evaluate(() => document.activeElement.blur());
+  await pg.setViewportSize({ width: 390, height: 844 });
+  await pg.waitForTimeout(300);
+  if (await pg.evaluate(() => document.documentElement.dataset.kb)) errs.push(`[${tag}] keyboard flag should clear`);
+  // 0411：长按卡片 → 底部菜单 → 编辑
+  const card = pg.locator('.card:has-text("城市天际线")');
+  await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await pg.waitForTimeout(200);
+  const box = await card.boundingBox();
+  await pg.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: x, clientY: y })); }, [box.x + 20, box.y + 20]);
+  await pg.waitForSelector('.ctxmenu.as-sheet', { timeout: 2000 }).catch(() => errs.push(`[${tag}] long press menu`));
+  const acts = await pg.locator('.ctxmenu-item').allTextContents();
+  if (acts.join('|') !== '打开|编辑|拿去嫁接|复制文字|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
+  await pg.click('.ctx-edit');
+  await pg.waitForSelector('.sheet .capture', { timeout: 3000 }).catch(() => errs.push(`[${tag}] menu edit`));
+  await pg.click('.sheet .icon-btn');
+  // 0409：详情就地改标题 / 为什么（#标签进标签）/ 加标签
+  await card.click();
+  await pg.waitForSelector('.detail');
+  await pg.click('.detail-title .inline-edit');
+  await pg.fill('.detail-title .inline-input', '城市天际线（夜）');
+  await pg.keyboard.press('Enter');
+  await pg.click('.detail-why .inline-edit');
+  await pg.fill('.detail-why .inline-input', '灯一盏盏亮起来 #夜车');
+  await pg.keyboard.press('Control+Enter');
+  await pg.click('.tags .tag-add');
+  await pg.fill('.tags .inline-input', '天台');
+  await pg.keyboard.press('Enter');
+  await pg.waitForTimeout(400);
+  const ed = (await dbRaw(pg, 'items')).find((x) => x.title.startsWith('城市天际线'));
+  if (ed?.title !== '城市天际线（夜）' || ed?.why !== '灯一盏盏亮起来' || ed?.tags.join() !== '城市,夜车,天台') errs.push(`[${tag}] inline edit ${JSON.stringify(ed && [ed.title, ed.why, ed.tags])}`);
+  if (!(await pg.locator('.detail-title:has-text("城市天际线（夜）")').count())) errs.push(`[${tag}] detail not refreshed after inline edit`);
+  // Esc 放弃，不关详情
+  await pg.click('.detail-title .inline-edit');
+  await pg.fill('.detail-title .inline-input', '不要这个');
+  await pg.keyboard.press('Escape');
+  if (!(await pg.locator('.detail').count()) || (await dbItems(pg)).some((x) => x.title === '不要这个')) errs.push(`[${tag}] escape should cancel edit only`);
+  await pg.click('.sheet .icon-btn');
+  // 0403：关掉详情回到那张卡；切页回来回到原来的滚动位置
+  await pg.waitForSelector('.card.was-open', { timeout: 1200 }).catch(async () => errs.push(`[${tag}] closed card not marked ${await pg.evaluate(() => JSON.stringify({ a: document.activeElement?.outerHTML.slice(0, 80), d: !!document.querySelector('.detail'), s: !!document.querySelector('.sheet'), cards: [...document.querySelectorAll('.main [data-item-id]')].map((e) => e.dataset.itemId + ':' + e.className) }))}`));
+  await seedMany(pg, 60);
+  await pg.reload();
+  await pg.waitForSelector('.card');
+  await pg.evaluate(() => window.scrollTo(0, 1500));
+  await pg.waitForTimeout(300);
+  const y0 = await pg.evaluate(() => window.scrollY);
+  const anchor0 = await pg.evaluate(() => { const el = [...document.querySelectorAll('.main .card[data-item-id]')].find((e) => e.getBoundingClientRect().top >= 80); return el ? { id: el.dataset.itemId, top: Math.round(el.getBoundingClientRect().top) } : null; });
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('.settings-layout, .set-sec');
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.waitForTimeout(1200);
+  const y1 = await pg.evaluate(() => window.scrollY);
+  // 回到同一张卡、差不多同一位置（浏览器的滚动锚定会因上方内容长高而整体挪一点，看的是卡不是像素）
+  const anchor1 = anchor0 && (await pg.evaluate((id) => { const el = document.querySelector(`.main .card[data-item-id="${id}"]`); return el ? Math.round(el.getBoundingClientRect().top) : null; }, anchor0.id));
+  // 瀑布流在上方模块晚到时会重新分列，单张卡的像素位置不一定不变：要求刚才看着的那张卡回来后仍在屏幕里
+  if (y0 < 1000 || y1 < 1000 || !anchor0 || anchor1 == null || anchor1 < -150 || anchor1 > 700) errs.push(`[${tag}] scroll restore ${y0} → ${y1} card ${JSON.stringify(anchor0)} → ${anchor1}`);
+  // 0414：手机上可点元素触达区 ≥ 44（穗仓 / 设置 / 详情）
+  const small = [];
+  await pg.evaluate(() => window.scrollTo(0, 0));
+  small.push(...(await smallTargets(pg)));
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('.set-sec');
+  for (const y of [0, 1200, 2400, 3600]) {
+    await pg.evaluate((y) => window.scrollTo(0, y), y);
+    await pg.waitForTimeout(150);
+    small.push(...(await smallTargets(pg)));
+  }
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.locator('.card').first().click();
+  await pg.waitForSelector('.detail');
+  small.push(...(await smallTargets(pg)));
+  await pg.click('.sheet .icon-btn');
+  const uniq = [...new Set(small)];
+  PERF.touchTargets = { small: uniq.length, list: uniq.slice(0, 20) };
+  if (uniq.length) errs.push(`[${tag}] touch targets < 44px: ${uniq.slice(0, 8).join(' ; ')}${uniq.length > 8 ? ` …(+${uniq.length - 8})` : ''}`);
+  // 0416：换黑主题 → 状态栏桥收到 dark
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.click('.theme-seg button:has-text("黑")').catch(() => errs.push(`[${tag}] theme seg`));
+  await pg.waitForTimeout(200);
+  if (JSON.stringify(await pg.evaluate(() => window.__theme.at(-1))) !== '[true,"#17161a"]') errs.push(`[${tag}] dark theme not sent to status bar`);
+  await ctx.close();
+
+  // 桌面：右键菜单、Ctrl+V 成穗、拖放、Ctrl+N、速记小窗粘图、多窗口同步
+  const dctx = await b.newContext({ viewport: { width: 1366, height: 860 } });
+  const dp = await dctx.newPage();
+  dp.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await dp.goto(base);
+  await dp.waitForSelector('text=穗仓还是空的');
+  await quickSave(dp, '右键这一穗');
+  await dp.click('.card:has-text("右键这一穗")', { button: 'right' });
+  await dp.waitForSelector('.ctxmenu.at-point', { timeout: 2000 }).catch(() => errs.push(`[${tag}] right click menu`));
+  const mp = await dp.evaluate(() => { const r = document.querySelector('.ctxmenu').getBoundingClientRect(); return r.right <= innerWidth && r.bottom <= innerHeight && r.left >= 0; });
+  if (!mp) errs.push(`[${tag}] menu off screen`);
+  await dp.keyboard.press('Escape');
+  if (await dp.locator('.ctxmenu').count()) errs.push(`[${tag}] esc should close menu`);
+  await dp.click('.card:has-text("右键这一穗")', { button: 'right' });
+  await dp.click('.ctx-delete');
+  await dp.waitForSelector('.confirm');
+  await dp.click('.confirm-ok');
+  await dp.waitForTimeout(300);
+  if ((await dbItems(dp)).some((x) => x.title === '右键这一穗')) errs.push(`[${tag}] menu delete`);
+  // 0406：穗仓任意处 Ctrl+V（文字 / 图片）
+  await dp.click('.view h1, .view', { position: { x: 5, y: 5 } }).catch(() => {});
+  await dp.evaluate(() => { document.activeElement?.blur?.(); const dt = new DataTransfer(); dt.setData('text/plain', '粘贴来的一句话'); document.body.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); });
+  await dp.waitForSelector('.toast:has-text("已拾 1 穗")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] paste text toast`));
+  const png = await pngFileJs(dp);
+  await dp.evaluate(async (png) => { const blob = await (await fetch(png)).blob(); const dt = new DataTransfer(); dt.items.add(new File([blob], 'image.png', { type: 'image/png' })); document.body.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }, png);
+  await dp.waitForTimeout(1200);
+  const pasted = await dbItems(dp);
+  if (!pasted.some((x) => x.title === '粘贴来的一句话') || !pasted.some((x) => x.type === 'image' && x.title === '粘贴的图片')) errs.push(`[${tag}] paste anywhere ${JSON.stringify(pasted.map((x) => [x.type, x.title]))}`);
+  // 输入框里粘贴照旧（不成穗）
+  const n0 = (await dbItems(dp)).length;
+  await dp.focus('.quick-input');
+  await dp.evaluate(() => { const dt = new DataTransfer(); dt.setData('text/plain', '只是粘进输入框'); document.activeElement.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); });
+  await dp.waitForTimeout(400);
+  if ((await dbItems(dp)).length !== n0) errs.push(`[${tag}] paste in input should not capture`);
+  await dp.evaluate(() => document.activeElement.blur());
+  // 0407：拖文件进窗口：出提示层，松手成穗（图片 + .md + 跳过 pdf）
+  await dp.evaluate(async (png) => {
+    const blob = await (await fetch(png)).blob();
+    const dt = new DataTransfer();
+    dt.items.add(new File([blob], '海边.png', { type: 'image/png' }));
+    dt.items.add(new File(['# 读书笔记\n第二行'], '读书笔记.md', { type: 'text/markdown' }));
+    dt.items.add(new File(['%PDF'], 'x.pdf', { type: 'application/pdf' }));
+    window.__dt = dt;
+    document.body.dispatchEvent(new DragEvent('dragenter', { dataTransfer: dt, bubbles: true, cancelable: true }));
+  }, png);
+  if (!(await dp.locator('.dropin').count())) errs.push(`[${tag}] drop overlay`);
+  await dp.evaluate(() => document.body.dispatchEvent(new DragEvent('drop', { dataTransfer: window.__dt, bubbles: true, cancelable: true })));
+  await dp.waitForSelector('.toast:has-text("已拾 2 穗 · 跳过 1 个")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] drop toast`));
+  if (await dp.locator('.dropin').count()) errs.push(`[${tag}] overlay should hide after drop`);
+  const dropped = await dbItems(dp);
+  if (!dropped.some((x) => x.type === 'image' && x.title === '海边') || !dropped.some((x) => x.type === 'text' && x.title === '读书笔记')) errs.push(`[${tag}] drop items ${JSON.stringify(dropped.map((x) => [x.type, x.title]))}`);
+  // 0406：Ctrl+N 打开完整表单
+  await dp.keyboard.press('Control+n');
+  await dp.waitForSelector('.sheet .capture', { timeout: 2000 }).catch(() => errs.push(`[${tag}] ctrl+n`));
+  await dp.keyboard.press('Escape');
+  // 0405：速记小窗粘贴图片 → 预览 → 回车存成图片穗（带说明）
+  await dp.evaluate(() => window.dispatchEvent(new Event('glean:quick')));
+  await dp.waitForSelector('.quick-window input');
+  await dp.fill('.quick-window input', '截图里的海');
+  await dp.evaluate(async (png) => { const blob = await (await fetch(png)).blob(); const dt = new DataTransfer(); dt.items.add(new File([blob], 'image.png', { type: 'image/png' })); document.querySelector('.quick-window input').dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }, png);
+  await dp.waitForSelector('.qw-img img', { timeout: 3000 }).catch(() => errs.push(`[${tag}] quick window image preview`));
+  await dp.press('.quick-window input', 'Enter');
+  await dp.waitForTimeout(600);
+  if (!(await dbItems(dp)).some((x) => x.type === 'image' && x.title === '截图里的海')) errs.push(`[${tag}] quick window image save`);
+  // 0417：两个窗口：一个存穗、改主题，另一个立刻跟上
+  const dp2 = await dctx.newPage();
+  await dp2.goto(base);
+  await dp2.waitForSelector('.card');
+  await quickSave(dp, '另一个窗口也看得到');
+  await dp2.waitForSelector('.card:has-text("另一个窗口也看得到")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] cross-window item sync`));
+  await dp.evaluate(() => { const s = JSON.parse(localStorage.getItem('lingan.settings.v1') || '{}'); s.theme = 'dark'; localStorage.setItem('lingan.settings.v1', JSON.stringify(s)); });
+  await dp2.waitForFunction(() => document.documentElement.dataset.theme === 'dark', null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] cross-window settings sync`));
+  await dctx.close();
+  console.log('ui27: safe area / keyboard / type chip / tag suggest / menus / scroll / inline edit / paste / drop / sync ok');
+}
+
 try {
+  if (process.env.E2E_ONLY === 'ui27') {
+    await ui27();
+    throw Object.assign(new Error('ui27 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'graft24') {
     await graft24();
     throw Object.assign(new Error('graft24 only'), { only: true });
@@ -3063,6 +3304,7 @@ try {
     throw Object.assign(new Error('legacy only'), { only: true });
   }
   await security();
+  await ui27();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
