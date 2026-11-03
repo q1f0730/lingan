@@ -9,6 +9,7 @@
 到 [Releases](../../releases) 下载最新版：
 - **安卓**：`Glean_x.y.z_android.apk`（首次安装需允许「安装未知来源应用」）
 - **Windows**：`Glean_x.y.z_x64-setup.exe`（或 `.msi`）
+- **浏览器扩展**（Chrome / Edge，v0.36 起）：`glean-extension.zip`，解压后在扩展页「加载已解压的扩展程序」；右键拾这一句 / 这张图 / 视频当前时间点，交给本机拾穗（见 `extension/README.md`）
 
 ## 功能
 | 模块 | 内容 |
