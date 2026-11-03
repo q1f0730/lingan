@@ -11,6 +11,7 @@ import { TYPE_LABEL, type GraftSeed, type GraftTension, type Idea, type Item, ty
 import { branchHits, emptyReport, enforcedKeys, enforceWall, findHits, forbiddenBlock, promptWall, type Cliche, type WallReport } from './wall';
 import { deaiIdea } from './deai';
 import { branchCore, enforceDistinct, maxPairSim, type DistinctReport } from './distinct';
+import { WILD_DETOURS, WILD_LINE, WILD_TEMP } from './constraints';
 
 export interface Transform {
   id: string;
@@ -152,6 +153,16 @@ type Ctx = {
   feedback?: string;
   /** v0.24 0210 我的文风样本 */
   style?: string[];
+  /** v0.30 0216 约束骰子掷出的硬约束 */
+  constraint?: string;
+  /** v0.30 ROADMAP v0.23 野一点：破前提的迂回指令（温度另外提到 1.5） */
+  wild?: boolean;
+  /** v0.30 0205 口味原子 top8 */
+  atoms?: string[];
+  /** v0.30 0201 用户从 PHASE A 里挑的张力 */
+  focus?: GraftTension[];
+  /** v0.30 0207 大众版答案（第一步模型给的，不展示） */
+  mainstream?: string;
 };
 
 function anchorOf(items: Item[], opts: Ctx): Item | undefined {
@@ -164,6 +175,8 @@ function context(items: Item[], opts: Ctx) {
     modeBrief(opts.mode, items),
     opts.theme ? `创作方向：${opts.theme}` : '创作方向：没有指定，自由嫁接。',
     `斜策略（作为额外约束）：${opts.oblique}`,
+    opts.constraint ? `硬约束（每根新枝都必须满足，写进 idea 里怎么满足）：${opts.constraint}` : '',
+    opts.atoms?.length ? `我在意的东西（口味原子，每根新枝至少接住其中一个，不要复述）：${opts.atoms.slice(0, 8).join('、')}` : '',
     opts.taste ? `我的口味（参考，不要复述）：${opts.taste.slice(0, 400)}` : '',
     a ? `主干：#${a.id}（${a.title}）。每根新枝都必须以它为主体，其余素材只能提供手法、材料或情绪。` : '',
     '素材（只能用这些；方括号里 # 后面的数字是素材 ID；每件先看「为什么打动我」，那才是我在意的）：',
@@ -185,6 +198,7 @@ function sysHead(opts: Ctx): string {
     opts.avoid?.some((i) => i.polarity === -1) ? '用户消息里的 AVOID 段是我讨厌的东西：不许引用、不许靠近，只能当反面参照。' : '',
     opts.feedback ? '用户消息里的 FEEDBACK 段是我最近不要的新枝和理由：同样的毛病不许再犯。' : '',
     opts.style?.length ? '新枝的文字（title / idea / experiment）照 STYLE 段样本的语气写：短句、具体、不要 AI 腔（不要「不仅…更是」「在…的同时」「值得一提的是」）。' : '',
+    opts.wild ? WILD_LINE : '',
     '不要输出思考过程，只输出要求的 JSON。',
     forbiddenBlock(opts.wall || []),
   ]
@@ -198,12 +212,13 @@ export function buildMapPrompt(items: Item[], opts: Ctx): { system: string; user
     sysHead(opts),
     '这一次只做 PHASE A 和 PHASE B，不要写完整创意，不要排序。',
     opts.mode ? `这次按「${modeDef(opts.mode)?.name}」接法抽的穗（规则与要求见用户消息开头），张力和种子都要照这个接法的要求来。` : '',
+    'PHASE A0 — MAINSTREAM：先用一句话（40 字内）写出「大众版」：大多数人拿到这组素材最顺手会做的那个作品。它不会展示给我，只用来让新枝离它远一点。',
     'PHASE A — MAP：找出 4 个素材之间的张力或意外的桥（结构、节奏、情绪、材料、动作上的同构或冲突，而不是表面题材相似），每个标出依据的素材 ID。',
     `PHASE B — DIVERGE：写 8 粒一句话种子（每粒不超过 45 字）。8 种变形法每种恰好用一次：`,
     ...TRANSFORMS.map((t) => `- ${t.id}（${t.name}）：${t.hint}`),
     `每粒种子至少引用 ${k} 件素材 ID（写方括号里 # 后面的数字，#12 就写 12；不许写不存在的 ID）。`,
     '只输出一个 JSON 对象：',
-    '{"tensions":[{"text":"张力（40字内）","refs":[素材ID,素材ID]}],"seeds":[{"t":"invert","text":"一句话种子","refs":[素材ID,素材ID,素材ID]}]}',
+    '{"mainstream":"大众版（40字内）","tensions":[{"text":"张力（40字内）","refs":[素材ID,素材ID]}],"seeds":[{"t":"invert","text":"一句话种子","refs":[素材ID,素材ID,素材ID]}]}',
   ]
     .filter(Boolean)
     .join('\n');
@@ -228,6 +243,8 @@ export function buildConvergePrompt(
     'PHASE D — CONVERGE：从换过之后的 8 粒里，选 3 粒彼此最不一样、且变形法两两不同的，各长成一根新枝。挑选标准：证据扎实、在这一批里新、对我有用、做得出来、忠于这些素材。',
     '每根新枝给出：seed（种子编号 1-8）、title（12 字内，不要冒号）、idea（100-180 字，具体到画面 / 声音 / 结构）、form（形式，如短片 / 歌 / 海报 / 装置 / 文案 / 游戏）、refs（这根新枝真正用到的素材 ID，至少 ${k} 个，只能是上面方括号里的数字）、unlike（它和另外两根哪里不同，40 字内）、experiment（我 20 分钟内就能完成的一个小实验）。',
     'idea 正文里用到哪件素材，就点出它的名字（如《花样年华》），方便我对照。说不出依据的新枝宁可不写。',
+    opts.focus?.length ? `我从 PHASE A 里亲手挑了 ${opts.focus.length} 条张力（见用户消息「我挑的张力」）：三根新枝都必须沿着它们长，优先选和它们相关的种子。` : '',
+    opts.mainstream ? `大众版是「${opts.mainstream.slice(0, 60)}」：三根新枝都要离它最远，不许是它的变体或换皮。` : '',
     '再列出 3-5 个这组素材最容易落入的套路（cliches，每条 2-16 字的词或短语，不要整句），三根新枝都必须避开；它们会被加进我的套路墙。',
     wallNote ? `注意：上一版新枝里${wallNote}。这一次三根新枝都不许出现套路墙上的任何一条。` : '',
     recheck ? `注意：上一次的回答里${recheck}。这一次每根新枝的 refs 必须是至少 ${k} 个真实存在的素材 ID。` : '',
@@ -240,9 +257,12 @@ export function buildConvergePrompt(
     context(items, opts),
     'PHASE A 找到的张力：',
     tensions.map((t, i) => `${i + 1}. ${t.text}${t.refs.length ? `（${idList(t.refs, ids)}）` : ''}`).join('\n'),
+    opts.focus?.length ? '我挑的张力：\n' + opts.focus.map((t) => `- ${t.text}`).join('\n') : '',
     'PHASE B 的 8 粒种子：',
     seeds.map((s, i) => `${i + 1}. [${s.transform}/${transformName(s.transform)}] ${s.text}${s.refs.length ? `（${idList(s.refs, ids)}）` : ''}`).join('\n'),
-  ].join('\n\n');
+  ]
+    .filter(Boolean)
+    .join('\n\n');
   return { system, user };
 }
 
@@ -264,7 +284,7 @@ export function normalizeRefs(v: unknown, ids: IdsArg): number[] {
 }
 
 /** 第 1 次调用的结果：4 个张力、8 粒种子（变形法去重、补齐） */
-export function normalizeMap(raw: unknown, idsArg: IdsArg): { tensions: GraftTension[]; seeds: GraftSeed[] } {
+export function normalizeMap(raw: unknown, idsArg: IdsArg): { tensions: GraftTension[]; seeds: GraftSeed[]; mainstream?: string } {
   if (!raw || typeof raw !== 'object') throw new ParseError('模型没有按格式回答（张力 / 种子）');
   const nItems = idsOf(idsArg);
   const r = raw as Record<string, unknown>;
@@ -297,7 +317,8 @@ export function normalizeMap(raw: unknown, idsArg: IdsArg): { tensions: GraftTen
     seeds.push({ ...s, transform: free.id });
   }
   if (seeds.length < 3) throw new ParseError('模型给的种子太少');
-  return { tensions, seeds: seeds.slice(0, 8) };
+  const mainstream = str(r.mainstream).slice(0, 80) || undefined;
+  return { tensions, seeds: seeds.slice(0, 8), ...(mainstream ? { mainstream } : {}) };
 }
 
 /** DEFIX：按模型给的编号把最相像的种子换掉（最多 3 粒），沿用原变形法 */
@@ -587,6 +608,49 @@ export interface GraftResult {
   distinct?: DistinctReport;
   /** v0.24 0234 去 AI 腔：一共改写了几处 */
   deai?: number;
+  /** v0.30 0207 大众版：模型给的那句、离它太近被换掉了几根、换完后最大相似度 */
+  mainstream?: MainstreamReport;
+  /** v0.30 每次调用的温度（野一点时第一步 1.5） */
+  temps?: number[];
+}
+
+export interface MainstreamReport {
+  text: string;
+  replaced: number;
+  maxSim: number;
+}
+/** v0.30 0207：新枝和大众版的字面相似度到这个数就算「换皮」 */
+export const MAINSTREAM_SIM = 0.32;
+
+/** v0.30 0207 大众答案对照：离大众版太近的新枝换成替补（变形法不和另外两根撞），替补也不行就留着并如实记 */
+export function awayFromMainstream(branches: Idea[], mainstream: string | undefined, pool: () => Idea[], threshold = MAINSTREAM_SIM): { branches: Idea[]; report?: MainstreamReport } {
+  if (!mainstream) return { branches };
+  const simOf = (b: Idea) => textSimilarity(branchCore(b), mainstream);
+  let cands: Idea[] | null = null;
+  let replaced = 0;
+  const out = branches.map((b) => ({ ...b }));
+  out.forEach((b, i) => {
+    if (simOf(b) < threshold) return;
+    cands ||= pool();
+    const used = new Set(out.filter((_, j) => j !== i).map((x) => x.transform));
+    const titles = new Set(out.map((x) => x.title));
+    const alt = cands.find((c) => !used.has(c.transform) && !titles.has(c.title) && simOf(c) < threshold);
+    if (alt) {
+      out[i] = { ...alt, mainstream: 'replaced' };
+      replaced++;
+    }
+  });
+  return { branches: out, report: { text: mainstream, replaced, maxSim: Math.round(Math.max(0, ...out.map(simOf)) * 100) / 100 } };
+}
+
+/** v0.30 给新枝记上这次用了什么约束（硬约束 / 野一点 / 亲手挑的张力） */
+export function tagConstraints(branches: Idea[], o: { constraint?: string; wild?: boolean; focus?: GraftTension[] }): Idea[] {
+  return branches.map((b) => ({
+    ...b,
+    ...(o.constraint ? { constraint: o.constraint } : {}),
+    ...(o.wild ? { wild: 1 as const } : {}),
+    ...(o.focus?.length ? { focus: o.focus.map((t) => t.text) } : {}),
+  }));
 }
 
 /** v0.24 三枝不撞车的设置：字面 / 向量阈值，有向量模型时传 embed */
@@ -668,13 +732,13 @@ export function applyWall(branches: Idea[], keys: string[], pool: () => Idea[], 
 }
 
 /** 离线四步：张力 → 8 种变形各一粒 → 换掉最相像的 3 粒 → 收拢 3 根变形法两两不同的 */
-export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number; mode?: GraftMode; wall?: Cliche[]; anchorId?: number; distinct?: { text: number } } = {}): GraftResult {
+export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number; mode?: GraftMode; wall?: Cliche[]; anchorId?: number; distinct?: { text: number }; oblique?: string; constraint?: string; wild?: boolean } = {}): GraftResult {
   const rand = opts.rand || Math.random;
   if (!items.length) throw new Error('没有穗');
   const list = items.length === 1 ? [items[0], items[0]] : items;
   // v0.19 离线同样遵守套路墙（内置禁用词 + 墙上没划掉的）
   const keys = enforcedKeys(opts.wall || []);
-  const oblique = pickObliqueClean(rand, keys);
+  const oblique = opts.oblique?.trim() || pickObliqueClean(rand, keys);
   const tensions = tensionTexts(list, opts.mode);
   // 随机一个起点，让同一组穗多次离线嫁接不完全一样
   const off = Math.floor(rand() * list.length);
@@ -700,7 +764,14 @@ export function graftOffline(items: Item[], opts: { theme?: string; rand?: () =>
   const walled = applyWall(withAnchor(fin.branches, list, opts.anchorId), keys, wallPool(fin.seeds, list, oblique, opts.theme, opts.mode));
   // v0.24 三枝不撞车（离线只有字面相似度）
   const dist = enforceDistinct(walled.branches, () => withAnchor(cleanPool(fin.seeds, list, oblique, keys, opts.theme, opts.mode)(), list, opts.anchorId), { threshold: opts.distinct?.text ?? 0.45, method: 'text' });
-  return { mode: opts.mode, branches: dist.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0, wall: walled.report, distinct: dist.report };
+  // v0.30 硬约束 / 野一点：离线也写进正文（野一点挑一句破前提的迂回）
+  const detour = opts.wild ? WILD_DETOURS[Math.floor(rand() * WILD_DETOURS.length)] : '';
+  const extra = (b: Idea): Idea => ({
+    ...b,
+    idea: [b.idea, opts.constraint ? `硬约束：${opts.constraint}。` : '', detour ? `野一点：${detour}？` : ''].filter(Boolean).join(''),
+  });
+  const final = tagConstraints(opts.constraint || opts.wild ? dist.branches.map(extra) : dist.branches, { constraint: opts.constraint, wild: opts.wild });
+  return { mode: opts.mode, branches: final, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0, wall: walled.report, distinct: dist.report };
 }
 
 /** 给模型的「上一次哪里不对」 */
@@ -755,9 +826,11 @@ export async function withRetry<T>(
   throw last;
 }
 
-export type GraftStage = 'map' | 'defix' | 'done';
+export type GraftStage = 'map' | 'pick' | 'defix' | 'done';
 export interface GraftProgress {
   stage: GraftStage;
+  /** v0.30 0201 停在「挑张力」时给的四条 */
+  tensions?: GraftTension[];
   retry?: RetryInfo;
   /** v0.12：有新枝说不清从哪几穗长出来，正在重长一次 */
   recheck?: boolean;
@@ -785,12 +858,22 @@ export async function graftWithAI(
     feedback?: string;
     style?: string[];
     distinct?: DistinctCfg;
+    /** v0.30 斜策略卡（翻到 / 钉住 / 自己写的那张）；没给就随机抽 */
+    oblique?: string;
+    /** v0.30 0216 硬约束 */
+    constraint?: string;
+    /** v0.30 野一点：第一步温度 1.5 + 破前提指令 */
+    wild?: boolean;
+    /** v0.30 0205 口味原子 */
+    atoms?: string[];
+    /** v0.30 0201 张力手选：第一步之后停下来给用户挑；返回挑中的下标（空 / null = 都要） */
+    pickTensions?: (t: GraftTension[]) => Promise<number[] | null>;
   } = {},
 ): Promise<GraftResult> {
   const wall = opts.wall || [];
   const baseKeys = enforcedKeys(wall);
-  const oblique = pickObliqueClean(opts.rand || Math.random, baseKeys);
-  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode, wall: promptWall(wall), anchorId: opts.anchorId, avoid: opts.avoid, feedback: opts.feedback, style: opts.style };
+  const oblique = opts.oblique?.trim() || pickObliqueClean(opts.rand || Math.random, baseKeys);
+  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode, wall: promptWall(wall), anchorId: opts.anchorId, avoid: opts.avoid, feedback: opts.feedback, style: opts.style, constraint: opts.constraint, wild: opts.wild, atoms: opts.atoms };
   const dcfg: DistinctCfg = opts.distinct || { text: 0.45, vector: 0.9 };
   /** v0.24 收尾：去 AI 腔 → 过墙 → 不撞车 */
   const polish = async (branches: Idea[], seeds: GraftSeed[], keys: string[], report: WallReport) => {
@@ -802,9 +885,14 @@ export async function graftWithAI(
     });
     const walled = applyWall(clean, keys, wallPool(seeds, items, oblique, opts.theme, opts.mode), report);
     const dist = await distinctBranches(walled.branches, cleanPool(seeds, items, oblique, keys, opts.theme, opts.mode), dcfg);
-    return { branches: dist.branches, wall: walled.report, distinct: dist.report, deai };
+    // v0.30 0207 离大众版远一点；再记上用了什么约束
+    const away = awayFromMainstream(dist.branches, ctx.mainstream, cleanPool(seeds, items, oblique, keys, opts.theme, opts.mode));
+    return { branches: tagConstraints(away.branches, ctx), wall: walled.report, distinct: dist.report, deai, mainstream: away.report };
   };
-  const temp = Math.max(0.2, Math.min(1.3, s.temperature || 1));
+  // v0.30 野一点：第一步（撒种子）温度临时 1.5，第二步收拢 1.0；关掉就是设置里的值
+  const temp = opts.wild ? WILD_TEMP : Math.max(0.2, Math.min(1.3, s.temperature || 1));
+  const temp2 = opts.wild ? 1 : Math.min(temp, 0.8);
+  const temps: number[] = [];
   let calls = 0;
   const rOpts = (stage: GraftStage) => ({
     sleep: opts.sleep,
@@ -817,6 +905,7 @@ export async function graftWithAI(
   const p1 = buildMapPrompt(items, ctx);
   const map = await withRetry(async () => {
     calls++;
+    temps.push(temp);
     const out = await chat(
       s,
       [
@@ -827,19 +916,29 @@ export async function graftWithAI(
     );
     return normalizeMap(parseJSONLoose(out), items.length);
   }, rOpts('map'));
+  ctx.mainstream = map.mainstream;
+  // v0.30 0201 张力手选：停下来让用户勾 1–2 条，再往下长
+  if (opts.pickTensions && map.tensions.length > 1) {
+    opts.onProgress?.({ stage: 'pick', tensions: map.tensions });
+    const idx = await opts.pickTensions(map.tensions);
+    if (opts.signal?.aborted) throw new AIError('已取消');
+    const chosen = (idx || []).filter((i) => i >= 0 && i < map.tensions.length);
+    if (chosen.length && chosen.length < map.tensions.length) ctx.focus = chosen.map((i) => map.tensions[i]);
+  }
 
   opts.onProgress?.({ stage: 'defix' });
   const converge = (recheck?: string, wallNote?: string) =>
     withRetry(async () => {
       const p2 = buildConvergePrompt(items, ctx, map.tensions, map.seeds, recheck, wallNote);
       calls++;
+      temps.push(temp2);
       const out = await chat(
         s,
         [
           { role: 'system', content: p2.system },
           { role: 'user', content: p2.user },
         ],
-        { temperature: Math.min(temp, 0.8), maxTokens: 2200, signal: opts.signal },
+        { temperature: temp2, maxTokens: 2200, signal: opts.signal },
       );
       const parsed = parseJSONLoose(out);
       if (!parsed) throw new ParseError('模型没有按格式回答（新枝）');
@@ -882,13 +981,13 @@ export async function graftWithAI(
     walled.wall.hit = Math.max(report.hit, walled.wall.hit);
     opts.onProgress?.({ stage: 'done' });
     const weak = walled.branches.filter((b) => b.evidence === 'weak').length;
-    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak, cliches: conv.cliches, wall: walled.wall, distinct: walled.distinct, deai: walled.deai };
+    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak, cliches: conv.cliches, wall: walled.wall, distinct: walled.distinct, deai: walled.deai, mainstream: walled.mainstream, temps };
   } catch (e) {
     if (opts.signal?.aborted) throw e;
     // 第二步没跑完：用第一步的 8 粒种子本地收拢
     const conv = normalizeConverge({}, map.seeds, items, oblique);
     const walled = await polish(conv.branches, conv.seeds, baseKeys, emptyReport());
     opts.onProgress?.({ stage: 'done' });
-    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true, wall: walled.wall, distinct: walled.distinct, deai: walled.deai };
+    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true, wall: walled.wall, distinct: walled.distinct, deai: walled.deai, mainstream: walled.mainstream, temps };
   }
 }
