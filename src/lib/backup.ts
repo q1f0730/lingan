@@ -1,8 +1,10 @@
 import { withBundles } from './bundles';
+import { cleanPrefs, isEmptyPrefs, mergePrefs, readLocalPrefs, writeLocalPrefs, type LocalPrefs } from './localprefs';
 // v0.21 数据地基：.glean 备份（流式 ZIP）+ 按 uid 去重的导入（合并 / 替换 / 只补缺，先预览条数）。
 //
 // .glean = ZIP（只存储不压缩）：
 //   data.jsonl     一行一条：{"t":"item",…} / {"t":"dev",…,"itemUids":[…]} / {"t":"cliche",…} / {"t":"reject",…}（v0.24 不要的理由）/ {"t":"work",…}（v0.29 作品，引用本来就是 uid）
+//                  / {"t":"local",atoms,cards,outbound}（v0.31 只在本机的口味原子 / 自写斜策略卡 / 出站记录）
 //   images/<sha256>.<ext>  原图原样二进制（按内容哈希命名，同一张图只存一份）
 //   manifest.json  格式、版本、导出时间、设备、条数，以及每个文件的 sha256 与字节数
 // 导出时一张一张读原图、边算哈希边写，data.jsonl 边生成边写（数据描述符），内存峰值≈一张原图，和库多大无关。
@@ -199,6 +201,9 @@ export async function exportGlean(
     void _id;
     await push({ t: 'work', ...rest });
   }
+  // v0.31 只在本机 localStorage 的口味原子、自写斜策略卡、出站记录（都空就不写这一行）
+  const lp = readLocalPrefs();
+  if (!isEmptyPrefs(lp)) await push({ t: 'local', ...lp });
   await flush();
   const { size } = await ent.end();
   files['data.jsonl'] = { sha256: hash.hex(), bytes: size, lines };
@@ -241,6 +246,8 @@ export interface Incoming {
   rejects?: Reject[];
   /** v0.29 作品（旧备份没有） */
   works?: Work[];
+  /** v0.31 本机偏好（口味原子 / 自写卡 / 出站记录；旧备份没有） */
+  local?: LocalPrefs;
   /** .glean：按 ref 从包里取原图（未核对）；json：原图在行里 */
   image?: (ref: string) => Promise<Blob | null>;
   /** ref → 期望的 sha256 */
@@ -255,7 +262,7 @@ export function incomingFromObject(b: unknown): Incoming {
   if (!b || typeof b !== 'object' || (b as { app?: string }).app !== 'lingan' || !Array.isArray((b as { items?: unknown }).items)) {
     throw new Error('不是拾穗（灵感暗房）的备份文件');
   }
-  const bk = b as { exportedAt?: number; items: InItem[]; developments?: InDev[]; cliches?: Cliche[]; works?: Work[] };
+  const bk = b as { exportedAt?: number; items: InItem[]; developments?: InDev[]; cliches?: Cliche[]; works?: Work[]; local?: unknown };
   const items = bk.items.filter((it) => it && typeof it.title === 'string' && it.type);
   return {
     format: 'json',
@@ -264,6 +271,7 @@ export function incomingFromObject(b: unknown): Incoming {
     developments: (bk.developments || []).filter((dv) => dv && dv.idea),
     cliches: Array.isArray(bk.cliches) ? bk.cliches : null,
     works: Array.isArray(bk.works) ? bk.works.filter(validWork) : undefined,
+    local: bk.local ? cleanPrefs(bk.local) : undefined,
     imageCount: items.filter((it) => isDataUrl(it.image)).length,
     problems: [],
   };
@@ -299,6 +307,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
   const cliches: Cliche[] = [];
   const rejects: Reject[] = [];
   const works: Work[] = [];
+  let local: LocalPrefs | undefined;
   let bad = 0;
   for (const line of text.split('\n')) {
     if (!line.trim()) continue;
@@ -314,6 +323,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
     else if (o.t === 'cliche' && typeof o.text === 'string') cliches.push(o as unknown as Cliche);
     else if (o.t === 'reject' && typeof o.reason === 'string') rejects.push(o as unknown as Reject);
     else if (o.t === 'work' && validWork(o)) works.push(o as unknown as Work);
+    else if (o.t === 'local') local = cleanPrefs(o);
     else bad++;
   }
   if (bad) problems.push(`${bad} 行读不出，已跳过`);
@@ -329,6 +339,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
     cliches,
     rejects,
     works,
+    local,
     imageCount: new Set(items.map((x) => x.imageRef).filter(Boolean)).size,
     imageSha,
     image: async (ref: string) => {
@@ -740,6 +751,8 @@ export async function applyImport(inc: Incoming, plan: ImportPlan, d: LinganDB =
     }
   });
   if (wroteImages) notifyNewImages();
+  // v0.31 本机偏好：不在 IndexedDB 里，事务之后写
+  if (inc.local) writeLocalPrefs(mergePrefs(readLocalPrefs(), inc.local, plan.mode));
   return { ...plan.counts, badImages, problems: [...inc.problems, ...(badImages ? [`${badImages} 张图坏了或缺失，没导进来`] : [])] };
 }
 
