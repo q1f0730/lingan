@@ -51,8 +51,8 @@ export default function SharePanel({ req, onClose }: { req: ShareReq; onClose: (
 
   /** 0909：发出去前本地扫一遍；私密穗再确认一次。返回 true = 可以发 */
   async function guard(extra = ''): Promise<boolean> {
-    if (it?.locked) {
-      toast('上锁的穗不能分享', 'err');
+    if (it?.locked || it?.shut?.includes('share')) {
+      toast(it.locked ? '上锁的穗不能分享' : '这一穗关了分享出口（详情 → 给谁看）', 'err');
       return false;
     }
     const hits = scanPersonal(text + '\n' + extra, prefs.words);
