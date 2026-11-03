@@ -1,6 +1,8 @@
 """v0.28 0112 生成 src/lib/pinyin-table.ts：GB2312 一二级 6763 字 → 常用读音（pypinyin，多音字最多收 3 个读音）。
+v0.35 改成紧凑编码（31KB → 约 18.5KB）：字不再直接写汉字（UTF-8 每字 3 字节），写它在 GB2312 一二级里的序号；
+每个读音下的序号排好序，记「和上一个的间隔 - 1」，用 52 个结尾符 + 34 个前缀符的变长数字。运行时用 TextDecoder('gbk') 还原 6763 个字。
 用法：PYTHONPATH=/workspace/tools/py python3 scripts/pinyin/gen.py"""
-from pypinyin import lazy_pinyin, Style
+from pypinyin import pinyin, Style
 import collections, os
 chars = []
 for hi in range(0xB0, 0xF8):
@@ -10,7 +12,8 @@ for hi in range(0xB0, 0xF8):
         except UnicodeDecodeError:
             continue
         chars.append(c)
-from pypinyin import pinyin
+assert len(chars) == 6763
+idx = {c: i for i, c in enumerate(chars)}
 g = collections.OrderedDict()   # 常用读音
 alt = collections.OrderedDict()  # 多音字的其它读音（最多再 2 个，如 重 = chong）
 n = 0
@@ -27,7 +30,26 @@ for c in chars:
     for s in rs[1:3]:
         alt.setdefault(s, []).append(c)
     n += min(3, len(rs))
-enc = lambda d: '|'.join(k + ':' + ''.join(v) for k, v in sorted(d.items()))
+# 必须和 src/lib/pinyin.ts 的 DIGITS / NT 一致
+DIGITS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+,-./;<=>?@[]^_{}~'
+NT = 52
+T, C = DIGITS[:NT], DIGITS[NT:]
+def num(v):
+    out = T[v % NT]
+    q = v // NT
+    while q:
+        out = C[q % len(C)] + out
+        q //= len(C)
+    return out
+def enc(d):
+    parts = []
+    for k, v in sorted(d.items()):
+        prev, s = -1, ''
+        for i in sorted(idx[c] for c in v):
+            s += num(i - prev - 1)
+            prev = i
+        parts.append(k + ':' + s)
+    return '|'.join(parts)
 out = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'lib', 'pinyin-table.ts')
-open(out, 'w', encoding='utf-8').write('// 自动生成（scripts/pinyin/gen.py，pypinyin，GB2312 一二级 6763 字，共 %d 个读音）：读音:字…，| 分隔。不要手改\n// 常用读音\nexport const PINYIN_TABLE =\n  %r;\n// 多音字的其它读音\nexport const PINYIN_ALT =\n  %r;\n' % (n, enc(g), enc(alt)))
+open(out, 'w', encoding='utf-8').write('// 自动生成（scripts/pinyin/gen.py，pypinyin，GB2312 一二级 6763 字，共 %d 个读音）：读音:GB2312 序号间隔的变长编码，| 分隔。不要手改\n// 常用读音\nexport const PINYIN_TABLE =\n  %s;\n// 多音字的其它读音\nexport const PINYIN_ALT =\n  %s;\n' % (n, repr(enc(g)), repr(enc(alt))))
 print(len(g), len(alt), n)
