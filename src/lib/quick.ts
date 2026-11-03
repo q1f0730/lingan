@@ -144,8 +144,9 @@ export async function readClipboard(): Promise<string | null> {
   const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
   if (isTauri) {
     try {
-      const mod = await import('@tauri-apps/plugin-clipboard-manager');
-      return await mod.readText();
+      // v0.36 直接调插件命令：插件的 JS 包会连带整个 Image 类（约 1.3KB），这里只要读文字
+      const { invoke } = await import('@tauri-apps/api/core');
+      return await invoke<string>('plugin:clipboard-manager|read_text');
     } catch {
       return null;
     }
