@@ -72,6 +72,8 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
       <div className="detail-info">
         <div className="label detail-kicker">
           {it.sample ? '示例 · ' : ''}
+          {it.polarity === -1 ? '讨厌 · ' : ''}
+          {it.private ? '私密 · ' : ''}
           {TYPE_LABEL[it.type]}
           {it.inbox ? ' · 待理' : ''}
         </div>
