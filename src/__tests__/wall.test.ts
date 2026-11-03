@@ -253,7 +253,7 @@ describe('套路墙存储', () => {
     v6.close();
     const d = new LinganDB(name);
     const wall = await d.cliches.orderBy('key').toArray();
-    expect(d.verno).toBe(7);
+    expect(d.verno).toBe(8);
     expect(wall.map((c) => [c.key, c.listed])).toEqual(
       [
         ['城市里的陌生人', 1],
