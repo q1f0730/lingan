@@ -14,10 +14,12 @@ import { FormPicker } from './FormPicker';
 import { FOCUS_WORK_KEY, FORMS } from '../lib/works';
 import { createWork } from '../lib/workstore';
 import type { WorkForm } from '../lib/types';
+import { BranchMore, ChildBranches, ConstraintsUsed } from './BranchMore';
+import { STATUS_LABEL } from '../lib/branchplus';
 
 
 /** 一根新枝（m3 / m25 / d4）：细体序号 → 标题 → 一句话 → 因为这几穗 → 文字动作「留下 / 再接一次 / 不要」 */
-export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onAgain }: { idea: Idea; source: 'ai' | 'offline'; devId?: number; animate?: boolean; index?: number; hideCliches?: boolean; onAgain?: () => void }) {
+export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onAgain, depth = 0 }: { idea: Idea; source: 'ai' | 'offline'; devId?: number; animate?: boolean; index?: number; hideCliches?: boolean; onAgain?: () => void; depth?: number }) {
   const { toast, openItem, confirm, go } = useApp();
   const [forming, setForming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -106,6 +108,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
     >
       <div className="idea-meta">
         <span className="numeral">{typeof index === 'number' ? nn(index) : '—'}</span>
+        {dev?.regraft && <span className="idea-child-k label">子枝</span>}
         <span className="idea-tags label">
           {evidence === 'weak' && <span className="weak-badge">证据不足</span>}
           {idea.wall && <span className="wall-badge">{idea.wall === 'replaced' ? '撞墙后重长' : '删了撞墙的字'}</span>}
@@ -148,7 +151,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
           </p>
         )
       )}
-      {idea.oblique && <p className="idea-oblique meta-text">斜策略：{idea.oblique}</p>}
+      <ConstraintsUsed idea={idea} />
       {dev && <SourceSprigs ids={ids} items={srcItems} evidence={evidence} note={idea.evidenceNote} hl={hl} setHl={setHl} onOpen={openItem} anchor={dev.anchorId} />}
       {!hideCliches && idea.cliches.length > 0 && (
         <div className="cliches">
@@ -191,6 +194,9 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
           <FormPicker onPick={(f) => void found(f)} busy={busy} />
         </div>
       )}
+      {/* v0.30 落地追踪 / 再嫁接 / 追问；子枝挂在下面 */}
+      {dev && devId && <BranchMore dev={{ ...dev, id: devId }} depth={depth} />}
+      {dev?.uid && depth < 3 && <ChildBranches parentUid={dev.uid} depth={depth + 1} />}
     </article>
   );
 }
@@ -211,6 +217,7 @@ export function HistoryRow({ dev, byId, index, focus }: { dev: Development; byId
         <span className="hrow-title">
           {dev.idea.title.replace(/^《|》$/g, '')}
           {dev.starred ? <span className="hrow-kept label">已留下</span> : null}
+          {dev.status && dev.status !== 'seed' ? <span className={`hrow-status label s-${dev.status}`}>{STATUS_LABEL[dev.status]}</span> : null}
           {evidenceOf(dev, dev.idea) === 'weak' && <span className="hrow-weak">证据不足</span>}
         </span>
         <span className="hrow-src">{names.join(' / ')}</span>
@@ -227,7 +234,7 @@ export function HistoryRow({ dev, byId, index, focus }: { dev: Development; byId
 
 /** 四步嫁接的中间产物：张力、八粒种子（哪几粒被换过、哪三粒长成了新枝）、找到的套路 */
 export function GraftTrail({ batch, names }: { batch: GraftBatch; names: string[] }) {
-  if (!batch.tensions?.length && !batch.seeds?.length) return null;
+  if (!batch.tensions?.length && !batch.seeds?.length && !batch.mainstream) return null;
   const nm = (refs: number[]) => refs.map((r) => names[r - 1]).filter(Boolean).join(' · ');
   return (
     <details className="trail">
@@ -261,6 +268,8 @@ export function GraftTrail({ batch, names }: { batch: GraftBatch; names: string[
         </>
       )}
       {batch.pattern && <p className="trail-pattern">换掉的原因：{batch.pattern}</p>}
+      {batch.mainstream && <p className="trail-mainstream">避开的大众版：{batch.mainstream}</p>}
+      {batch.temps?.length ? <p className="trail-temps meta-text">温度：{batch.temps.join(' → ')}</p> : null}
     </details>
   );
 }
