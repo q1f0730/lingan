@@ -3,13 +3,18 @@ import { db, normalizeTags } from './db';
 import { getOriginalDataUrl, itemHasImage } from './imagestore';
 import { itemText } from './similarity';
 import { aiReady, embedConfig, type Settings } from './settings';
+import { aiVisible } from './privacy';
 
 /** Background AI enrichment for one item. Returns a human-readable error or null. */
 export async function enrichItem(id: number, s: Settings, force = false): Promise<string | null> {
   const it = await db.items.get(id);
   if (!it) return null;
+  // v0.24 0242 私密穗：不发给云端的看图 / 向量（本地模型且设置里允许时才发）
+  const seeChat = aiVisible(it, s);
+  const ecv = embedConfig(s);
+  const seeEmbed = !!ecv && aiVisible(it, s, ecv.baseUrl);
   const errs: string[] = [];
-  if (itemHasImage(it) && s.autoCaption && aiReady(s) && s.chat.visionModel && (force || !it.caption)) {
+  if (seeChat && itemHasImage(it) && s.autoCaption && aiReady(s) && s.chat.visionModel && (force || !it.caption)) {
     try {
       const img = await getOriginalDataUrl(db, id);
       if (!img) throw new Error('原图不见了');
@@ -28,7 +33,7 @@ export async function enrichItem(id: number, s: Settings, force = false): Promis
     }
   }
   const ec = embedConfig(s);
-  if (ec && s.autoEmbed) {
+  if (ec && s.autoEmbed && seeEmbed) {
     const fresh = await db.items.get(id);
     if (fresh && (force || !fresh.embedding || fresh.embedModel !== ec.model)) {
       try {
@@ -45,7 +50,7 @@ export async function enrichItem(id: number, s: Settings, force = false): Promis
 export async function embedAllMissing(s: Settings, onProgress?: (done: number, total: number) => void): Promise<{ done: number; failed: number; error?: string }> {
   const ec = embedConfig(s);
   if (!ec) return { done: 0, failed: 0, error: '没有配置向量模型' };
-  const all = (await db.items.toArray()).filter((x) => !x.deletedAt);
+  const all = (await db.items.toArray()).filter((x) => !x.deletedAt && aiVisible(x, s, ec.baseUrl));
   const todo = all.filter((i) => !i.embedding || i.embedModel !== ec.model);
   let done = 0, failed = 0, error: string | undefined;
   for (let k = 0; k < todo.length; k += 16) {
