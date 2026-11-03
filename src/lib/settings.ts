@@ -1,5 +1,6 @@
 import { themeFromLegacy, type ThemePref } from './theme';
-import { detectBackend, type SecretName, type VaultBackend, type VaultKind } from './vault';
+type AiSecret = 'chat.apiKey' | 'embed.apiKey';
+import { detectBackend, type VaultBackend, type VaultKind } from './vault';
 export interface Provider {
   baseUrl: string;
   apiKey: string;
@@ -106,7 +107,7 @@ export function defaultSettings(): Settings {
 
 // v0.20：密钥另存系统钥匙串。启动时 initSecrets() 读进内存缓存，loadSettings 再合进去；
 // localStorage 里的设置只剩非敏感字段。
-const secrets: Record<SecretName, string> = { 'chat.apiKey': '', 'embed.apiKey': '' };
+const secrets: Record<AiSecret, string> = { 'chat.apiKey': '', 'embed.apiKey': '' };
 let backend: VaultBackend | null = null;
 let keysInSettings = true; // 还没接上持久钥匙串（或只剩内存）时，密钥仍跟旧版一样留在设置里，免得丢
 let writeChain: Promise<unknown> = Promise.resolve();
@@ -155,11 +156,11 @@ export async function initSecrets(pick: () => Promise<VaultBackend> = () => dete
     // 设置被清掉 = 重置：钥匙串里残留的旧密钥也一起清，避免默认服务 + 旧 key 的错配
     secrets['chat.apiKey'] = '';
     secrets['embed.apiKey'] = '';
-    if (persistent) for (const n of ['chat.apiKey', 'embed.apiKey'] as SecretName[]) await b.del(n).catch(() => {});
+    if (persistent) for (const n of ['chat.apiKey', 'embed.apiKey'] as AiSecret[]) await b.del(n).catch(() => {});
     keysInSettings = !persistent;
     return { kind: b.kind, migrated };
   }
-  const legacy: Record<SecretName, string> = { 'chat.apiKey': String(raw.chat?.apiKey || ''), 'embed.apiKey': String(raw.embed?.apiKey || '') };
+  const legacy: Record<AiSecret, string> = { 'chat.apiKey': String(raw.chat?.apiKey || ''), 'embed.apiKey': String(raw.embed?.apiKey || '') };
   if (!persistent) {
     keysInSettings = true;
     secrets['chat.apiKey'] = legacy['chat.apiKey'];
@@ -167,7 +168,7 @@ export async function initSecrets(pick: () => Promise<VaultBackend> = () => dete
     return { kind: b.kind, migrated };
   }
   let ok = true;
-  for (const n of ['chat.apiKey', 'embed.apiKey'] as SecretName[]) {
+  for (const n of ['chat.apiKey', 'embed.apiKey'] as AiSecret[]) {
     if (legacy[n]) {
       try {
         await b.set(n, legacy[n]);
@@ -185,7 +186,7 @@ export async function initSecrets(pick: () => Promise<VaultBackend> = () => dete
     return { kind: b.kind, migrated: 0 };
   }
   keysInSettings = false;
-  for (const n of ['chat.apiKey', 'embed.apiKey'] as SecretName[]) {
+  for (const n of ['chat.apiKey', 'embed.apiKey'] as AiSecret[]) {
     secrets[n] = legacy[n] || (await b.get(n).catch(() => ''));
   }
   if (migrated) {
@@ -227,7 +228,7 @@ export function saveSettings(s: Settings) {
   localStorage.setItem(KEY, JSON.stringify(stripSecrets(s)));
   const b = backend;
   if (!b) return;
-  for (const [n, v] of [['chat.apiKey', s.chat.apiKey], ['embed.apiKey', s.embed.apiKey]] as Array<[SecretName, string]>) {
+  for (const [n, v] of [['chat.apiKey', s.chat.apiKey], ['embed.apiKey', s.embed.apiKey]] as Array<[AiSecret, string]>) {
     if (secrets[n] === v) continue;
     secrets[n] = v;
     // 串行写，保证最后一次输入落盘
