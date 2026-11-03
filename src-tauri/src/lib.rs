@@ -7,6 +7,10 @@ mod api;
 mod lancore;
 #[cfg(desktop)]
 mod lan;
+#[cfg(desktop)]
+mod entry;
+#[cfg(any(desktop, test))]
+mod entrylogic;
 
 /// v0.22 正在播放一键拾（Windows SMTC）；其它平台返回 unsupported，安卓走 MainActivity 的 LinganNowPlaying 桥
 #[tauri::command]
@@ -87,7 +91,11 @@ mod vault {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  let builder = tauri::Builder::default()
+  let builder = tauri::Builder::default();
+  // v0.33 0517：单实例必须第一个注册；再次打开 / 深链接 / 「发送到」都交给已在运行的那个
+  #[cfg(desktop)]
+  let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| entry::take_args(app, &argv, true)));
+  let builder = builder
     .plugin(tauri_plugin_http::init())
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
@@ -104,6 +112,10 @@ pub fn run() {
     .plugin(tauri_plugin_process::init())
     // v0.26 0609：必须在 fs 插件之后注册；把对话框选中的备份文件夹权限存下来，重启后自动备份照样能写
     .plugin(tauri_plugin_persisted_scope::init())
+    // v0.33：glean:// 深链接、开机静默启动（带 --hidden）、外链交给系统
+    .plugin(tauri_plugin_deep_link::init())
+    .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hidden"])))
+    .plugin(tauri_plugin_opener::init())
     .invoke_handler(tauri::generate_handler![
       vault::secret_get,
       vault::secret_set,
@@ -119,20 +131,25 @@ pub fn run() {
       lan::lan_start,
       lan::lan_stop,
       lan::lan_offer,
-      lan::lan_addrs
+      lan::lan_addrs,
+      entry::entry_get,
+      entry::entry_set_keys,
+      entry::entry_autostart,
+      entry::link_take,
+      entry::send_list,
+      entry::send_read,
+      entry::send_clear,
+      entry::open_external,
+      entry::clip_peek,
+      entry::clip_image
     ]);
 
   #[cfg(desktop)]
   let builder = builder
     .plugin(
+      // v0.33 0515：热键由 entry.rs 按 hotkeys.json 注册（默认 Ctrl+Shift+L），这里只转发
       tauri_plugin_global_shortcut::Builder::new()
-        .with_shortcuts(["ctrl+shift+l"])
-        .expect("shortcut")
-        .with_handler(|app, _shortcut, event| {
-          if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
-            show_quick(app);
-          }
-        })
+        .with_handler(|app, shortcut, event| entry::on_shortcut(app, shortcut, event.state()))
         .build(),
     )
     .on_window_event(|window, event| {
@@ -148,10 +165,35 @@ pub fn run() {
       #[cfg(desktop)]
       {
         api::init(app.handle());
+        {
+          use tauri::Manager;
+          app.manage(entry::Entry::default());
+          entry::init(app.handle());
+          // 0516：开机自启带 --hidden = 只进托盘（窗口在配置里默认不显示，网页照常加载 = 首次唤出不用等）
+          if !std::env::args().any(|a| a == "--hidden") {
+            entry::show_main(app.handle());
+          }
+          use tauri_plugin_deep_link::DeepLinkExt;
+          #[cfg(windows)]
+          if !app.deep_link().is_registered("glean").unwrap_or(true) {
+            let _ = app.deep_link().register("glean");
+          }
+          if let Ok(Some(urls)) = app.deep_link().get_current() {
+            for u in urls {
+              entry::on_link(app.handle(), u.to_string());
+            }
+          }
+          let h = app.handle().clone();
+          app.deep_link().on_open_url(move |e| {
+            for u in e.urls() {
+              entry::on_link(&h, u.to_string());
+            }
+          });
+        }
         { use tauri::Manager; app.manage(lan::Lan::default()); }
         use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
         use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-        let quick = MenuItem::with_id(app, "quick", "随手拾一穗\tCtrl+Shift+L", true, None::<&str>)?;
+        let quick = MenuItem::with_id(app, "quick", "随手拾一穗", true, None::<&str>)?;
         let song = MenuItem::with_id(app, "nowplaying", "拾正在播放的歌", true, None::<&str>)?;
         let library = MenuItem::with_id(app, "library", "打开穗仓", true, None::<&str>)?;
         let daily = MenuItem::with_id(app, "daily", "今日一穗", true, None::<&str>)?;
