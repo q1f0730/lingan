@@ -1,4 +1,4 @@
-import { m } from 'framer-motion';
+import { m } from './rw/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IconEnter } from './rw/icons';
 import { addItem, db, normalizeTags, updateItem } from '../lib/db';
