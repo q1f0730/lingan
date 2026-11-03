@@ -250,7 +250,7 @@ kbd {
 }
 .dock .nav {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   height: 62px;
   padding: 6px;
   gap: 2px;
@@ -4203,3 +4203,4 @@ html[data-kb] .clip-offer {
     animation: none;
   }
 }
+
