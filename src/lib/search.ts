@@ -8,7 +8,7 @@ export const SEARCH_VER = 1;
 /** 从搜索结果点进某根新枝：新枝页读到它就展开并滚过去 */
 export const FOCUS_BRANCH_KEY = 'glean.focusbranch';
 
-export type FieldName = 'title' | 'creator' | 'year' | 'content' | 'why' | 'tags' | 'caption' | 'url' | 'idea' | 'bridge' | 'form' | 'step' | 'experiment' | 'theme';
+export type FieldName = 'title' | 'creator' | 'year' | 'content' | 'why' | 'tags' | 'caption' | 'ocr' | 'url' | 'idea' | 'bridge' | 'form' | 'step' | 'experiment' | 'theme';
 
 export const FIELD_LABEL: Record<FieldName, string> = {
   title: '标题',
@@ -18,6 +18,7 @@ export const FIELD_LABEL: Record<FieldName, string> = {
   why: '为什么',
   tags: '标签',
   caption: '图片描述',
+  ocr: '图中文字',
   url: '链接',
   idea: '正文',
   bridge: '嫁接点',
@@ -26,14 +27,14 @@ export const FIELD_LABEL: Record<FieldName, string> = {
   experiment: '小实验',
   theme: '主题',
 };
-const WEIGHT: Record<FieldName, number> = { title: 8, creator: 5, tags: 5, year: 3, form: 3, theme: 3, content: 3, idea: 3, bridge: 2, why: 2, caption: 2, step: 1, experiment: 1, url: 1 };
+const WEIGHT: Record<FieldName, number> = { title: 8, creator: 5, tags: 5, year: 3, form: 3, theme: 3, content: 3, idea: 3, bridge: 2, why: 2, caption: 2, ocr: 2, step: 1, experiment: 1, url: 1 };
 
 export interface SearchField {
   f: FieldName;
   text: string;
 }
 
-export function itemFields(it: Pick<Item, 'title' | 'creator' | 'year' | 'content' | 'why' | 'tags' | 'caption' | 'url'>): SearchField[] {
+export function itemFields(it: Pick<Item, 'title' | 'creator' | 'year' | 'content' | 'why' | 'tags' | 'caption' | 'url'> & { ocr?: string }): SearchField[] {
   const out: SearchField[] = [];
   const add = (f: FieldName, t?: string) => {
     if (t && t.trim()) out.push({ f, text: t });
@@ -45,6 +46,7 @@ export function itemFields(it: Pick<Item, 'title' | 'creator' | 'year' | 'conten
   add('why', it.why);
   if (it.tags?.length) add('tags', it.tags.join(' · '));
   add('caption', it.caption);
+  add('ocr', it.ocr);
   add('url', it.url);
   return out;
 }
