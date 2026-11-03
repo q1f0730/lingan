@@ -79,7 +79,9 @@ export function afterAdd(id: number, d: QuickDraft, s: Settings, onErr?: (m: str
           await db.items.update(id, {
             type: cur.type === 'link' ? m.type : cur.type,
             title: titleIsUrl ? m.title || cur.title : cur.title,
-            creator: cur.creator || m.siteName || '',
+            // v0.35 0012 短链换成展开后的真实地址
+            ...(m.url !== d.url && cur.url === d.url ? { url: m.url } : {}),
+            creator: cur.creator || m.creator || m.siteName || '',
             year: cur.year || m.year || '',
             content: cur.content || m.description || '',
           });
