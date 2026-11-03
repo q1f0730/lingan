@@ -178,6 +178,11 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
           复制
         </button>
         {devId && (
+          <button className="btn text idea-share" onClick={() => window.dispatchEvent(new CustomEvent('glean:share', { detail: { dev: devId } }))}>
+            分享
+          </button>
+        )}
+        {devId && (
           <button className="btn text idea-found" onClick={() => setForming((x) => !x)} aria-expanded={forming}>
             {forming ? '收起' : '立项'}
           </button>
