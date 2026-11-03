@@ -304,15 +304,17 @@ class MainActivity : TauriActivity() {
         close()
         val f = file ?: return ""
         return try {
+          // v0.34 新枝明信片（image/*）存进相册 Pictures/Glean，其它文件进「下载」
+          val pic = mime.startsWith("image/")
           if (Build.VERSION.SDK_INT >= 29) {
             val values = ContentValues().apply {
               put(MediaStore.MediaColumns.DISPLAY_NAME, f.name)
               put(MediaStore.MediaColumns.MIME_TYPE, mime)
-              put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+              put(MediaStore.MediaColumns.RELATIVE_PATH, if (pic) Environment.DIRECTORY_PICTURES + "/Glean" else Environment.DIRECTORY_DOWNLOADS)
             }
-            val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return ""
+            val uri = contentResolver.insert(if (pic) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return ""
             contentResolver.openOutputStream(uri)?.use { o -> f.inputStream().use { it.copyTo(o) } } ?: return ""
-            "下载/" + f.name
+            (if (pic) "相册/Glean/" else "下载/") + f.name
           } else {
             val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: return ""
             dir.mkdirs()
