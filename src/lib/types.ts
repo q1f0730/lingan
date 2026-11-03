@@ -67,8 +67,21 @@ export interface Item {
   garden?: 1;
   /** v0.35 0016 再次遇见：同一件东西又收了一次、合并进来时记下那次的时间（最早拾于 = createdAt）。没加索引，随同步 */
   meets?: number[];
+  /** v0.38 0104 作品实体：手动归属（没有 = 按标题 / 《》自动认；'' = 拆出来不归入；名字 = 归到那一部）。没加索引，随同步 */
+  work?: string;
+  /** v0.38 0105 穗间连线（两头各存一条，存对方 uid）。没加索引，随同步 */
+  links?: ItemLink[];
   createdAt: number;
   updatedAt: number;
+}
+
+export type LinkKind = 'like' | 'anti' | 'lead' | 'reply';
+/** r = 1：这一头是被连的（「由它引出」「被回应」） */
+export interface ItemLink {
+  to: string;
+  k: LinkKind;
+  at: number;
+  r?: 1;
 }
 
 export interface Idea {
