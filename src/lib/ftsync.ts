@@ -29,8 +29,9 @@ declare global {
   }
 }
 
-const ITEM_KEYS = new Set(['title', 'creator', 'year', 'content', 'why', 'tags', 'caption', 'url']);
-const DEV_KEYS = new Set(['idea', 'theme']);
+// v0.21 deletedAt：进回收站 = 从索引里拿掉，恢复 = 重新切词
+const ITEM_KEYS = new Set(['title', 'creator', 'year', 'content', 'why', 'tags', 'caption', 'url', 'deletedAt']);
+const DEV_KEYS = new Set(['idea', 'theme', 'deletedAt']);
 
 type Yield = () => Promise<void>;
 const noYield: Yield = () => Promise.resolve();
@@ -124,14 +125,14 @@ export class FtSync {
       const live = new Set<string>();
       const todo: Array<{ kind: 'i' | 'b'; id: number; fields: SearchField[]; sig: string }> = [];
       for (const it of items) {
-        if (it.id == null) continue;
+        if (it.id == null || it.deletedAt) continue;
         const f = itemFields(it);
         const sig = signature(f);
         live.add(`i:${it.id}`);
         if (this.index.sigOf(`i:${it.id}`) !== sig) todo.push({ kind: 'i', id: it.id, fields: f, sig });
       }
       for (const dv of devs) {
-        if (dv.id == null || !dv.idea) continue;
+        if (dv.id == null || !dv.idea || dv.deletedAt) continue;
         const f = branchFields(dv);
         const sig = signature(f);
         live.add(`b:${dv.id}`);
@@ -174,7 +175,7 @@ export class FtSync {
       const dels: string[] = [];
       iIds.forEach((id, n) => {
         const it = its[n];
-        if (!it) dels.push(`i:${id}`);
+        if (!it || it.deletedAt) dels.push(`i:${id}`);
         else {
           const f = itemFields(it);
           const sig = signature(f);
@@ -183,7 +184,7 @@ export class FtSync {
       });
       bIds.forEach((id, n) => {
         const dv = dvs[n];
-        if (!dv || !dv.idea) dels.push(`b:${id}`);
+        if (!dv || !dv.idea || dv.deletedAt) dels.push(`b:${id}`);
         else {
           const f = branchFields(dv);
           const sig = signature(f);
