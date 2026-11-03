@@ -3,9 +3,10 @@ import { chromium } from 'playwright-core';
 const base = process.argv[2] || 'http://127.0.0.1:4173/';
 const out = process.argv[3] || '/tmp/shots';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 fs.mkdirSync(out, { recursive: true });
 const errs = [];
-const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 // v0.16 引导只在第一次打开时出现：其余用例都当作「走过引导」的老用户（onboard: true 的上下文才看引导）
 const _newContext = b.newContext.bind(b);
 b.newContext = async (opts = {}) => {
@@ -139,7 +140,7 @@ async function dbItems(pg) {
     r.onerror = () => rej(r.error);
     r.onsuccess = () => {
       const q = r.result.transaction('items').objectStore('items').getAll();
-      q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ id: x.id, type: x.type, title: x.title, content: x.content || '', creator: x.creator || '', tags: x.tags, sample: x.sample || 0, createdAt: x.createdAt }))); };
+      q.onsuccess = () => { r.result.close(); res(q.result.filter((x) => !x.deletedAt).map((x) => ({ id: x.id, type: x.type, title: x.title, content: x.content || '', creator: x.creator || '', tags: x.tags, sample: x.sample || 0, createdAt: x.createdAt }))); };
       q.onerror = () => rej(q.error);
     };
   }));
@@ -150,7 +151,7 @@ async function dbItemsFull(pg) {
     r.onerror = () => rej(r.error);
     r.onsuccess = () => {
       const q = r.result.transaction('items').objectStore('items').getAll();
-      q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ id: x.id, title: x.title, why: x.why || '', tags: x.tags }))); };
+      q.onsuccess = () => { r.result.close(); res(q.result.filter((x) => !x.deletedAt).map((x) => ({ id: x.id, title: x.title, why: x.why || '', tags: x.tags }))); };
       q.onerror = () => rej(q.error);
     };
   }));
@@ -177,18 +178,19 @@ function e2eMatch(text, terms) {
 }
 const itemSearchText = (x) => [x.title, x.creator, x.year, x.content && x.content !== x.title ? x.content : '', x.why, (x.tags || []).join(' · '), x.caption, x.url].filter(Boolean).join('\n');
 const devSearchText = (d) => [(d.idea?.title || '').replace(/^《|》$/g, ''), d.idea?.idea, d.idea?.bridge, d.idea?.form, d.idea?.firstStep, d.idea?.experiment, d.theme].filter(Boolean).join('\n');
-async function dbRaw(pg, store) {
-  return pg.evaluate((store) => new Promise((res, rej) => {
+// v0.21 墓碑：默认只看活着的（不在回收站里的）穗 / 新枝；withTrash = true 连回收站一起
+async function dbRaw(pg, store, withTrash = false) {
+  return pg.evaluate(({ store, withTrash }) => new Promise((res, rej) => {
     const r = indexedDB.open('lingan');
     r.onerror = () => rej(r.error);
     r.onsuccess = () => {
       const db = r.result;
       if (!db.objectStoreNames.contains(store)) { db.close(); return res([]); }
       const q = db.transaction(store).objectStore(store).getAll();
-      q.onsuccess = () => { db.close(); res(q.result.map((x) => { const { thumb, image, ...rest } = x; void thumb; void image; return rest; })); };
+      q.onsuccess = () => { db.close(); res(q.result.filter((x) => withTrash || !x.deletedAt).map((x) => { const { thumb, image, ...rest } = x; void thumb; void image; return rest; })); };
       q.onerror = () => rej(q.error);
     };
-  }), store);
+  }), { store, withTrash });
 }
 async function sqType(pg, q) {
   await pg.fill('.sq-input', q);
@@ -1010,7 +1012,9 @@ function vaultCheck(tag, files, { ownIds, sampleIds, imageId, includeSamples, de
     const md = text(p);
     if (!md.startsWith('---\n')) { errs.push(`[${tag}] ${p} has no front matter`); continue; }
     const fm = md.slice(4, md.indexOf('\n---\n', 4));
-    const gid = fm.match(/^glean_id: (\d+)$/m);
+    // v0.21 glean_id 改写全局 uid（ULID），本机编号在 glean_n
+    const gid = fm.match(/^glean_n: (\d+)$/m);
+    if (gid && !/^glean_id: "[0-9A-Z]{26}"$/m.test(fm)) errs.push(`[${tag}] ${p} glean_id should be a ULID`);
     const type = fm.match(/^类型: "(.+)"$/m)?.[1];
     if (!type) errs.push(`[${tag}] ${p} no 类型`);
     if (gid && type !== '新枝' && type !== '索引') {
@@ -1150,6 +1154,238 @@ async function obsidian() {
   if ((await ap.evaluate(() => window.__files.save.length)) !== 1) errs.push('[obsidian-android] saveDownloads not called');
   await ap.screenshot({ path: `${out}/obsidian-android.png` });
   await actx.close();
+}
+
+// v0.21 数据地基：每行 uid（ULID）+ deviceId；删除进回收站（恢复 / 彻底删）；.glean 流式备份（manifest + data.jsonl + images/ 原图，
+// 哈希核对）；导入按 uid 去重、先预览三种模式条数（合并 / 只补缺 / 替换）；新设备导入一样；旧 .json 备份照样导、再导不重复
+const ULID_RE = /^[0-7][0-9A-HJKMNP-TV-Z]{25}$/;
+const sha256 = (u8) => crypto.createHash('sha256').update(u8).digest('hex');
+async function importNote(pg, mode) {
+  return pg.locator(`.import-note[data-mode="${mode}"]`).evaluate((e) => ({ add: +e.dataset.add, update: +e.dataset.update, skip: +e.dataset.skip, trash: +e.dataset.trash }));
+}
+async function openSettings(pg) {
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('#set-data');
+}
+async function pickBackup(pg, file) {
+  await pg.setInputFiles('.backup-file', file);
+  await pg.waitForSelector('.import-preview', { timeout: 15000 });
+}
+async function datafound() {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[datafound] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.click('text=先放点示例');
+  await pg.waitForSelector('.card[data-sample="1"]');
+  for (const t of ['数据地基一穗 #地基', '数据地基二穗']) {
+    await pg.fill('.quick-input', t);
+    await pg.press('.quick-input', 'Enter');
+    await pg.waitForSelector(`.card:has-text("${t.replace(/ #.*/, '')}")`);
+  }
+  const png = await pg.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 200; c.height = 120;
+    const g = c.getContext('2d');
+    g.fillStyle = '#111'; g.fillRect(0, 0, 200, 120);
+    g.fillStyle = '#eee'; g.fillRect(20, 20, 160, 80);
+    return c.toDataURL('image/png').split(',')[1];
+  });
+  await pg.click('.quick-more');
+  await pg.setInputFiles('.capture input[type=file]', { name: 'base.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+  await pg.waitForTimeout(300);
+  await pg.fill('.capture .field.big input', '地基里的图');
+  await pg.click('.capture button[type=submit]');
+  await pg.waitForSelector('.card:has-text("地基里的图")');
+  // 每行都有 uid（ULID，唯一）和本机 deviceId
+  const rows = await dbRaw(pg, 'items');
+  const dev = await pg.evaluate(() => localStorage.getItem('glean.device.v1'));
+  if (!ULID_RE.test(dev || '')) errs.push(`[datafound] device id ${dev}`);
+  if (!rows.every((x) => ULID_RE.test(x.uid || '') && x.deviceId === dev)) errs.push(`[datafound] rows missing uid/deviceId ${JSON.stringify(rows.slice(0, 2))}`);
+  if (new Set(rows.map((x) => x.uid)).size !== rows.length) errs.push('[datafound] uid not unique');
+  const meta = await dbRaw(pg, 'meta');
+  if (meta.find((m) => m.k === 'deviceId')?.v !== dev) errs.push(`[datafound] meta deviceId ${JSON.stringify(meta)}`);
+
+  // 删除 → 回收站 → 恢复 → 再删 → 彻底删
+  const two = rows.find((x) => x.title === '数据地基二穗');
+  const del = async () => {
+    await pg.click('.nav-btn:has-text("穗仓")');
+    await pg.click(cardSel(two.id));
+    await pg.click('.detail button:has-text("删除")');
+    await pg.click('.confirm-ok');
+    await pg.waitForSelector('.toast:has-text("在回收站")', { timeout: 3000 }).catch(() => errs.push('[datafound] delete toast should mention 回收站'));
+    await pg.waitForTimeout(200);
+    if (await pg.locator(cardSel(two.id)).count()) errs.push('[datafound] deleted card still in library');
+  };
+  await del();
+  const tomb = (await dbRaw(pg, 'items', true)).find((x) => x.id === two.id);
+  if (!tomb || !(tomb.deletedAt > 0) || tomb.uid !== two.uid) errs.push(`[datafound] tombstone missing ${JSON.stringify(tomb)}`);
+  await openSettings(pg);
+  await pg.locator('#set-trash').scrollIntoViewIfNeeded();
+  if ((await pg.locator('.trash-row').count()) !== 1) errs.push(`[datafound] trash rows ${await pg.locator('.trash-row').count()}`);
+  if (!(await pg.locator('.trash-row').first().innerText()).includes('数据地基二穗')) errs.push('[datafound] trash row title');
+  if (!/30 天/.test(await pg.locator('.trash-row').first().innerText())) errs.push('[datafound] trash row should show 30 天 left');
+  await pg.screenshot({ path: `${out}/datafound-trash.png` });
+  await pg.click('.trash-restore');
+  await pg.waitForSelector('.toast:has-text("已恢复")');
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.waitForSelector(cardSel(two.id), { timeout: 3000 }).catch(() => errs.push('[datafound] restore did not bring the card back'));
+  await del();
+  await openSettings(pg);
+  await pg.click('.trash-purge');
+  await pg.click('.confirm-ok');
+  await pg.waitForSelector('.toast:has-text("已彻底删掉")');
+  if ((await dbRaw(pg, 'items', true)).some((x) => x.id === two.id)) errs.push('[datafound] purge left the row');
+  if (!(await pg.locator('.trash-none').count())) errs.push('[datafound] trash should be empty');
+
+  // 导出 .glean：结构、哈希、条数
+  const live = await dbRaw(pg, 'items');
+  const [dl] = await Promise.all([pg.waitForEvent('download'), pg.click('.backup-export')]);
+  const gname = dl.suggestedFilename();
+  if (!/^glean-backup-\d{4}-\d\d-\d\d-\d{4}\.glean$/.test(gname)) errs.push(`[datafound] backup name ${gname}`);
+  await pg.waitForSelector(`.toast:has-text("已导出 ${live.length} 穗")`, { timeout: 5000 }).catch(() => errs.push('[datafound] export toast'));
+  const gbuf = fs.readFileSync(await dl.path());
+  fs.writeFileSync(`${out}/datafound.glean`, gbuf);
+  const z = readZipBuf(gbuf);
+  const man = JSON.parse(new TextDecoder().decode(z.get('manifest.json')));
+  const imgs = [...z.keys()].filter((k) => k.startsWith('images/'));
+  if (man.format !== 'glean' || man.schema !== 8 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
+  for (const [k, v] of z) if (k !== 'manifest.json' && man.files[k]?.sha256 !== sha256(v)) errs.push(`[datafound] sha256 mismatch ${k}`);
+  if (imgs[0] && imgs[0] !== `images/${sha256(z.get(imgs[0]))}.png`) errs.push(`[datafound] image not named by content hash ${imgs[0]}`);
+  const lines = new TextDecoder().decode(z.get('data.jsonl')).trim().split('\n').map((l) => JSON.parse(l));
+  const lu = lines.filter((l) => l.t === 'item').map((l) => l.uid).sort();
+  if (JSON.stringify(lu) !== JSON.stringify(live.map((x) => x.uid).sort())) errs.push('[datafound] data.jsonl uids != db');
+  // 导回同一台：合并预览「新增 0」
+  await pickBackup(pg, { name: gname, mimeType: 'application/octet-stream', buffer: gbuf });
+  const same = await importNote(pg, 'merge');
+  if (same.add !== 0 || same.skip !== live.length) errs.push(`[datafound] reimport same device should add 0: ${JSON.stringify(same)}`);
+  await pg.screenshot({ path: `${out}/datafound-preview.png` });
+  await pg.click('.import-go');
+  await pg.waitForSelector('.toast:has-text("已合并")');
+  if ((await dbRaw(pg, 'items')).length !== live.length) errs.push('[datafound] reimport duplicated items');
+  await ctx.close();
+
+  // 新设备：空库导入 .glean → 条数、uid、原图都在
+  const ctx2 = await b.newContext({ viewport: { width: 1366, height: 860 } });
+  const p2 = await ctx2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[datafound-2] pageerror ${e.message}`));
+  await p2.goto(base);
+  await p2.waitForSelector('text=穗仓还是空的');
+  await openSettings(p2);
+  await pickBackup(p2, { name: gname, mimeType: 'application/octet-stream', buffer: gbuf });
+  const fresh = await importNote(p2, 'merge');
+  if (fresh.add !== live.length) errs.push(`[datafound] fresh device preview ${JSON.stringify(fresh)}`);
+  await p2.screenshot({ path: `${out}/datafound-preview-desktop.png` });
+  await p2.click('.import-go');
+  await p2.waitForSelector('.toast:has-text("已合并")');
+  const got = await dbRaw(p2, 'items');
+  if (JSON.stringify(got.map((x) => x.uid).sort()) !== JSON.stringify(live.map((x) => x.uid).sort())) errs.push('[datafound] new device uids differ');
+  const imgRow = got.find((x) => x.title === '地基里的图');
+  if (!imgRow?.hasImage || (await dbRaw(p2, 'images')).length !== 1) errs.push('[datafound] image not restored on new device');
+  // 旧版 .json（v0.20 及以前：原图是 data URL、没有 uid）：照样导，再导一次不重复
+  const legacyJson = JSON.stringify({ app: 'lingan', version: 1, exportedAt: Date.now() - 86400000, items: [
+    { id: 1, type: 'film', title: '旧备份里的片子', tags: ['旧'], createdAt: 1700000000000, updatedAt: 1700000000000 },
+    { id: 2, type: 'image', title: '旧备份里的图', image: 'data:image/png;base64,' + png, tags: [], createdAt: 1700000100000, updatedAt: 1700000100000 },
+  ], developments: [{ itemIds: [1, 2], jump: 0.5, idea: { title: '旧备份的新枝', bridge: '', idea: '旧片子接旧图', cliches: ['旧备份套路'] }, source: 'offline', createdAt: 1700000200000 }] });
+  await pickBackup(p2, { name: 'glean-backup-old.json', mimeType: 'application/json', buffer: Buffer.from(legacyJson) });
+  const lj = await importNote(p2, 'merge');
+  if (lj.add !== 2 || (await p2.locator('.import-preview').getAttribute('data-format')) !== 'json') errs.push(`[datafound] legacy json preview ${JSON.stringify(lj)}`);
+  await p2.click('.import-go');
+  await p2.waitForSelector('.toast:has-text("已合并")');
+  const afterOld = await dbRaw(p2, 'items');
+  const oldImg = afterOld.find((x) => x.title === '旧备份里的图');
+  if (afterOld.length !== live.length + 2 || !oldImg?.hasImage || !ULID_RE.test(oldImg.uid || '')) errs.push(`[datafound] legacy import ${afterOld.length}`);
+  const odev = (await dbRaw(p2, 'developments')).find((d) => d.idea?.title === '旧备份的新枝');
+  const oldFilm = afterOld.find((x) => x.title === '旧备份里的片子');
+  if (!odev || JSON.stringify(odev.itemIds) !== JSON.stringify([oldFilm?.id, oldImg?.id])) errs.push(`[datafound] legacy dev sources ${JSON.stringify(odev?.itemIds)}`);
+  await pickBackup(p2, { name: 'glean-backup-old.json', mimeType: 'application/json', buffer: Buffer.from(legacyJson) });
+  const lj2 = await importNote(p2, 'merge');
+  if (lj2.add !== 0 || lj2.skip !== 2) errs.push(`[datafound] legacy reimport should add 0: ${JSON.stringify(lj2)}`);
+  await p2.click('.import-cancel');
+  // 只补缺 / 替换：本机多出来的（旧 json 那两穗）替换后进回收站，可恢复
+  await pickBackup(p2, { name: gname, mimeType: 'application/octet-stream', buffer: gbuf });
+  const rp = await importNote(p2, 'replace');
+  const ms = await importNote(p2, 'missing');
+  if (rp.trash !== 2 || rp.add !== 0 || ms.add !== 0) errs.push(`[datafound] replace/missing preview ${JSON.stringify({ rp, ms })}`);
+  await p2.click('.import-mode[data-mode="replace"]');
+  await p2.click('.import-go');
+  await p2.waitForSelector('.confirm:has-text("替换")');
+  await p2.click('.confirm-ok');
+  await p2.waitForSelector('.toast:has-text("已替换")');
+  const trashed = (await dbRaw(p2, 'items', true)).filter((x) => x.deletedAt).map((x) => x.title).sort();
+  if (JSON.stringify(trashed) !== JSON.stringify(['旧备份里的图', '旧备份里的片子'].sort())) errs.push(`[datafound] replace should trash the 2 local-only ${JSON.stringify(trashed)}`);
+  await p2.locator('#set-trash').scrollIntoViewIfNeeded();
+  if ((await p2.locator('.trash-row').count()) !== 3) errs.push(`[datafound] trash rows after replace ${await p2.locator('.trash-row').count()}`); // 2 穗 + 只由它们长出的那根新枝
+  await p2.screenshot({ path: `${out}/datafound-trash-desktop.png` });
+  await p2.click('.trash-restore-all');
+  await p2.waitForSelector('.toast:has-text("已恢复")');
+  if ((await dbRaw(p2, 'items')).length !== live.length + 2) errs.push('[datafound] restore all failed');
+  // 搜索里看不到回收站里的
+  await ctx2.close();
+  console.log(`datafound: ${live.length} items, glean ${gbuf.length}B (${z.size} files), legacy json ok`);
+}
+
+// v0.21 大库备份：1000 穗（300 张各不相同的原图）流式导出 .glean，量 JS 堆峰值；再在新设备导入，量峰值和条数
+async function heapStart(pg) {
+  return pg.evaluate(() => {
+    if (window.gc) window.gc();
+    const s = { base: performance.memory.usedJSHeapSize, peak: performance.memory.usedJSHeapSize };
+    window.__heap = s;
+    window.__heapT = setInterval(() => { const u = performance.memory.usedJSHeapSize; if (u > s.peak) s.peak = u; }, 15);
+    return s.base;
+  });
+}
+async function heapStop(pg) {
+  return pg.evaluate(() => { clearInterval(window.__heapT); const s = window.__heap; const u = performance.memory.usedJSHeapSize; if (u > s.peak) s.peak = u; return { baseMB: +(s.base / 1048576).toFixed(1), peakMB: +(s.peak / 1048576).toFixed(1), deltaMB: +((s.peak - s.base) / 1048576).toFixed(1) }; });
+}
+async function perfBackup(ctx) {
+  const pg = await ctx.newPage();
+  pg.on('pageerror', (e) => errs.push(`[perf-backup] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForFunction(() => window.__gleanReady && document.querySelectorAll('.masonry .card').length > 0, null, { timeout: 30000 });
+  await openSettings(pg);
+  await pg.waitForSelector('.backup-counts:has-text("1000 穗")');
+  await heapStart(pg);
+  const t0 = Date.now();
+  const [dl] = await Promise.all([pg.waitForEvent('download', { timeout: 150000 }), pg.click('.backup-export')]);
+  await pg.waitForSelector('.toast:has-text("已导出 1000 穗")', { timeout: 150000 }).catch(() => errs.push('[perf-backup] export toast'));
+  const heap = await heapStop(pg);
+  const ms = Date.now() - t0;
+  const file = await dl.path();
+  const buf = fs.readFileSync(file);
+  const z = readZipBuf(buf);
+  const man = JSON.parse(new TextDecoder().decode(z.get('manifest.json')));
+  const imgs = [...z.keys()].filter((k) => k.startsWith('images/'));
+  const imageBytes = imgs.reduce((a, k) => a + z.get(k).length, 0);
+  let bad = 0;
+  for (const k of imgs) if (man.files[k].sha256 !== sha256(z.get(k))) bad++;
+  PERF.backup = { ms, bytes: buf.length, items: man.counts.items, images: imgs.length, imageMB: +(imageBytes / 1048576).toFixed(1), heap, badHashes: bad };
+  if (man.counts.items !== 1000 || imgs.length !== 300 || bad) errs.push(`[perf-backup] backup content ${JSON.stringify(PERF.backup)}`);
+  // 旧做法（整库 JSON + base64）光字符串就要 ≥ 原图 × 1.33 × 2；流式导出堆峰值必须远小于原图总量
+  if (heap.deltaMB > Math.max(48, imageBytes / 1048576 / 2)) errs.push(`[perf-backup] export heap grew ${heap.deltaMB}MB for ${PERF.backup.imageMB}MB of images`);
+  await pg.close();
+  // 新设备导入这份大备份
+  const ictx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  await ictx.addInitScript(() => { if (!localStorage.getItem('lingan.settings.v1')) localStorage.setItem('lingan.settings.v1', JSON.stringify({ phase: 'day', autoCaption: false, autoEmbed: false })); });
+  const ip = await ictx.newPage();
+  ip.on('pageerror', (e) => errs.push(`[perf-import] pageerror ${e.message}`));
+  await ip.goto(base);
+  await ip.waitForSelector('.view');
+  await openSettings(ip);
+  await heapStart(ip);
+  const t1 = Date.now();
+  await pickBackup(ip, file);
+  const pv = await importNote(ip, 'merge');
+  if (pv.add !== 1000) errs.push(`[perf-import] preview ${JSON.stringify(pv)}`);
+  await ip.click('.import-go');
+  await ip.waitForSelector('.toast:has-text("已合并")', { timeout: 150000 }).catch(() => errs.push('[perf-import] import toast'));
+  const iheap = await heapStop(ip);
+  const ims = Date.now() - t1;
+  const cnt = await ip.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const tx = r.result.transaction(['items', 'images']); const o = {}; tx.objectStore('items').count().onsuccess = (e) => (o.items = e.target.result); tx.objectStore('images').count().onsuccess = (e) => (o.images = e.target.result); tx.oncomplete = () => { r.result.close(); res(o); }; }; }));
+  PERF.restore = { ms: ims, heap: iheap, ...cnt };
+  if (cnt.items !== 1000 || cnt.images !== 300) errs.push(`[perf-import] restored ${JSON.stringify(cnt)}`);
+  if (iheap.deltaMB > Math.max(64, imageBytes / 1048576 / 2)) errs.push(`[perf-import] import heap grew ${iheap.deltaMB}MB`);
+  await ictx.close();
 }
 
 // v0.12 兼容旧数据：先在同源页面用 v0.11 的库结构（Dexie version 1 = IndexedDB 10）写入旧新枝，再打开 App
@@ -1437,7 +1673,7 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 70) errs.push(`[legacy] db version expected 70 (Dexie v7) got ${ver}`);
+  if (ver !== 80) errs.push(`[legacy] db version expected 80 (Dexie v8) got ${ver}`);
   // v0.19 旧新枝里列过的套路迁移上墙
   const lw = (await dbRaw(pg, 'cliches')).map((c) => c.key).sort();
   if (JSON.stringify(lw) !== JSON.stringify(['旧套路乙', '旧套路甲'].sort())) errs.push(`[legacy] wall backfill ${JSON.stringify(lw)}`);
@@ -1477,6 +1713,13 @@ async function seedLegacy1000(pg) {
       g.putImageData(id, 0, 0);
       variants.push(c.toDataURL('image/jpeg', 0.82));
     }
+    // v0.21：300 张图各不相同（.glean 按内容哈希去重，同图只存一份；这里要的是 300 份真原图）——在 JPEG 头后插一个注释段
+    const uniqueJpeg = (url, i) => {
+      const bin = atob(url.slice(url.indexOf(',') + 1));
+      const tag = `glean-perf-${i}`;
+      const seg = String.fromCharCode(0xff, 0xfe, 0, tag.length + 2) + tag;
+      return 'data:image/jpeg;base64,' + btoa(bin.slice(0, 2) + seg + bin.slice(2));
+    };
     const words = ['麦田', '黄昏', '旧歌', '慢镜头', '雨', '海边', '便利店', '霓虹', '胶片', '手写', '风', '街角', '老电影', '钢琴', '夏天', '夜车'];
     const types = ['film', 'music', 'text', 'idea', 'link'];
     const now = Date.now();
@@ -1493,7 +1736,7 @@ async function seedLegacy1000(pg) {
         url: t === 'link' ? `https://example.com/a/${i}` : '',
         why: i % 4 === 0 ? `因为${w2}让我想起${words[(i * 11) % 16]}` : '',
         tags: [w1, w2].slice(0, 1 + (i % 2)),
-        ...(img ? { image: variants[i % 12] } : {}),
+        ...(img ? { image: uniqueJpeg(variants[i % 12], i) } : {}),
         createdAt: now - Math.floor(i * 6.1 * 3600e3) - (i % 7) * 60e3,
         updatedAt: now,
       });
@@ -1624,7 +1867,8 @@ async function perf() {
   await ctx.addInitScript(() => { if (!localStorage.getItem('lingan.settings.v1')) localStorage.setItem('lingan.settings.v1', JSON.stringify({ phase: 'day', autoCaption: false, autoEmbed: false })); });
   const pg = await ctx.newPage();
   pg.on('pageerror', (e) => errs.push(`[perf] pageerror ${e.message}`));
-  pg.on('console', (m) => m.type() === 'error' && errs.push(`[perf] console ${m.text()}`));
+  // 种库时停在 favicon.svg 上，浏览器顺手要 /favicon.ico（静态服务器 404），这条不是 App 的错
+  pg.on('console', (m) => m.type() === 'error' && !/\/favicon\.ico$/.test(m.location()?.url || '') && errs.push(`[perf] console ${m.text()}`));
   const seed = await seedLegacy1000(pg);
   PERF.seed = { items: 1000, images: 300, ...seed };
   // 第一次打开：Dexie v2 → v3 迁移（原图搬进 images 表）+ 首屏
@@ -1668,7 +1912,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 70) errs.push(`[perf] db version (expected 70 = Dexie v7) ${integ.version}`);
+  if (integ.version !== 80) errs.push(`[perf] db version (expected 80 = Dexie v8) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
@@ -1747,6 +1991,8 @@ async function perf() {
   PERF.detailOriginalPx = nat;
   PERF.cardThumbPx = cardNat;
   await sp.screenshot({ path: `${out}/perf-detail.png` });
+  await sp.close();
+  await perfBackup(ctx);
   await ctx.close();
   fs.writeFileSync(`${out}/perf.json`, JSON.stringify(PERF, null, 2));
 }
@@ -1876,6 +2122,8 @@ try {
   if (process.env.E2E_ONLY === 'onboarding') throw Object.assign(new Error('onboarding only'), { only: true });
   await obsidian();
   if (process.env.E2E_ONLY === 'obsidian') throw Object.assign(new Error('obsidian only'), { only: true });
+  await datafound();
+  if (process.env.E2E_ONLY === 'datafound') throw Object.assign(new Error('datafound only'), { only: true });
   await modes();
   if (process.env.E2E_ONLY === 'modes') throw Object.assign(new Error('modes only'), { only: true });
   await wall();
@@ -1922,6 +2170,7 @@ if (PERF.scrollMasonryCpu4x && PERF.scrollTimeline) {
   const P = PERF;
   console.log(`PERF cold start ${P.coldStartMs.median}ms (4x CPU ${P.coldStartCpu4xMs.median}ms) · first open+migration ${P.firstOpenWithMigrationMs}ms · thumbs ${P.thumbJob.made} in ${P.thumbJob.ms}ms avg ${P.storage.avgThumbKB}KB (orig ${P.storage.avgOrigKB}KB)`);
   if (P.search) console.log(`PERF search 1000 items offline: max ${P.search.maxMs}ms median ${P.search.medianMs}ms (${P.search.runs.map((r) => `${r.q} ${r.ms}ms/${r.results}`).join(', ')}) · 4x CPU ${P.search.cpu4x.map((r) => `${r.q} ${r.ms}ms`).join(', ')} · index build ${P.searchIndex.built} rows in ${P.searchIndex.buildMs}ms, reopen load ${P.searchIndex.reopenLoadMs}ms`);
+  if (P.backup) console.log(`PERF backup 1000 items/${P.backup.images} images (${P.backup.imageMB}MB) → ${(P.backup.bytes / 1048576).toFixed(1)}MB .glean in ${P.backup.ms}ms, JS heap +${P.backup.heap.deltaMB}MB (peak ${P.backup.heap.peakMB}MB) · restore ${P.restore?.ms}ms heap +${P.restore?.heap.deltaMB}MB`);
   console.log(`PERF scroll masonry ${P.scrollMasonry.avgFps}fps p95 ${P.scrollMasonry.p95Ms}ms jank ${P.scrollMasonry.jankPct}% mounted≤${P.scrollMasonry.maxMountedCards} · 4x ${P.scrollMasonryCpu4x.avgFps}fps jank ${P.scrollMasonryCpu4x.jankPct}% · timeline ${P.scrollTimeline.avgFps}fps jank ${P.scrollTimeline.jankPct}%${P.scrollList ? ` · list ${P.scrollList.avgFps}fps jank ${P.scrollList.jankPct}% mounted≤${P.scrollList.maxMountedCards}` : ''}`);
 }
 console.log(errs.length ? 'ERRORS:\n' + errs.join('\n') : 'ALL PASS');
