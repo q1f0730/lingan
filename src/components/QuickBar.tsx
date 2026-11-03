@@ -13,8 +13,6 @@ import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
 import { NowPlayingButton } from './NowPlaying';
 import { notifyDupe, savedMsg } from '../lib/dupnotice';
 import { useTagSuggest } from './TagSuggest';
-import { takeTransfer } from './DropIn';
-import { readTransfer } from '../lib/dropin';
 import { compressImage } from '../lib/image';
 
 
@@ -332,14 +330,19 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     e.stopPropagation();
     setOver(false);
-    const { t, files } = readTransfer(e.dataTransfer);
+    // 拖放结束后 DataTransfer 就读不到了：先同步拍一份，再懒加载处理代码
+    const src = e.dataTransfer;
+    const snap = { files: Array.from(src?.files || []), uri: src?.getData('text/uri-list') || '', text: src?.getData('text/plain') || '' };
+    const dt = { files: snap.files, getData: (k: string) => (k === 'text/uri-list' ? snap.uri : k === 'text/plain' ? snap.text : '') } as unknown as DataTransfer;
+    const [{ readTransfer }, { takeTransfer }] = await Promise.all([import('../lib/dropin'), import('./DropIn')]);
+    const { t, files } = readTransfer(dt);
     const firstImg = files.find((f) => f.type.startsWith('image/'));
     if (firstImg && files.length === 1) return void takeImage(firstImg);
     if (!t.files.length && (t.text || t.uris.length)) {
       setText((x) => (x ? x + ' ' : '') + (t.uris[0] || t.text).trim());
       return;
     }
-    const r = await takeTransfer(e.dataTransfer, (d) => quickAdd(d, settings, (m) => toast(m, 'err')), text);
+    const r = await takeTransfer(dt, (d) => quickAdd(d, settings, (m) => toast(m, 'err')), text);
     if (r) {
       toast(r.msg, r.ids.length ? 'ok' : 'err');
       if (r.ids.length) {
