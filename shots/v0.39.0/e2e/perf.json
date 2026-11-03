@@ -1,0 +1,234 @@
+{
+  "touchTargets": {
+    "small": 0,
+    "list": []
+  },
+  "quickEnterMs": {
+    "median": 10,
+    "runs": [
+      11,
+      15,
+      9,
+      10,
+      9
+    ],
+    "items": 1000
+  },
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 2882,
+  "preUpgrade": {
+    "from": 2,
+    "to": 12,
+    "id": 1
+  },
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 9216,
+    "wallMs": 10674
+  },
+  "storage": {
+    "version": 120,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102224504,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 11,
+    "rows": 1000,
+    "reopenLoadMs": 12,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 17,
+        "results": 176,
+        "coreMs": 1.6
+      },
+      {
+        "q": "海边",
+        "ms": 16.9,
+        "results": 178,
+        "coreMs": 0.7
+      },
+      {
+        "q": "钢琴",
+        "ms": 17.1,
+        "results": 172,
+        "coreMs": 0.5
+      },
+      {
+        "q": "夜车",
+        "ms": 16.9,
+        "results": 174,
+        "coreMs": 0.6
+      },
+      {
+        "q": "麦田",
+        "ms": 17,
+        "results": 63,
+        "coreMs": 0.5
+      },
+      {
+        "q": "黄昏",
+        "ms": 16.9,
+        "results": 176,
+        "coreMs": 0.4
+      }
+    ],
+    "maxMs": 17.1,
+    "medianMs": 17,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 32.7,
+        "results": 176,
+        "coreMs": 2
+      },
+      {
+        "q": "便利",
+        "ms": 41.4,
+        "results": 125,
+        "coreMs": 1.9
+      },
+      {
+        "q": "霓虹",
+        "ms": 40,
+        "results": 176,
+        "coreMs": 2.1
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 188,
+    "runs": [
+      188,
+      190,
+      183
+    ],
+    "firstThumbsDecodedMedian": 225,
+    "cardsOnFirstScreen": 12
+  },
+  "coldStartCpu4xMs": {
+    "median": 535,
+    "runs": [
+      535,
+      535,
+      532
+    ],
+    "firstThumbsDecodedMedian": 675
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16836,
+    "scrollHeight": 115217,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 4,
+    "objectUrlsCreated": 62
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14432,
+    "scrollHeight": 66168,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 27,
+    "virtual": {
+      "total": 37,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14417,
+    "scrollHeight": 45265,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 58,
+    "maxLiveObjectUrls": 1,
+    "virtual": {
+      "total": 1000,
+      "mounted": 58
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 300,
+    "scrolledPx": 8018,
+    "scrollHeight": 115217,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.7,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400,
+  "backup": {
+    "ms": 638,
+    "bytes": 102855623,
+    "items": 1000,
+    "images": 300,
+    "imageMB": 97.5,
+    "heap": {
+      "baseMB": 9.3,
+      "peakMB": 44.1,
+      "deltaMB": 34.4,
+      "runs": [
+        45.8,
+        34.4,
+        34.2
+      ]
+    },
+    "badHashes": 0
+  },
+  "restore": {
+    "ms": 862,
+    "heap": {
+      "baseMB": 6.6,
+      "peakMB": 48.7,
+      "deltaMB": 42.1
+    },
+    "items": 1000,
+    "images": 300
+  }
+}
