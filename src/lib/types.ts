@@ -79,6 +79,8 @@ export interface Item {
   metaTodo?: 1;
   /** v0.39 0907 上锁：要输入本机 PIN 才显示；永远不进分享、花园、Agent / MCP、AI。没加索引，随同步 */
   locked?: 1;
+  /** v0.39 0934 这一穗关掉的出口（'ai' | 'agent' | 'share' | 'garden'）；上锁 = 全关。没加索引，随同步 */
+  shut?: string[];
   createdAt: number;
   updatedAt: number;
 }
