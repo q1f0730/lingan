@@ -192,7 +192,9 @@ export function Library() {
     toast(`放进了 ${ids.length} 穗示例（标着「示例」），随时一键清掉`);
   }
   async function dropSamples(again = false) {
-    const r = await clearSamples();
+    // v0.26 0621：清示例前拍一张快照
+    const { withSnapshot } = await import('../lib/snapshots');
+    const { result: r } = await withSnapshot('清掉示例前', db, () => clearSamples(), { required: false });
     if (again) {
       await addSamples(10);
       toast('换了一批示例');
