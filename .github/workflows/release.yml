@@ -30,6 +30,18 @@ jobs:
       - run: node --check mcp/glean-mcp.mjs
       - uses: actions/upload-artifact@v4
         with: { name: size-report, path: size-report.md }
+      # v0.37 0705：e2e 进发版质量门（ALL PASS 才往下走）。性能组只在 InstaBox 上当门（runner 之间差太多），这里跳过
+      - name: e2e
+        env: { E2E_CHROMIUM: /usr/bin/google-chrome, E2E_SKIP: perf, E2E_TRACE: '1' }
+        run: |
+          npm i --no-save playwright-core@1.64.1
+          (npx vite preview --host 127.0.0.1 --port 4173 --strictPort >/tmp/preview.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          node e2e/run.mjs http://127.0.0.1:4173/ e2e-out 2>&1 | tee e2e.log
+          tail -1 e2e.log | grep -qx 'ALL PASS'
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: e2e-failure, path: 'e2e-out/trace-*.zip', if-no-files-found: ignore }
   create-release:
     needs: verify
     runs-on: ubuntu-latest
@@ -37,6 +49,12 @@ jobs:
       id: ${{ steps.rel.outputs.id }}
     steps:
       - uses: actions/checkout@v4
+      # v0.37 0728：先建草稿，产物齐了、核过了（finalize）才公开；同 tag 重跑时先清掉上次留下的草稿（只删草稿）
+      - name: drop stale drafts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" -q ".[] | select(.draft and .tag_name==\"$TAG\") | .id" | while read -r id; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/$id"; done
       - name: notes
         run: |
           V="${TAG#v}"
@@ -48,7 +66,7 @@ jobs:
           name: 拾穗 Glean ${{ env.TAG }}
           body_path: notes.md
           target_commitish: ${{ github.sha }}
-          make_latest: true
+          draft: true
   windows:
     needs: create-release
     runs-on: windows-latest
@@ -124,10 +142,10 @@ jobs:
           FP=$($BT/apksigner verify --print-certs "Glean_${TAG#v}_android.apk" | grep -E 'certificate SHA-256 digest' | head -1 | awk '{print $NF}')
           if [ "$FP" != "9771c62b20a081c6c3d17d0928f2314f969105f1cfaa8cc1ab6bfee4cfb36d88" ]; then echo "::error::unexpected signer $FP"; exit 1; fi
           $BT/apksigner lineage --in "Glean_${TAG#v}_android.apk" --print-certs | grep -E "Signer #. in lineage certificate SHA-256"
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.TAG }}
-          files: Glean_*_android.apk
+      - name: upload apk (draft release)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$TAG" Glean_*_android.apk --clobber -R "$GITHUB_REPOSITORY"
   # v0.25：产物核对（apk / exe / msi / latest.json / .sig 必须都在）+ 0748 SHA256SUMS + glean-mcp.mjs
   finalize:
     needs: [create-release, windows, android]
@@ -162,3 +180,6 @@ jobs:
           sha256sum $(ls | grep -v '^SHA256SUMS') > ../SHA256SUMS.txt
           cd .. && cat SHA256SUMS.txt
           gh release upload "$TAG" SHA256SUMS.txt --clobber -R "$GITHUB_REPOSITORY"
+          # v0.37 0728：全部核过了才公开（这时才打 tag、才成为 latest，老版本的自动更新这一刻才看得到）
+          gh release edit "$TAG" --draft=false --latest -R "$GITHUB_REPOSITORY"
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" --json isDraft,tagName -q '.isDraft' | grep -qx false || { echo "::error::release still draft"; exit 1; }
