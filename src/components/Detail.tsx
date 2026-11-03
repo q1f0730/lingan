@@ -38,7 +38,7 @@ export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it
         {quote ? (
           <>
             <h2 className="detail-title quote">{displayTitle(it)}</h2>
-            <p className="detail-src">— {quoteSource(it) || bookTitle(it.title)}</p>
+            <p className="detail-src">— {quoteSource(it) || (it.source ? `摘自${it.source}` : bookTitle(it.title))}</p>
           </>
         ) : (
           <h2 className="detail-title">{displayTitle(it)}</h2>
@@ -60,13 +60,29 @@ export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it
               />
             </dd>
           </div>
+          {it.source && (
+            <div className="kv-source">
+              <dt>来自</dt>
+              <dd>{it.source}</dd>
+            </div>
+          )}
+          {quote && !it.creator && it.source && (
+            <div className="kv-todo">
+              <dt>作者</dt>
+              <dd className="todo">
+                <button type="button" className="btn text todo" onClick={onEdit}>
+                  待补 · 点这里补上
+                </button>
+              </dd>
+            </div>
+          )}
           {it.creator && !quote && (
             <div>
               <dt>{CREATOR[it.type]}</dt>
               <dd>{it.creator}</dd>
             </div>
           )}
-          {quote && it.title && (
+          {quote && it.title && it.title !== (it.content || '').replace(/^[「“"『]+/, '').slice(0, 18) && it.title !== (it.content || '').slice(0, 18) && (
             <div>
               <dt>出处</dt>
               <dd>{bookTitle(it.title)}</dd>
