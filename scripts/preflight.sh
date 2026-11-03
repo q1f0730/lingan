@@ -26,7 +26,8 @@ assert b.count(b'\n')==b.count(b'\r\n'), 'mixed line endings'
 P
 ok 'ideas.csv CRLF'
 # 私钥 / key 不进仓库
-if grep -rIl --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=target --exclude-dir=gen -E 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|sk-[A-Za-z0-9]{20,}|untrusted comment: rsign encrypted secret key' . >/tmp/preflight-secrets.txt; then cat /tmp/preflight-secrets.txt; die '疑似私钥 / key'; fi
+# 排除本脚本自己的模式串；e2e 里脱敏测试用的假 key（sk-abcdefghijklmnop1234）白名单放行
+if grep -rIn --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=target --exclude-dir=gen --exclude=preflight.sh -E 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|sk-[A-Za-z0-9]{20,}|untrusted comment: rsign encrypted secret key' . | grep -v 'sk-abcdefghijklmnop1234' >/tmp/preflight-secrets.txt; then cut -d: -f1,2 /tmp/preflight-secrets.txt; die '疑似私钥 / key'; fi
 ok '没有私钥 / key'
 find . -path ./node_modules -prune -o \( -name '*.p12' -o -name '*.jks' -o -name '*.keystore' -o -name 'updater.key' \) -print | grep -q . && die '仓库里有密钥文件' || ok '没有密钥文件'
 # 锁文件完整（CI 用 npm ci）
