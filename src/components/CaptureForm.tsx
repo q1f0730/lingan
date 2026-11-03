@@ -47,7 +47,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
   const [imgBusy, setImgBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [sniff, setSniff] = useState<'' | 'busy' | 'ok' | 'fail'>('');
-  const [more, setMore] = useState(!!(initial.why || initial.tags.length));
+  const [more, setMore] = useState(!!(initial.why || initial.tags.length || initial.polarity || initial.private));
   const np = useNowPlaying();
   const [restored, setRestored] = useState(false);
   const writer = useRef(draftWriter(DRAFT_KEY));
@@ -115,7 +115,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
     }
     setD(initial);
     setTagText(initial.tags.join(' '));
-    setMore(!!(initial.why || initial.tags.length));
+    setMore(!!(initial.why || initial.tags.length || initial.polarity || initial.private));
   }, [initial]);
   const ph = PH[d.type];
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
@@ -282,6 +282,15 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
         <span className="label">标签（空格分隔）</span>
         <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="雨 克制 慢镜头" />
       </label>
+      <div className="field flag-row" role="group" aria-label="这一穗">
+        <button type="button" className={`chip flag-dislike${d.polarity === -1 ? ' on' : ''}`} aria-pressed={d.polarity === -1} onClick={() => set('polarity', d.polarity === -1 ? undefined : -1)} title="反口味：不当嫁接素材，只告诉模型别往这边长">
+          讨厌
+        </button>
+        <button type="button" className={`chip flag-private${d.private ? ' on' : ''}`} aria-pressed={!!d.private} onClick={() => set('private', d.private ? undefined : 1)} title="不发给云端 AI（嫁接 / 看图 / 向量 / 侧写都跳过它）">
+          私密
+        </button>
+        <span className="meta-text flag-note">{d.polarity === -1 ? '记成「我讨厌的」：嫁接不拿它当素材。' : d.private ? '只留在本机，不发给云端 AI。' : '讨厌的东西也值得记；私密的不发给云端 AI。'}</span>
+      </div>
       </>)}
       {err && <div className="error">{err}</div>}
       <div className="actions form-actions">
