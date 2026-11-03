@@ -1,0 +1,348 @@
+{
+  "version": "0.37.0",
+  "date": "2026-11-04",
+  "build": "app-CXyGB7J3.js",
+  "e2e": {
+    "coldStartMs": 187,
+    "coldStartCpu4xMs": 529,
+    "searchMaxMs": 17.8,
+    "searchMedianMs": 17.1,
+    "quickEnterToCardMs": {
+      "median": 11,
+      "runs": [
+        13,
+        11,
+        10,
+        7,
+        14
+      ],
+      "items": 1000
+    },
+    "midTier": {
+      "origBytes": 3472071,
+      "midBytes": 712133
+    },
+    "backup": {
+      "items": 1000,
+      "images": 300,
+      "ms": 634,
+      "heapDeltaMB": 34.0,
+      "peakMB": 50.8
+    },
+    "restoreMs": 961,
+    "scroll": "masonry/timeline/list 60fps jank 0%"
+  },
+  "interleavedBench": {
+    "script": "e2e/bench5.mjs (painted), InstaBox 4436=dist36 app-Dl-IX8_h / 4437=dist app-CXyGB7J3（哈希已核对）",
+    "rounds": 9,
+    "v036": {
+      "normalMedian": 198,
+      "cpu4xMedian": 597,
+      "normalRuns": [
+        185,
+        189,
+        208,
+        198,
+        217,
+        212,
+        192,
+        192,
+        202
+      ],
+      "cpu4xRuns": [
+        580,
+        555,
+        625,
+        563,
+        600,
+        646,
+        598,
+        583,
+        597
+      ]
+    },
+    "v037": {
+      "normalMedian": 197,
+      "cpu4xMedian": 600,
+      "normalRuns": [
+        201,
+        195,
+        194,
+        188,
+        201,
+        205,
+        210,
+        197,
+        197
+      ],
+      "cpu4xRuns": [
+        570,
+        578,
+        570,
+        603,
+        600,
+        628,
+        606,
+        648,
+        561
+      ]
+    },
+    "perfGate": {
+      "normal": "198 → 197ms（-0.5%，U=41/81，z=-0.04）OK",
+      "cpu4x": "597 → 600ms（+0.5%，U=36.5/81，z=0.35）OK"
+    },
+    "verdict": "持平，性能回归门 OK"
+  },
+  "note1000": "第一次同会话交替测（分段读库对所有库都开）1000 穗慢 15%（196/594 → 226/678，回归门 FAIL）：首段多几条小查询各占一个事务，小库比一次 getAll 慢。修法：只有上次全量 >4000 穗（localStorage glean.libn）才走两段，小库照旧一次读全表；阈值不放宽。",
+  "stress": {
+    "date": "2026-11-03T20:32:11.013Z",
+    "rounds": 3,
+    "versions": [
+      "v036",
+      "v037"
+    ],
+    "sizes": {
+      "10000": {
+        "seeded": {
+          "items": 10000,
+          "images": 3000
+        },
+        "seedMs": 1913,
+        "index": {
+          "buildMs": 1557,
+          "rows": 10000
+        },
+        "cold": {
+          "v036": {
+            "normalMedian": 317,
+            "cpu4xMedian": 791,
+            "normalRuns": [
+              317,
+              273,
+              348
+            ],
+            "cpu4xRuns": [
+              828,
+              791,
+              775
+            ],
+            "fullAfterMedianMs": 19,
+            "heapMedianMB": 14.1,
+            "count": "(10000)"
+          },
+          "v037": {
+            "normalMedian": 219,
+            "cpu4xMedian": 646,
+            "normalRuns": [
+              225,
+              196,
+              219
+            ],
+            "cpu4xRuns": [
+              684,
+              646,
+              592
+            ],
+            "fullAfterMedianMs": 186,
+            "heapMedianMB": 13.6,
+            "count": "(10000)"
+          }
+        },
+        "scroll": {
+          "v036": {
+            "avgFps": 60,
+            "p95Ms": 16.8,
+            "jankPct": 0,
+            "mounted": 22
+          },
+          "v037": {
+            "avgFps": 60,
+            "p95Ms": 16.7,
+            "jankPct": 0,
+            "mounted": 24
+          }
+        },
+        "search": {
+          "v036": {
+            "maxMs": 25,
+            "runs": [
+              {
+                "q": "黄昏",
+                "ms": 25,
+                "n": 1600
+              },
+              {
+                "q": "慢镜头",
+                "ms": 18,
+                "n": 1600
+              },
+              {
+                "q": "夜车 海边",
+                "ms": 17,
+                "n": 350
+              },
+              {
+                "q": "第 4",
+                "ms": 18,
+                "n": 900
+              }
+            ]
+          },
+          "v037": {
+            "maxMs": 23,
+            "runs": [
+              {
+                "q": "黄昏",
+                "ms": 23,
+                "n": 1600
+              },
+              {
+                "q": "慢镜头",
+                "ms": 18,
+                "n": 1600
+              },
+              {
+                "q": "夜车 海边",
+                "ms": 17,
+                "n": 350
+              },
+              {
+                "q": "第 4",
+                "ms": 18,
+                "n": 900
+              }
+            ]
+          }
+        },
+        "export": {
+          "v037": {
+            "ms": 1966,
+            "mb": 61.6,
+            "heapDeltaMB": 83.6
+          }
+        }
+      },
+      "50000": {
+        "seeded": {
+          "items": 50000,
+          "images": 0
+        },
+        "seedMs": 3197,
+        "index": {
+          "buildMs": 5638,
+          "rows": 50000
+        },
+        "cold": {
+          "v036": {
+            "normalMedian": 647,
+            "cpu4xMedian": 1690,
+            "normalRuns": [
+              681,
+              609,
+              647
+            ],
+            "cpu4xRuns": [
+              1767,
+              1585,
+              1690
+            ],
+            "fullAfterMedianMs": 21,
+            "heapMedianMB": 40.2,
+            "count": "(50000)"
+          },
+          "v037": {
+            "normalMedian": 211,
+            "cpu4xMedian": 624,
+            "normalRuns": [
+              211,
+              216,
+              208
+            ],
+            "cpu4xRuns": [
+              624,
+              632,
+              612
+            ],
+            "fullAfterMedianMs": 523,
+            "heapMedianMB": 59.7,
+            "count": "(50000)"
+          }
+        },
+        "scroll": {
+          "v036": {
+            "avgFps": 60,
+            "p95Ms": 16.8,
+            "jankPct": 0,
+            "mounted": 22
+          },
+          "v037": {
+            "avgFps": 60,
+            "p95Ms": 16.7,
+            "jankPct": 0,
+            "mounted": 22
+          }
+        },
+        "search": {
+          "v036": {
+            "maxMs": 68,
+            "runs": [
+              {
+                "q": "黄昏",
+                "ms": 68,
+                "n": 8750
+              },
+              {
+                "q": "慢镜头",
+                "ms": 58,
+                "n": 8750
+              },
+              {
+                "q": "夜车 海边",
+                "ms": 27,
+                "n": 2500
+              },
+              {
+                "q": "第 4",
+                "ms": 41,
+                "n": 11809
+              }
+            ]
+          },
+          "v037": {
+            "maxMs": 75,
+            "runs": [
+              {
+                "q": "黄昏",
+                "ms": 75,
+                "n": 8750
+              },
+              {
+                "q": "慢镜头",
+                "ms": 46,
+                "n": 8750
+              },
+              {
+                "q": "夜车 海边",
+                "ms": 24,
+                "n": 2500
+              },
+              {
+                "q": "第 4",
+                "ms": 36,
+                "n": 11809
+              }
+            ]
+          }
+        }
+      }
+    },
+    "errors": []
+  },
+  "size": {
+    "firstJsKB": 570.0,
+    "firstJsGzipKB": 193.6,
+    "firstCssKB": 127.1,
+    "totalAssetsKB": 2223.5,
+    "totalBudgetKB": 2226.6
+  }
+}
