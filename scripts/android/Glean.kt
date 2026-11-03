@@ -30,6 +30,14 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object Glean {
+  /** v0.33 0514：和 src/lib/quick.ts 的 looksSensitive 同一套规则（纯数字 4–8 位、带「验证码」的短句、像密码的一串） */
+  fun looksSensitive(t: String): Boolean {
+    val s = t.trim()
+    if (Regex("^\\d{4,8}$").matches(s)) return true
+    if (s.length < 200 && Regex("验证码|校验码|动态码|动态密码|verification code|\\bOTP\\b", RegexOption.IGNORE_CASE).containsMatchIn(s) && Regex("(^|\\D)\\d{4,8}(\\D|$)").containsMatchIn(s)) return true
+    return s.length in 8..64 && !Regex("[\\s/\\u3000-\\u9fff]").containsMatchIn(s) && Regex("[a-z]").containsMatchIn(s) && Regex("[A-Z]").containsMatchIn(s) && Regex("\\d").containsMatchIn(s) && Regex("[^A-Za-z0-9]").containsMatchIn(s)
+  }
+
   /**
    * v0.23 后台同步：主界面的 WebView 还活着（App 在后台、没被系统杀）时，收件箱一有新条目就叫 JS 立刻收进 IndexedDB，
    * 不用等下次回到前台。WebView 已经没了（进程被杀 / 从没打开过）就什么也不做，仍按 v0.22 的方式下次打开时收。
