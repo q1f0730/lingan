@@ -27,6 +27,8 @@ tauri-plugin-http = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-clipboard-manager = "2"
+# v0.36 0519：手机和电脑统一的系统通知（嫁接在后台完成、截图收好了）
+tauri-plugin-notification = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-global-shortcut = "2"
@@ -48,6 +50,6 @@ tauri-plugin-autostart = "2"
 tauri-plugin-opener = "2"
 png = "0.18"
 
-# v0.22：Windows「正在播放一键拾」读系统媒体传输控件（SMTC）
+# v0.22：Windows「正在播放一键拾」读系统媒体传输控件（SMTC）；v0.36 0020 系统 OCR（Media_Ocr / Graphics_Imaging）
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.61", features = ["Media_Control", "Storage_Streams", "Foundation", "Win32_Foundation", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_UI_Input_KeyboardAndMouse"] }
+windows = { version = "0.61", features = ["Media_Control", "Storage_Streams", "Foundation", "Win32_Foundation", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_UI_Input_KeyboardAndMouse", "Media_Ocr", "Globalization", "Graphics_Imaging", "Foundation_Collections"] }
