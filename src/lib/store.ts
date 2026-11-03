@@ -9,6 +9,8 @@ export interface ConfirmOpts {
   ok: string;
   cancel?: string;
   danger?: boolean;
+  /** v0.24 0212 可选理由：一排快捷理由 + 自定义（不选也能确认）。确认时 onPick(理由 id 或 null, 自定义原话) */
+  reasons?: { options: Array<{ id: string; label: string }>; custom?: string; onPick: (id: string | null, text?: string) => void };
 }
 export interface AppCtx {
   settings: Settings;
