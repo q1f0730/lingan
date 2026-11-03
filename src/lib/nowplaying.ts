@@ -1,7 +1,7 @@
 // v0.22「正在播放一键拾」：安卓读媒体会话（MainActivity 的 LinganNowPlaying 桥，需要「通知使用权」），
 // Windows 读系统媒体传输控件 SMTC（Rust 命令 now_playing，无需权限）。浏览器里不支持。
 
-import { isTauriEnv } from './desktop';
+import { nowPlayingSupport } from './npsupport';
 import { cleanSource, sourceName } from './sources';
 import type { QuickDraft } from './quick';
 
@@ -28,16 +28,7 @@ function bridge(w: unknown = typeof window === 'undefined' ? undefined : window)
   return b && typeof b.read === 'function' ? b : null;
 }
 
-function isWindows(): boolean {
-  return typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent || '');
-}
-
-/** 这台设备能不能读正在播放：android（要权限）/ windows / null */
-export function nowPlayingSupport(w?: unknown): 'android' | 'windows' | null {
-  if (bridge(w)) return 'android';
-  if (isTauriEnv(w) && isWindows()) return 'windows';
-  return null;
-}
+export { nowPlayingSupport };
 
 /** 安卓：通知使用权有没有给 */
 export function nowPlayingAccess(): boolean {
