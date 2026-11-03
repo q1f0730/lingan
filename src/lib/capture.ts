@@ -176,7 +176,7 @@ export function drainInbox(d: LinganDB, bridge: InboxBridge | null = inboxBridge
           bridge.ack(e.uid);
           continue;
         }
-        const id = await addItem(draft, d, { createdAt: e.createdAt, uid: e.uid });
+        const id = await addItem(draft, d, { createdAt: e.createdAt, uid: e.uid, inbox: true });
         bridge.ack(e.uid);
         res.added.push({ id, draft });
       } catch {
