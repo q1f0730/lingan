@@ -13,11 +13,16 @@ export async function enrichItem(id: number, s: Settings, force = false): Promis
     try {
       const img = await getOriginalDataUrl(db, id);
       if (!img) throw new Error('原图不见了');
-      const cap = await caption(s, img);
+      // v0.23 0110：只从你已有的标签词汇里选；新词放进 tagSugg，要你点头才加
+      const vocab = (await db.items.orderBy('tags').uniqueKeys()) as string[];
+      const wallKeys = (await db.cliches.toArray()).filter((c) => !c.struck).map((c) => c.key);
+      const cap = await caption(s, img, vocab);
       const m = cap.match(/标签[:：]\s*(.+)$/m);
       const extraTags = m ? normalizeTags(m[1]) : [];
+      const { known, fresh } = (await import('./organize')).splitSuggested(extraTags, vocab, wallKeys);
       const capText = cap.replace(/标签[:：].*$/m, '').trim();
-      await db.items.update(id, { caption: capText, tags: normalizeTags([...it.tags, ...extraTags]) });
+      const sugg = fresh.filter((t) => !it.tags.includes(t));
+      await db.items.update(id, { caption: capText, tags: normalizeTags([...it.tags, ...known]), ...(sugg.length ? { tagSugg: sugg } : {}) });
     } catch (e) {
       errs.push('看图：' + (e instanceof Error ? e.message : String(e)));
     }
