@@ -1,5 +1,5 @@
 import { m } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IconEnter } from './rw/icons';
 import { addItem, db, normalizeTags, updateItem } from '../lib/db';
 import { itemHasImage } from '../lib/imagestore';
@@ -9,11 +9,52 @@ import { clipMemory, parseQuick, readClipboard, shouldOffer, type QuickDraft } f
 import type { Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
+import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
+import { NowPlayingButton } from './NowPlaying';
+
+/** v0.22 速记草稿：输入防抖写本地，App 被杀后下次打开接着写；存了或清空就删 */
+function useDraft(key: string, text: string, setText: (t: string) => void): [boolean, () => void] {
+  const [restored, setRestored] = useState(false);
+  const w = useMemo(() => draftWriter(key), [key]);
+  useEffect(() => {
+    const t = loadDraft(key);
+    if (t) {
+      setText(t);
+      setRestored(true);
+    }
+    return () => w.flush();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  useEffect(() => {
+    w.write(text);
+  }, [text, w]);
+  useEffect(() => {
+    const f = () => w.flush();
+    window.addEventListener('pagehide', f);
+    document.addEventListener('visibilitychange', f);
+    return () => {
+      window.removeEventListener('pagehide', f);
+      document.removeEventListener('visibilitychange', f);
+    };
+  }, [w]);
+  const done = useCallback(() => {
+    w.cancel();
+    clearDraft(key);
+    setRestored(false);
+  }, [key, w]);
+  return [restored, done];
+}
 
 /** Save a quick draft, then fill link metadata + AI enrichment in the background. */
 export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) => void): Promise<number> {
   const id = await addItem(d);
-  (async () => {
+  afterAdd(id, d, s, onErr);
+  return id;
+}
+
+/** 新穗入库后的后台活：链接补标题封面、AI 整理（极速拾收件箱、正在播放也走这里） */
+export function afterAdd(id: number, d: QuickDraft, s: Settings, onErr?: (m: string) => void) {
+  void (async () => {
     if (d.url) {
       try {
         const m = await fetchLinkMeta(d.url);
@@ -37,7 +78,6 @@ export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) =
     const err = await enrichItem(id, s);
     if (err) onErr?.('AI 整理失败：' + err);
   })();
-  return id;
 }
 
 function splitWhy(raw: string): { why: string; tags: string[] } {
@@ -91,6 +131,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   const [focus, setFocus] = useState(false);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [restored, dropDraft] = useDraft('quick', text, setText);
 
   async function save() {
     const d = parseQuick(text);
@@ -98,6 +139,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
     setBusy(true);
     try {
       const id = await quickAdd(d, settings, (m) => toast(m, 'err'));
+      dropDraft();
       setText('');
       setWhy('');
       setLast(id);
@@ -166,6 +208,20 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
           </button>
         </m.div>
       )}
+      {restored && text && !last && (
+        <div className="quick-draft" role="status">
+          <span className="quick-after-k">接着写 · 上次没存的草稿</span>
+          <button
+            className="btn text faint quick-draft-clear"
+            onClick={() => {
+              dropDraft();
+              setText('');
+            }}
+          >
+            清掉
+          </button>
+        </div>
+      )}
       <m.div className="quick-bar" onPointerDown={ripple} animate={{ scale: focus ? 1.015 : 1 }} transition={{ type: 'spring', stiffness: 420, damping: 28 }}>
         {ripples.map((r) => (
           <m.span key={r.id} className="qc-ripple" style={{ left: r.x - 30, top: r.y - 30 }} initial={{ scale: 0, opacity: 0.7 }} animate={{ scale: 2.8, opacity: 0 }} transition={{ duration: 0.55, ease: 'easeOut' }} aria-hidden />
@@ -218,6 +274,7 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
   const guess = useMemo(() => parseQuick(text), [text]);
+  const [, dropDraft] = useDraft('qw', text, setText);
   useEffect(() => {
     ref.current?.focus();
     const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -230,6 +287,7 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
     setBusy(true);
     try {
       await quickAdd(type ? { ...d, type } : d, settings, (m) => toast(m, 'err'));
+      dropDraft();
       toast('已拾进穗仓');
       onClose();
     } catch (e) {
@@ -277,8 +335,9 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
             ))}
           </span>
           {guess && !type && <span className="meta-text">自动识别：{TYPE_LABEL[guess.type]}</span>}
+          <NowPlayingButton onDone={onClose} />
         </div>
-        <footer className="qw-foot meta-text">Esc 关闭 · Ctrl+Shift+L 在任何程序里唤出</footer>
+        <footer className="qw-foot meta-text">Esc 关闭 · Ctrl+Shift+L 在任何程序里唤出 · 托盘菜单「拾正在播放的歌」一键收歌</footer>
       </div>
     </div>
   );
