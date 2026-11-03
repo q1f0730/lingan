@@ -49,7 +49,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             返回
           </button>
         ) : (
-          <span className="logo">拾穗 · GLEAN</span>
+          <span className="logo"><span className="logo-mark" aria-hidden>拾</span><span className="logo-text">拾穗 <span className="logo-en">GLEAN</span></span></span>
         )}
         <button className="btn text faint onboard-skip" onClick={() => finish(false)}>
           跳过
