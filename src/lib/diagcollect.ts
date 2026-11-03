@@ -3,6 +3,7 @@ import { buildDiagnostics } from './diagnostics';
 import { aiReady, loadSettings, PRESETS, vaultKind } from './settings';
 import { VAULT_LABEL } from './vault';
 
+
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([p.catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), ms))]);
 }
