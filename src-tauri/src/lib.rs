@@ -38,7 +38,7 @@ fn show_view(app: &tauri::AppHandle, view: &str) {
 mod vault {
   const SERVICE: &str = "com.q1f730.lingan";
   fn entry(name: &str) -> Result<keyring::Entry, String> {
-    if !matches!(name, "chat.apiKey" | "embed.apiKey") {
+    if !matches!(name, "chat.apiKey" | "embed.apiKey" | "sync.davPass" | "sync.key") {
       return Err("bad secret name".into());
     }
     keyring::Entry::new(SERVICE, name).map_err(|_| "keychain unavailable".to_string())
