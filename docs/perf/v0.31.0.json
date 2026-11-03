@@ -1,0 +1,291 @@
+{
+ "touchTargets": {
+  "small": 0,
+  "list": []
+ },
+ "seed": {
+  "items": 1000,
+  "images": 300,
+  "avgOrigKB": 333,
+  "maxOrigKB": 335
+ },
+ "firstOpenWithMigrationMs": 1679,
+ "preUpgrade": {
+  "from": 2,
+  "to": 12,
+  "id": 1
+ },
+ "thumbJob": {
+  "made": 300,
+  "failed": 0,
+  "ms": 6436,
+  "wallMs": 7898
+ },
+ "storage": {
+  "version": 120,
+  "items": 1000,
+  "inline": 0,
+  "withThumb": 300,
+  "hasImage": 300,
+  "images": 300,
+  "imageBytes": 102224504,
+  "avgThumbKB": 11.8,
+  "maxThumbKB": 12.5,
+  "avgOrigKB": 333
+ },
+ "searchIndex": {
+  "built": 1000,
+  "buildMs": 48,
+  "rows": 1000,
+  "reopenLoadMs": 13,
+  "reopenRebuilt": 0
+ },
+ "search": {
+  "items": 1000,
+  "offline": true,
+  "runs": [
+   {
+    "q": "黄昏",
+    "ms": 17.2,
+    "results": 176,
+    "coreMs": 1.9
+   },
+   {
+    "q": "海边",
+    "ms": 17.1,
+    "results": 178,
+    "coreMs": 0.6
+   },
+   {
+    "q": "钢琴",
+    "ms": 16.9,
+    "results": 172,
+    "coreMs": 0.6
+   },
+   {
+    "q": "夜车",
+    "ms": 17.1,
+    "results": 174,
+    "coreMs": 0.6
+   },
+   {
+    "q": "麦田",
+    "ms": 16.8,
+    "results": 63,
+    "coreMs": 0.4
+   },
+   {
+    "q": "黄昏",
+    "ms": 17.2,
+    "results": 176,
+    "coreMs": 0.3
+   }
+  ],
+  "maxMs": 17.2,
+  "medianMs": 17.1,
+  "cpu4x": [
+   {
+    "q": "黄昏",
+    "ms": 40.6,
+    "results": 176,
+    "coreMs": 1.1
+   },
+   {
+    "q": "便利",
+    "ms": 39.8,
+    "results": 125,
+    "coreMs": 1.9
+   },
+   {
+    "q": "霓虹",
+    "ms": 31.6,
+    "results": 176,
+    "coreMs": 2
+   }
+  ]
+ },
+ "coldStartMs": {
+  "median": 172,
+  "runs": [
+   172,
+   172,
+   183
+  ],
+  "firstThumbsDecodedMedian": 214,
+  "cardsOnFirstScreen": 12
+ },
+ "coldStartCpu4xMs": {
+  "median": 556,
+  "runs": [
+   590,
+   541,
+   556
+  ],
+  "firstThumbsDecodedMedian": 671
+ },
+ "scrollMasonry": {
+  "frames": 420,
+  "scrolledPx": 16816,
+  "scrollHeight": 115306,
+  "avgFps": 60,
+  "p50Ms": 16.7,
+  "p95Ms": 16.8,
+  "maxMs": 16.8,
+  "jankPct": 0,
+  "longPct": 0,
+  "maxMountedCards": 22,
+  "maxLiveObjectUrls": 9,
+  "virtual": {
+   "total": 1000,
+   "mounted": 22,
+   "cols": 2
+  },
+  "liveObjectUrlsAfter": 4,
+  "objectUrlsCreated": 60
+ },
+ "scrollTimeline": {
+  "frames": 360,
+  "scrolledPx": 14433,
+  "scrollHeight": 66310,
+  "avgFps": 60,
+  "p50Ms": 16.7,
+  "p95Ms": 16.7,
+  "maxMs": 16.8,
+  "jankPct": 0,
+  "longPct": 0,
+  "maxMountedCards": 83,
+  "maxLiveObjectUrls": 27,
+  "virtual": {
+   "total": 38,
+   "mounted": 2
+  }
+ },
+ "scrollList": {
+  "frames": 360,
+  "scrolledPx": 14407,
+  "scrollHeight": 45355,
+  "avgFps": 60,
+  "p50Ms": 16.7,
+  "p95Ms": 16.7,
+  "maxMs": 16.8,
+  "jankPct": 0,
+  "longPct": 0,
+  "maxMountedCards": 58,
+  "maxLiveObjectUrls": 1,
+  "virtual": {
+   "total": 1000,
+   "mounted": 57
+  }
+ },
+ "scrollMasonryCpu4x": {
+  "frames": 300,
+  "scrolledPx": 8003,
+  "scrollHeight": 115306,
+  "avgFps": 60,
+  "p50Ms": 16.7,
+  "p95Ms": 16.7,
+  "maxMs": 16.8,
+  "jankPct": 0,
+  "longPct": 0,
+  "maxMountedCards": 22,
+  "maxLiveObjectUrls": 9
+ },
+ "detailOriginalPx": 1280,
+ "cardThumbPx": 400,
+ "backup": {
+  "ms": 658,
+  "bytes": 102855622,
+  "items": 1000,
+  "images": 300,
+  "imageMB": 97.5,
+  "heap": {
+   "baseMB": 9.4,
+   "peakMB": 50.9,
+   "deltaMB": 40.9,
+   "runs": [
+    52.2,
+    40.9,
+    37.6
+   ]
+  },
+  "badHashes": 0
+ },
+ "restore": {
+  "ms": 983,
+  "heap": {
+   "baseMB": 6.8,
+   "peakMB": 49.8,
+   "deltaMB": 43
+  },
+  "items": 1000,
+  "images": 300
+ },
+ "interleavedBench": {
+  "script": "/workspace/work/v030/bench5.mjs（painted = 首帧真正画完；同会话 9 轮交替，v0.30 = main 源码 vite build）",
+  "rounds": 9,
+  "v30": {
+   "normalMedian": 218,
+   "cpu4xMedian": 641,
+   "normalRuns": [
+    508,
+    200,
+    201,
+    209,
+    223,
+    206,
+    218,
+    224,
+    221
+   ],
+   "cpu4xRuns": [
+    618,
+    709,
+    622,
+    614,
+    694,
+    641,
+    634,
+    658,
+    643
+   ],
+   "fcpMedian": 152,
+   "fcp4xMedian": 408
+  },
+  "v31": {
+   "normalMedian": 205,
+   "cpu4xMedian": 640,
+   "normalRuns": [
+    204,
+    201,
+    205,
+    221,
+    203,
+    224,
+    211,
+    232,
+    203
+   ],
+   "cpu4xRuns": [
+    605,
+    608,
+    671,
+    664,
+    627,
+    649,
+    640,
+    652,
+    639
+   ],
+   "fcpMedian": 140,
+   "fcp4xMedian": 384
+  }
+ },
+ "sizeBudget": {
+  "firstScreenJsKB": 557.2,
+  "firstScreenJsGzipKB": 188.7,
+  "firstScreenCssKB": 126.5,
+  "syncChunkKB": 23.4,
+  "argon2ChunkKB": 27.1
+ },
+ "backupHeapNote": "peak 50.9MB 与 v0.30 相同；delta 变大是因为导出前 GC 后的 base 更低（9.4 vs 35.1MB）"
+}
