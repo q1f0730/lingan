@@ -91,6 +91,17 @@ export function parseHtmlMeta(html: string, url: string): LinkMeta {
 }
 
 import { getFetch } from './ai';
+
+// v0.39 0017：收链接时默认存正文快照（设置 → 极速采集 可关）；只在本机
+export const SNAP_KEY = 'glean.snap';
+export function snapOn(): boolean {
+  try {
+    return localStorage.getItem(SNAP_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
 import { compressImage } from './image';
 import { cleanUrl } from './cleanurl';
 
@@ -116,7 +127,8 @@ export function fetchableUrl(url: string): string {
   return local ? url : 'https://' + url.slice(7);
 }
 
-export async function fetchLinkMeta(rawUrl: string): Promise<LinkMeta & { imageData?: string }> {
+/** opts.snap：顺手存正文快照（0017）；公众号链接（0013）总会读脚本里的标题 / 公众号名 / 封面 */
+export async function fetchLinkMeta(rawUrl: string, opts: { snap?: boolean } = {}): Promise<LinkMeta & { imageData?: string; snap?: string }> {
   const f = await getFetch();
   const inApp = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
   const url = inApp ? fetchableUrl(rawUrl) : rawUrl;
@@ -125,7 +137,9 @@ export async function fetchLinkMeta(rawUrl: string): Promise<LinkMeta & { imageD
     return { url: rawUrl, type: 'image', imageData, title: decodeURIComponent(url.split('/').pop()?.split('?')[0] || '图片') };
   }
   // v0.30 0906 出站记录：抓链接只发了链接本身（v0.35 短链跳转、B 站接口各记一条）
+  const { assertPlug } = await import('./plugs');
   const rf = async (u: string, init?: RequestInit) => {
+    assertPlug('link', u, ['*']);
     const rec = (ok: boolean) => void import('./outbound').then((o) => o.recordOutbound({ at: Date.now(), host: o.hostOf(u), kind: 'link', fields: ['链接'], bytes: u.length, ok }));
     try {
       const r = await withTimeout((signal) => f(u, { ...init, signal, maxRedirections: 5 } as RequestInit), 12000);
@@ -154,18 +168,33 @@ export async function fetchLinkMeta(rawUrl: string): Promise<LinkMeta & { imageD
   const bid = P.biliId(target);
   const bm = bid ? await P.biliMeta(bid, target, rf) : null;
   let m: LinkMeta;
+  let snap: string | undefined;
   if (bm) m = bm;
   else {
     res ||= await rf(target, hdr);
     if (!res.ok) throw new Error(`网页返回 ${res.status}`);
-    m = parseHtmlMeta(await res.text(), target);
+    const html = await res.text();
+    m = parseHtmlMeta(html, target);
+    const wx = /^https?:\/\/mp\.weixin\.qq\.com\//i.test(target);
+    if (opts.snap || wx) {
+      const S = await import('./snapshot');
+      if (wx) {
+        const w = S.wxMeta(html);
+        m = { ...m, title: w.title || m.title, creator: w.creator || m.creator, siteName: w.creator ? '微信公众号' : m.siteName, image: w.image || m.image, description: w.description || m.description };
+      }
+      const a = S.extractArticle(html, target);
+      if (opts.snap && a.text) snap = a.text;
+      if (!m.image && a.image) m.image = a.image;
+    }
   }
   let imageData: string | undefined;
   if (m.image) imageData = await fetchImageData(m.image).catch(() => undefined);
-  return { ...m, url: out, imageData };
+  return { ...m, url: out, imageData, ...(snap ? { snap } : {}) };
 }
 
-export async function fetchImageData(url: string): Promise<string> {
+export async function fetchImageData(url: string, plug: 'link' | 'netease' = 'link'): Promise<string> {
+  const P = await import('./plugs');
+  P.assertPlug(plug, url, plug === 'link' ? ['*'] : P.NETEASE_HOSTS);
   const f = await getFetch();
   const res = await withTimeout((signal) => f(typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window ? fetchableUrl(url) : url, { headers: { 'User-Agent': UA }, signal }), 12000);
   if (!res.ok) throw new Error('img ' + res.status);
