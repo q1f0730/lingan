@@ -1,7 +1,7 @@
 // v0.21 数据地基：.glean 备份（流式 ZIP）+ 按 uid 去重的导入（合并 / 替换 / 只补缺，先预览条数）。
 //
 // .glean = ZIP（只存储不压缩）：
-//   data.jsonl     一行一条：{"t":"item",…} / {"t":"dev",…,"itemUids":[…]} / {"t":"cliche",…}
+//   data.jsonl     一行一条：{"t":"item",…} / {"t":"dev",…,"itemUids":[…]} / {"t":"cliche",…} / {"t":"reject",…}（v0.24 不要的理由）
 //   images/<sha256>.<ext>  原图原样二进制（按内容哈希命名，同一张图只存一份）
 //   manifest.json  格式、版本、导出时间、设备、条数，以及每个文件的 sha256 与字节数
 // 导出时一张一张读原图、边算哈希边写，data.jsonl 边生成边写（数据描述符），内存峰值≈一张原图，和库多大无关。
@@ -13,7 +13,7 @@ import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
 import { dataUrlToBlob, detachInlineImage, isDataUrl } from './imagestore';
 import { Sha256, sha256Hex } from './sha256';
-import type { Development, Item } from './types';
+import type { Development, Item, Reject } from './types';
 import { isUlid, ulid } from './ulid';
 import { cleanText, clicheKey, validKey, type Cliche } from './wall';
 import { readZipBlob, zipEntryBlob, ZipWriter, type ByteSink } from './zipstream';
@@ -185,6 +185,12 @@ export async function exportGlean(
     void _id;
     await push({ t: 'cliche', ...rest });
   }
+  // v0.24 不要的理由（旧版读到不认识的行会跳过，不影响导入）
+  for (const r of await d.rejects.toArray()) {
+    const { id: _id, ...rest } = r;
+    void _id;
+    await push({ t: 'reject', ...rest });
+  }
   await flush();
   const { size } = await ent.end();
   files['data.jsonl'] = { sha256: hash.hex(), bytes: size, lines };
@@ -223,6 +229,8 @@ export interface Incoming {
   developments: InDev[];
   /** null = 旧备份没有套路墙（按导入的新枝重建） */
   cliches: Cliche[] | null;
+  /** v0.24 不要的理由（旧备份没有） */
+  rejects?: Reject[];
   /** .glean：按 ref 从包里取原图（未核对）；json：原图在行里 */
   image?: (ref: string) => Promise<Blob | null>;
   /** ref → 期望的 sha256 */
@@ -278,6 +286,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
   const items: InItem[] = [];
   const developments: InDev[] = [];
   const cliches: Cliche[] = [];
+  const rejects: Reject[] = [];
   let bad = 0;
   for (const line of text.split('\n')) {
     if (!line.trim()) continue;
@@ -291,6 +300,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
     if (o.t === 'item' && typeof o.title === 'string' && o.type) items.push(o as unknown as InItem);
     else if (o.t === 'dev' && o.idea) developments.push(o as unknown as InDev);
     else if (o.t === 'cliche' && typeof o.text === 'string') cliches.push(o as unknown as Cliche);
+    else if (o.t === 'reject' && typeof o.reason === 'string') rejects.push(o as unknown as Reject);
     else bad++;
   }
   if (bad) problems.push(`${bad} 行读不出，已跳过`);
@@ -304,6 +314,7 @@ export async function readGlean(file: Blob): Promise<Incoming> {
     items,
     developments,
     cliches,
+    rejects,
     imageCount: new Set(items.map((x) => x.imageRef).filter(Boolean)).size,
     imageSha,
     image: async (ref: string) => {
@@ -527,7 +538,7 @@ export async function applyImport(inc: Incoming, plan: ImportPlan, d: LinganDB =
   let wroteImages = 0;
   const addedDevs: Development[] = [];
   const noCount: number[] = [];
-  await d.transaction('rw', [d.items, d.developments, d.images, d.cliches], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.images, d.cliches, d.rejects], async () => {
     markRawTransaction();
     const uidToId = new Map<string, number>();
     const oldToId = new Map<number, number>();
@@ -661,6 +672,16 @@ export async function applyImport(inc: Incoming, plan: ImportPlan, d: LinganDB =
           ...(c.source === 'user' ? { source: 'user' as const } : {}),
           ...(c.struck && !row.struck ? { struck: 1 as const } : {}),
         });
+    }
+    // v0.24 不要的理由：按 uid 去重，只补本机没有的（替换模式也不删本机的理由）
+    for (const r of inc.rejects || []) {
+      if (!r || typeof r.reason !== 'string' || typeof r.createdAt !== 'number') continue;
+      if (isUlid(r.uid) && (await d.rejects.where('uid').equals(r.uid!).count())) continue;
+      const { t: _t, id: _id, ...row } = r as Reject & { t?: string };
+      void _t;
+      void _id;
+      if (!isUlid(row.uid)) row.uid = ulid(row.createdAt);
+      await d.rejects.add({ ...row, title: String(row.title || ''), updatedAt: row.updatedAt || row.createdAt, deviceId: row.deviceId || getDeviceId() });
     }
   });
   if (wroteImages) notifyNewImages();
