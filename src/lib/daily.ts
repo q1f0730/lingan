@@ -28,7 +28,8 @@ export function lastTouchMap(items: Item[], devs: Array<Pick<Development, 'itemI
 
 /** 有自己的穗（≥4）时只用自己的；否则示例也算 */
 export function dailyPool(items: Item[]): Item[] {
-  const withId = items.filter((i) => i.id != null);
+  // v0.39 0907 上锁的穗不进每日一穗
+  const withId = items.filter((i) => i.id != null && !i.locked);
   const own = withId.filter((i) => !i.sample);
   return own.length >= DAILY_COMBO ? own : withId;
 }
