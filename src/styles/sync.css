@@ -1,0 +1,56 @@
+/* v0.31 设置 · 同步面板。懒加载（SyncPanel 引入），不进首屏 CSS。沿用现有面板 / chip / 大数字视觉。 */
+.sync-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 4px 0 6px;
+}
+.sync-big {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.sync-last {
+  overflow-wrap: anywhere;
+}
+.sync-err {
+  color: var(--danger);
+}
+.sync-busy {
+  color: var(--fg-2);
+}
+.sync-code {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 6px;
+  padding: 14px;
+  border: 1px solid var(--fg);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.sync-code-g {
+  font: 600 19px/1.4 ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  letter-spacing: 0.08em;
+  text-align: center;
+  user-select: all;
+}
+.sync-check {
+  max-width: 9em;
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sync-seg {
+  margin: 8px 0 2px;
+}
+.sync-found {
+  margin-top: 4px;
+}
+@media (min-width: 900px) {
+  .sync-code {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
