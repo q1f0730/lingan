@@ -41,7 +41,13 @@ tauri-plugin-process = "2"
 tauri-plugin-persisted-scope = "2"
 # v0.32 局域网直连：请求签名用 HMAC-SHA256（手写 HMAC，只引 sha2）
 sha2 = "0.10"
+# v0.33 系统入口：单实例（深链接转给已在运行的那个）、glean:// 深链接、开机静默启动、外链交给系统、剪贴板图转 PNG
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+tauri-plugin-deep-link = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-opener = "2"
+png = "0.18"
 
 # v0.22：Windows「正在播放一键拾」读系统媒体传输控件（SMTC）
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.61", features = ["Media_Control", "Storage_Streams", "Foundation"] }
+windows = { version = "0.61", features = ["Media_Control", "Storage_Streams", "Foundation", "Win32_Foundation", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_UI_Input_KeyboardAndMouse"] }
