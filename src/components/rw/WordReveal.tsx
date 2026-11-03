@@ -1,4 +1,4 @@
-import { m } from 'framer-motion';
+import { m } from './lite';
 
 /**
  * Rewamp「Word By Word Text」移植：逐词淡入、上移、去模糊。中文没有空格，按标点 / 空格切成短语，
