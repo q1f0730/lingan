@@ -1,3 +1,4 @@
+import { Seg } from '../components/rw/Seg';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
@@ -6,7 +7,11 @@ import { embedAllMissing } from '../lib/enrich';
 import { androidFiles, deliverZip, readFileText, saveTextFile, type ZipTarget } from '../lib/files';
 import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
 import { db } from '../lib/db';
-import { PRESETS, embedConfig, withPreset, type Settings } from '../lib/settings';
+import { PRESETS, embedConfig, vaultKind, withPreset, type Settings } from '../lib/settings';
+import { VAULT_LABEL } from '../lib/vault';
+import { clearErrors, isSafeMode, readErrors, setSafeMode } from '../lib/errlog';
+import { collectDiagnostics } from '../lib/diagcollect';
+import { copyText } from '../components/ErrorBoundary';
 import { useApp } from '../lib/store';
 import { DisplayTitle } from '../components/DisplayTitle';
 import { THEME_LABEL, THEME_ORDER } from '../lib/theme';
@@ -24,6 +29,9 @@ export function SettingsView() {
   const [withSamples, setWithSamples] = useState(false);
   const [vaulting, setVaulting] = useState(false);
   const onAndroid = !!androidFiles();
+  const [errCount, setErrCount] = useState(() => readErrors().length);
+  const vk = vaultKind();
+  const safe = isSafeMode();
   const dirty = JSON.stringify(s) !== JSON.stringify(settings);
   const preset = PRESETS.find((p) => p.id === s.preset) || PRESETS[PRESETS.length - 1];
 
@@ -107,12 +115,18 @@ export function SettingsView() {
     toast('已清空');
   }
 
+  async function copyDiag() {
+    const ok = await copyText(await collectDiagnostics());
+    toast(ok ? '诊断信息已复制（不含密钥和内容）' : '复制失败', ok ? 'ok' : 'err');
+  }
+
   const SECTIONS: Array<[string, string, string]> = [
     ['set-ai', 'AI 服务', PRESETS.find((p) => p.id === settings.preset)?.name.replace(/（.*）/, '') || ''],
     ['set-embed', '向量', settings.embed.model || '不用'],
     ['set-look', '外观', THEME_LABEL[settings.theme]],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
+    ['set-diag', '诊断', errCount ? `${errCount} 条错误` : '无错误'],
     ['set-about', '关于', `v${APP_VERSION}`],
   ];
   return (
@@ -130,7 +144,7 @@ export function SettingsView() {
         <div className="settings-body">
           <section className="set-sec" id="set-ai">
             <h2 className="sec-title">AI 服务</h2>
-            <p className="meta-text">key 只存在这台手机 / 电脑上，不会上传到 Glean。</p>
+            <p className="meta-text">key 只存在这台手机 / 电脑上，不会上传到 Glean，也不进备份和诊断信息。</p>
             <div className="radio-list" role="radiogroup" aria-label="AI 服务">
               {PRESETS.map((p) => (
                 <button key={p.id} role="radio" aria-checked={s.preset === p.id} className={`radio chip${s.preset === p.id ? ' on' : ''}`} onClick={() => applyPreset(p.id)}>
@@ -152,7 +166,7 @@ export function SettingsView() {
               <input value={s.chat.baseUrl} onChange={(e) => setChat('baseUrl', e.target.value.trim())} placeholder="https://…/v1" />
             </label>
             <label className="field">
-              <span className="label">API Key（只保存在本机）</span>
+              <span className="label">API Key（存在{vk ? VAULT_LABEL[vk].replace(/（.*）/, '') : '本机'}）</span>
               <div className="inline">
                 <input type={showKey ? 'text' : 'password'} value={s.chat.apiKey} onChange={(e) => setChat('apiKey', e.target.value.trim())} placeholder="粘贴你的密钥" autoComplete="off" />
                 <button type="button" className="btn text" onClick={() => setShowKey((x) => !x)}>
@@ -233,27 +247,20 @@ export function SettingsView() {
             <h2 className="sec-title">外观</h2>
             <div className="kv-row">
               <span className="label">主题</span>
-              <div className="seg theme-seg">
-                {THEME_ORDER.map((p, i) => [
-                  i > 0 && (
-                    <span key={'s' + p} className="sep" aria-hidden>
-                      |
-                    </span>
-                  ),
-                  <button
-                    key={p}
-                    className={settings.theme === p ? 'on' : ''}
-                    onClick={() => {
-                      setS((x) => ({ ...x, theme: p }));
-                      setSettings({ ...settings, theme: p });
-                    }}
-                  >
-                    {THEME_LABEL[p]}
-                  </button>,
-                ])}
-              </div>
+              <Seg
+                id="theme"
+                className="seg theme-seg"
+                role="radiogroup"
+                label="主题"
+                value={settings.theme}
+                options={THEME_ORDER.map((p) => [p, THEME_LABEL[p]] as [typeof p, string])}
+                onPick={(p) => {
+                  setS((x) => ({ ...x, theme: p }));
+                  setSettings({ ...settings, theme: p });
+                }}
+              />
             </div>
-            <p className="hint meta-text">只有黑、白两套。跟随系统时随手机 / 电脑的深色模式切换。系统开启「减少动态效果」时，淡入与放大全部关闭。</p>
+            <p className="hint meta-text">只有黑、白两套。跟随系统时随手机 / 电脑的深色模式切换。系统开启「减少动态效果」时，弹簧、淡入、流光这些动效全部关闭。</p>
           </section>
 
           <section className="set-sec" id="set-data">
@@ -306,6 +313,55 @@ export function SettingsView() {
                   {vaulting ? '打包中…' : '导出为 Markdown'}
                 </button>
               )}
+            </div>
+          </section>
+
+          <section className="set-sec" id="set-diag">
+            <h2 className="sec-title">诊断</h2>
+            <p className="meta-text">出问题时把诊断信息发给作者。只含版本、平台、库条数和最近错误的摘要，不含密钥、接口密钥和穗的内容；错误日志只存在本机，不上传。</p>
+            <dl className="kv">
+              <div>
+                <dt>密钥存放</dt>
+                <dd className="diag-vault">{vk ? VAULT_LABEL[vk] : '…'}</dd>
+              </div>
+              <div>
+                <dt>错误日志</dt>
+                <dd className="num diag-errs">{errCount} 条</dd>
+              </div>
+              <div>
+                <dt>安全模式</dt>
+                <dd>{safe ? '开（动效和后台任务已关）' : '关'}</dd>
+              </div>
+            </dl>
+            <div className="table action-table">
+              <button className="trow diag-copy" onClick={copyDiag}>
+                <span className="tc tc-title">复制诊断信息</span>
+                <span className="tc tc-src">版本 · 平台 · 库条数 · 最近 20 条错误</span>
+                <span className="tc tc-date" />
+              </button>
+              <button
+                className="trow diag-clear"
+                onClick={() => {
+                  clearErrors();
+                  setErrCount(0);
+                  toast('错误日志已清空');
+                }}
+              >
+                <span className="tc tc-title">清空错误日志</span>
+                <span className="tc tc-src">只删本机的错误记录</span>
+                <span className="tc tc-date" />
+              </button>
+              <button
+                className="trow diag-safe"
+                onClick={() => {
+                  setSafeMode(!safe);
+                  location.reload();
+                }}
+              >
+                <span className="tc tc-title">{safe ? '退出安全模式' : '进安全模式'}</span>
+                <span className="tc tc-src">{safe ? '恢复动效和后台任务' : '白屏或卡顿时用：关掉动效、缩略图和索引等后台任务'}</span>
+                <span className="tc tc-date" />
+              </button>
             </div>
           </section>
 
