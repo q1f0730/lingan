@@ -122,3 +122,13 @@ class GleanWidget : AppWidgetProvider() {
     }
   }
 }
+
+/** v0.36 0505：桌面 1×1 小组件「拾」——点一下就是半屏速记卡（和磁贴「拾一穗」同一个入口，写进 glean_inbox 收件队列） */
+class GleanWidgetOne : AppWidgetProvider() {
+  override fun onUpdate(c: Context, m: AppWidgetManager, ids: IntArray) {
+    val v = RemoteViews(c.packageName, R.layout.glean_widget_one)
+    val pi = PendingIntent.getActivity(c, 30, Glean.quickIntent(c, "note").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+    v.setOnClickPendingIntent(R.id.gw1_root, pi)
+    for (id in ids) m.updateAppWidget(id, v)
+  }
+}
