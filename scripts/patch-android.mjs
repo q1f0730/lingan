@@ -80,6 +80,13 @@ import java.io.FileOutputStream
 import android.util.Base64
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 import org.json.JSONObject
 
 class MainActivity : TauriActivity() {
@@ -201,6 +208,52 @@ class MainActivity : TauriActivity() {
         } catch (e: Exception) { "" }
       }
     }, "LinganFiles")
+    // v0.20 AI 密钥进 Android Keystore：AES-256-GCM 密钥只在系统密钥库里（不可导出），SharedPreferences 只存密文
+    webView.addJavascriptInterface(object {
+      private val alias = "glean_vault_v1"
+      private val prefs by lazy { getSharedPreferences("glean_vault", android.content.Context.MODE_PRIVATE) }
+      private fun ok(name: String) = name == "chat.apiKey" || name == "embed.apiKey"
+      private fun key(): SecretKey {
+        val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        (ks.getKey(alias, null) as? SecretKey)?.let { return it }
+        val kg = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        kg.init(
+          KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setKeySize(256)
+            .build()
+        )
+        return kg.generateKey()
+      }
+
+      @JavascriptInterface
+      fun get(name: String): String {
+        if (!ok(name)) return ""
+        val v = prefs.getString(name, null) ?: return ""
+        return try {
+          val raw = Base64.decode(v, Base64.NO_WRAP)
+          val c = Cipher.getInstance("AES/GCM/NoPadding")
+          c.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, raw, 0, 12))
+          String(c.doFinal(raw, 12, raw.size - 12), Charsets.UTF_8)
+        } catch (e: Exception) { "\\u0000" }
+      }
+
+      @JavascriptInterface
+      fun set(name: String, value: String): Boolean {
+        if (!ok(name)) return false
+        return try {
+          if (value.isEmpty()) {
+            prefs.edit().remove(name).commit()
+          } else {
+            val c = Cipher.getInstance("AES/GCM/NoPadding")
+            c.init(Cipher.ENCRYPT_MODE, key())
+            val out = c.iv + c.doFinal(value.toByteArray(Charsets.UTF_8))
+            prefs.edit().putString(name, Base64.encodeToString(out, Base64.NO_WRAP)).commit()
+          }
+        } catch (e: Exception) { false }
+      }
+    }, "LinganVault")
   }
 }
 `);
