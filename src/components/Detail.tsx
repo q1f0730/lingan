@@ -2,6 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useRef } from 'react';
 import { db, findDupes, keepItems, reInbox, updateItem } from '../lib/db';
 import { InlineText } from './InlineText';
+import { basketHint, toggleBasket, useBasket } from '../lib/basket';
+import { BUNDLE_EVENT, BUNDLE_OPEN_KEY, splitBundles, withBundles } from '../lib/bundles';
 // v0.23 瘦首包：batch / organize 点到才加载（详情首屏不需要）
 const batch = () => import('../lib/batch');
 import { dupReason } from '../lib/dupe';
@@ -29,6 +31,18 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
   const full = useOriginalSrc(it);
   const grown = useLiveQuery(async () => (it.id != null ? branchesFrom((await db.developments.toArray()).filter((x) => !x.deletedAt), it.id) : []), [it.id]);
   const quote = it.type === 'text' && !!it.content;
+  // v0.28 0408 待嫁接篮
+  const basket = useBasket();
+  const inBasket = it.id != null && basket.includes(it.id);
+  const openBundle = (b: string) => {
+    try {
+      sessionStorage.setItem(BUNDLE_OPEN_KEY, b);
+    } catch {
+      /* 隐私模式 */
+    }
+    go('library');
+    window.dispatchEvent(new CustomEvent(BUNDLE_EVENT, { detail: b }));
+  };
   // v0.27 0409 点一下直接改：改了内容就让向量重算
   const save = async (patch: Partial<Item>) => {
     if (it.id == null) return;
@@ -231,6 +245,30 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
               </dd>
             </div>
           )}
+          <div className="kv-bundles">
+            <dt>穗束</dt>
+            <dd className="tags bundles">
+              {(it.bundles || []).map((b) => (
+                <span key={b} className="tag bundle-tag">
+                  <button className="bundle-go" onClick={() => openBundle(b)} title={`看「${b}」这一束`}>
+                    束 · {b}
+                  </button>
+                  <button className="bundle-x" onClick={() => void save({ bundles: (it.bundles || []).filter((x) => x !== b) })} aria-label={`从「${b}」拿出来`}>
+                    ✕
+                  </button>
+                </span>
+              ))}
+              <InlineText
+                value=""
+                label="加进穗束"
+                placeholder={it.bundles?.length ? '＋束' : '＋加进一个束（如：毕业设计参考）'}
+                allowEmpty={false}
+                maxLength={80}
+                className="bundle-add"
+                onSave={(v) => save({ bundles: withBundles(it.bundles, splitBundles(v)) })}
+              />
+            </dd>
+          </div>
           <div className="kv-graft">
             <dt>嫁接</dt>
             <dd className="num">{it.graftCount ? `${it.graftCount} 次 · 最后 ${shortDate(it.graftedAt || it.createdAt)}` : '还没接过'}</dd>
@@ -283,6 +321,9 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
         <div className="actions text-actions">
           <button className="btn text strong detail-graft" onClick={onDevelop}>
             拿去嫁接
+          </button>
+          <button className={`btn text detail-basket${inBasket ? ' on' : ''}`} onClick={() => it.id != null && toast(toggleBasket(it.id) ? `放进嫁接篮 · ${basketHint(basket.length + 1)}` : '从嫁接篮拿出来了')} aria-pressed={inBasket}>
+            {inBasket ? '在篮里 ✓' : '放进嫁接篮'}
           </button>
           {it.url && (
             <a className="btn text" href={it.url} target="_blank" rel="noreferrer">
