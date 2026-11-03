@@ -205,6 +205,8 @@ export const TYPE_ORDER: ItemType[] = ['music', 'film', 'image', 'text', 'link',
 export interface StoredImage {
   itemId: number;
   blob: Blob;
+  /** v0.37 0713 详情档（长边 ≤ MID_MAX 的 JPEG），本机派生、不进备份 / 同步；null = 看过了、原图不大不用做 */
+  mid?: Blob | null;
 }
 
 /** v0.14 每日一穗：某一天定下来的内容（同一天打开都一样） */
