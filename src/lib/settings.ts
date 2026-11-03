@@ -1,6 +1,7 @@
 import { themeFromLegacy, type ThemePref } from './theme';
 type AiSecret = 'chat.apiKey' | 'embed.apiKey';
 import { detectBackend, type VaultBackend, type VaultKind } from './vault';
+import { MINI, MINI_KEY } from './privacy';
 export interface Provider {
   baseUrl: string;
   apiKey: string;
@@ -268,7 +269,11 @@ export function aiReady(s: Settings): boolean {
 export function embedConfig(s: Settings): { baseUrl: string; apiKey: string; model: string } | null {
   const baseUrl = s.embed.sameAsChat ? s.embed.baseUrl || s.chat.baseUrl : s.embed.baseUrl;
   const apiKey = s.embed.sameAsChat ? s.chat.apiKey : s.embed.apiKey;
-  if (!s.embed.model || !baseUrl || (!apiKey && !keyOptional(s))) return null;
+  if (!s.embed.model || !baseUrl || (!apiKey && !keyOptional(s))) {
+    // v0.38 没配向量模型、但下载了本机小模型：用它
+    const m = globalThis.localStorage?.getItem(MINI_KEY);
+    return m ? { baseUrl: MINI, apiKey: '', model: m } : null;
+  }
   return { baseUrl, apiKey, model: s.embed.model };
 }
 
