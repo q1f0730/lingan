@@ -1552,8 +1552,8 @@ async function inbox() {
   // 2) 这穗收过了：同一个链接带不同追踪参数 → 提示 → 合并（撤销可回）
   await quickSave(pg, 'https://example.com/post/9/?spm_id_from=333&from=timeline 又看到这篇');
   await pg.waitForSelector('.toast:has-text("收过了（同一个链接）")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] dup toast (same link) missing`));
-  await pg.click('.toast:has-text("收过了") .toast-act:has-text("合并")').catch(() => errs.push(`[${tag}] merge action missing`));
-  await pg.waitForSelector('.toast:has-text("已合并进")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] merged toast missing`));
+  await pg.click('.toast:has-text("收过了") .toast-act:has-text("重逢")').catch(() => errs.push(`[${tag}] merge action missing`));
+  await pg.waitForSelector('.toast:has-text("已记一次重逢")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] merged toast missing`));
   let rows = await dbRaw(pg, 'items');
   if (rows.filter((x) => /example\.com\/post\/9/.test(x.url || '')).length !== 1) errs.push(`[${tag}] merge should leave one post/9 row: ${rows.filter((x) => /post\/9/.test(x.url || '')).length}`);
   // 3) 待理页：列表 → 三秒整理（键盘 1 留下 / 3 丢掉 / 2 补一句）
@@ -4418,7 +4418,91 @@ async function v034() {
   console.log(`v034: share defaults title+content, why toggle, phone caught+masked, hand link → handed inbox → also-glean needs why, garden html only marked, gate bar + no outside fetch, branch share plain/show, postcard ${nat.join('x')}`);
 }
 
+// v0.35 认得出常用 App + 把旧仓库搬进来：b23 短链跟跳转 + B 站接口（0012 0803）、时间点「从 3:12 看」、再次遇见（0016）、
+// 设置「从别处搬进来」豆瓣 CSV 预览 → 导入 → 再导 0 新（0014 / ROADMAP v0.28 / 0065 穗束）、Kindle（0049）
+async function v035() {
+  const tag = 'v035';
+  const c1 = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET' };
+  let api = 0;
+  // 网页版没有 plugin-http：B 站接口要带 CORS 头才读得到（App 里走 Rust 不受限）
+  const pre = (r) => r.request().method() === 'OPTIONS' && (r.fulfill({ status: 204, headers: cors }), true);
+  await c1.route('https://b23.tv/**', (r) => pre(r) || r.fulfill({ status: 302, headers: { ...cors, location: 'https://www.bilibili.com/video/BV1GJ411x7h7/?share_source=copy_web&vd_source=ab12&t=192' } }));
+  await c1.route('https://www.bilibili.com/**', (r) => pre(r) || r.fulfill({ status: 200, headers: { ...cors, 'content-type': 'text/html' }, body: '<title>网页标题不该用上</title>' }));
+  await c1.route('https://api.bilibili.com/**', (r) => pre(r) || (api++, r.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ code: 0, data: { title: '王家卫电影里的光影', owner: { name: '影像笔记' }, pubdate: 1700000000, desc: '-' } }) })));
+  const p = await c1.newPage();
+  p.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p.goto(base);
+  await p.waitForSelector('text=穗仓还是空的');
+  // Playwright 拦不到 302 之后的那一跳，短链跟跳转（res.url）由 vitest 用假 fetch 测；这里测 B 站链接去追踪参数、保留 t、接口补 UP 主
+  await quickSave(p, '【王家卫电影里的光影-哔哩哔哩】 https://www.bilibili.com/video/BV1GJ411x7h7/?share_source=copy_web&vd_source=ab12&t=192');
+  let row;
+  for (let i = 0; i < 20; i++) {
+    row = (await dbRaw(p, 'items'))[0];
+    if (row?.creator) break;
+    await p.waitForTimeout(300);
+  }
+  if (!row || row.url !== 'https://www.bilibili.com/video/BV1GJ411x7h7/?t=192' || row.type !== 'film' || row.creator !== '影像笔记' || row.title !== '王家卫电影里的光影' || !api) errs.push(`[${tag}] b23 expand ${JSON.stringify(row && { url: row.url, type: row.type, creator: row.creator, title: row.title })} api=${api}`);
+  await p.locator('.main [data-item-id] >> text=王家卫电影里的光影').first().click();
+  await p.waitForSelector('.detail');
+  const at = (await p.textContent('.detail-at').catch(() => '')) || '';
+  if (!at.includes('从 3:12 看')) errs.push(`[${tag}] time mark "${at}"`);
+  await p.screenshot({ path: `${out}/v035-bili-detail-mobile.png` });
+  await p.keyboard.press('Escape');
+  await p.goBack().catch(() => {});
+  await p.waitForTimeout(300);
+  // 再次遇见：同一部电影又收一次 → 记一次重逢 → 只剩一件，详情写重逢 1 次
+  await p.goto(base);
+  await p.waitForSelector('.quick-input');
+  await quickSave(p, '《花样年华》 @王家卫 > 旗袍');
+  await quickSave(p, '《花样年华》 @王家卫 > 楼梯');
+  await p.waitForSelector('.toast:has-text("收过了（同一件作品）")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] reunion toast missing`));
+  await p.click('.toast:has-text("收过了") .toast-act:has-text("记一次重逢")').catch(() => errs.push(`[${tag}] reunion action missing`));
+  await p.waitForSelector('.toast:has-text("第 2 次遇见")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] reunion done toast`));
+  const films = (await dbRaw(p, 'items')).filter((r) => r.title === '花样年华');
+  if (films.length !== 1 || films[0].meets?.length !== 1 || films[0].why !== '旗袍 / 楼梯') errs.push(`[${tag}] reunion row ${JSON.stringify(films.map((f) => ({ meets: f.meets, why: f.why })))}`);
+  await p.locator('.main [data-item-id] >> text=花样年华').first().click();
+  await p.waitForSelector('.detail .kv-meets', { timeout: 3000 }).catch(() => errs.push(`[${tag}] detail meets row`));
+  if (!((await p.textContent('.detail').catch(() => '')) || '').includes('首次拾于')) errs.push(`[${tag}] first-seen label`);
+  await c1.close();
+  // 搬进来（桌面）：豆瓣 CSV → 预览 2 新 → 导入 → 再导 0 新 2 已有；Kindle 2 条
+  const c2 = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  const q = await c2.newPage();
+  q.on('pageerror', (e) => errs.push(`[${tag}] pageerror(q) ${e.message}`));
+  await q.goto(base);
+  await q.waitForSelector('text=穗仓还是空的');
+  await openSettings(q);
+  const csv = '\uFEFF标题,个人评分,打分日期,我的短评,上映日期,制片国家,条目链接\n花样年华,5,2019-03-02 21:10:00,旗袍和楼梯,2000-09-29,中国香港,https://movie.douban.com/subject/1291557/\n重庆森林,4,2018-07-01,"罐头, 菠萝",1994-07-14,中国香港,https://movie.douban.com/subject/1291999/\n';
+  const file = (name, text) => ({ name, mimeType: 'text/plain', buffer: Buffer.from(text, 'utf8') });
+  await q.setInputFiles('.movein-file', file('豆瓣-看过.csv', csv));
+  await q.waitForSelector('.movein-preview[data-new="2"][data-dup="0"]', { timeout: 5000 }).catch(() => errs.push(`[${tag}] csv preview`));
+  if (!((await q.textContent('.movein-preview').catch(() => '')) || '').includes('认作「豆瓣」')) errs.push(`[${tag}] csv kind`);
+  await q.locator('.movein-preview').scrollIntoViewIfNeeded();
+  await q.screenshot({ path: `${out}/v035-movein-desktop.png` });
+  await q.click('.movein-go');
+  await q.waitForSelector('.toast:has-text("搬进来 2 穗")', { timeout: 6000 }).catch(() => errs.push(`[${tag}] import toast`));
+  const got = await dbRaw(q, 'items');
+  const cq = got.find((r) => r.title === '重庆森林');
+  if (got.length !== 2 || !cq || cq.why !== '罐头, 菠萝' || cq.type !== 'film' || !cq.bundles?.[0]?.startsWith('导入 · 豆瓣') || cq.inbox) errs.push(`[${tag}] imported rows ${JSON.stringify(got.map((r) => [r.title, r.type, r.why, r.bundles, r.inbox]))}`);
+  if (new Date(got.find((r) => r.title === '花样年华')?.createdAt || 0).getFullYear() !== 2019) errs.push(`[${tag}] mark date not kept`);
+  await q.setInputFiles('.movein-file', file('豆瓣-看过.csv', csv));
+  await q.waitForSelector('.movein-preview[data-new="0"][data-dup="2"]', { timeout: 5000 }).catch(() => errs.push(`[${tag}] re-import should be 0 new`));
+  const kindle = '红楼梦 (曹雪芹)\n- 您在位置 #120-121的标注 | 添加于 2023年1月2日星期一 下午3:04:05\n\n满纸荒唐言，一把辛酸泪\n==========\nWalden (Henry David Thoreau)\n- Your Highlight on page 3 | Location 40-41 | Added on Sunday, January 1, 2023 10:00:00 AM\n\nI went to the woods because I wished to live deliberately.\n==========\n';
+  await q.setInputFiles('.movein-file', file('My Clippings.txt', kindle));
+  await q.waitForSelector('.movein-preview[data-new="2"]', { timeout: 5000 }).catch(() => errs.push(`[${tag}] kindle preview`));
+  await q.click('.movein-go');
+  await waitItems(q, 4, 5000);
+  const hl = (await dbRaw(q, 'items')).find((r) => r.source === 'Kindle' && r.creator === '曹雪芹');
+  if (!hl || hl.title !== '红楼梦' || !hl.tags.includes('摘抄')) errs.push(`[${tag}] kindle row ${JSON.stringify(hl && { t: hl.title, tags: hl.tags })}`);
+  await c2.close();
+  console.log(`v035: bilibili link cleaned (t=192 kept) + api up, 从 3:12 看, reunion (1 row, meets 1, why joined), douban csv 2 new → imported (bundle, mark date) → re-import 0 new, kindle 2`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v035') {
+    await v035();
+    throw Object.assign(new Error('v035 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v034') {
     await v034();
     throw Object.assign(new Error('v034 only'), { only: true });
@@ -4489,6 +4573,7 @@ try {
   await v032();
   await v033();
   await v034();
+  await v035();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
