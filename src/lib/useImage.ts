@@ -1,7 +1,7 @@
 // v0.13 图片懒加载与 objectURL 回收：只给挂载着（= 在视口附近，列表是虚拟滚动）的卡片建 objectURL，卸载即回收。
 import { useEffect, useRef, useState } from 'react';
 import { db } from './db';
-import { getOriginalBlob, isDataUrl } from './imagestore';
+import { getOriginalBlob, getViewBlob, isDataUrl } from './imagestore';
 import type { Item } from './types';
 
 declare global {
@@ -64,11 +64,11 @@ export function useThumbSrc(item: Pick<Item, 'id' | 'thumb' | 'thumbW' | 'thumbH
   return inline || url;
 }
 
-/** 详情用：原图 */
-export function useOriginalSrc(item: Pick<Item, 'id' | 'hasImage' | 'image' | 'thumb' | 'updatedAt'> | null): string | undefined {
+/** 详情用：详情档（v0.37 0713，大图才有），没有就原图 */
+export function useOriginalSrc(item: Pick<Item, 'id' | 'hasImage' | 'image' | 'thumb' | 'updatedAt'> | null, orig = false): string | undefined {
   const inline = item && isDataUrl(item.image) ? item.image : undefined;
   const id = item?.id;
-  const key = !item || inline || id == null || !(item.hasImage || item.thumb) ? null : `o:${id}:${item.updatedAt}`;
-  const url = useKeyedBlobUrl(key, () => (id != null ? getOriginalBlob(db, id) : null));
+  const key = !item || inline || id == null || !(item.hasImage || item.thumb) ? null : `${orig ? 'O' : 'o'}:${id}:${item.updatedAt}`;
+  const url = useKeyedBlobUrl(key, () => (id == null ? null : orig ? getOriginalBlob(db, id) : getViewBlob(db, id)));
   return inline || url;
 }
