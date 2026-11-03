@@ -32,6 +32,13 @@ export const IconSprout = (p: P) => (
     <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
   </Svg>
 );
+/** v0.29 作品：Lucide pen-line */
+export const IconPen = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 20h9" />
+    <path d="M16.4 3.6a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z" />
+  </Svg>
+);
 export const IconHeart = (p: P) => (
   <Svg {...p}>
     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
