@@ -3,6 +3,7 @@ import { useThumbSrc } from '../lib/useImage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { db } from '../lib/db';
+import { setStar } from '../lib/repo';
 import { dropWithReason } from '../lib/feedback';
 import { useApp } from '../lib/store';
 import { transformName } from '../lib/graft';
@@ -77,7 +78,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
     setBusy(true);
     try {
       const id = await createWork(f, [devId]);
-      if (!dev?.starred) await db.developments.update(devId, { starred: true });
+      if (!dev?.starred) await setStar(devId, true);
       try {
         sessionStorage.setItem(FOCUS_WORK_KEY, String(id));
       } catch {
@@ -165,7 +166,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
       )}
       <div className="actions text-actions idea-acts">
         {devId && (
-          <button className="btn text strong idea-keep" onClick={() => db.developments.update(devId, { starred: !dev?.starred })} aria-pressed={!!dev?.starred}>
+          <button className="btn text strong idea-keep" onClick={() => setStar(devId, !dev?.starred)} aria-pressed={!!dev?.starred}>
             {dev?.starred ? '已留下' : '留下'}
           </button>
         )}
