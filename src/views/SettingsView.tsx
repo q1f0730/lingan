@@ -5,6 +5,7 @@ import { testConnection } from '../lib/ai';
 import { clearAll, liveCounts } from '../lib/db';
 import { applyImport, exportGlean, gleanName, GLEAN_MIME, MODE_LABEL, planImport, previewImport, readBackupFile, type ImportCounts, type ImportMode, type Incoming } from '../lib/backup';
 import { TrashPanel } from '../components/Trash';
+import { CapturePanel, captureSummary } from '../components/CapturePanel';
 import { embedAllMissing } from '../lib/enrich';
 import { androidFiles, deliverZip, openFileSink, type ZipTarget } from '../lib/files';
 import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
@@ -169,6 +170,7 @@ export function SettingsView() {
     ['set-ai', 'AI 服务', PRESETS.find((p) => p.id === settings.preset)?.name.replace(/（.*）/, '') || ''],
     ['set-embed', '向量', settings.embed.model || '不用'],
     ['set-look', '外观', THEME_LABEL[settings.theme]],
+    ['set-capture', '极速采集', captureSummary()],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
@@ -308,6 +310,8 @@ export function SettingsView() {
             </div>
             <p className="hint meta-text">只有黑、白两套。跟随系统时随手机 / 电脑的深色模式切换。系统开启「减少动态效果」时，弹簧、淡入、流光这些动效全部关闭。</p>
           </section>
+
+          <CapturePanel />
 
           <section className="set-sec" id="set-data">
             <h2 className="sec-title">备份与导入</h2>
