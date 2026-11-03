@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '../lib/db';
+import { clearPolarity } from '../lib/repo';
 import { clearRejects, deleteReject, FEEDBACK_N, reasonCounts, reasonLabel } from '../lib/feedback';
 import { STYLE_LEN, STYLE_MAX } from '../lib/settings';
 import { useApp } from '../lib/store';
@@ -105,7 +106,7 @@ export function DislikePanel({ items }: { items: Item[] }) {
                 <button
                   className="btn text faint undislike"
                   onClick={async () => {
-                    await db.items.update(it.id!, { polarity: undefined });
+                    await clearPolarity(it.id!);
                     toast('放回普通穗了');
                   }}
                 >
