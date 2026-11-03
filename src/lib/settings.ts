@@ -15,6 +15,28 @@ export interface Settings {
   temperature: number;
   autoCaption: boolean;
   autoEmbed: boolean;
+  /** v0.24 0209 手机连电脑上的本地模型：上次填的电脑地址（局域网 IP / *.local） */
+  localHost?: string;
+  /** v0.24 0242 私密穗也可以发给本地模型（接口在本机 / 局域网时才生效；云端永远不发） */
+  privateLocal?: boolean;
+  /** v0.24 三枝不撞车：两根新枝相似度的上限（字面 = 去掉素材名和固定句式后的二元组 Jaccard；向量 = 余弦） */
+  distinct?: { text: number; vector: number };
+  /** v0.24 0210 我的文风：最多 3 段、每段 300 字，开着时作为语气样本写进嫁接提示词 */
+  style?: { on: boolean; samples: string[] };
+}
+
+export const DISTINCT_DEFAULT = { text: 0.45, vector: 0.9 };
+export const STYLE_MAX = 3;
+export const STYLE_LEN = 300;
+export function distinctOf(s: Pick<Settings, 'distinct'>): { text: number; vector: number } {
+  const d = s.distinct || DISTINCT_DEFAULT;
+  const clamp = (x: unknown, lo: number, hi: number, dft: number) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : dft);
+  return { text: clamp(d.text, 0.1, 0.95, DISTINCT_DEFAULT.text), vector: clamp(d.vector, 0.5, 0.99, DISTINCT_DEFAULT.vector) };
+}
+/** 开着、且有内容的文风样本（每段截到 300 字，最多 3 段） */
+export function styleSamples(s: Pick<Settings, 'style'>): string[] {
+  if (!s.style?.on) return [];
+  return (s.style.samples || []).map((x) => String(x || '').trim().slice(0, STYLE_LEN)).filter(Boolean).slice(0, STYLE_MAX);
 }
 
 export interface Preset {
@@ -50,6 +72,13 @@ export const PRESETS: Preset[] = [
     chat: { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', chatModel: 'gemini-2.5-flash', visionModel: 'gemini-2.5-flash', extraBody: '' },
     embed: { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-embedding-001' },
     keyUrl: 'https://aistudio.google.com/apikey',
+  },
+  {
+    id: 'local',
+    name: '本地模型（LM Studio / Ollama）',
+    note: '模型跑在你自己的电脑上：不要密钥、不联网也能用、素材不出门。点「探测」自动找 LM Studio（1234）和 Ollama（11434）；手机填电脑的局域网 IP 也能用电脑上的模型。',
+    chat: { baseUrl: 'http://127.0.0.1:1234/v1', chatModel: '', visionModel: '', extraBody: '' },
+    embed: { baseUrl: '', model: '' },
   },
   {
     id: 'custom',
@@ -227,14 +256,18 @@ export function _resetSecretsForTest() {
   writeChain = Promise.resolve();
 }
 
+/** 不要密钥也能用的预设：自定义（自己负责）、本地模型 */
+export function keyOptional(s: Pick<Settings, 'preset'>): boolean {
+  return s.preset === 'custom' || s.preset === 'local';
+}
 export function aiReady(s: Settings): boolean {
-  return !!(s.chat.baseUrl && s.chat.chatModel && (s.chat.apiKey || s.preset === 'custom'));
+  return !!(s.chat.baseUrl && s.chat.chatModel && (s.chat.apiKey || keyOptional(s)));
 }
 
 export function embedConfig(s: Settings): { baseUrl: string; apiKey: string; model: string } | null {
   const baseUrl = s.embed.sameAsChat ? s.embed.baseUrl || s.chat.baseUrl : s.embed.baseUrl;
   const apiKey = s.embed.sameAsChat ? s.chat.apiKey : s.embed.apiKey;
-  if (!s.embed.model || !baseUrl || (!apiKey && s.preset !== 'custom')) return null;
+  if (!s.embed.model || !baseUrl || (!apiKey && !keyOptional(s))) return null;
   return { baseUrl, apiKey, model: s.embed.model };
 }
 
