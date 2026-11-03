@@ -70,6 +70,18 @@
         "type": "downloadBootstrapper"
       }
     },
-    "longDescription": "拾穗 Glean 是一个私人灵感收集器：随手拾进打动你的音乐、电影、图片、文案和想法，再把相距很远的两穗嫁接成新的创意。数据只保存在本机。"
+    "longDescription": "拾穗 Glean 是一个私人灵感收集器：随手拾进打动你的音乐、电影、图片、文案和想法，再把相距很远的两穗嫁接成新的创意。数据只保存在本机。",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdBNzhDNEFGQTcxM0IzMjIKUldRaXN4T25yOFI0ZXJBZDBkS3pIdHIreksza3VscENDMythMmdhSjRzR2I3ZEgvc1NjNjI5NTkK",
+      "endpoints": [
+        "https://github.com/q1f0730/lingan/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
