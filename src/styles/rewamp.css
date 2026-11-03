@@ -543,6 +543,17 @@ kbd {
 .btn.quick-more:hover {
   color: var(--fg);
 }
+/* v0.36 说一句就收：按住时反白，松手收 */
+.btn.quick-mic {
+  margin-right: 6px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.btn.quick-mic.on {
+  background: var(--fg);
+  color: var(--bg);
+}
 .quick-after {
   display: flex;
   align-items: center;
