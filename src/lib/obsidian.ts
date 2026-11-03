@@ -154,7 +154,7 @@ export function buildVault(input: VaultInput): Vault {
   const now = input.now ?? Date.now();
   const include = !!input.includeSamples;
   // v0.21 回收站里的（墓碑）不导出
-  const all = input.items.filter((it) => it.id != null && !it.deletedAt);
+  const all = input.items.filter((it) => it.id != null && !it.deletedAt && !it.locked);
   const items = all.filter((it) => include || !it.sample).sort((a, b) => b.createdAt - a.createdAt);
   const skippedSamples = all.length - items.length;
   const byId = new Map(all.map((it) => [it.id!, it]));
