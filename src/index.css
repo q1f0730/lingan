@@ -3510,3 +3510,14 @@ button.heat-cell {
   border-radius: 0;
   overflow-wrap: anywhere;
 }
+/* v0.38 详情里的关系：作品 / 连线 / 一起被嫁接 */
+.rel-acts { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
+.rel-add { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 8px; }
+.rel-q { flex: 1 1 160px; min-width: 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--fg); font: inherit; padding: 6px 0; }
+.rel-cut, .rel-regraft { margin-left: 8px; }
+/* v0.38 母题 + 星图 */
+.motif-row { width: 100%; text-align: left; }
+.motif-items { padding: 4px 0 10px; }
+.star-map { display: block; width: 100%; height: 360px; color: var(--fg); touch-action: none; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: crosshair; }
+.star-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 10px; }
+@media (min-width: 1024px) { .star-map { height: 480px; } }
