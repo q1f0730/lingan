@@ -3317,3 +3317,39 @@ button.heat-cell {
   color: var(--fg-2);
   white-space: nowrap;
 }
+
+/* ———————————————————————— v0.21 回收站 / 导入预览 ———————————————————————— */
+.trash-table .thead,
+.trash-table .trow {
+  grid-template-columns: 1fr 3.5em 3.5em 5.5em;
+  column-gap: 12px;
+}
+.trash-table .tc-act {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.trash-table .faint {
+  color: var(--fg-3);
+  font-weight: 400;
+}
+.trash-more {
+  margin-top: 12px;
+}
+.import-preview {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fg);
+}
+.import-preview .radio-list {
+  margin-top: 8px;
+}
+.import-problems {
+  color: var(--fg);
+}
+@media (min-width: 1024px) {
+  .trash-table .thead,
+  .trash-table .trow {
+    grid-template-columns: 1fr 6em 5em 7em;
+  }
+}
