@@ -1,3 +1,4 @@
+import { useTagSuggest } from './TagSuggest';
 import { useEffect, useRef, useState } from 'react';
 import { compressImage } from '../lib/image';
 import { normalizeTags } from '../lib/db';
@@ -43,6 +44,8 @@ export function emptyDraft(type: ItemType = 'idea'): Draft {
 export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDelete }: { initial: Draft; onSave: (d: Draft) => void; onCancel: () => void; saving?: boolean; editing?: boolean; onDelete?: () => void }) {
   const [d, setD] = useState<Draft>(initial);
   const [tagText, setTagText] = useState(initial.tags.join(' '));
+  const tagRef = useRef<HTMLInputElement>(null);
+  const tagSug = useTagSuggest(tagText, setTagText, tagRef, { bare: true });
   const [err, setErr] = useState('');
   const [imgBusy, setImgBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -280,7 +283,8 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
       </label>
       <label className="field">
         <span className="label">标签（空格分隔）</span>
-        <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="雨 克制 慢镜头" />
+        <input ref={tagRef} className="tag-field" value={tagText} onChange={(e) => setTagText(e.target.value)} onKeyDown={(e) => void tagSug.onKey(e)} placeholder="雨 克制 慢镜头" />
+        {tagSug.box}
       </label>
       <div className="field flag-row" role="group" aria-label="这一穗">
         <button type="button" className={`chip flag-dislike${d.polarity === -1 ? ' on' : ''}`} aria-pressed={d.polarity === -1} onClick={() => set('polarity', d.polarity === -1 ? undefined : -1)} title="反口味：不当嫁接素材，只告诉模型别往这边长">
