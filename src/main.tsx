@@ -86,6 +86,12 @@ function boot() {
         }),
       )
       .catch((e) => logError(e, 'error', { view: 'sync' }));
+  // v0.39 0054 有待补的链接 / 0804 有订阅源：启动 8 秒后空闲时才加载（都没有就不碰）
+  if (+(localStorage.getItem('glean.metatodo') || 0) > 0 || localStorage.getItem('glean.feeds.n'))
+    void afterFirstPaint(3000)
+      .then(() => new Promise((r) => setTimeout(r, 8000)))
+      .then(() => import('./lib/linkretry').then((m) => m.backgroundTick()))
+      .catch((e) => logError(e, 'error', { view: 'linkretry' }));
   // v0.20：其余四页的包在穗仓首屏画完之后预取
   void afterFirstPaint(2500).then(prefetchViews);
   // v0.20：申请持久存储（浏览器 / WebView 在空间紧张时不清本库）
