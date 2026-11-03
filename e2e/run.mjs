@@ -4085,7 +4085,218 @@ async function v032() {
   console.log(`v032: QR decodes (${qrText.length} chars) / pair via photo + native bridge / 5+5 (incl. 1 image)=10 both sides, ciphertext only (${lm.files.size} files) / incremental up ${incIn}B down ${incOut}B / log ${rows} rows, 2 devices, ${cleanMsg} / desktop-off reason ok`);
 }
 
+// v0.33 系统入口：glean:// 深链接（网页事件 + Tauri 冷启动）、复制 glean:// 链接、剪贴板敏感内容不提示、
+// 桌面设置（开机静默启动 / 热键改键 + 冲突 / 带上选中文字 / 摘抄热键）、热键带选中文字唤出小窗、摘抄事件、发送到、剪贴板图片、外链交给系统
+async function tauriMock(ctx, opts) {
+  await ctx.addInitScript((o) => {
+    const cbs = new Map();
+    let next = 1;
+    const listeners = {};
+    const st = { keys: { quick: 'ctrl+shift+l', excerpt: '', grab: true }, autostart: false, taken: [], opened: [], calls: [] };
+    window.__mock = st;
+    const png = Uint8Array.from(atob(o.png), (c) => c.charCodeAt(0)).buffer;
+    const files = o.send ? [{ name: '发送的图.png', mime: 'image/png', data: png }, { name: '一段话.txt', mime: 'text/plain', data: new TextEncoder().encode('从资源管理器发来的一段话').buffer }] : [];
+    const busy = new Set(['ctrl+shift+k']);
+    window.__emit = (event, payload) => {
+      for (const id of listeners[event] || []) cbs.get(id)?.({ event, id, payload });
+    };
+    window.__TAURI_EVENT_PLUGIN_INTERNALS__ = { unregisterListener: () => {} };
+    window.__TAURI_INTERNALS__ = {
+      metadata: { currentWindow: { label: 'main' }, currentWebview: { windowLabel: 'main', label: 'main' } },
+      transformCallback: (cb) => (cbs.set(next, cb), next++),
+      unregisterCallback: (id) => cbs.delete(id),
+      convertFileSrc: (p) => p,
+      invoke: async (cmd, args) => {
+        st.calls.push(cmd);
+        switch (cmd) {
+          case 'plugin:event|listen':
+            (listeners[args.event] ||= []).push(args.handler);
+            return args.handler;
+          case 'entry_get':
+            return { keys: st.keys, errors: [], autostart: st.autostart };
+          case 'entry_set_keys': {
+            const errors = [];
+            for (const a of ['quick', 'excerpt']) if (busy.has(args.keys[a])) errors.push([a, '被别的程序占用了']);
+            if (!errors.length) st.keys = args.keys;
+            return { keys: st.keys, errors, autostart: st.autostart };
+          }
+          case 'entry_autostart':
+            st.autostart = args.on;
+            return st.autostart;
+          case 'link_take':
+            return o.links.splice(0);
+          case 'send_list':
+            return files.map((f) => ({ name: f.name, mime: f.mime, size: f.data.byteLength }));
+          case 'send_read':
+            return files[args.index].data;
+          case 'send_clear':
+            files.length = 0;
+            return null;
+          case 'open_external':
+            st.opened.push(args.url);
+            return null;
+          case 'clip_peek':
+            return { seq: 7, private: false, image: true };
+          case 'clip_image':
+            return png;
+          case 'plugin:clipboard-manager|read_text':
+            return '';
+          default:
+            return null;
+        }
+      },
+    };
+  }, opts);
+}
+
+async function v033() {
+  const tag = 'v033';
+  // A. 网页版：深链接事件、复制 glean:// 链接、剪贴板敏感内容
+  const c1 = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  await c1.addInitScript(() => {
+    window.__clip = '';
+    window.__copied = [];
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { readText: async () => window.__clip, writeText: async (t) => void window.__copied.push(t) } });
+  });
+  const p = await c1.newPage();
+  p.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p.goto(base);
+  await p.waitForSelector('text=穗仓还是空的');
+  await quickSave(p, '空房间 > 下午的光');
+  await quickSave(p, '末班车 > 一个人坐');
+  const rows = await dbRaw(p, 'items');
+  const uid = (t) => rows.find((r) => r.title.startsWith(t))?.uid;
+  const link = (u) => p.evaluate((x) => window.dispatchEvent(new CustomEvent('glean:link', { detail: x })), u);
+  await link(`glean://item/${uid('空房间')}`);
+  await p.waitForSelector('.sheet .detail >> text=下午的光', { timeout: 5000 }).catch(() => errs.push(`[${tag}] item link did not open detail`));
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(400);
+  await link('glean://capture?text=' + encodeURIComponent('雨夜的霓虹') + '&why=' + encodeURIComponent('像电影') + '&tags=' + encodeURIComponent('夜,城市'));
+  await waitItems(p, 3, 5000);
+  const cap = (await dbRaw(p, 'items')).find((r) => r.title.includes('雨夜的霓虹'));
+  if (!cap || cap.why !== '像电影' || !cap.tags.includes('夜') || !cap.tags.includes('城市')) errs.push(`[${tag}] capture link row ${JSON.stringify(cap && { why: cap.why, tags: cap.tags })}`);
+  await link(`glean://graft?ids=${uid('空房间')},${uid('末班车')}`);
+  await p.waitForSelector('.view.develop', { timeout: 5000 }).catch(() => errs.push(`[${tag}] graft link did not open develop`));
+  const dev = await p.locator('.view.develop').innerText().catch(() => '');
+  if (!dev.includes('空房间') || !dev.includes('末班车')) errs.push(`[${tag}] graft link pool missing items`);
+  await link('glean://search?q=' + encodeURIComponent('末班'));
+  await p.waitForSelector('.search-view input', { timeout: 5000 });
+  await p.waitForTimeout(700);
+  const sq = await p.inputValue('.search-view input');
+  if (sq !== '末班') errs.push(`[${tag}] search link query "${sq}"`);
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(300);
+  await link('glean://quick?text=' + encodeURIComponent('链接带来的一句'));
+  await p.waitForSelector('.quick-window', { timeout: 3000 });
+  const qv = await p.inputValue('.quick-window input');
+  if (qv !== '链接带来的一句') errs.push(`[${tag}] quick link prefill "${qv}"`);
+  await p.keyboard.press('Escape');
+  await link('glean://whatever');
+  await p.waitForSelector('text=认不出这个 glean:// 链接', { timeout: 3000 }).catch(() => errs.push(`[${tag}] bad link no toast`));
+  // 卡片菜单「复制 glean:// 链接」
+  await p.waitForTimeout(600);
+  await p.locator('.main [data-item-id] >> text=末班车').first().click({ button: 'right' });
+  await p.click('.ctxmenu >> text=复制 glean:// 链接');
+  await p.waitForTimeout(200);
+  const copied = await p.evaluate(() => window.__copied.at(-1));
+  if (copied !== `glean://item/${uid('末班车')}`) errs.push(`[${tag}] copied link ${copied}`);
+  // 剪贴板：验证码不提示，正常文字提示
+  for (const [clip, want] of [['您的验证码是 739201，5 分钟内有效', false], ['Tr0ub4dor&3x!', false], ['海边的卡夫卡', true]]) {
+    await p.evaluate((t) => ((window.__clip = t), window.dispatchEvent(new Event('focus'))), clip);
+    await p.waitForTimeout(500);
+    const shown = await p.locator('.clip-offer').count();
+    if (!!shown !== want) errs.push(`[${tag}] clip offer for "${clip}" = ${shown}`);
+  }
+  await c1.close();
+
+  // B. 桌面版（模拟 Tauri）：冷启动链接、发送到、设置、热键带选中文字、摘抄、剪贴板图片、外链
+  const png = await (async () => {
+    const pg = await b.newPage();
+    const d = await pg.evaluate(() => {
+      const c = document.createElement('canvas');
+      c.width = 160; c.height = 90;
+      const g = c.getContext('2d');
+      g.fillStyle = '#204060'; g.fillRect(0, 0, 160, 90);
+      g.fillStyle = '#e0c060'; g.fillRect(30, 20, 100, 50);
+      return c.toDataURL('image/png').split(',')[1];
+    });
+    await pg.close();
+    return d;
+  })();
+  const c2 = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  await tauriMock(c2, { png, send: true, links: ['glean://go/settings'] });
+  const d = await c2.newPage();
+  d.on('pageerror', (e) => errs.push(`[${tag}] desktop pageerror ${e.message}`));
+  await d.goto(base);
+  // 冷启动攒下的链接 → 设置页；发送到的两个文件 → 两穗
+  await d.waitForSelector('#set-capture', { timeout: 9000 }).catch(() => errs.push(`[${tag}] cold-start link did not open settings`));
+  await waitItems(d, 2, 8000);
+  const sent = await dbRaw(d, 'items');
+  if (sent.length !== 2 || !sent.some((r) => r.type === 'image') || !sent.some((r) => (r.content || r.title).includes('从资源管理器发来的一段话'))) errs.push(`[${tag}] send-to rows ${JSON.stringify(sent.map((r) => [r.type, r.title]))}`);
+  // 设置：开机静默启动、改热键（冲突退回）、摘抄热键
+  await d.locator('#set-capture').scrollIntoViewIfNeeded();
+  await d.click('.cap-autostart');
+  await d.waitForFunction(() => window.__mock.autostart === true);
+  if ((await d.getAttribute('.cap-autostart', 'aria-checked')) !== 'true') errs.push(`[${tag}] autostart switch`);
+  await d.click('.cap-key-quick');
+  await d.keyboard.press('Control+Shift+K');
+  await d.waitForSelector('text=被别的程序占用了', { timeout: 3000 }).catch(() => errs.push(`[${tag}] conflict not reported`));
+  if ((await d.evaluate(() => window.__mock.keys.quick)) !== 'ctrl+shift+l') errs.push(`[${tag}] conflict changed key`);
+  await d.click('.cap-key-quick');
+  await d.keyboard.press('Alt+Shift+G');
+  await d.waitForFunction(() => window.__mock.keys.quick === 'alt+shift+g', null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] quick key not saved`));
+  if (!(await d.locator('.cap-key-quick').innerText()).includes('Alt+Shift+G')) errs.push(`[${tag}] quick key label`);
+  await d.click('.cap-key-excerpt');
+  await d.keyboard.press('Control+Shift+C');
+  await d.waitForFunction(() => window.__mock.keys.excerpt === 'ctrl+shift+c', null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] excerpt key not saved`));
+  await d.click('.cap-grab');
+  await d.waitForFunction(() => window.__mock.keys.grab === false, null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] grab toggle`));
+  await d.screenshot({ path: `${out}/v033-settings-desktop.png` });
+  // 热键唤出小窗：带上选中的文字 + 剪贴板图片
+  await d.evaluate(() => window.__emit('quick-focus', '别处选中的\n一段文字'));
+  await d.waitForSelector('.quick-window', { timeout: 3000 });
+  if ((await d.inputValue('.quick-window input')) !== '别处选中的 一段文字') errs.push(`[${tag}] grabbed text prefill`);
+  await d.waitForSelector('.qw-clip', { timeout: 3000 }).catch(() => errs.push(`[${tag}] clipboard image offer missing`));
+  await d.screenshot({ path: `${out}/v033-quick-desktop.png` });
+  await d.click('.qw-clip');
+  await d.waitForSelector('.qw-img img[alt="要拾的图片"]', { timeout: 3000 });
+  await d.fill('.quick-window input', '剪贴板截图');
+  await d.press('.quick-window input', 'Enter');
+  await waitItems(d, 3, 5000);
+  // 同一张剪贴板图（序号没变）不再提示
+  await d.evaluate(() => window.__emit('quick-focus', ''));
+  await d.waitForSelector('.quick-window');
+  await d.waitForTimeout(600);
+  if (await d.locator('.qw-clip').count()) errs.push(`[${tag}] same clipboard image offered twice`);
+  await d.keyboard.press('Escape');
+  // 摘抄热键：选中即存
+  await d.evaluate(() => window.__emit('glean-excerpt', '人生如逆旅，我亦是行人。'));
+  await waitItems(d, 4, 5000);
+  const ex = (await dbRaw(d, 'items')).find((r) => (r.content || r.title).includes('人生如逆旅'));
+  if (!ex?.tags?.includes('摘抄')) errs.push(`[${tag}] excerpt row ${JSON.stringify(ex && ex.tags)}`);
+  // 外链交给系统
+  await d.evaluate(() => {
+    const a = document.createElement('a');
+    a.href = 'https://music.163.com/song?id=5257138';
+    a.target = '_blank';
+    a.textContent = 'ext';
+    a.id = 'ext-link';
+    document.body.appendChild(a);
+  });
+  await d.click('#ext-link');
+  await d.waitForTimeout(200);
+  const opened = await d.evaluate(() => window.__mock.opened);
+  if (opened[0] !== 'https://music.163.com/song?id=5257138') errs.push(`[${tag}] external link ${JSON.stringify(opened)}`);
+  if ((await c2.pages()).length > 1) errs.push(`[${tag}] external link opened a webview window`);
+  await c2.close();
+  console.log(`v033: item / capture / graft / search / quick / bad links, copy glean:// link, clip codes+passwords skipped / desktop: cold-start link, send-to 2 files, autostart, hotkey conflict + change, excerpt key, grab toggle, prefill selection, clipboard image once, excerpt saved, external link → system ok`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v033') {
+    await v033();
+    throw Object.assign(new Error('v033 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v032') {
     await v032();
     throw Object.assign(new Error('v032 only'), { only: true });
@@ -4146,6 +4357,7 @@ try {
   await v030();
   await v031();
   await v032();
+  await v033();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
