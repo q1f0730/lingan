@@ -2894,3 +2894,503 @@ details summary {
   color: var(--accent-ink);
   font-weight: 600;
 }
+
+/* ———————————————————————— v0.23 待理与补为什么 ———————————————————————— */
+/* 穗仓顶部两条提示：待理 = 淡紫，缺为什么 = 淡杏 */
+.inbox-bar {
+  background: linear-gradient(160deg, var(--accent-soft), var(--surface) 80%);
+  border-color: var(--accent-line);
+}
+.inbox-bar .label {
+  color: var(--accent-ink);
+}
+.why-bar .label {
+  color: var(--sun-ink);
+}
+.inbox-bar .num,
+.why-bar .num {
+  font-weight: 600;
+}
+.page-tools .chip {
+  height: 36px;
+}
+/* 多选 */
+.card.selectable,
+.card.selected {
+  cursor: pointer;
+}
+.card .sel-mark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: var(--glass);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-ink);
+}
+.card.selected {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+.card.selected .sel-mark {
+  background: var(--accent);
+  border-color: var(--accent-ink);
+}
+.trow.selected,
+.tl-frame.selected {
+  background: var(--accent-soft);
+}
+.select-bar {
+  position: sticky;
+  bottom: calc(var(--dock-h) + 12px + env(safe-area-inset-bottom));
+  z-index: 35;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-3);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+@media (min-width: 1024px) {
+  .select-bar {
+    bottom: 16px;
+  }
+}
+.sb-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+.sb-n {
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.sb-n b {
+  color: var(--fg);
+}
+.sb-acts {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.sb-more {
+  padding-top: 8px;
+  border-top: 1px solid var(--hair);
+  gap: 8px;
+}
+.sb-tag-input,
+.tp-target {
+  flex: 1;
+  min-width: 140px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 14px;
+}
+.sb-tag-ok,
+.why-save {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* 待理：整理卡 */
+.inbox-view .page-sub,
+.why-view .page-sub {
+  max-width: 640px;
+}
+.sort-list {
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 1024px) {
+  .sort-list {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+}
+.sort-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  box-shadow: var(--sh-1);
+  min-width: 0;
+}
+.sort-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  min-width: 0;
+}
+.sort-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sort-why {
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.sort-dupe,
+.detail-dupe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px 12px;
+  border-radius: var(--r);
+  background: var(--sun);
+  color: var(--sun-ink);
+  font-size: 13px;
+}
+.detail-dupe {
+  border: 0;
+  margin: 10px 0 0;
+}
+.detail-dupe .meta-text {
+  color: var(--sun-ink);
+}
+.sort-dupe .btn,
+.detail-dupe .btn {
+  margin-left: auto;
+  color: var(--sun-ink);
+}
+.sort-sugg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.sort-sugg .label {
+  margin-right: 2px;
+}
+.sort-sugg .chip {
+  height: 30px;
+  padding: 0 11px;
+  font-size: 12px;
+}
+.chip.fresh,
+.tag.sugg-yes {
+  border-style: dashed;
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+.sort-whyrow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sort-why-input,
+.why-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 14px;
+  min-width: 0;
+}
+.sort-why-input:focus,
+.why-input:focus,
+.sb-tag-input:focus,
+.tp-target:focus {
+  outline: none;
+  border-color: var(--accent-ink);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.why-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  font-size: 12px;
+}
+.why-prompt {
+  color: var(--fg-2);
+}
+.sort-acts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.sort-acts .btn {
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.sort-acts .sort-keep {
+  background: var(--fg);
+  border-color: var(--fg);
+  color: var(--bg);
+}
+.sort-acts .sort-keep kbd {
+  background: transparent;
+  color: inherit;
+  border-color: currentColor;
+  opacity: 0.7;
+}
+.sort-acts .sort-drop {
+  color: var(--danger);
+}
+/* 三秒整理：一次一穗 */
+.sort-focus {
+  max-width: 560px;
+  margin: 8px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sort-progress {
+  text-align: center;
+  line-height: 2;
+}
+.sort-stage {
+  touch-action: pan-y;
+  transition: transform 220ms var(--spring);
+}
+.sort-stage .sort-card.big {
+  padding: 24px;
+  box-shadow: var(--sh-2);
+  gap: 14px;
+}
+.sort-card.big .sort-title {
+  font-size: 22px;
+  -webkit-line-clamp: 5;
+}
+.sort-stage.to-keep .sort-card {
+  box-shadow: 0 0 0 3px var(--accent), var(--sh-2);
+}
+.sort-stage.to-drop .sort-card {
+  box-shadow: 0 0 0 3px var(--rose), var(--sh-2);
+}
+.sort-later {
+  align-self: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sort-stage {
+    transition: none;
+  }
+}
+[data-motion='off'] .sort-stage {
+  transition: none;
+}
+.inbox-empty .lead,
+.why-empty .lead {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* 缺为什么 */
+.why-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+}
+.why-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--hair);
+}
+.why-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  min-width: 0;
+}
+.why-title {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.why-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.why-edit .why-skip {
+  flex: none;
+}
+
+/* 详情：上一穗 / 下一穗、待理、AI 新词、常一起 */
+.detail-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 10px;
+}
+.detail-inbox {
+  margin: 10px 0 0;
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+.detail-inbox .btn {
+  margin-left: auto;
+}
+.tag-sugg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.sugg-no {
+  font-size: 11px;
+  color: var(--fg-3);
+  padding: 2px 6px;
+}
+.sugg-no:hover {
+  color: var(--danger);
+}
+.tag-co {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.tag.co-tag {
+  color: var(--fg-2);
+  border-style: dashed;
+}
+
+/* 搜索语法 */
+.sq-complete {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.sq-complete .chip,
+.sq-syntax .chip {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.sq-syntax {
+  margin-top: 18px;
+}
+.sq-syntax .sq-recent-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sq-syntax b {
+  font-weight: 600;
+  color: var(--fg);
+}
+.sq-syntax-on {
+  color: var(--accent-ink);
+}
+
+/* 设置 → 待理与标签 */
+.tp-h {
+  margin: 22px 0 8px;
+  font-size: 12px;
+}
+.tp-tags .tp-tag {
+  height: 30px;
+  padding: 0 11px;
+}
+.tp-merge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.tp-hrow {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--hair);
+  font-size: 13px;
+}
+.tp-hk {
+  color: var(--fg-2);
+}
+.tp-hv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tp-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tp-al {
+  gap: 4px;
+}
+.organize-sec button.trow {
+  width: 100%;
+  text-align: left;
+}
+.organize-sec button.trow:hover {
+  background: var(--surface-2);
+}
+.card.selectable,
+.card.selected,
+.trow.selected,
+.sort-stage {
+  -webkit-user-select: none;
+  user-select: none;
+}
+@media (min-width: 1024px) {
+  .why-list {
+    max-width: none;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  }
+}
