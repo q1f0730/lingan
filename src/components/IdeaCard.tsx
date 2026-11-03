@@ -2,12 +2,14 @@ import { itemHasImage } from '../lib/imagestore';
 import { useThumbSrc } from '../lib/useImage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { db, trashDevelopments, untrashDevelopments } from '../lib/db';
+import { db } from '../lib/db';
+import { dropWithReason } from '../lib/feedback';
 import { useApp } from '../lib/store';
 import { transformName } from '../lib/graft';
 import { evidenceOf, MIN_EVIDENCE, sourceIds, splitMentions, type Evidence } from '../lib/provenance';
 import { TYPE_LABEL, type Development, type GraftBatch, type Idea, type Item } from '../lib/types';
 import { nn } from '../lib/studio';
+import { noveltyLabel } from '../lib/distinct';
 
 
 /** 一根新枝（m3 / m25 / d4）：细体序号 → 标题 → 一句话 → 因为这几穗 → 文字动作「留下 / 再接一次 / 不要」 */
@@ -63,11 +65,10 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
   }
   async function drop() {
     if (!devId) return;
-    const ok = await confirm({ title: `不要「${idea.title.replace(/^《|》$/g, '')}」？`, body: '这根新枝会放进回收站（30 天内可恢复），它的来源穗不受影响。', ok: '不要了', cancel: '留着', danger: true });
-    if (!ok) return;
-    const id = devId;
-    await trashDevelopments([id]);
-    toast('已删掉这根新枝（在回收站）', 'ok', { label: '撤销', run: () => void untrashDevelopments([id]).then(() => toast('已放回新枝')) });
+    const row = dev || (await db.developments.get(devId));
+    if (!row) return;
+    // v0.24 0212：确认时可选一个理由，写进下次嫁接的 FEEDBACK
+    await dropWithReason({ ...row, id: devId }, confirm, toast);
   }
   return (
     <article
@@ -81,12 +82,19 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
         <span className="idea-tags label">
           {evidence === 'weak' && <span className="weak-badge">证据不足</span>}
           {idea.wall && <span className="wall-badge">{idea.wall === 'replaced' ? '撞墙后重长' : '删了撞墙的字'}</span>}
+          {idea.distinct && <span className="distinct-badge">换掉了一根太像的</span>}
           {idea.transform && <span className="idea-transform">{transformName(idea.transform)}</span>}
           <span className="idea-src">{source === 'ai' ? 'AI 嫁接' : '离线嫁接'}</span>
           {dev && typeof index !== 'number' ? <span className="dim"> · {new Date(dev.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span> : null}
         </span>
       </div>
       <h2 className="idea-title">{idea.title.replace(/^《|》$/g, '')}</h2>
+      {idea.nearest && (
+        <p className={`novelty meta-text${idea.nearest.sim >= 0.35 ? ' familiar' : ''}`} data-sim={idea.nearest.sim} title={idea.nearest.title ? `最像的旧枝：${idea.nearest.title}` : '穗仓里还没有别的新枝'}>
+          {noveltyLabel(idea.nearest.sim)}
+          {idea.deai ? <span className="dim"> · 去 AI 腔 {idea.deai} 处</span> : null}
+        </p>
+      )}
       <p className="idea-body">{marked ?? idea.idea}</p>
       {idea.form && <div className="idea-form meta-text">形式 · {idea.form}</div>}
       {idea.bridge && (
@@ -114,7 +122,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
         )
       )}
       {idea.oblique && <p className="idea-oblique meta-text">斜策略：{idea.oblique}</p>}
-      {dev && <SourceSprigs ids={ids} items={srcItems} evidence={evidence} note={idea.evidenceNote} hl={hl} setHl={setHl} onOpen={openItem} />}
+      {dev && <SourceSprigs ids={ids} items={srcItems} evidence={evidence} note={idea.evidenceNote} hl={hl} setHl={setHl} onOpen={openItem} anchor={dev.anchorId} />}
       {!hideCliches && idea.cliches.length > 0 && (
         <div className="cliches">
           <span className="label">剪掉的旧枝（套路）</span>
@@ -228,7 +236,9 @@ export function SourceSprigs({
   hl,
   setHl,
   onOpen,
+  anchor,
 }: {
+  anchor?: number;
   ids: number[];
   items: (Item | undefined)[] | undefined;
   evidence: Evidence;
@@ -269,7 +279,7 @@ export function SourceSprigs({
               <button
                 key={id}
                 type="button"
-                className={`sprig sprig-${it.type}${itemHasImage(it) ? ' has-img' : ''}${hl === id ? ' on' : ''}`}
+                className={`sprig sprig-${it.type}${itemHasImage(it) ? ' has-img' : ''}${hl === id ? ' on' : ''}${anchor === id ? ' anchor' : ''}`}
                 data-item-id={id}
                 title={`回到「${it.title}」`}
                 onPointerEnter={(e) => e.pointerType === 'mouse' && setHl(id)}
@@ -308,6 +318,7 @@ export function SourceSprigs({
                 <span className="sprig-text">
                   <span className="sprig-title">{it.title}</span>
                   <span className="sprig-sub">
+                    {anchor === id ? '主干 · ' : ''}
                     {TYPE_LABEL[it.type]}
                     {it.creator ? ` · ${it.creator}` : ''}
                   </span>
