@@ -208,7 +208,7 @@ kbd {
 /* 手机底部：浮起的速记胶囊 + 浮起的导航胶囊（Morphing Tab Navbar） */
 .dock {
   background: linear-gradient(to top, var(--bg) 62%, var(--bg-clear));
-  padding: 18px 12px calc(10px + env(safe-area-inset-bottom));
+  padding: 18px 12px calc(10px + var(--safe-b));
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1915,7 +1915,7 @@ details summary {
   background: var(--veil);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
-  padding: 0 10px calc(10px + env(safe-area-inset-bottom));
+  padding: 0 10px calc(10px + var(--safe-b));
 }
 .confirm {
   border-top: 0;
@@ -1952,7 +1952,7 @@ details summary {
 .toasts {
   left: 12px;
   right: 12px;
-  bottom: calc(var(--dock-h) + 14px + env(safe-area-inset-bottom));
+  bottom: calc(var(--dock-h) + 14px + var(--safe-b));
   gap: 8px;
   align-items: center;
 }
@@ -2023,7 +2023,7 @@ details summary {
 .clip-offer {
   left: 12px;
   right: 12px;
-  bottom: calc(var(--dock-h) + 14px + env(safe-area-inset-bottom));
+  bottom: calc(var(--dock-h) + 14px + var(--safe-b));
   border-radius: 22px;
   animation: rw-up 320ms var(--spring) both;
 }
@@ -2949,7 +2949,7 @@ details summary {
 }
 .select-bar {
   position: sticky;
-  bottom: calc(var(--dock-h) + 12px + env(safe-area-inset-bottom));
+  bottom: calc(var(--dock-h) + 12px + var(--safe-b));
   z-index: 35;
   margin-top: 16px;
   padding: 10px 14px;
@@ -3608,4 +3608,271 @@ details summary {
   .pick-table.has-pin .tc-type {
     display: none;
   }
+}
+
+/* ———————————————————————— v0.27 界面交互（C1） ———————————————————————— */
+/* 0410 全面屏：安卓原生把安全区写进 --safe-*（见 lib/chrome.ts）；网页 / 桌面仍用 env() */
+:root {
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --kb: 0px;
+}
+.is-mobile .topbar {
+  padding-top: var(--safe-t);
+  height: calc(60px + var(--safe-t));
+}
+.is-mobile {
+  padding-left: var(--safe-l);
+  padding-right: var(--safe-r);
+}
+.sheet-backdrop.v-page {
+  padding-top: calc(10px + var(--safe-t));
+}
+.safe-bar,
+.offline-bar {
+  padding-top: max(8px, var(--safe-t));
+}
+/* 0401 软键盘：键盘开着时底栏只留速记条，贴住键盘顶（视觉视口被顶起时用 --kb 抬上去） */
+html[data-kb] .dock {
+  transform: translateY(calc(-1 * var(--kb)));
+  padding-bottom: 8px;
+  transition: none;
+}
+html[data-kb] .dock .nav {
+  display: none;
+}
+html[data-kb] .clip-offer {
+  display: none;
+}
+/* 0414 手机上所有可点的东西触达区 ≥ 44×44：不改外观，用透明 ::after 往外扩（低优先级 :where，组件自己的定位照旧） */
+@media (pointer: coarse), (max-width: 600px) {
+  :where(button, a[href], [role='button'], [role='switch'], [role='radio'], [role='tab'], [role='menuitem'], [role='option'], summary):not(.rw-shimmer) {
+    position: relative;
+  }
+  :where(button, a[href], [role='button'], [role='switch'], [role='radio'], [role='tab'], [role='menuitem'], [role='option'], summary):not(.rw-shimmer)::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+    background: transparent;
+  }
+}
+/* 0403 关掉详情后回到的那张卡：轻轻描一圈 */
+.was-open {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  transition: outline-color 1.2s var(--ease);
+}
+[data-motion='off'] .was-open {
+  transition: none;
+}
+/* 0406 / 0407 拖进来：整窗一层提示 */
+.dropin {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: var(--veil);
+  pointer-events: none;
+}
+.dropin-box {
+  display: grid;
+  gap: 6px;
+  text-align: center;
+  padding: 28px 36px;
+  border: 2px dashed var(--fg-2);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--sh-3);
+  font-size: 17px;
+}
+.quick-window.drag-over {
+  outline: 2px dashed var(--fg-2);
+  outline-offset: -6px;
+}
+.qw-img {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.qw-img img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--hair);
+}
+/* 0411 卡片上下文菜单：电脑贴着鼠标，手机从底部升起 */
+.ctxmenu {
+  position: fixed;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  box-shadow: var(--sh-3);
+  padding: 6px;
+}
+.ctxmenu.at-point {
+  min-width: 176px;
+  border-radius: 14px;
+}
+.ctxmenu.as-sheet {
+  left: 8px;
+  right: 8px;
+  bottom: calc(8px + var(--safe-b));
+  border-radius: var(--r-xl);
+  padding: 8px;
+  animation: g-in 160ms var(--ease) both;
+}
+.ctxmenu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 94;
+  background: var(--veil);
+}
+.ctxmenu-title {
+  font-size: 12px;
+  color: var(--fg-3);
+  padding: 8px 12px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ctxmenu-item {
+  text-align: left;
+  font-size: 14px;
+  color: var(--fg);
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+.as-sheet .ctxmenu-item {
+  min-height: 48px;
+  font-size: 16px;
+}
+.ctxmenu-item:hover,
+.ctxmenu-item:focus-visible {
+  background: var(--surface-2);
+  outline: none;
+}
+.ctxmenu-item.danger {
+  color: var(--danger);
+}
+.card,
+.trow,
+.tl-frame {
+  -webkit-touch-callout: none;
+}
+/* 0413 标签补全 */
+.tag-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+}
+.tag-suggest-quick {
+  padding: 8px 4px 0;
+}
+.quick-dock .tag-suggest-quick {
+  order: -1;
+  padding: 0 4px 8px;
+}
+.tag-suggest-opt {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  color: var(--fg-2);
+  font-size: 13px;
+}
+.tag-suggest-opt.on {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+.tag-suggest-hint {
+  font-size: 11px;
+}
+.is-mobile .tag-suggest-hint {
+  display: none;
+}
+/* 0412 速记时识别出的类型小标（点一下换） */
+.quick-type {
+  flex: none;
+  height: 26px;
+  padding: 0 10px;
+  margin-right: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.quick-type.set {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+/* 0409 详情页字段点一下直接改 */
+.inline-edit {
+  cursor: text;
+  border-radius: 6px;
+  transition: background-color 150ms;
+  overflow-wrap: anywhere;
+}
+.inline-edit:hover,
+.inline-edit:focus-visible {
+  background: var(--surface-2);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--surface-2);
+}
+.inline-ph {
+  color: var(--fg-3);
+  font-weight: 400;
+}
+.inline-wrap {
+  display: block;
+}
+.inline-input {
+  width: 100%;
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 10px;
+  resize: none;
+}
+.inline-hint {
+  display: block;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.tags .tag-add {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.tags .inline-wrap {
+  display: inline-block;
+  min-width: 160px;
+}
+.detail-why.is-empty p {
+  color: var(--fg-3);
 }
