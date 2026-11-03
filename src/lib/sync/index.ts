@@ -6,6 +6,7 @@ import { b64, makeHeader, newRecoveryCode, openHeader, rewrapPass, SyncKey, unb6
 import { emptyStats, freshState, readDevs, retire, syncOnce, undoLastSync, type DevInfo, type SyncCtx, type SyncState, type SyncStats } from './engine';
 import { DAV_PRESETS, TransportError, WebDavTransport, type SyncTransport } from './transport';
 import { getDeviceId } from '../device';
+import { mayReach } from '../gate';
 import type { SyncTable } from '../db';
 
 export const SYNC_KEY = 'glean.sync.v1';
@@ -286,7 +287,8 @@ export function startAutoSync(appVersion?: string) {
   if (timer) return;
   const go = () => {
     const c = loadConfig();
-    if (!c?.auto || c.confirm || document.visibilityState === 'hidden') return;
+    // v0.34 0905 出站总开关关着：网盘自动同步不跑（局域网直连照常）
+    if (!c?.auto || c.confirm || document.visibilityState === 'hidden' || !mayReach(c.url)) return;
     if (c.lastAt && Date.now() - c.lastAt < 2 * 60_000) return;
     void runSync({ appVersion }).catch(() => undefined);
   };
