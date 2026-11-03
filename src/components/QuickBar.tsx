@@ -52,6 +52,13 @@ function useDraft(key: string, text: string, setText: (t: string) => void): [boo
 
 const isPending = (e: unknown) => (e as { name?: string } | null)?.name === 'PendingWriteError';
 
+/** v0.34 0900 文字里带 glean://capture?…&from= 的递穗链接 → 交给深链接路由；返回 true = 已处理 */
+function handOff(t: string): boolean {
+  const m = /glean:\/\/capture\?\S*from=\S+/i.exec(t);
+  if (m) window.dispatchEvent(new CustomEvent('glean:link', { detail: m[0] }));
+  return !!m;
+}
+
 /** Save a quick draft, then fill link metadata + AI enrichment in the background. */
 export async function quickAdd(d: QuickDraft, s: Settings, onErr?: (m: string) => void): Promise<number> {
   // v0.23 速记 / 剪贴板 / 速记小窗收进来的先进待理
@@ -150,6 +157,12 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   const tsWhy = useTagSuggest(why, setWhy, whyRef, { className: 'tag-suggest-quick' });
 
   async function save() {
+    // v0.34 0900：粘进来的是别人「递一穗」的整段话，按 glean:// 链接收（进 待理 · 递来的）
+    if (handOff(text)) {
+      dropDraft();
+      setText('');
+      return;
+    }
     const d0 = parseQuick(text);
     if (!d0 || busy) return;
     const d = typeOv ? { ...d0, type: typeOv } : d0;
@@ -513,6 +526,7 @@ export function ClipOffer() {
     const t = clip!;
     clipMemory.set(t);
     setClip(null);
+    if (handOff(t)) return;
     const d = parseQuick(t);
     if (!d) return;
     const id = await quickAdd(d, settings, (m) => toast(m, 'err'));
