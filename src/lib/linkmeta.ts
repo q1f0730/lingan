@@ -103,11 +103,22 @@ async function withTimeout<T>(p: (signal: AbortSignal) => Promise<T>, ms: number
 }
 
 /** Fetch a page and return its metadata plus a compressed cover image data URL (if any). */
-export async function fetchLinkMeta(url: string): Promise<LinkMeta & { imageData?: string }> {
+/** v0.20：App 里 http 只放本机 / 局域网，公网的 http 链接改走 https 抓（网页本身照原样保存） */
+export function fetchableUrl(url: string): string {
+  const m = /^http:\/\/([^/:?#]+)/i.exec(url);
+  if (!m) return url;
+  const h = m[1].toLowerCase();
+  const local = h === 'localhost' || h.endsWith('.local') || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)\d/.test(h);
+  return local ? url : 'https://' + url.slice(7);
+}
+
+export async function fetchLinkMeta(rawUrl: string): Promise<LinkMeta & { imageData?: string }> {
   const f = await getFetch();
+  const inApp = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+  const url = inApp ? fetchableUrl(rawUrl) : rawUrl;
   if (IMAGE_EXT.test(url)) {
     const imageData = await fetchImageData(url).catch(() => undefined);
-    return { url, type: 'image', imageData, title: decodeURIComponent(url.split('/').pop()?.split('?')[0] || '图片') };
+    return { url: rawUrl, type: 'image', imageData, title: decodeURIComponent(url.split('/').pop()?.split('?')[0] || '图片') };
   }
   const res = await withTimeout((signal) => f(url, { headers: { 'User-Agent': UA, Accept: 'text/html,*/*' }, signal }), 12000);
   if (!res.ok) throw new Error(`网页返回 ${res.status}`);
@@ -115,12 +126,12 @@ export async function fetchLinkMeta(url: string): Promise<LinkMeta & { imageData
   const m = parseHtmlMeta(html, url);
   let imageData: string | undefined;
   if (m.image) imageData = await fetchImageData(m.image).catch(() => undefined);
-  return { ...m, imageData };
+  return { ...m, url: rawUrl, imageData };
 }
 
 async function fetchImageData(url: string): Promise<string> {
   const f = await getFetch();
-  const res = await withTimeout((signal) => f(url, { headers: { 'User-Agent': UA }, signal }), 12000);
+  const res = await withTimeout((signal) => f(typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window ? fetchableUrl(url) : url, { headers: { 'User-Agent': UA }, signal }), 12000);
   if (!res.ok) throw new Error('img ' + res.status);
   const blob = await res.blob();
   if (blob.size > 15_000_000) throw new Error('too big');
