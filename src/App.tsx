@@ -144,6 +144,15 @@ export default function App() {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), ms);
   }, []);
   useEffect(() => onVaultError(() => toast('密钥没能写进系统钥匙串，请到设置里重新保存一次', 'err')), [toast]);
+  // v0.26 0605：上次写不进库、暂存着的穗补进来了
+  useEffect(() => {
+    const on = (e: Event) => {
+      const r = (e as CustomEvent<{ done: number; left: number }>).detail;
+      toast(`上次没存进去的 ${r.done} 穗已补进穗仓${r.left ? `（还有 ${r.left} 穗等空间腾出来）` : ''}`);
+    };
+    window.addEventListener('glean:replayed', on);
+    return () => window.removeEventListener('glean:replayed', on);
+  }, [toast]);
   const confirm = useCallback((o: ConfirmOpts) => new Promise<boolean>((resolve) => setConfirmReq({ ...o, resolve })), []);
 
   const setSettings = useCallback((s: Settings) => {
@@ -352,7 +361,11 @@ export default function App() {
         if (err) toast('AI 整理失败：' + err, 'err');
       });
     } catch (e) {
-      toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+      // v0.26 0605：写不进库但已暂存（下次打开自动补上）：表单照常关掉
+      if ((e as { name?: string } | null)?.name === 'PendingWriteError') {
+        setCapture(null);
+        toast((e as Error).message, 'err');
+      } else toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
     } finally {
       setSaving(false);
     }
