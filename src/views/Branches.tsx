@@ -32,14 +32,7 @@ export function Branches() {
   const [mode, setMode] = useState<'list' | 'manifesto'>(() => (!focusId && localStorage.getItem(MODE_KEY) === 'manifesto' ? 'manifesto' : 'list'));
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
   const groups = useMemo(() => groupBranches(history || []), [history]);
-  // 宣言是黑主题：整页（含顶栏、速记栏）换成黑 token，离开时恢复
-  const hasAny = !!history?.length;
-  useEffect(() => {
-    if (mode !== 'manifesto' || !hasAny) return;
-    const el = document.querySelector('.app');
-    el?.setAttribute('data-theme', 'dark');
-    return () => el?.removeAttribute('data-theme');
-  }, [mode, hasAny]);
+  // v0.20：宣言只是一张深墨色大卡（卡内用黑主题 token），不再把整页换成黑
   if (!history || !items) return <Loading />;
   const nStar = history.filter((h) => h.starred).length;
   const shown = starred ? groups.map((g) => ({ ...g, devs: g.devs.filter((d) => d.starred) })).filter((g) => g.devs.length) : groups;
