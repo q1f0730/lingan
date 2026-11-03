@@ -45,6 +45,7 @@
     "fs:allow-open",
     "fs:allow-write",
     "clipboard-manager:allow-read-text",
+    "notification:default",
     "core:event:default",
     "fs:allow-mkdir",
     "fs:allow-read-dir",
