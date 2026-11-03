@@ -4,6 +4,7 @@ const base = process.argv[2] || 'http://127.0.0.1:4173/';
 const out = process.argv[3] || '/tmp/shots';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { startLanMock } from './lanmock.mjs';
 fs.mkdirSync(out, { recursive: true });
 const errs = [];
 const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
@@ -3907,7 +3908,188 @@ async function v031() {
   console.log(`v031: create + recovery confirm / ciphertext only (${store.files.size} files, ${log.length} requests) / wrong pass / join by recovery code / 3+2=5 both sides / undo last sync propagates ok`);
 }
 
+// v0.32 局域网直连：电脑（1440 宽，window.__gleanLanHost 模拟 Tauri 柜子命令，柜子是本地端口上的参考服务 e2e/lanmock.mjs，协议同 lancore.rs）
+// 显示一次性二维码 → 在 Node 里用独立解码器（qr/decode.js）把截图解回链接 → 手机（390 宽，LinganQr 模拟原生 ZXing 桥）从相册选这张截图配对 →
+// 手机 5 条 + 电脑 5 条（手机含 1 张图）→ 两边 11 条无重复、图到了电脑 → 断开再同步只传增量 → 同步状态（日志 / 各设备 / 清理旧包）→ 电脑柜子关了时手机给出原因。
+async function waitItems(pg, n, ms) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    if ((await dbRaw(pg, 'items')).length >= n) return true;
+    await pg.waitForTimeout(400);
+  }
+  return false;
+}
+async function v032() {
+  const tag = 'v032';
+  const lm = await startLanMock(0);
+  const lan = `http://127.0.0.1:${lm.port}`;
+  const { default: decodeQR } = await import('qr/decode.js');
+  const cd = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  await cd.addInitScript((lb) => {
+    let since = 0;
+    window.__gleanLanHost = {
+      start: async (keyHex) => (await fetch(lb + '/__admin/start', { method: 'POST', body: JSON.stringify({ keyHex }) })).json(),
+      stop: async () => void (await fetch(lb + '/__admin/stop', { method: 'POST' })),
+      offer: async (authHex, bundle, ttl) => {
+        let s = '';
+        for (const x of bundle) s += String.fromCharCode(x);
+        await fetch(lb + '/__admin/offer', { method: 'POST', body: JSON.stringify({ authHex, bundle: btoa(s), ttl }) });
+      },
+      onChanged: async (cb) => {
+        const t = setInterval(async () => {
+          try {
+            for (const c of await (await fetch(lb + '/__admin/changes?since=' + since)).json()) {
+              since = c.n;
+              cb(c.path);
+            }
+          } catch {
+            /* ignore */
+          }
+        }, 400);
+        return () => clearInterval(t);
+      },
+    };
+  }, lan);
+  const pd = await cd.newPage();
+  pd.on('pageerror', (e) => errs.push(`[${tag}] desktop pageerror ${e.message}`));
+  await pd.goto(base);
+  await pd.waitForSelector('text=穗仓还是空的');
+  for (const t of ['电脑一 > 屏幕', '电脑二 > 键盘', '电脑三 > 窗外', '电脑四 > 台灯', '电脑五 > 咖啡']) await quickSave(pd, t);
+
+  const cp = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await cp.addInitScript(() => {
+    window.__qrCalls = 0;
+    window.LinganQr = { decode: (b64) => (window.__qrCalls++, b64 && b64.length > 200 ? window.__qrText || '' : '') };
+  });
+  const pp = await cp.newPage();
+  pp.on('pageerror', (e) => errs.push(`[${tag}] phone pageerror ${e.message}`));
+  await pp.goto(base);
+  await pp.waitForSelector('text=穗仓还是空的');
+  for (const t of ['手机一 > 雨', '手机二 > 地铁', '手机三 > 夜', '手机四 > 风']) await quickSave(pp, t);
+  const png = await pp.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 200; c.height = 120;
+    const g = c.getContext('2d');
+    g.fillStyle = '#2a6f97'; g.fillRect(0, 0, 200, 120);
+    g.fillStyle = '#f2c14e'; g.fillRect(20, 30, 160, 60);
+    return c.toDataURL('image/png').split(',')[1];
+  });
+  await pp.click('.quick-more');
+  await pp.setInputFiles('.capture input[type=file]', { name: 'lan.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
+  await pp.waitForTimeout(400);
+  await pp.fill('.capture .field.big input', '手机拍的图');
+  await pp.click('.capture button[type=submit]');
+  await pp.waitForSelector('.card:has-text("手机拍的图")');
+
+  // 电脑：开启 → 二维码
+  await pd.click('.nav-btn:has-text("设置")');
+  await pd.waitForSelector('#set-lan');
+  await pd.locator('#set-lan').scrollIntoViewIfNeeded();
+  if (await pd.locator('#set-lan .lan-scan-btn').count()) errs.push(`[${tag}] desktop host should not offer scanning`);
+  await pd.click('#set-lan .lan-enable');
+  await pd.waitForSelector('#set-lan .lan-qr svg', { timeout: 10000 }).catch(async () => errs.push(`[${tag}] QR not shown: ${await pd.textContent('#set-lan').catch(() => '')}`));
+  await pd.locator('#set-lan').screenshot({ path: `${out}/v032-qr-desktop.png` });
+  const shot = await pd.locator('#set-lan .lan-qr').screenshot();
+  const px = await pd.evaluate(async () => {
+    const svg = document.querySelector('#set-lan .lan-qr svg').outerHTML;
+    const img = new Image();
+    img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = c.height = 360;
+    const g = c.getContext('2d');
+    g.drawImage(img, 0, 0, 360, 360);
+    return Array.from(g.getImageData(0, 0, 360, 360).data);
+  });
+  let qrText = '';
+  try {
+    qrText = decodeQR({ width: 360, height: 360, data: Uint8Array.from(px) });
+  } catch (e) {
+    errs.push(`[${tag}] QR not decodable: ${e.message}`);
+  }
+  if (!/^glean:\/\/lan\?v=1&h=127\.0\.0\.1&p=\d+&k=[A-Za-z0-9_-]{43}&n=/.test(qrText)) errs.push(`[${tag}] QR payload ${qrText.slice(0, 60)}`);
+  // 手机：从相册选这张截图 → 原生桥（模拟）认出 → 配对 + 同步
+  await pp.evaluate((t) => (window.__qrText = t), qrText);
+  await pp.click('.nav-btn:has-text("设置")');
+  await pp.waitForSelector('#set-lan');
+  await pp.locator('#set-lan').scrollIntoViewIfNeeded();
+  await pp.locator('#set-lan').screenshot({ path: `${out}/v032-lan-mobile-off.png` });
+  await pp.setInputFiles('#set-lan .lan-file', { name: 'qr.png', mimeType: 'image/png', buffer: shot });
+  await pp.waitForFunction(() => /已连上电脑/.test(document.querySelector('#set-lan .lan-msg')?.textContent || ''), null, { timeout: 20000 }).catch(async () => errs.push(`[${tag}] phone pair: ${await pp.textContent('#set-lan').catch(() => '')}`));
+  const pairMsg = await pp.textContent('#set-lan .lan-msg').catch(() => '');
+  if (!/推 5 行/.test(pairMsg) || !/收 5 行/.test(pairMsg) || !/传图 1/.test(pairMsg)) errs.push(`[${tag}] first sync stats: ${pairMsg}`);
+  if (!(await pp.evaluate(() => window.__qrCalls))) errs.push(`[${tag}] native QR bridge not used`);
+  // 电脑收到手机推送通知后自动合并
+  if (!(await waitItems(pd, 10, 20000))) errs.push(`[${tag}] desktop did not auto-merge`);
+  const ti = (xs) => xs.map((x) => x.title).sort().join('|');
+  let di = await dbRaw(pd, 'items');
+  let pi = await dbRaw(pp, 'items');
+  if (di.length !== 10 || pi.length !== 10 || ti(di) !== ti(pi)) errs.push(`[${tag}] 5+5 → ${di.length}/${pi.length}: ${ti(di)} vs ${ti(pi)}`);
+  if (new Set(di.map((x) => x.uid)).size !== 10) errs.push(`[${tag}] duplicates on desktop`);
+  const dImg = di.find((x) => x.title === '手机拍的图');
+  const imgs = await dbRaw(pd, 'images').catch(() => []);
+  if (!dImg || !imgs.some((x) => x.itemId === dImg.id)) errs.push(`[${tag}] image did not reach desktop`);
+  for (const [k, f] of lm.files) if (f.b.includes(Buffer.from('手机一')) || f.b.includes(Buffer.from('电脑一'))) errs.push(`[${tag}] plaintext in LAN store ${k}`);
+  // 断开再同步只传增量：手机再收 1 条
+  await pp.click('.nav-btn:has-text("穗仓")');
+  await quickSave(pp, '断开后新收的 > 一条');
+  await pp.click('.nav-btn:has-text("设置")');
+  await pp.waitForSelector('#set-lan .lan-now');
+  const in0 = lm.stats.bytesIn;
+  const out0 = lm.stats.bytesOut;
+  await pp.click('#set-lan .lan-now');
+  await pp.waitForFunction(() => /推 1 行/.test(document.querySelector('#set-lan .lan-msg')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] incremental: ${await pp.textContent('#set-lan').catch(() => '')}`));
+  const incIn = lm.stats.bytesIn - in0;
+  const incOut = lm.stats.bytesOut - out0;
+  if (incIn > 8000) errs.push(`[${tag}] incremental upload too big ${incIn}B`);
+  if (!(await waitItems(pd, 11, 15000))) errs.push(`[${tag}] desktop missing incremental item`);
+  // 同步状态：日志、各设备、清理旧包
+  await pp.locator('#set-syncstate').scrollIntoViewIfNeeded();
+  const rows = await pp.locator('#set-syncstate .st-table tbody tr').count();
+  if (rows < 2) errs.push(`[${tag}] status log rows ${rows}`);
+  await pp.click('#set-syncstate .st-devs');
+  await pp.waitForSelector('#set-syncstate .st-devtable', { timeout: 10000 }).catch(() => errs.push(`[${tag}] device table missing`));
+  const devRows = await pp.locator('#set-syncstate .st-devtable tbody tr').allInnerTexts();
+  if (devRows.length !== 2 || !devRows.some((r) => r.includes('（这台）'))) errs.push(`[${tag}] devices ${JSON.stringify(devRows)}`);
+  await pp.waitForTimeout(1500); // 电脑合并完写回执
+  await pp.click('#set-syncstate .st-clean');
+  await pp.waitForFunction(() => /清掉 \d+ 个旧包|没有能清的/.test(document.querySelector('#set-syncstate .st-msg-out')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] clean: ${await pp.textContent('#set-syncstate').catch(() => '')}`));
+  const cleanMsg = await pp.textContent('#set-syncstate .st-msg-out').catch(() => '');
+  if (!/清掉 [1-9]\d* 个旧包/.test(cleanMsg)) errs.push(`[${tag}] expected packs cleaned: ${cleanMsg}`);
+  await pp.locator('#set-syncstate').screenshot({ path: `${out}/v032-status-mobile.png` });
+  await pd.locator('#set-syncstate').scrollIntoViewIfNeeded();
+  await pd.click('#set-syncstate .st-devs');
+  await pd.waitForSelector('#set-syncstate .st-devtable', { timeout: 10000 }).catch(() => errs.push(`[${tag}] desktop device table missing`));
+  await pd.locator('#set-syncstate').screenshot({ path: `${out}/v032-status-desktop.png` });
+  // 清理之后手机再收一条、电脑照常收到（被清的包靠快照补，不影响后续）
+  await pp.click('.nav-btn:has-text("穗仓")');
+  await quickSave(pp, '清理之后 > 还能同步');
+  await pp.click('.nav-btn:has-text("设置")');
+  await pp.click('#set-lan .lan-now');
+  if (!(await waitItems(pd, 12, 15000))) errs.push(`[${tag}] desktop missing item after compaction`);
+  // 电脑柜子关了：手机给出原因，穗仓标题旁变黑条
+  await fetch(lan + '/__admin/stop', { method: 'POST' });
+  await pp.click('#set-lan .lan-now');
+  await pp.waitForSelector('#set-lan .lan-err', { timeout: 15000 }).catch(() => errs.push(`[${tag}] no error shown when desktop off`));
+  const why = await pp.textContent('#set-lan .lan-err').catch(() => '');
+  if (!/局域网直连没开/.test(why)) errs.push(`[${tag}] error reason: ${why}`);
+  if (!(await pp.locator('#set-syncstate .st-table tr.bad').count())) errs.push(`[${tag}] failed row missing in log`);
+  await pp.click('.nav-btn:has-text("穗仓")');
+  await pp.waitForSelector('.sync-badge.err', { timeout: 5000 }).catch(() => errs.push(`[${tag}] library badge should show failure`));
+  await pp.screenshot({ path: `${out}/v032-badge-mobile.png` });
+  const idx = await pd.locator('.settings-index .set-link:has-text("局域网直连")').innerText().catch(() => '');
+  if (!idx.includes('这台是电脑')) errs.push(`[${tag}] settings index: ${idx}`);
+  await cd.close();
+  await cp.close();
+  await lm.stop();
+  console.log(`v032: QR decodes (${qrText.length} chars) / pair via photo + native bridge / 5+5 (incl. 1 image)=10 both sides, ciphertext only (${lm.files.size} files) / incremental up ${incIn}B down ${incOut}B / log ${rows} rows, 2 devices, ${cleanMsg} / desktop-off reason ok`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v032') {
+    await v032();
+    throw Object.assign(new Error('v032 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v031') {
     await v031();
     throw Object.assign(new Error('v031 only'), { only: true });
@@ -3963,6 +4145,7 @@ try {
   await v029();
   await v030();
   await v031();
+  await v032();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
