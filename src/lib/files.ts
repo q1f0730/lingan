@@ -104,3 +104,118 @@ export async function deliverZip(name: string, bytes: Uint8Array, target: ZipTar
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   return name;
 }
+
+// ───────── v0.21 流式写文件（.glean 备份）─────────
+// 安卓：分块 base64 交给原生桥；Windows：保存对话框 + plugin-fs 打开文件逐块写；浏览器：Blob 拼接（库里的原图 Blob 不复制）后下载。
+// 小块（ZIP 头）先攒到 384KB 再交出去，大块（原图 Blob）按 384KB 切片读，任何时候内存里最多一两块。
+export interface FileSink {
+  write(chunk: Uint8Array | Blob): Promise<void>;
+  /** 写完：返回给人看的位置（取消返回 null） */
+  close(): Promise<string | null>;
+  abort(): Promise<void>;
+}
+
+class Coalesce {
+  private parts: Uint8Array[] = [];
+  private size = 0;
+  private out: (b: Uint8Array) => Promise<void>;
+  constructor(out: (b: Uint8Array) => Promise<void>) {
+    this.out = out;
+  }
+  async push(c: Uint8Array | Blob) {
+    if (c instanceof Blob) {
+      for (let i = 0; i < c.size; i += ANDROID_CHUNK) await this.pushBytes(new Uint8Array(await c.slice(i, i + ANDROID_CHUNK).arrayBuffer()));
+      return;
+    }
+    await this.pushBytes(c);
+  }
+  private async pushBytes(b: Uint8Array) {
+    if (!b.length) return;
+    this.parts.push(b);
+    this.size += b.length;
+    if (this.size >= ANDROID_CHUNK) await this.flush();
+  }
+  async flush() {
+    if (!this.size) return;
+    const all = new Uint8Array(this.size);
+    let p = 0;
+    for (const x of this.parts) {
+      all.set(x, p);
+      p += x.length;
+    }
+    this.parts = [];
+    this.size = 0;
+    for (let i = 0; i < all.length; i += ANDROID_CHUNK) await this.out(all.subarray(i, i + ANDROID_CHUNK));
+  }
+}
+
+/** 打开一个「要保存的文件」。用户在保存对话框里取消时返回 null */
+export async function openFileSink(name: string, opts: { mime: string; ext: string; label: string; target?: ZipTarget; shareTitle?: string }): Promise<FileSink | null> {
+  const target = opts.target || 'save';
+  const bridge = androidFiles();
+  if (bridge) {
+    if (!bridge.begin(name)) throw new Error('无法写入临时文件');
+    let n = 0;
+    const co = new Coalesce(async (b) => {
+      if (!bridge.append(bytesToBase64(b))) throw new Error('写入临时文件失败');
+      if (++n % 8 === 0) await new Promise((r) => setTimeout(r, 0));
+    });
+    return {
+      write: (c) => co.push(c),
+      close: async () => {
+        await co.flush();
+        if (target === 'downloads') {
+          const where = bridge.saveDownloads(opts.mime);
+          if (!where) throw new Error('存到下载失败');
+          return where;
+        }
+        if (!bridge.share(opts.mime, opts.shareTitle || name)) throw new Error('打不开系统分享');
+        return '分享面板';
+      },
+      abort: async () => undefined,
+    };
+  }
+  if (isTauri()) {
+    const { save } = await import('@tauri-apps/plugin-dialog');
+    const fs = await import('@tauri-apps/plugin-fs');
+    const path = await save({ defaultPath: name, filters: [{ name: opts.label, extensions: [opts.ext] }] });
+    if (!path) return null;
+    const fh = await fs.open(path, { write: true, create: true, truncate: true });
+    const co = new Coalesce(async (b) => {
+      await fh.write(b);
+    });
+    return {
+      write: (c) => co.push(c),
+      close: async () => {
+        await co.flush();
+        await fh.close();
+        return String(path);
+      },
+      abort: async () => {
+        await fh.close().catch(() => undefined);
+      },
+    };
+  }
+  const parts: BlobPart[] = [];
+  return {
+    write: async (c) => {
+      parts.push(c as BlobPart);
+    },
+    close: async () => {
+      const blob = new Blob(parts, { type: opts.mime });
+      parts.length = 0;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return name;
+    },
+    abort: async () => {
+      parts.length = 0;
+    },
+  };
+}
