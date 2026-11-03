@@ -1858,6 +1858,7 @@ details[open] summary {
   margin-top: 10px;
   font-size: 14px;
   color: var(--fg-2);
+  white-space: pre-line;
 }
 .confirm-actions {
   display: flex;
@@ -3352,4 +3353,51 @@ button.heat-cell {
   .trash-table .trow {
     grid-template-columns: 1fr 6em 5em 7em;
   }
+}
+
+/* v0.25 Agent 与 API / 更新 */
+.sub-title {
+  margin-top: 32px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--fg-2);
+}
+.agent-panel .kv > div,
+.update-panel .kv > div {
+  grid-template-columns: 112px 1fr;
+}
+.agent-snippet {
+  display: inline;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Glean Sans', monospace;
+  font-size: 12px;
+  padding: 0 4px;
+  border: 1px solid var(--line, currentColor);
+  overflow-wrap: anywhere;
+}
+.agent-howto dd .btn.text {
+  margin-left: 8px;
+}
+.agent-port {
+  margin-top: 16px;
+  max-width: 200px;
+}
+.agent-recent {
+  margin-top: 12px;
+  padding-left: 0;
+  list-style: none;
+}
+.agent-recent li {
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+.agent-recent li.err {
+  color: var(--fg-2);
+  text-decoration: line-through;
+}
+.update-notes {
+  margin-top: 12px;
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow: auto;
 }
