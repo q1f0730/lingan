@@ -1,3 +1,11 @@
+mod smtc;
+
+/// v0.22 正在播放一键拾（Windows SMTC）；其它平台返回 unsupported，安卓走 MainActivity 的 LinganNowPlaying 桥
+#[tauri::command]
+async fn now_playing() -> Result<Option<smtc::NowPlaying>, String> {
+  smtc::read()
+}
+
 #[cfg(desktop)]
 fn show_quick(app: &tauri::AppHandle) {
   use tauri::{Emitter, Manager};
@@ -76,7 +84,7 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_clipboard_manager::init())
-    .invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete]);
+    .invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete, now_playing]);
 
   #[cfg(desktop)]
   let builder = builder
@@ -106,19 +114,28 @@ pub fn run() {
         use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
         use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
         let quick = MenuItem::with_id(app, "quick", "随手拾一穗\tCtrl+Shift+L", true, None::<&str>)?;
+        let song = MenuItem::with_id(app, "nowplaying", "拾正在播放的歌", true, None::<&str>)?;
         let library = MenuItem::with_id(app, "library", "打开穗仓", true, None::<&str>)?;
         let daily = MenuItem::with_id(app, "daily", "今日一穗", true, None::<&str>)?;
         let settings = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
         let quit = MenuItem::with_id(app, "quit", "退出拾穗", true, None::<&str>)?;
         let sep1 = PredefinedMenuItem::separator(app)?;
         let sep2 = PredefinedMenuItem::separator(app)?;
-        let menu = Menu::with_items(app, &[&quick, &sep1, &library, &daily, &sep2, &settings, &quit])?;
+        let menu = Menu::with_items(app, &[&quick, &song, &sep1, &library, &daily, &sep2, &settings, &quit])?;
         let mut tray = TrayIconBuilder::new()
           .tooltip("拾穗 Glean")
           .menu(&menu)
           .show_menu_on_left_click(false)
           .on_menu_event(|app, e| match e.id().as_ref() {
             "quick" => show_quick(app),
+            "nowplaying" => {
+              use tauri::{Emitter, Manager};
+              if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
+                let _ = w.show();
+              }
+              let _ = app.emit("glean-nowplaying", ());
+            }
             "library" => show_view(app, "library"),
             "daily" => show_view(app, "daily"),
             "settings" => show_view(app, "settings"),
