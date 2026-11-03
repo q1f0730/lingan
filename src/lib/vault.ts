@@ -5,8 +5,9 @@
 // 本模块不打日志、不把值写进任何错误信息。
 
 export type VaultKind = 'android' | 'keychain' | 'browser' | 'memory';
-export type SecretName = 'chat.apiKey' | 'embed.apiKey';
-export const SECRET_NAMES: SecretName[] = ['chat.apiKey', 'embed.apiKey'];
+// v0.31 同步：WebDAV 应用密码、同步数据钥（base64）
+export type SecretName = 'chat.apiKey' | 'embed.apiKey' | 'sync.davPass' | 'sync.key';
+export const SECRET_NAMES: SecretName[] = ['chat.apiKey', 'embed.apiKey', 'sync.davPass', 'sync.key'];
 
 export interface VaultBackend {
   kind: VaultKind;
