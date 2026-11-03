@@ -149,6 +149,10 @@ jobs:
           ls *setup.exe >/dev/null && ls *.msi >/dev/null && ls *setup.exe.sig >/dev/null || { echo "::error::missing exe / msi / updater signature"; exit 1; }
           grep -q "\"version\": *\"$V\"" latest.json || { echo "::error::latest.json version mismatch"; cat latest.json; exit 1; }
           grep -q 'windows-x86_64' latest.json || { echo "::error::latest.json has no windows platform"; exit 1; }
+          # v0.26 0750：latest.json 的 notes 填上这版的中文更新说明（App 里「这版新了什么」），再传回去覆盖
+          node ../scripts/latest-notes.mjs "../docs/releases/$TAG.md" latest.json
+          grep -q "\"version\": *\"$V\"" latest.json && grep -q 'windows-x86_64' latest.json || { echo "::error::latest.json broken after notes"; exit 1; }
+          gh release upload "$TAG" latest.json --clobber -R "$GITHUB_REPOSITORY"
           rm -f SHA256SUMS.txt
           sha256sum $(ls | grep -v '^SHA256SUMS') > ../SHA256SUMS.txt
           cd .. && cat SHA256SUMS.txt
