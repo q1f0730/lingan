@@ -10,7 +10,8 @@ import { evidenceOf, sourceIds, splitMentions } from '../lib/provenance';
 import { nn } from '../lib/studio';
 import { FOCUS_BRANCH_KEY } from '../lib/search';
 import { useApp } from '../lib/store';
-import type { Development, Item } from '../lib/types';
+import type { BranchStatus, Development, Item } from '../lib/types';
+import { branchTree, STATUS_LABEL, STATUS_ORDER, statusCounts, statusOf } from '../lib/branchplus';
 
 const MODE_KEY = 'glean.branchview';
 
@@ -20,6 +21,8 @@ export function Branches() {
   const items = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const history = useLiveQuery(() => db.developments.orderBy('createdAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const [starred, setStarred] = useState(false);
+  // v0.30 0904 按「做了吗」筛
+  const [stat, setStat] = useState<BranchStatus | null>(null);
   // v0.17 从搜索结果点进来：展开那一根并滚过去（宣言视图先切回列表）
   const [focusId] = useState<number | null>(() => {
     try {
@@ -32,11 +35,15 @@ export function Branches() {
   });
   const [mode, setMode] = useState<'list' | 'manifesto'>(() => (!focusId && localStorage.getItem(MODE_KEY) === 'manifesto' ? 'manifesto' : 'list'));
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
-  const groups = useMemo(() => groupBranches(history || []), [history]);
+  // v0.30 子枝挂在父枝下面（父枝展开时显示），列表里只放根
+  const roots = useMemo(() => branchTree(history || []).roots, [history]);
+  const groups = useMemo(() => groupBranches(roots), [roots]);
+  const sc = useMemo(() => statusCounts(history || []), [history]);
   // v0.20：宣言只是一张深墨色大卡（卡内用黑主题 token），不再把整页换成黑
   if (!history || !items) return <Loading />;
   const nStar = history.filter((h) => h.starred).length;
-  const shown = starred ? groups.map((g) => ({ ...g, devs: g.devs.filter((d) => d.starred) })).filter((g) => g.devs.length) : groups;
+  const keep = (d: Development) => (!starred || d.starred) && (!stat || statusOf(d) === stat);
+  const shown = starred || stat ? groups.map((g) => ({ ...g, devs: g.devs.filter(keep) })).filter((g) => g.devs.length) : groups;
   const pick = (m: 'list' | 'manifesto') => {
     setMode(m);
     localStorage.setItem(MODE_KEY, m);
@@ -82,6 +89,11 @@ export function Branches() {
             <button className={`chip${starred ? ' on' : ''}`} onClick={() => setStarred((x) => !x)} aria-pressed={starred}>
               只看留下的 <span className="n">({nStar})</span>
             </button>
+            {STATUS_ORDER.filter((s) => s !== 'seed' && sc[s]).map((s) => (
+              <button key={s} className={`chip status-chip${stat === s ? ' on' : ''}`} data-status={s} onClick={() => setStat(stat === s ? null : s)} aria-pressed={stat === s}>
+                {STATUS_LABEL[s]} <span className="n">({sc[s]})</span>
+              </button>
+            ))}
           </div>
           <div className="history">
             {shown.map((g) =>
@@ -116,7 +128,7 @@ export function Branches() {
                 </div>
               ),
             )}
-            {shown.length === 0 && <div className="empty small meta-text">还没有留下的新枝。</div>}
+            {shown.length === 0 && <div className="empty small meta-text">{stat ? `还没有「${STATUS_LABEL[stat]}」的新枝。` : '还没有留下的新枝。'}</div>}
           </div>
         </>
       )}
