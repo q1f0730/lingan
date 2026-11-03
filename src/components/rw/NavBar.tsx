@@ -1,14 +1,15 @@
 import { m } from 'framer-motion';
 import type { ComponentType } from 'react';
 import type { View } from '../../lib/store';
-import { IconGrid, IconHeart, IconMerge, IconSliders, IconSprout } from './icons';
+import { IconGrid, IconHeart, IconMerge, IconPen, IconSliders, IconSprout } from './icons';
 import { SPRING } from './MotionRoot';
 
 export const NAV: Array<{ v: View; label: string; Icon: ComponentType<{ size?: number }>; key: string }> = [
   { v: 'library', label: '穗仓', Icon: IconGrid, key: '1' },
   { v: 'develop', label: '嫁接', Icon: IconMerge, key: '2' },
   { v: 'branches', label: '新枝', Icon: IconSprout, key: '3' },
-  { v: 'taste', label: '口味', Icon: IconHeart, key: '4' },
+  { v: 'works', label: '作品', Icon: IconPen, key: '4' },
+  { v: 'taste', label: '口味', Icon: IconHeart, key: '5' },
   { v: 'settings', label: '设置', Icon: IconSliders, key: ',' },
 ];
 
