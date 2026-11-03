@@ -1,5 +1,6 @@
 // v0.33 0510 glean:// 深链接（懒加载）。入口：桌面版单实例 / 冷启动参数（entry.rs）、安卓 intent（MainActivity）、页面里的 glean:link 事件。
 //   glean://capture?text=…&url=…&why=…&title=…&tags=a,b   直接拾一穗（进待理）
+//     带 &from=名字（v0.34 0900 别人递来的）：不进穗仓，先放进 待理 · 递来的
 //   glean://quick?text=…                                   打开速记小窗并填好
 //   glean://item/<uid>                                     打开这一穗
 //   glean://graft?ids=<uid>,<uid>                          拿这几穗去嫁接
@@ -11,7 +12,7 @@ import type { Item } from './types';
 import type { Settings } from './settings';
 
 export type Link =
-  | { k: 'capture'; text: string; url: string; why: string; title: string; tags: string[] }
+  | { k: 'capture'; text: string; url: string; why: string; title: string; tags: string[]; from: string }
   | { k: 'quick'; text: string }
   | { k: 'item'; uid: string }
   | { k: 'graft'; uids: string[] }
@@ -41,7 +42,7 @@ export function parseLink(raw: string): Link | null {
       .map((t) => t.replace(/^#/, '').slice(0, 20))
       .filter(Boolean)
       .slice(0, 8);
-    return { k: 'capture', text, url, why: s('why'), title: s('title').slice(0, 120), tags };
+    return { k: 'capture', text, url, why: s('why'), title: s('title').slice(0, 120), tags, from: s('from').slice(0, 40) };
   }
   if (head === 'quick' || head === 'new') return { k: 'quick', text: s('text') };
   if (head === 'item' && /^[0-9A-Za-z]{10,40}$/.test(path[1] || '')) return { k: 'item', uid: path[1] };
@@ -102,6 +103,11 @@ export async function routeLink(raw: string, c: LinkCtx): Promise<void> {
     const its = await byUids(l.uids);
     if (!its.length) return c.toast('这几穗不在这台设备上', 'err');
     return c.developFrom(its.map((x) => x.id!));
+  }
+  if (l.from) {
+    const { addHanded } = await import('./handed');
+    addHanded({ from: l.from, title: l.title || (l.text || l.url).slice(0, 60), text: l.text, url: l.url, tags: l.tags });
+    return c.toast(`${l.from} 递来一穗，在 待理 · 递来的`);
   }
   const d = parseQuick([l.text, l.url && !l.text.includes(l.url) ? l.url : ''].filter(Boolean).join(' '));
   if (!d) return;
