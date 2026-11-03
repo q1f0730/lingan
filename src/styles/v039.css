@@ -153,3 +153,30 @@
   min-height: 40px;
   padding: 6px 12px;
 }
+
+/* 0934 每穗出口（详情底部「给谁看」） */
+.detail-exits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 14px;
+  margin-top: 12px;
+}
+.detail-exits .off {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.exit-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.exit-bulk .exit-pick.on {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.exit-bulk-wrap {
+  margin-top: 24px;
+}
