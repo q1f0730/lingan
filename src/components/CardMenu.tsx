@@ -148,7 +148,7 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
     // v0.34 0899 分享（逐项勾选）/ 0902 放进花园（私密穗不能放）
     if (a === 'share') return void window.dispatchEvent(new CustomEvent('glean:share', { detail: { item: it.id } }));
     if (a === 'garden') {
-      if ((it.private || it.locked) && !it.garden) return toast(it.locked ? '上锁的穗不能放进花园' : '私密穗不能放进花园', 'err');
+      if ((it.private || it.locked || it.shut?.includes('garden')) && !it.garden) return toast(it.locked ? '上锁的穗不能放进花园' : it.private ? '私密穗不能放进花园' : '这一穗关了花园出口', 'err');
       await setGarden([it.id!], !it.garden);
       return toast(it.garden ? '从花园拿出来了' : '放进花园 · 设置 → 分享与花园 里生成网页');
     }
