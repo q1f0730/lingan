@@ -3,10 +3,10 @@ import { NAV } from '../components/rw/NavBar';
 import { splitPhrases } from '../components/rw/WordReveal';
 
 describe('v0.20 Rewamp 外壳', () => {
-  it('主导航仍是五页、顺序不变，每页一个图标和一个互不相同的快捷键', () => {
-    expect(NAV.map((n) => n.v)).toEqual(['library', 'develop', 'branches', 'taste', 'settings']);
-    expect(NAV.map((n) => n.label)).toEqual(['穗仓', '嫁接', '新枝', '口味', '设置']);
-    expect(new Set(NAV.map((n) => n.key)).size).toBe(5);
+  it('主导航六页（v0.29 在新枝和口味之间加了「作品」，原有顺序不变），每页一个图标和一个互不相同的快捷键', () => {
+    expect(NAV.map((n) => n.v)).toEqual(['library', 'develop', 'branches', 'works', 'taste', 'settings']);
+    expect(NAV.map((n) => n.label)).toEqual(['穗仓', '嫁接', '新枝', '作品', '口味', '设置']);
+    expect(new Set(NAV.map((n) => n.key)).size).toBe(6);
     expect(NAV.every((n) => typeof n.Icon === 'function')).toBe(true);
   });
   it('逐词淡入只在标点 / 空格处切，拼回去一字不差，一句短中文不拆字', () => {
