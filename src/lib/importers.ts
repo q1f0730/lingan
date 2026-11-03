@@ -272,10 +272,11 @@ export async function planMoveIn(p: Parsed): Promise<{ fresh: Draft[]; dup: numb
 }
 
 /** 写进穗仓（不进待理），全部放进穗束「导入 · 来源 月/日」 */
-export async function runMoveIn(fresh: Draft[], bundle: string): Promise<number> {
+export async function runMoveIn(fresh: Draft[], bundle: string, ids?: number[]): Promise<number> {
   let n = 0;
   for (const { at, ...it } of fresh) {
-    await addItem({ ...it, bundles: [bundle] }, db, { createdAt: at });
+    const id = await addItem({ ...it, bundles: [bundle] }, db, { createdAt: at });
+    ids?.push(id);
     n++;
   }
   return n;
