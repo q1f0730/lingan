@@ -3369,7 +3369,7 @@ button.heat-cell {
 }
 .agent-snippet {
   display: inline;
-  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Glean Sans', monospace;
+  font-family: 'Glean Sans', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   font-size: 12px;
   padding: 0 4px;
   border: 1px solid var(--line, currentColor);
