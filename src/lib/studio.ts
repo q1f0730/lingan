@@ -125,11 +125,17 @@ export function matchItem(it: Item, q: string): boolean {
   return !k || itemText(it).toLowerCase().includes(k);
 }
 
+let collator: Intl.Collator | null = null;
+/** 和 String#localeCompare() 默认一致的排序器，只建一次 */
+export function tagCollator(): Intl.Collator {
+  return (collator ??= new Intl.Collator());
+}
 /** 标签和真实计数，多→少 */
 export function tagCounts(items: Array<Pick<Item, 'tags'>>, max = 24): Array<[string, number]> {
   const m = new Map<string, number>();
   for (const it of items) for (const t of it.tags) m.set(t, (m.get(t) || 0) + 1);
-  return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, max);
+  // v0.24：同数时按字排序用一个缓存的 Collator（String#localeCompare 每次都新建排序器，几百个中文标签在 4× 降速下要几十毫秒）
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || tagCollator().compare(a[0], b[0])).slice(0, max);
 }
 
 /** 这一穗长进了哪些新枝（来源溯源反查） */
