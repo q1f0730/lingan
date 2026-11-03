@@ -2,7 +2,7 @@ import { itemHasImage } from '../lib/imagestore';
 import { useThumbSrc } from '../lib/useImage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { db } from '../lib/db';
+import { db, trashDevelopments, untrashDevelopments } from '../lib/db';
 import { useApp } from '../lib/store';
 import { transformName } from '../lib/graft';
 import { evidenceOf, MIN_EVIDENCE, sourceIds, splitMentions, type Evidence } from '../lib/provenance';
@@ -15,7 +15,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
   const { toast, openItem, confirm } = useApp();
   const dev = useLiveQuery(() => (devId ? db.developments.get(devId) : undefined), [devId]);
   const ids = useMemo(() => (dev ? sourceIds(dev, idea) : []), [dev, idea]);
-  const srcItems = useLiveQuery(async () => (ids.length ? await db.items.bulkGet(ids) : []), [ids.join(',')]);
+  const srcItems = useLiveQuery(async () => (ids.length ? (await db.items.bulkGet(ids)).map((x) => (x && !x.deletedAt ? x : undefined)) : []), [ids.join(',')]);
   const [hl, setHl] = useState<number | null>(null);
   const ptr = useRef('');
   const evidence = dev ? evidenceOf(dev, idea) : idea.evidence || 'legacy';
@@ -63,10 +63,11 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
   }
   async function drop() {
     if (!devId) return;
-    const ok = await confirm({ title: `不要「${idea.title.replace(/^《|》$/g, '')}」？`, body: '这根新枝会从新枝里删掉，它的来源穗不受影响。', ok: '不要了', cancel: '留着', danger: true });
+    const ok = await confirm({ title: `不要「${idea.title.replace(/^《|》$/g, '')}」？`, body: '这根新枝会放进回收站（30 天内可恢复），它的来源穗不受影响。', ok: '不要了', cancel: '留着', danger: true });
     if (!ok) return;
-    await db.developments.delete(devId);
-    toast('已删掉这根新枝');
+    const id = devId;
+    await trashDevelopments([id]);
+    toast('已删掉这根新枝（在回收站）', 'ok', { label: '撤销', run: () => void untrashDevelopments([id]).then(() => toast('已放回新枝')) });
   }
   return (
     <article
