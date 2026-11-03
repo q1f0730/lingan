@@ -4784,9 +4784,136 @@ async function v037() {
   console.log(`v037: head phase count ${first.count} chips ${first.chips} → full; oldest searchable; quick enter→card median ${latMed}ms (${lat.join(',')}); mid tier ${JSON.stringify(m)}; detail ${w1}→${w2}`);
 }
 
+// v0.38 向量与关系：本机小模型（下载 / 校验 / 离线向量化）、语义搜索、母题 + 星图、作品实体、穗间连线
+async function v038() {
+  const tag = 'v038';
+  const MODEL = process.env.GLEAN_MODEL || new URL('../models/mini-zh-v1.bin', import.meta.url);
+  const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+  let cdn = 0, raw = 0;
+  // jsDelivr 故意 503，测退到 GitHub raw；模型文件来自仓库 models/（和发版 tag 下的是同一份）
+  await c.route('**/cdn.jsdelivr.net/**', (r) => (cdn++, r.fulfill({ status: 503, body: 'down', headers: { 'access-control-allow-origin': '*' } })));
+  await c.route('**/raw.githubusercontent.com/**', (r) => (raw++, r.fulfill({ status: 200, body: fs.readFileSync(MODEL), headers: { 'access-control-allow-origin': '*', 'content-type': 'application/octet-stream' } })));
+  const pg = await c.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  await pg.evaluate(() => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const tx = r.result.transaction(['items', 'developments'], 'readwrite');
+      const st = tx.objectStore('items');
+      const now = Date.now();
+      let n = 0;
+      const add = (o) => st.add({ content: '', creator: '', year: '', url: '', tags: [], createdAt: now - n * 3600000, updatedAt: now - n * 3600000, uid: `01V038${String(n++).padStart(20, '0')}`, ...o });
+      add({ type: 'film', title: '末班车', why: '一个人坐末班车，窗外的灯一盏盏往后退', tags: ['夜'] });
+      add({ type: 'film', title: '花样年华', creator: '王家卫', why: '旗袍和慢镜头', tags: ['爱情'] });
+      add({ type: 'image', title: '《花样年华》剧照', why: '走廊里擦肩', tags: ['爱情'] });
+      add({ type: 'text', title: '花样年华', creator: '王家卫', content: '那些消逝了的岁月', why: '台词', tags: ['爱情'] });
+      add({ type: 'music', title: '晴天 (Live)', creator: '周杰伦', why: '夏天', tags: ['夏天'] });
+      const themes = [['海边', '夏天的海风和冰汽水', 'image'], ['火锅', '朋友聚会热闹的火锅', 'idea'], ['雨夜', '湿漉漉的街道和霓虹', 'film']];
+      for (const [t, w, ty] of themes) for (let i = 0; i < 6; i++) add({ type: ty, title: `${t}${i}`, why: w, tags: [t] });
+      tx.objectStore('developments').add({ itemIds: [1, 2, 6], jump: 0.6, source: 'offline', evidence: 'ok', createdAt: now, uid: '01V038DEV0000000000000000A', idea: { title: '《夜里的海》', bridge: '', idea: '', cliches: [], refs: [1, 2, 3], evidence: 'ok' } });
+      tx.oncomplete = () => { r.result.close(); res(); };
+    };
+  }));
+  await pg.reload();
+  await pg.waitForSelector('.card');
+  // 1. 设置 → 向量 → 下载本机小模型：退到 raw、核对 SHA-256、存独立库、把全部穗向量化
+  await openSettings(pg);
+  await pg.click('.set-link:has-text("向量")');
+  await pg.click('.mini-btn');
+  await pg.waitForSelector('.toast:has-text("已就绪")', { timeout: 30000 }).catch(() => errs.push(`[${tag}] mini model never ready`));
+  const rows = await dbRaw(pg, 'items');
+  const nv = rows.filter((r) => r.embedModel === 'glean-mini-zh-v1' && r.embedding?.length === 256).length;
+  if (nv !== rows.length) errs.push(`[${tag}] embedded ${nv}/${rows.length}`);
+  if (!cdn || !raw) errs.push(`[${tag}] should try jsDelivr then raw (cdn ${cdn} raw ${raw})`);
+  const stored = await pg.evaluate(() => localStorage.getItem('glean.mini'));
+  if (stored !== 'glean-mini-zh-v1') errs.push(`[${tag}] mini flag ${stored}`);
+  // 2. 断网：新收一穗，30 秒内拿到向量；语义搜索「孤独」找到「一个人坐末班车」（字面一个字都不沾）
+  // 「断网」：除本机页面外一律掐断（Playwright 的 setOffline 会连本机懒加载块也掐掉）
+  let ext = 0;
+  await c.unrouteAll();
+  await c.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/, (r) => (ext++, r.abort()));
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.fill('.quick-input', '空房间里只剩一把椅子');
+  await pg.press('.quick-input', 'Enter');
+  let off = null;
+  for (let k = 0; k < 60 && !off; k++) {
+    off = (await dbRaw(pg, 'items')).find((r) => r.title.includes('空房间') && r.embedModel === 'glean-mini-zh-v1');
+    if (!off) await pg.waitForTimeout(500);
+  }
+  if (!off) errs.push(`[${tag}] offline new item never embedded`);
+  await pg.click('.search-toggle');
+  await pg.fill('.sq-input', '孤独');
+  await pg.waitForSelector('.sq-sem', { timeout: 5000 }).catch(() => errs.push(`[${tag}] no 意思相近 section`));
+  const sem = await pg.locator('.sq-sem [data-item-id]').allInnerTexts();
+  if (!sem.slice(0, 3).some((t) => t.includes('末班车'))) errs.push(`[${tag}] 孤独 should find 末班车 in top 3: ${JSON.stringify(sem.map((t) => t.split('\n')[0]))}`);
+  const head = await pg.locator('.sq-items .sq-sec-head').innerText();
+  if (!/字面命中 \(0\)/.test(head)) errs.push(`[${tag}] literal head ${head}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v038-search.png' });
+  await pg.keyboard.press('Escape');
+  if (ext) errs.push(`[${tag}] offline phase made ${ext} outside requests`);
+  // 3. 口味：母题（按向量聚）+ 星图，点两颗星 → 嫁接这两颗
+  await pg.click('.nav-btn:has-text("口味")');
+  await pg.waitForSelector('.motif-row', { timeout: 8000 }).catch(() => errs.push(`[${tag}] no motifs`));
+  const motifs = await pg.locator('.motif-row').count();
+  const how = await pg.locator('.motif-sec .label').innerText();
+  if (motifs < 3 || !how.includes('按向量聚')) errs.push(`[${tag}] motifs ${motifs} ${how}`);
+  await pg.locator('.motif-row').first().click();
+  if (!(await pg.locator('.motif-items [data-item-id]').count())) errs.push(`[${tag}] motif expand empty`);
+  if (await pg.locator('canvas').count()) errs.push(`[${tag}] star map canvas should wait for 展开星图`);
+  await pg.click('.star-open');
+  await pg.waitForSelector('.star-map');
+  await pg.waitForTimeout(200);
+  const pts = await pg.evaluate(() => { const cv = document.querySelector('.star-map'); cv.scrollIntoView({ block: 'center' }); const r = cv.getBoundingClientRect(); return (cv._pts || []).map(([x, y, id]) => [r.left + x, r.top + y, id]); });
+  if (pts.length < 20) errs.push(`[${tag}] star points ${pts.length}`);
+  const far = pts.reduce((best, p) => { const d = Math.hypot(p[0] - pts[0][0], p[1] - pts[0][1]); return d > best.d ? { d, p } : best; }, { d: 0, p: pts[0] }).p;
+  await pg.mouse.click(pts[0][0], pts[0][1]);
+  await pg.waitForTimeout(100);
+  await pg.mouse.click(far[0], far[1]);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v038-star.png' });
+  await pg.waitForSelector('.star-graft', { timeout: 3000 }).catch(() => errs.push(`[${tag}] star graft button missing`));
+  if (await pg.locator('.star-graft').count()) {
+    await pg.click('.star-graft');
+    await pg.waitForSelector('.graft', { timeout: 5000 }).catch(() => errs.push(`[${tag}] star → graft page`));
+  }
+  // 4. 详情：作品实体（三穗一部）、同曲不同平台、连线两头都看得到、一起被嫁接
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.click('.card:has-text("花样年华") >> nth=0');
+  await pg.waitForSelector('.detail-work');
+  const wl = await pg.locator('.detail-work .label').first().innerText();
+  if (!/《花样年华》/.test(wl) || !/3 穗/.test(wl)) errs.push(`[${tag}] work label ${wl}`);
+  await pg.fill('.rel-q', '末班');
+  await pg.click('.rel-kinds button:has-text("引出")');
+  await pg.click('.rel-pick .linklike');
+  await pg.waitForSelector('.rel-list li:has-text("末班车")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] link not shown`));
+  const lt = await pg.locator('.rel-list li').first().innerText();
+  if (process.env.E2E_SHOTS) {
+    await pg.locator('.detail-work').scrollIntoViewIfNeeded();
+    await pg.waitForTimeout(400);
+    await pg.screenshot({ path: process.env.E2E_SHOTS + '/v038-detail.png' });
+  }
+  if (!lt.includes('引出')) errs.push(`[${tag}] link kind ${lt}`);
+  await pg.click('.rel-list li .linklike:has-text("末班车")');
+  await pg.waitForSelector('.rel-list li:has-text("由它引出")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] reverse link missing on target`));
+  const co = await pg.locator('.detail-co li').allInnerTexts();
+  if (!co.some((t) => t.includes('花样年华') && t.includes('1 次'))) errs.push(`[${tag}] co-grafted ${JSON.stringify(co)}`);
+  await pg.click('.detail-links .rel-cut');
+  await pg.waitForFunction(() => !document.querySelector('.detail-links li .rel-cut'), null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] unlink failed`));
+  const both = (await dbRaw(pg, 'items')).filter((r) => r.links?.length).length;
+  if (both !== 0) errs.push(`[${tag}] links left after cut: ${both}`);
+  await c.close();
+  console.log(`v038: mini cdn ${cdn} → raw ${raw}, embedded ${nv}/${rows.length}, offline new ${off ? 'ok' : 'no'}; 孤独 → ${sem.slice(0, 3).map((t) => t.split('\n')[0]).join(' / ')}; motifs ${motifs}, stars ${pts.length}; work ${wl}; co ${co.length}`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v038') {
+    await v038();
+    throw Object.assign(new Error('v038 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v037') {
     await v037();
+  await v038();
     throw Object.assign(new Error('v037 only'), { only: true });
   }
   if (process.env.E2E_ONLY === 'v036') {
