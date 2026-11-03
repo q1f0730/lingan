@@ -71,6 +71,14 @@ export interface Item {
   work?: string;
   /** v0.38 0105 穗间连线（两头各存一条，存对方 uid）。没加索引，随同步 */
   links?: ItemLink[];
+  /** v0.39 0017 链接正文快照（纯文本 ≤50KB，抓链接时顺手存；原链接失效也能看）。没加索引，随同步 / 备份 */
+  snap?: string;
+  /** v0.39 快照存于什么时候 */
+  snapAt?: number;
+  /** v0.39 0054 链接没解析成（断网 / 超时）：待补，联网后自动重试。只在本机、不同步 */
+  metaTodo?: 1;
+  /** v0.39 0907 上锁：要输入本机 PIN 才显示；永远不进分享、花园、Agent / MCP、AI。没加索引，随同步 */
+  locked?: 1;
   createdAt: number;
   updatedAt: number;
 }
