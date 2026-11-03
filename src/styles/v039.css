@@ -1,0 +1,155 @@
+/* v0.39 快照 / 上锁 / 歌单 / 待拾 / 接入清单：懒加载组件引入，不进首屏 CSS */
+
+/* 正文快照（详情） */
+.detail-snap summary {
+  cursor: pointer;
+  list-style: none;
+}
+.detail-snap summary::-webkit-details-marker {
+  display: none;
+}
+.detail-snap[open] .snap-more {
+  display: none;
+}
+.snap-text {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  margin-top: 10px;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: var(--r-lg, 14px);
+  background: var(--surface-2);
+  line-height: 1.75;
+  font-size: 15px;
+}
+.snap-note {
+  color: var(--fg);
+}
+
+/* 上锁 */
+.pin-gate {
+  max-width: 420px;
+  padding: 8px 0 24px;
+}
+.pin-gate .pin-input {
+  width: 100%;
+  max-width: 240px;
+  font-size: 22px;
+  letter-spacing: 0.4em;
+  margin-top: 12px;
+}
+.pin-err {
+  margin-top: 8px;
+}
+.detail-locked {
+  min-height: 50vh;
+}
+
+/* 网易云歌单 */
+.pl-list {
+  max-height: 46vh;
+  overflow: auto;
+  margin: 10px 0 0;
+  padding: 0 0 0 2.2em;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+.pl-list li {
+  padding: 2px 0;
+}
+.pl-list li.dim {
+  opacity: 0.55;
+}
+.pl-song {
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+}
+.pl-mode {
+  margin: 10px 0 6px;
+}
+
+/* 订阅 */
+.feed-tpl .radio-list {
+  margin: 6px 0 10px;
+}
+.tpl-preview {
+  overflow-wrap: anywhere;
+}
+.feed-inbox .actions {
+  margin-bottom: 8px;
+}
+.feed-list {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.feed-entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hair);
+  background: var(--bg);
+  touch-action: pan-y;
+  transition: transform 0.18s ease-out;
+}
+.feed-entry .fe-main {
+  min-width: 0;
+}
+.fe-title {
+  display: block;
+  color: var(--fg);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.fe-sub {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fe-acts {
+  display: flex;
+  gap: 4px;
+}
+.fe-why {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+.fe-why-input {
+  flex: 1;
+  min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed-entry {
+    transition: none;
+  }
+}
+
+/* 接入与权限 */
+.plug-table .trow .tc-src,
+.feed-table .trow .tc-src {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.plug-table .trow,
+.feed-table .trow {
+  height: auto;
+  min-height: 48px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.feed-tpl .radio-list {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.feed-tpl .radio.chip {
+  min-height: 40px;
+  padding: 6px 12px;
+}
