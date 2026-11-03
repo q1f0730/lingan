@@ -2,6 +2,7 @@
 //   glean://capture?text=…&url=…&why=…&title=…&tags=a,b   直接拾一穗（进待理）
 //     带 &from=名字（v0.34 0900 别人递来的）：不进穗仓，先放进 待理 · 递来的
 //   glean://quick?text=…                                   打开速记小窗并填好
+//     v0.36 浏览器扩展：&img=图片地址（0042 拾这张图，App 里下载）、&clip=1（0009 视频当前帧已放进剪贴板，桌面版带上）
 //   glean://item/<uid>                                     打开这一穗
 //   glean://graft?ids=<uid>,<uid>                          拿这几穗去嫁接
 //   glean://search?q=…                                     秒搜
@@ -12,7 +13,7 @@ import type { Item } from './types';
 import type { Settings } from './settings';
 
 export type Link =
-  | { k: 'capture'; text: string; url: string; why: string; title: string; tags: string[]; from: string }
+  | { k: 'capture'; text: string; url: string; why: string; title: string; tags: string[]; from: string; img: string; clip: boolean }
   | { k: 'quick'; text: string }
   | { k: 'item'; uid: string }
   | { k: 'graft'; uids: string[] }
@@ -35,14 +36,15 @@ export function parseLink(raw: string): Link | null {
   const head = (path[0] || '').toLowerCase();
   if (head === 'capture') {
     const url = /^https?:\/\//i.test(s('url')) ? s('url') : '';
+    const img = /^https?:\/\//i.test(s('img')) ? s('img') : '';
     const text = s('text');
-    if (!text && !url) return null;
+    if (!text && !url && !img) return null;
     const tags = s('tags')
       .split(/[,，\s]+/)
       .map((t) => t.replace(/^#/, '').slice(0, 20))
       .filter(Boolean)
       .slice(0, 8);
-    return { k: 'capture', text, url, why: s('why'), title: s('title').slice(0, 120), tags, from: s('from').slice(0, 40) };
+    return { k: 'capture', text, url, why: s('why'), title: s('title').slice(0, 120), tags, from: s('from').slice(0, 40), img, clip: s('clip') === '1' };
   }
   if (head === 'quick' || head === 'new') return { k: 'quick', text: s('text') };
   if (head === 'item' && /^[0-9A-Za-z]{10,40}$/.test(path[1] || '')) return { k: 'item', uid: path[1] };
@@ -77,6 +79,19 @@ async function byUids(uids: string[]): Promise<Item[]> {
   return rows.filter(alive);
 }
 
+async function linkImage(l: { img: string; clip: boolean }): Promise<string | undefined> {
+  try {
+    if (l.img) return await (await import('./linkmeta')).fetchImageData(l.img);
+    if (l.clip) {
+      const c = await (await import('./entry')).clipImageOffer();
+      if (c) return await (await import('./image')).compressImage(c.file);
+    }
+  } catch {
+    /* 图拿不到就只存文字和链接 */
+  }
+  return undefined;
+}
+
 export async function routeLink(raw: string, c: LinkCtx): Promise<void> {
   const l = parseLink(raw);
   if (!l) return void c.toast('认不出这个 glean:// 链接', 'err');
@@ -109,8 +124,11 @@ export async function routeLink(raw: string, c: LinkCtx): Promise<void> {
     addHanded({ from: l.from, title: l.title || (l.text || l.url).slice(0, 60), text: l.text, url: l.url, tags: l.tags });
     return c.toast(`${l.from} 递来一穗，在 待理 · 递来的`);
   }
-  const d = parseQuick([l.text, l.url && !l.text.includes(l.url) ? l.url : ''].filter(Boolean).join(' '));
+  const d = parseQuick([l.text, l.url && !l.text.includes(l.url) ? l.url : ''].filter(Boolean).join(' ') || l.title || '图片');
   if (!d) return;
+  // v0.36 扩展带来的图：网页里的图片地址（App 里下载，不受跨域限制）或剪贴板里的视频帧（桌面版）
+  const image = await linkImage(l);
+  if (image) Object.assign(d, { type: 'image', image });
   if (l.title) d.title = l.title;
   if (l.why) d.why = l.why;
   d.tags = Array.from(new Set([...d.tags, ...l.tags])).slice(0, 12);
