@@ -56,6 +56,8 @@ async function postJSON(url: string, key: string, body: unknown, timeoutMs = 900
     clearTimeout(t);
     const msg = e instanceof Error ? e.message : String(e);
     if (signal?.aborted) throw new AIError('已取消');
+    // v0.20 网络权限收紧：http 只放本机 / 局域网（本地模型），公网必须 https
+    if (/not allowed|scope/i.test(msg)) throw new AIError('这个接口地址不在允许范围：公网服务请用 https://；本地模型用 localhost、局域网 IP 或 *.local', 0);
     throw new AIError(msg.includes('abort') ? '请求超时，请检查网络或换个模型' : `网络错误：${msg}`, 0);
   }
   clearTimeout(t);
