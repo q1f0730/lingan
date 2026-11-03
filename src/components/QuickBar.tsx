@@ -2,6 +2,7 @@ import { m } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IconEnter } from './rw/icons';
 import { addItem, db, normalizeTags, updateItem } from '../lib/db';
+import { amendItem, fillItem } from '../lib/repo';
 import { itemHasImage } from '../lib/imagestore';
 import { enrichItem } from '../lib/enrich';
 import { fetchLinkMeta } from '../lib/linkmeta';
@@ -76,7 +77,7 @@ export function afterAdd(id: number, d: QuickDraft, s: Settings, onErr?: (m: str
         const cur = await db.items.get(id);
         if (cur) {
           const titleIsUrl = !cur.title || cur.title === d.url;
-          await db.items.update(id, {
+          await fillItem(id, {
             type: cur.type === 'link' ? m.type : cur.type,
             title: titleIsUrl ? m.title || cur.title : cur.title,
             // v0.35 0012 短链换成展开后的真实地址
@@ -218,7 +219,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
     const { why: w, tags } = splitWhy(why);
     const cur = await db.items.get(last);
     if (cur) {
-      await db.items.update(last, { why: w || cur.why, tags: normalizeTags([...cur.tags, ...tags]), updatedAt: Date.now(), embedding: undefined, embedModel: undefined });
+      await amendItem(last, { why: w || cur.why, tags: normalizeTags([...cur.tags, ...tags]) });
       enrichItem(last, settings);
     }
     toast('已补上');
