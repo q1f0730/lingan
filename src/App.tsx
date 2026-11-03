@@ -2,7 +2,6 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { CaptureForm, emptyDraft, type Draft } from './components/CaptureForm';
 import { ClipOffer, QuickBar, QuickWindow } from './components/QuickBar';
 import { ConfirmLayer, type ConfirmReq } from './components/Confirm';
-import { Detail } from './components/Detail';
 import { Sheet } from './components/Sheet';
 import { addItem, alive, db, inboxEnabled, touchItems, trashItems, untrashItems, updateItem } from './lib/db';
 import { notifyDupe, savedMsg } from './lib/dupnotice';
@@ -25,8 +24,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { collectDiagnostics } from './lib/diagcollect';
 import { isSafeMode, setErrView, setSafeMode } from './lib/errlog';
 import { onVaultError } from './lib/settings';
-import { DropIn } from './components/DropIn';
-import { CardMenu } from './components/CardMenu';
 import { initChrome, syncSystemTheme } from './lib/chrome';
 
 // v0.20：首屏只需要穗仓；其余四页拆成单独的包，首屏画完后空闲时预取（点过去时通常已经在内存里）。
@@ -39,7 +36,15 @@ const Develop = lazy(() => loadDevelop().then((m) => ({ default: m.Develop })));
 const Branches = lazy(() => loadBranches().then((m) => ({ default: m.Branches })));
 const Taste = lazy(() => loadTaste().then((m) => ({ default: m.Taste })));
 const SettingsView = lazy(() => loadSettings_().then((m) => ({ default: m.SettingsView })));
+// v0.27：详情页（带就地编辑、标签补全）和拖放 / 长按菜单也拆出首包：首屏画完空闲时预取 / 挂上
+const loadDetail = () => import('./components/Detail');
+const Detail = lazy(() => loadDetail().then((m) => ({ default: m.Detail })));
+const DropIn = lazy(() => import('./components/DropIn').then((m) => ({ default: m.DropIn })));
+const CardMenu = lazy(() => import('./components/CardMenu').then((m) => ({ default: m.CardMenu })));
+export const IDLE_READY = 'glean:idle-ready';
 export function prefetchViews() {
+  void loadDetail();
+  window.dispatchEvent(new Event(IDLE_READY));
   void loadDevelop();
   void loadBranches();
   void loadTaste();
@@ -112,6 +117,17 @@ export default function App() {
   const [confirmReq, setConfirmReq] = useState<ConfirmReq | null>(null);
   const [onboard, setOnboard] = useState<boolean | null>(null);
   const [quickWin, setQuickWin] = useState(false);
+  // 首屏画完、空闲后才挂拖放 / 长按菜单（main.tsx afterFirstPaint → prefetchViews 发 IDLE_READY；兜底 4 秒）
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    const on = () => setIdle(true);
+    window.addEventListener(IDLE_READY, on);
+    const t = setTimeout(on, 4000);
+    return () => {
+      window.removeEventListener(IDLE_READY, on);
+      clearTimeout(t);
+    };
+  }, []);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const theme = useTheme(settings.theme);
@@ -259,7 +275,8 @@ export default function App() {
     if (id == null) return;
     requestAnimationFrame(() => {
       const all = Array.from(document.querySelectorAll<HTMLElement>(`.main [data-item-id="${id}"]`));
-      const el = all.find((e) => /\b(card|trow|tl-frame)\b/.test(e.className)) || all[0];
+      // 只认穗仓里的卡片 / 列表行 / 时间线帧（秒搜结果、回顾里的链接不抢焦点）
+      const el = all.find((e) => /\b(card|trow|tl-frame)\b/.test(e.className) && !e.closest('.search-view'));
       if (!el) return;
       const r = el.getBoundingClientRect();
       if (r.bottom < 0 || r.top > window.innerHeight) el.scrollIntoView({ block: 'center' });
@@ -618,6 +635,7 @@ export default function App() {
           }
         >
           {detail && (
+            <Suspense fallback={<Loading />}>
             <Detail
               it={detail}
               pos={seq && detail.id != null ? { i: seq.indexOf(detail.id), n: seq.length } : undefined}
@@ -638,12 +656,15 @@ export default function App() {
                 if (fresh) setDetail(fresh);
               }}
             />
+            </Suspense>
           )}
         </Sheet>
 
         {quickWin && <QuickWindow onClose={() => setQuickWin(false)} />}
-        <DropIn blocked={!!capture || !!detail || !!confirmReq || quickWin} />
-        <CardMenu
+        {idle && (
+          <Suspense fallback={null}>
+            <DropIn blocked={!!capture || !!detail || !!confirmReq || quickWin} />
+            <CardMenu
           blocked={!!capture || !!detail || !!confirmReq || quickWin}
           onAct={(a, it) => {
             if (a === 'open') openItem(it);
@@ -651,7 +672,9 @@ export default function App() {
             else if (a === 'graft') developFrom([it.id!]);
             else if (a === 'delete') void onDelete(it);
           }}
-        />
+            />
+          </Suspense>
+        )}
         <NowPlayingTray />
         {!capture && !detail && <ClipOffer />}
         <ConfirmLayer req={confirmReq} onDone={() => setConfirmReq(null)} />
