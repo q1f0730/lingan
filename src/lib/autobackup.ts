@@ -371,7 +371,7 @@ export async function defaultDesktopDir(): Promise<string> {
   return join(await documentDir(), 'Glean', 'backup');
 }
 export function desktopTarget(dir: string): BackupTarget {
-  const fsm = () => import('@tauri-apps/plugin-fs');
+  const fsm = () => import('./tfs');
   const pj = async (name: string) => (await import('@tauri-apps/api/path')).join(dir, name);
   return {
     id: 'desktop',
@@ -418,7 +418,7 @@ export function desktopTarget(dir: string): BackupTarget {
       return blobLike(Number(st.size), async (off, len) => {
         const fh = await fs.open(path, { read: true });
         try {
-          await fh.seek(off, fs.SeekMode.Start);
+          await fh.seek(off, 0);
           const out = new Uint8Array(len);
           let p = 0;
           while (p < len) {
