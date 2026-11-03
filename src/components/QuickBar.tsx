@@ -14,6 +14,7 @@ import { NowPlayingButton } from './NowPlaying';
 import { notifyDupe, savedMsg } from '../lib/dupnotice';
 import { useTagSuggest } from './TagSuggest';
 import { compressImage } from '../lib/image';
+import { isTauriEnv } from '../lib/desktop';
 
 
 /** v0.22 速记草稿：输入防抖写本地，App 被杀后下次打开接着写；存了或清空就删 */
@@ -307,7 +308,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
 /**
  * 全局速记小窗（d20）：托盘「随手拾一穗」或 Ctrl+Shift+L 唤出。大号输入、自动识别类型（可改），回车即存，Esc 收起。
  */
-export function QuickWindow({ onClose }: { onClose: () => void }) {
+export function QuickWindow({ onClose, initial = '' }: { onClose: () => void; initial?: string }) {
   const { settings, toast } = useApp();
   const [text, setText] = useState('');
   const [type, setType] = useState<ItemType | null>(null);
@@ -319,6 +320,16 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
   // v0.27 0405：粘贴 / 拖进来的图片先放在小窗里预览，回车连同文字一起存成图片穗
   const [img, setImg] = useState<string | null>(null);
   const [over, setOver] = useState(false);
+  // v0.33 0004 热键唤出时带上选中的文字；0003 剪贴板里有图 → 给一张缩略图「拾这张图」
+  const [clip, setClip] = useState<{ file: File; url: string } | null>(null);
+  useEffect(() => {
+    if (initial) setText(initial.replace(/\s+/g, ' ').slice(0, 4000));
+    if (isTauriEnv())
+      void import('../lib/entry')
+        .then((m) => m.clipImageOffer())
+        .then(setClip, () => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   async function takeImage(f: File) {
     try {
       setImg(await compressImage(f));
@@ -430,6 +441,14 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         {ts.box}
+        {clip && !img && (
+          <div className="qw-img">
+            <img src={clip.url} alt="剪贴板里的图" />
+            <button className="btn text qw-clip" onClick={() => void takeImage(clip.file)}>
+              拾这张图
+            </button>
+          </div>
+        )}
         {img && (
           <div className="qw-img">
             <img src={img} alt="要拾的图片" />
@@ -469,6 +488,8 @@ export function ClipOffer() {
       try {
         const t = (await readClipboard())?.trim();
         if (!t) return;
+        // v0.33 0018：密码管理器标了「别记录」的不提示
+        if (isTauriEnv() && (await import('../lib/entry').then((m) => m.clipPrivate()))) return;
         const existing = (await db.items.toArray()).filter((x) => !x.deletedAt);
         if (shouldOffer(t, clipMemory.get(), existing)) setClip(t);
       } finally {
