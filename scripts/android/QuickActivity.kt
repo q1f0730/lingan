@@ -44,6 +44,7 @@ class QuickActivity : Activity() {
   private var song: Glean.Song? = null
   private var musicChecked = false
   private var pasteChecked = false
+  private var pasteSensitive = false
   private var done = false
   private var resumedOnce = false
   private val picked = LinkedHashSet<String>()
@@ -102,6 +103,12 @@ class QuickActivity : Activity() {
         val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = cm.primaryClip
         if (clip != null && clip.itemCount > 0) text = clip.getItemAt(0).coerceToText(this)?.toString()?.trim() ?: ""
+        // v0.33 0514：密码管理器 / 验证码短信标了 IS_SENSITIVE（安卓 13+），或者一眼像验证码的，不收
+        val flagged = clip?.description?.extras?.getBoolean("android.content.extra.IS_SENSITIVE", false) == true
+        if (flagged || Glean.looksSensitive(text)) {
+          pasteSensitive = true
+          text = ""
+        }
       } catch (e: Exception) {
       }
       fill()
@@ -308,7 +315,7 @@ class QuickActivity : Activity() {
       "music" -> fillMusic(full)
       else -> {
         if (mode == "paste" && text.isEmpty()) {
-          body.addView(tv(if (pasteChecked) "剪贴板是空的" else "正在读剪贴板…", 15f, cFg2), full)
+          body.addView(tv(if (pasteSensitive) "剪贴板里像是验证码或密码，没收" else if (pasteChecked) "剪贴板是空的" else "正在读剪贴板…", 15f, cFg2), full)
           saveBtn?.alpha = 0.4f
           return
         }
