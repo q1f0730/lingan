@@ -28,7 +28,8 @@ export function takeGo(): string {
   if (!b?.go) return '';
   try {
     const g = b.go();
-    return g === 'daily' || g === 'library' || g === 'settings' ? g : '';
+    // v0.33：长按图标「搜索」、glean:// 深链接
+    return /^(daily|library|settings|search)$|^glean:\/\//i.test(g) ? g : '';
   } catch {
     return '';
   }
