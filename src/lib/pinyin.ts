@@ -5,14 +5,33 @@
 import { PINYIN_ALT, PINYIN_TABLE } from './pinyin-table';
 
 let map: Map<string, string[]> | null = null;
+/** v0.35 字表改成紧凑编码（见 scripts/pinyin/gen.py）：必须和那边的 DIGITS / NT 一致 */
+const DIGITS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+,-./;<=>?@[]^_{}~';
+const NT = 52;
+/** GB2312 一二级 6763 字，按编码顺序（D7FA–D7FE 是空位） */
+export function gb2312Chars(): string[] {
+  const b: number[] = [];
+  for (let h = 0xb0; h < 0xf8; h++) for (let l = 0xa1; l < 0xff; l++) if (h !== 0xd7 || l < 0xfa) b.push(h, l);
+  return [...new TextDecoder('gbk').decode(new Uint8Array(b))];
+}
 function table(): Map<string, string[]> {
   if (map) return map;
   map = new Map();
+  const chars = gb2312Chars();
   // 先常用读音，再补多音字的其它读音：每个字的第一个读音就是常用的
   for (const seg of (PINYIN_TABLE + '|' + PINYIN_ALT).split('|')) {
     const i = seg.indexOf(':');
     const py = seg.slice(0, i);
-    for (const ch of seg.slice(i + 1)) {
+    let prev = -1, v = 0;
+    for (let k = i + 1; k < seg.length; k++) {
+      const d = DIGITS.indexOf(seg[k]);
+      if (d >= NT) {
+        v = v * (DIGITS.length - NT) + d - NT;
+        continue;
+      }
+      prev += v * NT + d + 1;
+      v = 0;
+      const ch = chars[prev];
       const a = map.get(ch);
       if (a) a.push(py);
       else map.set(ch, [py]);
@@ -95,3 +114,6 @@ export function pinyinMatch(it: { title: string; creator?: string; tags?: string
   }
   return false;
 }
+
+/** 一个字的读音（常用的在前）；不认得返回 undefined */
+export const readingsOf = (ch: string): string[] | undefined => table().get(ch);
