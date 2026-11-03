@@ -11,14 +11,17 @@ const STEPS = [
 export function GraftGrowing({ stage, retry, recheck, wall, onCancel }: { stage: GraftStage; retry?: RetryInfo | null; recheck?: boolean; wall?: boolean; onCancel?: () => void }) {
   const still = (typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) || document.documentElement.dataset.motion === 'off';
   const active = stage === 'map' ? [0, 1] : stage === 'defix' ? [2, 3] : [];
-  const doneUpTo = stage === 'map' ? -1 : stage === 'defix' ? 1 : 3;
+  // v0.30 0201 停在挑张力：前两步完成，等你挑
+  const doneUpTo = stage === 'map' ? -1 : stage === 'defix' || stage === 'pick' ? 1 : 3;
   const line = retry
     ? `${retry.reason}，${Math.max(1, Math.ceil(retry.waitMs / 1000))} 秒后再试一次`
     : wall
       ? '有一根撞了套路墙，让它重写一次'
       : recheck
       ? '有一根说不清从哪几穗长出来，让它重长一次'
-      : stage === 'map'
+      : stage === 'pick'
+        ? '挑一两条你想要的张力，再往下长'
+        : stage === 'map'
         ? '这几穗正在互相认识'
         : stage === 'defix'
           ? '三根新枝正在长'
