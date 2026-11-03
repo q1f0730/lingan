@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { GraftTrail, HistoryRow } from '../components/IdeaCard';
-import { db } from '../lib/db';
+import { db, trashDevelopments, untrashDevelopments } from '../lib/db';
 import { groupBranches } from '../lib/branches';
 import { transformName } from '../lib/graft';
 import { evidenceOf, sourceIds, splitMentions } from '../lib/provenance';
@@ -16,8 +16,8 @@ const MODE_KEY = 'glean.branchview';
 /** 新枝（m26 / d13）：每一次嫁接按批次成捆；「宣言」是黑主题大字视图（d2 Manifesto），一次看一根 */
 export function Branches() {
   const { go, toast } = useApp();
-  const items = useLiveQuery(() => db.items.toArray(), []);
-  const history = useLiveQuery(() => db.developments.orderBy('createdAt').reverse().toArray(), []);
+  const items = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  const history = useLiveQuery(() => db.developments.orderBy('createdAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const [starred, setStarred] = useState(false);
   // v0.17 从搜索结果点进来：展开那一根并滚过去（宣言视图先切回列表）
   const [focusId] = useState<number | null>(() => {
@@ -184,8 +184,9 @@ function Manifesto({ groups, byId }: { groups: ReturnType<typeof groupBranches>;
             className="btn text faint"
             onClick={async () => {
               if (await confirm({ title: '不要这根新枝？', ok: '不要了', cancel: '留着', danger: true })) {
-                await db.developments.delete(dev.id!);
-                toast('已删掉这根新枝');
+                const id = dev.id!;
+                await trashDevelopments([id]);
+                toast('已删掉这根新枝（在回收站）', 'ok', { label: '撤销', run: () => void untrashDevelopments([id]).then(() => toast('已放回新枝')) });
               }
             }}
           >
