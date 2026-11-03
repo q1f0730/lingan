@@ -1,5 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../lib/db';
+import { useMemo, useRef } from 'react';
+import { db, findDupes, keepItems, reInbox } from '../lib/db';
+// v0.23 瘦首包：batch / organize 点到才加载（详情首屏不需要）
+const batch = () => import('../lib/batch');
+import { dupReason } from '../lib/dupe';
+import { mergeDupe } from '../lib/dupnotice';
 import { fromLocalInput, toLocalInput } from '../lib/quick';
 import { useApp } from '../lib/store';
 import { bookTitle, branchesFrom, displayTitle, quoteSource, shortDate } from '../lib/studio';
@@ -10,8 +15,16 @@ import { safeHost } from './ItemCard';
 const CREATOR: Record<ItemType, string> = { music: '歌手', film: '导演', image: '来源', text: '作者', link: '来源', idea: '来源' };
 
 /** 穗详情（m12–m16 / d6）：照片满铺，下面是一张无线信息表、为什么收、长进了这些新枝、文字动作 */
-export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void }) {
+export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, pos, onStep }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void; pos?: { i: number; n: number }; onStep?: (dir: 1 | -1) => void }) {
   const { toast, go } = useApp();
+  // v0.23 详情跟着库走：补了标签 / 留下 / 合并之后立刻刷新
+  const live = useLiveQuery(() => (it0.id != null ? db.items.get(it0.id) : undefined), [it0.id]);
+  const it = live && !live.deletedAt ? live : it0;
+  const dupe = useLiveQuery(async () => (it.id != null ? (await findDupes(it.id))[0] || null : null), [it.id, (it.dup || []).join()]);
+  const co = useLiveQuery(async () => (it.tags.length ? (await import('../lib/organize')).cooccur((await db.items.where('tags').anyOf(it.tags).distinct().toArray()).filter((x) => !x.deletedAt), it.tags, 3) : []), [it.tags.join()]);
+  const sugg = useMemo(() => (it.tagSugg || []).filter((t) => !it.tags.includes(t)), [it.tagSugg, it.tags]);
+  // 手机左右滑翻穗（0113）
+  const sw = useRef<{ x: number; y: number } | null>(null);
   const full = useOriginalSrc(it);
   const grown = useLiveQuery(async () => (it.id != null ? branchesFrom((await db.developments.toArray()).filter((x) => !x.deletedAt), it.id) : []), [it.id]);
   const quote = it.type === 'text' && !!it.content;
@@ -24,7 +37,33 @@ export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it
     }
   }
   return (
-    <article className={`detail detail-${it.type}${full ? ' has-img' : ''}`}>
+    <article
+      className={`detail detail-${it.type}${full ? ' has-img' : ''}`}
+      onPointerDown={(e) => {
+        if (onStep && e.pointerType !== 'mouse' && !(e.target as HTMLElement).closest('input,textarea')) sw.current = { x: e.clientX, y: e.clientY };
+      }}
+      onPointerUp={(e) => {
+        const s0 = sw.current;
+        sw.current = null;
+        if (!s0 || !onStep) return;
+        const dx = e.clientX - s0.x;
+        if (Math.abs(dx) > 70 && Math.abs(e.clientY - s0.y) < 50) onStep(dx < 0 ? 1 : -1);
+      }}
+      onPointerCancel={() => (sw.current = null)}
+    >
+      {pos && pos.i >= 0 && onStep && (
+        <nav className="detail-step" aria-label="上一穗 / 下一穗">
+          <button className="btn text detail-prev" disabled={pos.i <= 0} onClick={() => onStep(-1)}>
+            ← 上一穗
+          </button>
+          <span className="meta-text num">
+            {pos.i + 1} / {pos.n}
+          </span>
+          <button className="btn text detail-next" disabled={pos.i >= pos.n - 1} onClick={() => onStep(1)}>
+            下一穗 →
+          </button>
+        </nav>
+      )}
       {full && (
         <figure className="detail-figure">
           <img className="detail-img" src={full} alt={it.title} decoding="async" />
@@ -34,7 +73,32 @@ export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it
         <div className="label detail-kicker">
           {it.sample ? '示例 · ' : ''}
           {TYPE_LABEL[it.type]}
+          {it.inbox ? ' · 待理' : ''}
         </div>
+        {it.inbox ? (
+          <div className="detail-inbox note-row">
+            <span className="meta-text">还在待理：理好了就留下，它会进穗仓。</span>
+            <button
+              className="btn text strong detail-keep"
+              onClick={async () => {
+                await keepItems([it.id!]);
+                toast('进了穗仓', 'ok', { label: '撤销', run: () => void reInbox([it.id!]) });
+              }}
+            >
+              留下
+            </button>
+          </div>
+        ) : null}
+        {dupe ? (
+          <div className="detail-dupe note-row">
+            <span className="meta-text">
+              {shortDate(dupe.createdAt)} 收过一穗{dupReason(it.dup, dupe.dup) ? `（${dupReason(it.dup, dupe.dup)}）` : ''}：「{displayTitle(dupe).slice(0, 18)}」
+            </span>
+            <button className="btn text strong dupe-merge" onClick={() => void mergeDupe(dupe.id!, it.id!, toast)}>
+              合并进它
+            </button>
+          </div>
+        ) : null}
         {quote ? (
           <>
             <h2 className="detail-title quote">{displayTitle(it)}</h2>
@@ -104,7 +168,7 @@ export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it
               </dd>
             </div>
           )}
-          {it.tags.length > 0 && (
+          {(it.tags.length > 0 || sugg.length > 0) && (
             <div>
               <dt>标签</dt>
               <dd className="tags">
@@ -113,6 +177,26 @@ export function Detail({ it, onEdit, onDelete, onDevelop, onReAI, onWhen }: { it
                     #{t}
                   </span>
                 ))}
+                {sugg.map((t) => (
+                  <span key={'s' + t} className="tag-sugg">
+                    <button className="tag sugg-yes" onClick={() => void batch().then((m) => m.acceptSugg(it.id!, t))} title="AI 想加的新词：点一下才算数">
+                      新：{t}？
+                    </button>
+                    <button className="sugg-no" onClick={() => void batch().then((m) => m.dropSugg(it.id!, t))} aria-label={`不要「${t}」`}>
+                      ✕
+                    </button>
+                  </span>
+                ))}
+                {!!co?.length && (
+                  <span className="tag-co">
+                    <span className="dim">常一起：</span>
+                    {co.map((t) => (
+                      <button key={'c' + t} className="tag co-tag" onClick={() => void batch().then((m) => m.addTagsTo([it.id!], [t]))}>
+                        +{t}
+                      </button>
+                    ))}
+                  </span>
+                )}
               </dd>
             </div>
           )}
