@@ -79,6 +79,95 @@ export function insertRef(text: string, caret: number, token: string): { text: s
   return { text: next, caret: from + token.length };
 }
 
+// ───────── v0.30 编辑区隐藏 uid：草稿里存 [[标题|uid]]，编辑框只显示 [[标题]]（引用当一整块 chip）─────────
+
+/** 一个引用在草稿（md）和编辑框（显示文本）里各占的区间 */
+export interface RefSpan {
+  title: string;
+  uid: string;
+  ms: number;
+  me: number;
+  ds: number;
+  de: number;
+}
+export interface RefLayout {
+  display: string;
+  spans: RefSpan[];
+}
+/** 草稿 → 编辑框显示文本：[[标题|uid]] 显示成 [[标题]] */
+export function refLayout(md: string): RefLayout {
+  const spans: RefSpan[] = [];
+  let display = '';
+  let last = 0;
+  for (const r of parseRefs(md || '')) {
+    display += md.slice(last, r.start);
+    const tok = `[[${r.title}]]`;
+    spans.push({ title: r.title, uid: r.uid, ms: r.start, me: r.end, ds: display.length, de: display.length + tok.length });
+    display += tok;
+    last = r.end;
+  }
+  display += (md || '').slice(last);
+  return { display, spans };
+}
+/** 编辑框位置 → 草稿位置（落在引用中间时按引用开头 / 结尾就近算） */
+export function dispToMd(L: RefLayout, pos: number): number {
+  let shift = 0;
+  for (const s of L.spans) {
+    if (pos <= s.ds) break;
+    if (pos < s.de) return pos - s.ds < s.de - pos ? s.ms : s.me;
+    shift = s.me - s.de;
+  }
+  return pos + shift;
+}
+/** 草稿位置 → 编辑框位置 */
+export function mdToDisp(L: RefLayout, pos: number): number {
+  let shift = 0;
+  for (const s of L.spans) {
+    if (pos <= s.ms) break;
+    if (pos < s.me) return pos - s.ms < s.me - pos ? s.ds : s.de;
+    shift = s.de - s.me;
+  }
+  return pos + shift;
+}
+/** 光标停在引用中间时挪到最近的边上（引用是一整块，不让光标钻进去） */
+export function snapCaret(L: RefLayout, pos: number): number {
+  for (const s of L.spans) if (pos > s.ds && pos < s.de) return pos - s.ds <= s.de - pos ? s.ds : s.de;
+  return pos;
+}
+/**
+ * 编辑框里改了一下（新显示文本）→ 新草稿。
+ * 规则：改动碰到引用就整块删掉（退格删 chip）；在引用中间插字就插到引用后面；
+ * 粘贴 / 拖进来的完整 [[标题|uid]] 原样进草稿（显示时再收起 uid）。
+ * 返回新草稿和改完后光标该在的显示位置。
+ */
+export function applyDisplayEdit(md: string, next: string): { md: string; caret: number } {
+  const L = refLayout(md);
+  const old = L.display;
+  if (old === next) return { md, caret: -1 };
+  let p = 0;
+  const max = Math.min(old.length, next.length);
+  while (p < max && old[p] === next[p]) p++;
+  let sfx = 0;
+  while (sfx < max - p && old[old.length - 1 - sfx] === next[next.length - 1 - sfx]) sfx++;
+  let a = p;
+  let b = old.length - sfx;
+  const ins = next.slice(p, next.length - sfx);
+  if (a === b) {
+    for (const s of L.spans) if (a > s.ds && a < s.de) a = b = s.de;
+  } else {
+    for (const s of L.spans) {
+      if (s.ds < b && s.de > a) {
+        a = Math.min(a, s.ds);
+        b = Math.max(b, s.de);
+      }
+    }
+  }
+  const ma = dispToMd(L, a);
+  const mb = dispToMd(L, b);
+  const out = md.slice(0, ma) + ins + md.slice(mb);
+  return { md: out, caret: mdToDisp(refLayout(out), ma + ins.length) };
+}
+
 // ───────── Markdown 小渲染（不走 innerHTML）─────────
 
 export type Inline = { t: string } | { b: string } | { ref: { title: string; uid: string } };
