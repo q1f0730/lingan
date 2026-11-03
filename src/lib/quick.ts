@@ -1,4 +1,5 @@
 import { normalizeTags } from './db';
+import { cleanUrl, parseShareCode } from './cleanurl';
 import { extractUrl, guessType } from './linkmeta';
 import { TYPE_ORDER, type Item, type ItemType } from './types';
 
@@ -6,33 +7,65 @@ export type QuickDraft = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
 
 const QUOTE = /^[「“"『].+[」”"』]$/s;
 
-/** Turn one line of free text into an item draft. `#标签` words become tags. */
+/** v0.28 0024 行内语法 /歌 /影 /文 /链接 /想：强制类型（/图 不收：没图的图片穗没意义） */
+const FORCE: Record<string, ItemType> = { 歌: 'music', 音乐: 'music', 影: 'film', 电影: 'film', 剧: 'film', 文: 'text', 摘抄: 'text', 链接: 'link', 想: 'idea', 念头: 'idea' };
+const BOOK = /^《([^《》]{1,60})》\s*(?:[（(]?((?:18|19|20)\d{2})[)）]?)?$/;
+
+/**
+ * Turn one line of free text into an item draft. `#标签` words become tags.
+ * v0.28 0024 行内语法：`> 为什么`（> 后面到结尾都是为什么）、`@作者`、整句是《片名》→ 电影、`/歌` 这类强制类型。
+ * 0023 链接去追踪参数；0019 平台口令文案抽出真实链接和标题。
+ */
 export function parseQuick(raw: string): QuickDraft | null {
   let text = raw.replace(/\r/g, '').trim();
   if (!text) return null;
   const tags: string[] = [];
+  let force: ItemType | null = null;
+  let creator = '';
+  let why = '';
   text = text
     .replace(/(^|\s)#([^\s#]{1,24})(?=\s|$)/g, (_, pre: string, t: string) => {
       tags.push(t);
       return pre;
     })
-    .replace(/\s{2,}/g, ' ')
+    .replace(/(^|\s)[/／](歌|音乐|影|电影|剧|文|摘抄|链接|想|念头)(?=\s|$)/, (_, pre: string, k: string) => {
+      force = FORCE[k];
+      return pre;
+    });
+  // > 为什么：行首或空格后的 >，后面到结尾都算（链接里不会有 >）
+  const wm = text.match(/(^|\s)[>＞]\s*(\S[\s\S]*)$/);
+  if (wm && wm.index != null) {
+    why = wm[2].trim().slice(0, 1000);
+    text = text.slice(0, wm.index + wm[1].length);
+  }
+  // @作者：行首或空格后（邮箱、链接里的 @ 不算）
+  text = text
+    .replace(/(^|\s)[@＠]([^\s@＠#/]{1,24})(?=\s|$)/, (_, pre: string, c: string) => {
+      creator = c;
+      return pre;
+    })
+    .replace(/[ \t]{2,}/g, ' ')
     .trim();
-  const url = extractUrl(text);
-  if (url) {
-    const rest = text.replace(url, '').trim();
-    const type: ItemType = guessType(url);
-    return { type, title: (rest || url).slice(0, 120), url, content: '', creator: '', year: '', why: '', tags: normalizeTags(tags) };
+  const base = { creator, year: '', why, tags: normalizeTags(tags) };
+  const found = extractUrl(text);
+  if (found) {
+    const url = cleanUrl(found);
+    const code = parseShareCode(text, found);
+    const rest = code ? code.title : text.replace(found, '').trim();
+    const type: ItemType = force || guessType(url);
+    return { ...base, type, title: (rest || url).slice(0, 120), url, content: '', ...(code?.source ? { source: code.source } : {}) };
   }
   if (!text) return null;
+  const bk = text.match(BOOK);
+  if (bk) return { ...base, type: force || 'film', title: bk[1].trim(), year: bk[2] || '', content: '', url: '' };
   const firstLine = text.split('\n')[0];
-  if (QUOTE.test(text) || text.length > 60) {
+  if (force === 'text' || (!force && (QUOTE.test(text) || text.length > 60))) {
     // a quote or a long passage → 文案 with the passage as content
     const body = text.replace(/^[「“"『]+|[」”"』]+$/g, '');
-    return { type: 'text', title: body.slice(0, 18), content: body, creator: '', year: '', url: '', why: '', tags: normalizeTags(tags) };
+    return { ...base, type: 'text', title: body.slice(0, 18), content: body, url: '' };
   }
   const multi = text.includes('\n');
-  return { type: 'idea', title: firstLine.slice(0, 120), content: multi ? text : '', creator: '', year: '', url: '', why: '', tags: normalizeTags(tags) };
+  return { ...base, type: force || 'idea', title: firstLine.slice(0, 120), content: multi ? text : '', url: '' };
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
