@@ -1,11 +1,20 @@
 import type { Settings } from './settings';
 import { embedConfig } from './settings';
 import type { ChatBody, OutKind } from './outbound';
+import { assertReach } from './gate';
 
 type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 
 let cachedFetch: FetchFn | null = null;
+/** v0.34 0905：所有外联都经这里拿 fetch，出站总开关关着时外网地址直接报错（本机 / 局域网照常） */
 export async function getFetch(): Promise<FetchFn> {
+  const f = await rawFetch();
+  return async (i, init) => {
+    assertReach(i);
+    return f(i, init);
+  };
+}
+async function rawFetch(): Promise<FetchFn> {
   if (cachedFetch) return cachedFetch;
   const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
   if (isTauri) {
