@@ -23,9 +23,10 @@ interface Fixture {
     daily?: unknown[];
     ftidx?: unknown[];
     cliches?: Cliche[];
+    meta?: Array<{ k: string; v: unknown }>;
   };
 }
-const LATEST = 8;
+const LATEST = 9;
 // 夹具按原文读进来（vite 的 ?raw），不依赖 node:fs
 const raw = import.meta.glob('./fixtures/dexie/v*.json', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const fixtures: Fixture[] = Object.values(raw)
@@ -47,6 +48,7 @@ async function seedFixture(name: string, fx: Fixture) {
   if (fx.data.daily) await t('daily').bulkAdd(fx.data.daily);
   if (fx.data.ftidx) await t('ftidx').bulkAdd(fx.data.ftidx);
   if (fx.data.cliches) await t('cliches').bulkAdd(fx.data.cliches);
+  if (fx.data.meta) await t('meta').bulkAdd(fx.data.meta);
   expect(raw.verno).toBe(fx.version);
   raw.close();
 }
@@ -59,9 +61,9 @@ function expectedImages(fx: Fixture): Map<number, string> {
   return m;
 }
 
-describe('0710 Dexie 迁移回归：v1–v7 夹具库逐个升级到最新', () => {
-  it('夹具齐全：v1 到 v7 每版一份', () => {
-    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+describe('0710 Dexie 迁移回归：v1–v8 夹具库逐个升级到最新', () => {
+  it('夹具齐全：v1 到 v8 每版一份', () => {
+    expect(fixtures.map((f) => f.version)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(new LinganDB(uniq('probe')).verno).toBe(LATEST);
   });
 
@@ -94,6 +96,10 @@ describe('0710 Dexie 迁移回归：v1–v7 夹具库逐个升级到最新', () 
         if (fx.version >= 6) expect(it.graftCount).toBe(src.graftCount);
         // v0.13：行里不再有内联原图
         expect(it.image).toBeUndefined();
+        // v0.23：老穗不进待理（升级不把整个穗仓塞进收件箱）；有链接 / 文字的补上重复钥匙
+        expect(it.inbox).toBeUndefined();
+        expect(Array.isArray(it.dup)).toBe(true);
+        if (src.url) expect(it.dup!.some((k) => k.startsWith('u:'))).toBe(true);
       }
       expect(new Set(items.map((x) => x.uid)).size).toBe(items.length);
       if (fx.version < 6) expect(items.filter((x) => x.id! <= 3).map((x) => x.graftCount)).toEqual([2, 2, 1]);
@@ -150,7 +156,7 @@ describe('0710 Dexie 迁移回归：v1–v7 夹具库逐个升级到最新', () 
     });
   }
 
-  it('再打开一次（已是 v8）不重复迁移：uid 不变', async () => {
+  it('再打开一次（已是最新）不重复迁移：uid 不变', async () => {
     const fx = fixtures[fixtures.length - 1];
     const name = uniq('mig-reopen');
     await seedFixture(name, fx);
