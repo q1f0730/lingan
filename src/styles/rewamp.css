@@ -2894,6 +2894,13 @@ details summary {
   color: var(--accent-ink);
   font-weight: 600;
 }
+/* v0.33 热键整串显示（Ctrl+Shift+L 不截断） */
+.entry-panel .trow {
+  grid-template-columns: 30% 1fr auto;
+}
+.entry-panel .tc-date {
+  white-space: nowrap;
+}
 
 /* ———————————————————————— v0.23 待理与补为什么 ———————————————————————— */
 /* 穗仓顶部两条提示：待理 = 淡紫，缺为什么 = 淡杏 */
