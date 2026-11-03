@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { chat } from '../lib/ai';
 import { db } from '../lib/db';
 import { HeatmapPanel } from '../components/Heatmap';
+import { MotifPanel } from '../components/Motifs';
 import { ClicheWall } from '../components/ClicheWall';
 import { AtomsPanel } from '../components/AtomsPanel';
 import { DislikePanel, RejectsPanel, StylePanel } from '../components/GraftFeedback';
@@ -268,6 +269,8 @@ export function Taste() {
           )}
         </section>
       </div>
+
+      <MotifPanel items={items} />
 
       <HeatmapPanel items={items} />
 
