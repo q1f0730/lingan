@@ -9,7 +9,10 @@ import { getOriginalDataUrl } from './lib/imagestore';
 import { enrichItem } from './lib/enrich';
 import { detectMotionLevel } from './lib/motion';
 import { onQuickFocus, onTrayGo } from './lib/desktop';
-import { shareToDraft, takeShared } from './lib/share';
+import { shareToDraft, takeGo, takeShared } from './lib/share';
+import { drainInbox, inboxBridge, pushHints } from './lib/capture';
+import { afterAdd } from './components/QuickBar';
+import { NowPlayingTray } from './components/NowPlaying';
 import { loadSettings, saveSettings, type Settings } from './lib/settings';
 import { Ctx, type ConfirmOpts, type View } from './lib/store';
 import { resolveTheme, type Theme } from './lib/theme';
@@ -173,24 +176,39 @@ export default function App() {
     [settings, setSettings, toast, confirm, openItem, openCapture, go, developFrom, theme, desktop],
   );
 
-  // 安卓分享菜单 → 直接拾进穗仓
+  // 安卓：旧版分享桥（升级过渡）+ v0.22 极速拾收件箱（半屏面板 / 选字菜单 / 磁贴 / 通知 / 小部件写进来的穗）
+  const goRef = useRef<(v: string) => void>(() => {});
   useEffect(() => {
+    let alive = true;
     const pull = async () => {
       const d = shareToDraft(takeShared());
-      if (!d) return;
-      const id = await addItem(d);
-      toast('已拾进穗仓');
-      enrichItem(id, settingsRef.current).then((err) => {
-        if (err) toast('AI 整理失败：' + err, 'err');
-      });
+      if (d) {
+        const id = await addItem(d);
+        toast('已拾进穗仓');
+        enrichItem(id, settingsRef.current).then((err) => {
+          if (err) toast('AI 整理失败：' + err, 'err');
+        });
+      }
+      const r = await drainInbox(db);
+      if (!alive) return;
+      if (r.added.length) {
+        const one = r.added.length === 1 ? r.added[0].draft : null;
+        toast(one ? `极速拾 · 收进「${one.title.slice(0, 16)}」${one.source ? ' · 来自 ' + one.source : ''}` : `极速拾 · 收进 ${r.added.length} 穗`);
+        for (const a of r.added) afterAdd(a.id, a.draft, settingsRef.current, (m) => toast(m, 'err'));
+      }
+      const go = takeGo();
+      if (go) goRef.current(go);
     };
     void pull();
+    // 面板上的「最近用过的标签」：一打开就先同步一次
+    if (inboxBridge()) void pushHints(db);
     const vis = () => {
       if (document.visibilityState === 'visible') void pull();
     };
     document.addEventListener('visibilitychange', vis);
     window.addEventListener('focus', vis);
     return () => {
+      alive = false;
       document.removeEventListener('visibilitychange', vis);
       window.removeEventListener('focus', vis);
     };
@@ -200,7 +218,7 @@ export default function App() {
   useEffect(() => {
     let off = () => {};
     let dead = false;
-    onTrayGo((v) => {
+    const goTo = (v: string) => {
       setCapture(null);
       setDetail(null);
       if (v === 'settings') setView('settings');
@@ -208,7 +226,9 @@ export default function App() {
         setView('library');
         if (v === 'daily') setTimeout(() => document.querySelector('.daily-ear')?.scrollIntoView({ block: 'start' }), 300);
       }
-    }).then((f) => (dead ? f() : (off = f)));
+    };
+    goRef.current = goTo;
+    onTrayGo(goTo).then((f) => (dead ? f() : (off = f)));
     return () => {
       dead = true;
       off();
@@ -434,6 +454,7 @@ export default function App() {
         </Sheet>
 
         {quickWin && <QuickWindow onClose={() => setQuickWin(false)} />}
+        <NowPlayingTray />
         {!capture && !detail && <ClipOffer />}
         <ConfirmLayer req={confirmReq} onDone={() => setConfirmReq(null)} />
 
