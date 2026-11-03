@@ -16,6 +16,7 @@ import { PRESETS, aiReady, distinctOf, embedConfig, keyOptional, vaultKind, with
 import { LocalModelPanel } from '../components/LocalModelPanel';
 import { OutboundPanel } from '../components/OutboundPanel';
 import { SyncPanel, syncSummary } from '../components/SyncPanel';
+import { lanSummary, syncStateSummary } from '../lib/syncsummary';
 import { previewMode } from '../lib/outbound';
 import { AgentPanel } from '../components/AgentPanel';
 import { UpdatePanel } from '../components/UpdatePanel';
@@ -219,7 +220,9 @@ export function SettingsView() {
     ['set-capture', '极速采集', captureSummary()],
     ['set-tags', '待理与标签', inboxEnabled() ? '待理开' : '待理关'],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
-    ['set-sync', '同步', syncSummary()],
+    ['set-sync', '同步 · 网盘', syncSummary()],
+    ['set-lan', '局域网直连', lanSummary()],
+    ['set-syncstate', '设备与记录', syncStateSummary()],
     ['set-autobak', '自动备份', readAutoBak().on ? '开' : '关'],
     ['set-snap', '操作前快照', ''],
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
