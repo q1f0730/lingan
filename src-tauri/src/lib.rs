@@ -98,6 +98,8 @@ pub fn run() {
   let builder = builder
     .plugin(tauri_plugin_updater::Builder::new().build())
     .plugin(tauri_plugin_process::init())
+    // v0.26 0609：必须在 fs 插件之后注册；把对话框选中的备份文件夹权限存下来，重启后自动备份照样能写
+    .plugin(tauri_plugin_persisted_scope::init())
     .invoke_handler(tauri::generate_handler![
       vault::secret_get,
       vault::secret_set,
