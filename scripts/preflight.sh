@@ -11,8 +11,9 @@ echo "preflight $TAG"
 # tsc 增量缓存会骗人（RUNBOOK v0.21）
 rm -f node_modules/.tmp/*.tsbuildinfo
 npx tsc -b >/dev/null && ok tsc || die tsc
-npx oxlint 2>&1 | tail -1 | grep -q ' 0 errors' && ok oxlint || die oxlint
-npx vitest run >/tmp/preflight-vitest.log 2>&1 && ok "vitest $(grep -o 'Tests  *[0-9]* passed' /tmp/preflight-vitest.log | head -1)" || { tail -30 /tmp/preflight-vitest.log; die vitest; }
+# oxlint 新版末行是「Finished in …」：找汇总行（Found n warnings and 0 errors）
+npx oxlint >/tmp/preflight-oxlint.log 2>&1 || true; grep -Eq '^Found [0-9]+ warnings? and 0 errors' /tmp/preflight-oxlint.log && ok "oxlint $(grep -Eo '^Found [0-9]+ warnings? and 0 errors' /tmp/preflight-oxlint.log)" || { tail -5 /tmp/preflight-oxlint.log; die oxlint; }
+NO_COLOR=1 npx vitest run >/tmp/preflight-vitest.log 2>&1 && ok "vitest $(grep -o 'Tests  *[0-9]* passed' /tmp/preflight-vitest.log | head -1)" || { tail -30 /tmp/preflight-vitest.log; die vitest; }
 npx vite build >/tmp/preflight-build.log 2>&1 && ok build || { tail -20 /tmp/preflight-build.log; die build; }
 node scripts/size-budget.mjs >/tmp/preflight-size.log 2>&1 && ok "体积预算 $(grep -o '总量.*' /tmp/preflight-size.log | head -1)" || { cat /tmp/preflight-size.log; die 体积预算; }
 node --check mcp/glean-mcp.mjs && node --check e2e/run.mjs && node --check e2e/stress.mjs && ok 语法 || die 语法
