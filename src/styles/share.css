@@ -1,0 +1,97 @@
+/* v0.34 分享出去 · 隐私边界：分享面板、明信片预览、递来的、花园。懒加载（SharePanel / Handed / GardenPanel 各自 import），不进首屏 CSS。 */
+.share-panel {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+.share-fields {
+  display: grid;
+  gap: 6px;
+}
+.share-preview {
+  margin: 0;
+  max-height: 34vh;
+  overflow: auto;
+  padding: 14px 16px;
+  border-radius: var(--r-md, 14px);
+  background: var(--surface-2);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.share-sign,
+.share-private {
+  margin: 0;
+}
+.share-acts,
+.handed-acts,
+.garden-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+}
+.share-cardview {
+  margin: 4px 0 0;
+  display: grid;
+  gap: 6px;
+}
+.share-cardview img {
+  display: block;
+  width: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  border-radius: var(--r-sm, 10px);
+  border: 1px solid var(--hair);
+  background: var(--surface);
+}
+/* 递来的 */
+.handed {
+  margin: 4px 0 22px;
+  display: grid;
+  gap: 10px;
+}
+.handed-row {
+  padding: 14px 16px;
+  border-radius: var(--r-lg, 22px);
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  display: grid;
+  gap: 4px;
+}
+.handed-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.handed-text {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.handed-why {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.handed-why input {
+  flex: 1;
+  min-width: 0;
+}
+/* 花园 */
+.garden-words {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+}
+.garden-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  max-height: 180px;
+  overflow: auto;
+  font-size: 14px;
+}
+.garden-acts {
+  margin-top: 12px;
+}
