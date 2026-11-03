@@ -9,7 +9,8 @@ if (!m.includes('android.permission.INTERNET')) {
 // v0.22 极速采集：分享 / 选字菜单改由透明的半屏 QuickActivity 接（不拉起整个 App）；磁贴、通知使用权、常驻通知、小部件
 // v0.26 0512：应用内更新要交给系统安装器（「安装未知应用」授权，首次安装时系统会问）
 // v0.32 局域网直连扫码：CAMERA（WebView 的 getUserMedia 由 wry 的 RustWebChromeClient 在第一次用时请求），相机不是必需硬件
-const perms = ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.CAMERA'];
+// v0.36 说一句就收：RECORD_AUDIO（按住「说」第一次时才请求；系统语音识别服务要它）
+const perms = ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.CAMERA', 'android.permission.RECORD_AUDIO'];
 if (!m.includes('android.hardware.camera')) m = m.replace('<application', '<uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application');
 for (const p of perms) if (!m.includes(p)) m = m.replace('<application', `<uses-permission android:name="${p}" />\n    <application`);
 // 让桌面上的 App 对 PackageManager 可见：把来源包名翻成「网易云音乐」这样的名字（只查桌面 App，不要 QUERY_ALL_PACKAGES）
@@ -21,6 +22,26 @@ if (!m.includes('<queries>')) {
         </intent>
     </queries>
     <application`);
+}
+// v0.36：安卓 11 起包可见性——要查得到系统语音识别服务 / 语音输入框
+if (!m.includes('android.speech.RecognitionService')) {
+  m = m.replace('</queries>', `    <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+    </queries>`);
+}
+// v0.36 0505：1×1 小组件「拾」，点一下弹速记卡
+if (!m.includes('.GleanWidgetOne')) {
+  m = m.replace('</application>', `    <receiver android:name=".GleanWidgetOne" android:exported="true" android:label="拾">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/glean_widget_one_info" />
+        </receiver>
+    </application>`);
 }
 if (!m.includes('.QuickActivity')) {
   m = m.replace('</application>', `    <activity
@@ -222,6 +243,7 @@ function androidRes() {
     'values/glean_strings.xml': `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="glean_widget_desc">一键拾：文字 / 粘贴 / 正在播放的歌</string>
+    <string name="glean_widget_one_desc">点一下拾一穗</string>
 </resources>
 `,
     'layout/glean_widget.xml': `<?xml version="1.0" encoding="utf-8"?>
@@ -234,6 +256,36 @@ function androidRes() {
     android:orientation="horizontal"
     android:padding="4dp">
 ${btn('gw_note', '拾一穗', true)}${btn('gw_paste', '粘贴', false)}${btn('gw_music', '♪ 这首歌', false)}${btn('gw_open', '穗仓', false)}</LinearLayout>
+`,
+    // v0.36 0505：1×1「拾」（只有一个字，点一下 = 半屏速记卡）
+    'layout/glean_widget_one.xml': `<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gw1_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/glean_widget_bg"
+    android:contentDescription="拾一穗">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="拾"
+        android:textColor="@color/glean_widget_fg"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+</FrameLayout>
+`,
+    'xml/glean_widget_one_info.xml': `<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="40dp"
+    android:minHeight="40dp"
+    android:targetCellWidth="1"
+    android:targetCellHeight="1"
+    android:resizeMode="none"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/glean_widget_one"
+    android:description="@string/glean_widget_one_desc"
+    android:widgetCategory="home_screen" />
 `,
     'xml/glean_widget_info.xml': `<?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
