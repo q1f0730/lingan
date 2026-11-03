@@ -9,6 +9,8 @@ import { aiReady } from '../lib/settings';
 import { useApp } from '../lib/store';
 import { displayTitle } from '../lib/studio';
 import { computeTaste, tastePrompt } from '../lib/taste';
+import { organizeStats } from '../lib/organize';
+import { openLibSub } from '../lib/libsub';
 import { TYPE_LABEL, TYPE_ORDER, type Item } from '../lib/types';
 
 const TASTE_KEY = 'lingan.taste.ai';
@@ -46,6 +48,7 @@ export function Taste() {
     return stats.topTags.slice(0, 8).map(([t, n]) => ({ t, n, from: items.filter((i) => i.tags.includes(t)).sort((a, b) => b.createdAt - a.createdAt).slice(0, 3) }));
   }, [items, stats]);
   const cold = useMemo(() => (items ? cooled(items) : []), [items]);
+  const org = useMemo(() => (items ? organizeStats(items) : null), [items]);
 
   if (!items || !stats) return <Loading />;
   const topType = TYPE_ORDER.slice().sort((a, b) => stats.byType[b] - stats.byType[a])[0];
@@ -139,6 +142,35 @@ export function Taste() {
             ))}
           </div>
         </section>
+
+        {org && org.total > 0 && (
+          <section className="taste-sec organize-sec">
+            <div className="table two-col">
+              <div className="thead">
+                <span className="tc">整理度</span>
+                <span className="tc tc-date">穗</span>
+              </div>
+              <button className="trow org-why" onClick={() => openLibSub('why', go)}>
+                <span className="tc tc-title">写了为什么</span>
+                <span className="tc tc-date num">
+                  {org.withWhy} / {org.total}
+                </span>
+              </button>
+              <div className="trow static org-tags">
+                <span className="tc tc-title">有标签</span>
+                <span className="tc tc-date num">
+                  {org.withTags} / {org.total}
+                </span>
+              </div>
+              {org.inbox > 0 && (
+                <button className="trow org-inbox" onClick={() => openLibSub('inbox', go)}>
+                  <span className="tc tc-title">还在待理</span>
+                  <span className="tc tc-date num">{org.inbox}</span>
+                </button>
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="taste-sec">
           <div className="table two-col">
