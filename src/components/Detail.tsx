@@ -16,6 +16,10 @@ import { TYPE_LABEL, type Item, type ItemType } from '../lib/types';
 import { useOriginalSrc } from '../lib/useImage';
 import { safeHost } from './ItemCard';
 import { clock, timeMark } from '../lib/platforms';
+import { lockReady, useUnlocked } from '../lib/lock';
+import { PinGate } from './PinGate';
+import { fillItem } from '../lib/repo';
+import '../styles/v039.css';
 
 const CREATOR: Record<ItemType, string> = { music: '歌手', film: '导演', image: '来源', text: '作者', link: '来源', idea: '来源' };
 
@@ -53,6 +57,34 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
     await updateItem(it.id, { ...patch, embedding: undefined, embedModel: undefined });
     toast('已保存');
   };
+  // v0.39 0017 / 0054：给已有的链接补抓正文快照（也顺便补标题封面）
+  const [snapping, setSnapping] = useState(false);
+  async function snapNow() {
+    if (it.id == null || !it.url || snapping) return;
+    setSnapping(true);
+    try {
+      const { fetchLinkMeta } = await import('../lib/linkmeta');
+      const m = await fetchLinkMeta(it.url, { snap: true });
+      const patch: Partial<Item> = { metaTodo: undefined };
+      if (m.snap) Object.assign(patch, { snap: m.snap, snapAt: Date.now() });
+      if (!it.title || it.title === it.url) patch.title = m.title || it.title;
+      if (!it.creator && (m.creator || m.siteName)) patch.creator = m.creator || m.siteName;
+      await fillItem(it.id, patch);
+      if (m.imageData && !it.hasImage) await updateItem(it.id, { image: m.imageData });
+      toast(m.snap ? `存了正文快照 ${m.snap.length} 字` : '读到了标题，但没认出正文');
+    } catch (e) {
+      toast('没抓到：' + (e instanceof Error ? e.message : String(e)), 'err');
+    } finally {
+      setSnapping(false);
+    }
+  }
+  const unl = useUnlocked();
+  async function toggleLock() {
+    if (it.id == null) return;
+    if (!it.locked && !lockReady()) return toast('先在 设置 → 上锁 里设一个 PIN', 'err');
+    await updateItem(it.id, { locked: it.locked ? undefined : 1 });
+    toast(it.locked ? '解了锁，这一穗恢复正常' : '上锁了：不进分享、花园、Agent 和 AI，平时只显示「上锁的一穗」');
+  }
   async function copy() {
     try {
       await navigator.clipboard.writeText(it.content || it.title);
@@ -61,6 +93,14 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
       toast('复制失败，请长按选择文字', 'err');
     }
   }
+  if (it.locked && !unl)
+    return (
+      <article className="detail detail-locked">
+        <div className="detail-info">
+          <PinGate />
+        </div>
+      </article>
+    );
   return (
     <article
       className={`detail detail-${it.type}${full ? ' has-img' : ''}`}
@@ -98,6 +138,7 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
         <div className="label detail-kicker">
           {it.sample ? '示例 · ' : ''}
           {it.polarity === -1 ? '讨厌 · ' : ''}
+          {it.locked ? '上锁 · ' : ''}
           {it.private ? '私密 · ' : ''}
           {TYPE_LABEL[it.type]}
           {it.inbox ? ' · 待理' : ''}
@@ -308,6 +349,26 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
             </p>
           </section>
         )}
+        {it.metaTodo && it.url ? (
+          <div className="detail-todo note-row">
+            <span className="meta-text">链接还没读到标题和封面（当时没网或超时）：联网后会自动再试。</span>
+            <button className="btn text strong meta-retry" onClick={snapNow} disabled={snapping}>
+              {snapping ? '读取中…' : '现在再试'}
+            </button>
+          </div>
+        ) : null}
+        {it.snap ? (
+          <details className="detail-sec detail-snap">
+            <summary className="label">
+              正文快照 · {it.snap.length} 字{it.snapAt ? ` · 存于 ${shortDate(it.snapAt)}` : ''}
+              <span className="snap-more"> · 点开看</span>
+            </summary>
+            <p className="snap-text">{it.snap}</p>
+            <button className="btn text faint snap-redo" onClick={snapNow} disabled={snapping}>
+              {snapping ? '重抓中…' : '重抓一次'}
+            </button>
+          </details>
+        ) : null}
         <section className={`detail-sec detail-why${it.why ? '' : ' is-empty'}`}>
           <div className="label">为什么收</div>
           <p>
@@ -357,6 +418,14 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
               打开链接
             </a>
           )}
+          {it.url && /^https?:/i.test(it.url) && !it.snap && (
+            <button className="btn text detail-snapnow" onClick={snapNow} disabled={snapping}>
+              {snapping ? '抓取中…' : '存正文快照'}
+            </button>
+          )}
+          <button className={`btn text detail-lock${it.locked ? ' on' : ''}`} onClick={toggleLock} aria-pressed={!!it.locked}>
+            {it.locked ? '解除上锁' : '上锁'}
+          </button>
           {quote && (
             <button className="btn text" onClick={copy}>
               复制原文
