@@ -3401,3 +3401,64 @@ button.heat-cell {
   max-height: 240px;
   overflow: auto;
 }
+
+/* v0.26 数据保险：自动备份 / 操作前快照 / 更新说明 */
+.update-notes-k {
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.autobak-table,
+.snap-table {
+  margin-top: 16px;
+}
+.autobak-table .trow,
+.snap-table .trow {
+  grid-template-columns: 1fr auto auto;
+  column-gap: 12px;
+  align-items: baseline;
+}
+.autobak-table .tc-date,
+.snap-table .tc-date {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  white-space: nowrap;
+}
+.autobak-row[data-verified='bad'] .tc-src {
+  color: var(--fg);
+  font-weight: 600;
+}
+.autobak-where {
+  overflow-wrap: anywhere;
+}
+.autobak-reset {
+  margin-left: 12px;
+}
+.autobak-error {
+  color: var(--fg);
+  margin-top: 8px;
+}
+.autobak-more {
+  margin-top: 12px;
+}
+.autobak-policy {
+  max-width: 320px;
+}
+@media (max-width: 600px) {
+  .autobak-table .trow,
+  .snap-table .trow {
+    grid-template-columns: 1fr auto;
+    row-gap: 2px;
+  }
+  .autobak-table .tc-src,
+  .snap-table .tc-src {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .autobak-table .tc-date,
+  .snap-table .tc-date {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+    align-self: center;
+  }
+}
