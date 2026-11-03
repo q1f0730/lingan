@@ -238,8 +238,9 @@ async function run(name, viewport) {
   await studio(pg, name);
   // v0.20 布局：桌面 ≥1024 左侧栏导航 + 顶栏速记胶囊、没有底部固定栏；手机底部 速记胶囊 + 图标导航胶囊、没有侧栏
   const lay = await pg.evaluate(() => ({ sideNav: document.querySelectorAll('.sidebar .nav-btn').length, topQuick: !!document.querySelector('.topbar .quick-input'), dock: !!document.querySelector('.dock'), dockNav: document.querySelectorAll('.dock .nav-btn').length, dockQuick: !!document.querySelector('.dock .quick-input'), navIcons: document.querySelectorAll('.nav-btn svg').length }));
-  if (viewport.width >= 1024 ? !(lay.sideNav === 5 && lay.topQuick && !lay.dock) : !(lay.dock && lay.dockNav === 5 && lay.dockQuick && !lay.sideNav)) errs.push(`[${name}] layout wrong ${JSON.stringify(lay)}`);
-  if (lay.navIcons !== 5) errs.push(`[${name}] nav should have 5 icons, got ${lay.navIcons}`);
+  // v0.29 导航六页（新枝和口味之间加了「作品」）
+  if (viewport.width >= 1024 ? !(lay.sideNav === 6 && lay.topQuick && !lay.dock) : !(lay.dock && lay.dockNav === 6 && lay.dockQuick && !lay.sideNav)) errs.push(`[${name}] layout wrong ${JSON.stringify(lay)}`);
+  if (lay.navIcons !== 6) errs.push(`[${name}] nav should have 6 icons, got ${lay.navIcons}`);
   const title0 = await pg.locator('.page-title').innerText();
   if (title0.replace(/\s+/g, '') !== '穗仓(0)') errs.push(`[${name}] empty title should be 穗仓 (0), got ${title0}`);
   // 字体自托管：不从任何外部域名拉字体
@@ -1255,7 +1256,7 @@ async function datafound() {
   const z = readZipBuf(gbuf);
   const man = JSON.parse(new TextDecoder().decode(z.get('manifest.json')));
   const imgs = [...z.keys()].filter((k) => k.startsWith('images/'));
-  if (man.format !== 'glean' || man.schema !== 10 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
+  if (man.format !== 'glean' || man.schema !== 11 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
   for (const [k, v] of z) if (k !== 'manifest.json' && man.files[k]?.sha256 !== sha256(v)) errs.push(`[datafound] sha256 mismatch ${k}`);
   if (imgs[0] && imgs[0] !== `images/${sha256(z.get(imgs[0]))}.png`) errs.push(`[datafound] image not named by content hash ${imgs[0]}`);
   const lines = new TextDecoder().decode(z.get('data.jsonl')).trim().split('\n').map((l) => JSON.parse(l));
@@ -2637,7 +2638,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 100) errs.push(`[perf] db version (expected 100 = Dexie v10) ${integ.version}`);
+  if (integ.version !== 110) errs.push(`[perf] db version (expected 110 = Dexie v11) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
