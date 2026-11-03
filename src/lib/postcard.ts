@@ -68,7 +68,7 @@ async function bitmap(b: Blob | null | undefined): Promise<ImageBitmap | null> {
 export async function renderPostcard(c: CardInput): Promise<Blob> {
   const title = c.title.replace(/^《|》$/g, '');
   const sprigs = c.mode === 'none' ? [] : c.sprigs.slice(0, 5);
-  const lines = (it: Item) => (it.private ? '一穗私密的' : c.mode === 'show' ? [TYPE_LABEL[it.type], it.title.replace(/^《|》$/g, ''), it.creator].filter(Boolean).join(' · ') : `${TYPE_LABEL[it.type]} · ${it.title.replace(/^《|》$/g, '')}`);
+  const lines = (it: Item) => (it.private || it.locked ? '一穗私密的' : c.mode === 'show' ? [TYPE_LABEL[it.type], it.title.replace(/^《|》$/g, ''), it.creator].filter(Boolean).join(' · ') : `${TYPE_LABEL[it.type]} · ${it.title.replace(/^《|》$/g, '')}`);
   const all = [title, c.body, c.form || '', c.name, '新枝因为这几穗拾穗', ...sprigs.map((s) => lines(s.item))].join('');
   try {
     await Promise.all([document.fonts.load(`700 80px ${SANS}`, all), document.fonts.load(`400 38px ${SANS}`, all)]);
@@ -140,7 +140,7 @@ export async function renderPostcard(c: CardInput): Promise<Blob> {
     y += 56;
     for (const s of sprigs) {
       const T = 136;
-      const bm = c.mode === 'show' && !s.item.private ? await bitmap(s.thumb) : null;
+      const bm = c.mode === 'show' && !s.item.private && !s.item.locked ? await bitmap(s.thumb) : null;
       if (bm) {
         const k = Math.max(T / bm.width, T / bm.height);
         const sw = T / k;
@@ -152,7 +152,7 @@ export async function renderPostcard(c: CardInput): Promise<Blob> {
         ctx.fillRect(PAD, y, T, T);
         font(500, 28);
         ctx.fillStyle = C.fg2;
-        const lb = s.item.private ? '私密' : TYPE_LABEL[s.item.type];
+        const lb = s.item.private || s.item.locked ? '私密' : TYPE_LABEL[s.item.type];
         ctx.fillText(lb, PAD + (T - m(lb)) / 2, y + T / 2 - 16);
       }
       font(400, 32);
