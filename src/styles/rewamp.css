@@ -3893,3 +3893,313 @@ html[data-kb] .clip-offer {
 .detail-why.is-empty p {
   color: var(--fg-3);
 }
+
+/* ———————————————————————— v0.28 拾穗动线：待嫁接篮 / 穗束 / 桌面三栏 / 首启第一穗 ———————————————————————— */
+/* 0408 待嫁接篮 */
+.basket {
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  border-radius: var(--r);
+  padding: 6px 6px 6px 12px;
+}
+.basket-dock {
+  box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.45);
+}
+.basket-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.basket-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+}
+.basket-n {
+  color: var(--fg-2);
+  font-weight: 500;
+}
+.basket-dots {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 2px;
+}
+.basket-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.basket-dots i.need {
+  border-color: var(--fg-3);
+}
+.basket-dots i.on {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+.basket .basket-graft {
+  min-height: 44px;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+.basket .basket-graft:disabled {
+  opacity: 0.45;
+}
+.basket-body {
+  padding: 4px 6px 6px 0;
+}
+.basket-hint {
+  margin: 0 0 6px;
+}
+.basket-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  border-top: 1px solid var(--hair);
+  font-size: 13px;
+}
+.basket-item {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.basket-x,
+.bundle-x {
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--fg-3);
+  font-size: 12px;
+}
+.basket-x:hover,
+.bundle-x:hover {
+  color: var(--fg);
+}
+.basket-acts {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--hair);
+  padding-top: 4px;
+}
+.basket-acts .inline-edit.basket-bundle {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  margin: 6px 0;
+  padding: 0 12px;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--fg-2);
+  box-shadow: none;
+}
+.basket-acts .inline-input.basket-bundle {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+}
+.basket-acts .basket-clear {
+  min-height: 44px;
+}
+.basket-side {
+  margin-top: auto;
+}
+.basket-side + .side-foot {
+  margin-top: 0;
+}
+.basket-dock.is-open .basket-body {
+  max-height: 42vh;
+  overflow: auto;
+}
+
+/* 0107 穗束 */
+.tags.bundles {
+  align-items: center;
+}
+.bundle-tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding-left: 10px;
+  font-size: 12px;
+}
+.bundle-go {
+  min-height: 26px;
+  color: var(--fg);
+  font-weight: 500;
+}
+.bundle-tag .bundle-x {
+  min-width: 28px;
+  min-height: 26px;
+}
+.tags .bundle-add {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.chip.bundle-chip {
+  border-style: dashed;
+}
+.chip.bundle-chip.on {
+  border-style: solid;
+}
+.bundle-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.bundle-bar .btn {
+  min-height: 44px;
+}
+/* 0108 嫁接池 */
+.pool-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.pool-pick .chips {
+  display: flex;
+  gap: 8px;
+}
+.pool-note {
+  margin: 0;
+}
+
+/* 0402 桌面三栏：导航 / 列表 / 右侧预览 */
+.preview-pane {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: clamp(380px, 28vw, 520px);
+  flex: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border-left: 1px solid var(--hair);
+  padding: 0 24px 32px;
+  z-index: 15;
+  animation: pane-in 220ms var(--ease) both;
+}
+@keyframes pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+.preview-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 56px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--hair);
+  margin: 0 -24px 16px;
+  padding: 0 12px 0 24px;
+}
+.preview-acts {
+  display: inline-flex;
+  gap: 4px;
+}
+.preview-acts .btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+.app.has-preview .shell {
+  min-width: 0;
+  flex: 1;
+}
+.app.has-preview .lib-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+.app.has-preview .lib-rail {
+  display: none;
+}
+.preview-pane .detail-step {
+  display: none;
+}
+
+/* 0404 首启：真的拾第一穗 */
+.onboard-first,
+.onboard-first-card {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.onboard-first-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.onboard-first-row .line-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+}
+.onboard-first-row .btn.primary {
+  min-height: 44px;
+  min-width: 64px;
+}
+.onboard-first-eg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.onboard-first-eg .chip {
+  height: auto;
+  min-height: 44px;
+  padding: 6px 14px;
+  text-align: left;
+  white-space: normal;
+}
+.onboard-first-card {
+  border: 1px solid var(--hair);
+  border-radius: var(--r);
+  background: var(--surface);
+  padding: 16px;
+}
+.onboard-first-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.onboard-first-title .chip {
+  height: 26px;
+  padding: 0 10px;
+  margin-right: 6px;
+  vertical-align: 2px;
+}
+.onboard-first-card .meta-text {
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .preview-pane {
+    animation: none;
+  }
+}
