@@ -12,6 +12,7 @@ import { displayTitle, shortDate } from '../lib/studio';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type Development, type Item, type ItemType } from '../lib/types';
 import { completeSyntax, matchFilters, parseSyntax, SYNTAX_HELP } from '../lib/qsyntax';
+import { AskPanel } from '../components/AskPanel';
 
 const RECENT_KEY = 'glean.recentq';
 const RANGES: DateRange[] = ['all', '7d', '30d', 'year', 'custom'];
@@ -55,6 +56,8 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   const ft = ftShared(db);
   const rev = useSyncExternalStore(ft.subscribe, ft.getRev);
   const [q, setQ] = useState('');
+  // v0.30 0211 问穗仓
+  const [asking, setAsking] = useState(false);
   const [type, setType] = useState<TypeSel>('all');
   const [tag, setTag] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange>('all');
@@ -240,6 +243,9 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
                 清除
               </button>
             )}
+            <button className={`btn text sq-ask${asking ? ' on' : ''}`} aria-pressed={asking} onClick={() => setAsking((x) => !x)}>
+              问穗仓
+            </button>
             <button className="btn text sq-cancel" onClick={onClose}>
               取消
             </button>
@@ -264,6 +270,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
           </div>
         )}
       </header>
+      {asking && <AskPanel items={items} initial={q} onOpen={openItem} />}
 
       <div className="sq-filters">
         <div className="sq-frow" role="toolbar" aria-label="类型">
