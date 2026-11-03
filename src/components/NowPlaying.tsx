@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { onNowPlaying } from '../lib/desktop';
 import { addItem } from '../lib/db';
-import { NP_ACCESS_WHY, NP_REASON, nowPlayingDraft, nowPlayingSupport, openNowPlayingAccess, readNowPlaying, type NowPlaying } from '../lib/nowplaying';
+import { nowPlayingSupport } from '../lib/npsupport';
+import type { NowPlaying } from '../lib/nowplaying';
+
+const loadNP = () => import('../lib/nowplaying');
 import { useApp } from '../lib/store';
 import { afterAdd } from './QuickBar';
 
@@ -15,6 +18,7 @@ export function useNowPlaying() {
 
   /** 只读不存（速记表单用来填字段）；拿不到返回 null，并已经提示过 */
   const read = useCallback(async (): Promise<NowPlaying | null> => {
+    const { NP_ACCESS_WHY, NP_REASON, openNowPlayingAccess, readNowPlaying } = await loadNP();
     const r = await readNowPlaying();
     if (r.ok) return r.np;
     if (r.reason === 'no-access') {
@@ -33,7 +37,7 @@ export function useNowPlaying() {
     try {
       const np = await read();
       if (!np) return null;
-      const d = nowPlayingDraft(np);
+      const d = (await loadNP()).nowPlayingDraft(np);
       const id = await addItem(d);
       afterAdd(id, d, settings, (m) => toast(m, 'err'));
       toast(`已拾 ♪ ${np.title}${np.artist ? ' — ' + np.artist : ''}`);
