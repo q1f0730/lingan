@@ -321,6 +321,12 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
             <p>{it.caption}</p>
           </section>
         )}
+        {it.ocr && (
+          <section className="detail-sec detail-ocr">
+            <div className="label">图中文字</div>
+            <p style={{ whiteSpace: 'pre-line' }}>{it.ocr}</p>
+          </section>
+        )}
         {!!grown?.length && (
           <section className="detail-sec detail-grown">
             <div className="label">长进了这些新枝 ({grown.length})</div>
