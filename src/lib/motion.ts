@@ -32,3 +32,25 @@ export function staggerDelay(index: number, step = 40, max = 8): number {
   if (!(index > 0)) return 0;
   return Math.min(Math.floor(index), max) * step;
 }
+
+/**
+ * v0.20：穗仓第一次画出卡片之后（Library 打点 glean:ready）才去做的事——加载 Framer Motion 的动画特性包、预取其余页面。
+ * 不和首屏抢主线程。没等到打点（比如首次打开走引导）就在 timeout 后照做。
+ */
+export function afterFirstPaint(timeout = 1500): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  const w = window as Window & { __gleanReady?: number };
+  if (w.__gleanReady) return Promise.resolve();
+  return new Promise((res) => {
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('glean:ready', go);
+      // 再让出一帧，确保卡片已经画到屏幕上
+      setTimeout(res, 0);
+    };
+    window.addEventListener('glean:ready', go);
+    setTimeout(go, timeout);
+  });
+}
