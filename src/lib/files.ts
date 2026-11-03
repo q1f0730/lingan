@@ -4,7 +4,7 @@ const isTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in 
 export async function saveTextFile(name: string, text: string): Promise<string | null> {
   if (isTauri()) {
     const { save } = await import('@tauri-apps/plugin-dialog');
-    const { writeTextFile } = await import('@tauri-apps/plugin-fs');
+    const { writeTextFile } = await import('./tfs');
     const path = await save({ defaultPath: name, filters: [{ name: 'JSON', extensions: ['json'] }] });
     if (!path) return null;
     await writeTextFile(path, text);
@@ -91,7 +91,7 @@ export async function deliverFile(name: string, bytes: Uint8Array, target: ZipTa
   }
   if (isTauri()) {
     const { save } = await import('@tauri-apps/plugin-dialog');
-    const { writeFile } = await import('@tauri-apps/plugin-fs');
+    const { writeFile } = await import('./tfs');
     const path = await save({ defaultPath: name, filters: [{ name: label, extensions: [name.split('.').pop() || 'zip'] }] });
     if (!path) return null;
     await writeFile(path, bytes);
@@ -181,7 +181,7 @@ export async function openFileSink(name: string, opts: { mime: string; ext: stri
   }
   if (isTauri()) {
     const { save } = await import('@tauri-apps/plugin-dialog');
-    const fs = await import('@tauri-apps/plugin-fs');
+    const fs = await import('./tfs');
     const path = await save({ defaultPath: name, filters: [{ name: opts.label, extensions: [opts.ext] }] });
     if (!path) return null;
     const fh = await fs.open(path, { write: true, create: true, truncate: true });
