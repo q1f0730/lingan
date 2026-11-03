@@ -12,11 +12,13 @@ pub struct Hotkeys {
   pub excerpt: String,
   /// 0004 唤出小窗时带上选中的文字
   pub grab: bool,
+  /// v0.36 0005 框选截图直接成图片穗（空 = 关）
+  pub shot: String,
 }
 
 impl Default for Hotkeys {
   fn default() -> Self {
-    Hotkeys { quick: "ctrl+shift+l".into(), excerpt: String::new(), grab: true }
+    Hotkeys { quick: "ctrl+shift+l".into(), excerpt: String::new(), grab: true, shot: "ctrl+shift+k".into() }
   }
 }
 
@@ -122,6 +124,63 @@ pub fn encode_png(rgba: &[u8], w: u32, h: u32) -> Option<Vec<u8>> {
   Some(out)
 }
 
+/// v0.36 0020 Windows OCR 的词拼回一行：中日韩字之间不加空格（系统按字切词，"拾 穗" → "拾穗"），西文词之间留一个空格
+pub fn join_words(words: &[String]) -> String {
+  fn cjk(c: char) -> bool {
+    matches!(c as u32, 0x3000..=0x303F | 0x3040..=0x30FF | 0x3400..=0x4DBF | 0x4E00..=0x9FFF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF)
+  }
+  let mut out = String::new();
+  for w in words.iter().map(|w| w.trim()).filter(|w| !w.is_empty()) {
+    let tail = out.chars().last();
+    let head = w.chars().next();
+    if let (Some(a), Some(b)) = (tail, head) {
+      if !(cjk(a) || cjk(b)) {
+        out.push(' ');
+      }
+    }
+    out.push_str(w);
+  }
+  out
+}
+
+/// 一张图的识别结果：一行一行拼起来，去掉空行，最多 8000 字
+pub fn join_lines(lines: &[String]) -> String {
+  let t: Vec<&str> = lines.iter().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
+  t.join("\n").chars().take(8000).collect()
+}
+
+/// v0.36 0509 桌面版收件队列：冷启动带来的 glean:// 链接、「发送到」的文件路径先落盘，前端取走才删。
+/// 程序在前端加载完之前被关掉 / 崩掉，下次启动还在。
+#[derive(serde::Serialize, serde::Deserialize, Default, Debug, PartialEq, Clone)]
+#[serde(default)]
+pub struct Inbox {
+  pub links: Vec<String>,
+  pub send: Vec<String>,
+}
+
+impl Inbox {
+  pub fn parse(s: &str) -> Inbox {
+    let mut b: Inbox = serde_json::from_str(s).unwrap_or_default();
+    b.links.retain(|l| is_glean_link(l));
+    b.links.truncate(200);
+    b.send.truncate(MAX_FILES);
+    b
+  }
+  pub fn add_link(&mut self, l: &str) {
+    if is_glean_link(l) && !self.links.iter().any(|x| x == l) && self.links.len() < 200 {
+      self.links.push(l.to_string());
+    }
+  }
+  pub fn add_send(&mut self, p: &str) {
+    if !self.send.iter().any(|x| x == p) && self.send.len() < MAX_FILES {
+      self.send.push(p.to_string());
+    }
+  }
+  pub fn is_empty(&self) -> bool {
+    self.links.is_empty() && self.send.is_empty()
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -165,6 +224,28 @@ mod tests {
     let p = encode_png(&[255, 0, 0, 255, 0, 255, 0, 255], 2, 1).unwrap();
     assert_eq!(&p[1..4], b"PNG");
     assert!(encode_png(&[0; 3], 1, 1).is_none());
+  }
+  #[test]
+  fn ocr_join() {
+    assert_eq!(join_words(&v(&["拾", "穗", "Glean", "v0.36", "很", "好"])), "拾穗Glean v0.36很好");
+    assert_eq!(join_words(&v(&["hello", " ", "world"])), "hello world");
+    assert_eq!(join_words(&v(&["，", "你"])), "，你");
+    assert_eq!(join_lines(&v(&["第一行", "  ", "第二行"])), "第一行\n第二行");
+  }
+  #[test]
+  fn inbox() {
+    let mut b = Inbox::parse("{\"links\":[\"glean://item/01ABCDEFGHJK\",\"https://x\"],\"send\":[\"C:\\\\a.png\"]}");
+    assert_eq!(b.links, v(&["glean://item/01ABCDEFGHJK"]));
+    assert_eq!(b.send, v(&["C:\\a.png"]));
+    b.add_link("glean://item/01ABCDEFGHJK");
+    b.add_link("glean://go/daily");
+    b.add_send("C:\\a.png");
+    assert_eq!(b.links.len(), 2);
+    assert_eq!(b.send.len(), 1);
+    assert_eq!(Inbox::parse("坏的"), Inbox::default());
+    assert!(Inbox::default().is_empty());
+    let old: Hotkeys = serde_json::from_str("{\"quick\":\"alt+g\",\"excerpt\":\"\",\"grab\":false}").unwrap();
+    assert_eq!(old.shot, "ctrl+shift+k");
   }
   #[test]
   fn text() {
