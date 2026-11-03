@@ -1,0 +1,383 @@
+/* v0.30 嫁接 · 人在环里：约束台 / 挑张力 / 用了什么约束 / 落地追踪 / 再嫁接 / 追问 / 口味原子 / 问穗仓 / 出站。
+   懒加载（嫁接页、新枝、口味、秒搜、设置的组件各自 import），不进首屏 CSS。沿用现有圆角面板 + chip 视觉。 */
+
+/* ——— 约束台 ——— */
+.deck {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+.oblique-card {
+  position: relative;
+  padding: 16px 18px 10px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--hair);
+}
+.oblique-card.pinned {
+  border-color: var(--fg);
+}
+.oblique-k {
+  color: var(--fg-3);
+}
+.oblique-text {
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.45;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.oblique-acts,
+.dice-acts,
+.atom-acts,
+.idea-regraft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+}
+.oblique-acts {
+  margin-top: 6px;
+}
+.oblique-new,
+.ask-row,
+.ask-line {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.oblique-new .line-input,
+.ask-row .line-input,
+.ask-line .line-input {
+  flex: 1;
+  min-width: 0;
+}
+.dice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 14px;
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  border: 1px solid var(--hair);
+}
+.dice-text {
+  font-weight: 600;
+  flex: 1 1 160px;
+}
+.dice-none {
+  flex: 1 1 160px;
+}
+.deck-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.deck-note {
+  font-size: 12px;
+}
+
+/* ——— 挑张力 ——— */
+.tension-pick {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--hair);
+}
+.tension-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.tension-chip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  text-align: left;
+  padding: 12px 14px;
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--hair);
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.tension-chip.on {
+  border-color: var(--fg);
+  background: var(--accent-soft);
+}
+.tension-t {
+  font-weight: 600;
+  line-height: 1.45;
+}
+.tension-refs {
+  grid-column: 2;
+  font-size: 12px;
+}
+.tension-acts {
+  margin-top: 12px;
+}
+
+/* ——— 一根新枝下面 ——— */
+.idea-cons {
+  margin-top: 12px;
+}
+.idea-cons-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.idea-child-k {
+  margin-left: 8px;
+  color: var(--fg-3);
+}
+.branch-more {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hair);
+  display: grid;
+  gap: 10px;
+}
+.idea-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.status-seg button {
+  padding: 0 12px;
+  min-width: 44px;
+}
+.status-seg button[aria-checked='true'] {
+  color: var(--fg);
+}
+.result-n {
+  font-size: 12px;
+}
+.idea-ask {
+  display: grid;
+  gap: 6px;
+}
+.followup {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+.followup-q {
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.followup-a {
+  margin-top: 4px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.followup-note {
+  font-size: 12px;
+}
+.idea-children {
+  margin-top: 14px;
+  padding-left: 12px;
+  border-left: 2px solid var(--hair);
+  display: grid;
+  gap: 10px;
+}
+.idea-child .idea {
+  margin-top: 4px;
+}
+.idea-child-how {
+  color: var(--fg-3);
+}
+.hrow-status {
+  margin-left: 6px;
+}
+.trail-mainstream {
+  margin: 8px 0;
+  color: var(--fg-2);
+}
+.trail-temps {
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+/* ——— 口味原子 ——— */
+.atom-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.atom {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 2px;
+  padding: 2px 4px 2px 2px;
+  border-radius: 999px;
+  border: 1px solid var(--hair);
+  background: var(--surface-2);
+  max-width: 100%;
+}
+.atom.open {
+  border-radius: 16px;
+}
+.atom.top {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+.atom.top .atom-name,
+.atom.top .atom-change,
+.atom.top .atom-del,
+.atom.top .atom-src,
+.atom.top .atom-src .linklike {
+  color: var(--bg);
+}
+.atom-name {
+  min-height: 36px;
+  padding: 0 10px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.atom-change,
+.atom-del {
+  min-height: 36px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+.atom-src {
+  flex-basis: 100%;
+  padding: 2px 10px 8px;
+  font-size: 12px;
+}
+.atom-edit {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.atom-input {
+  width: 8em;
+}
+.atom-acts {
+  margin-top: 12px;
+}
+.atom-add-input {
+  width: 9em;
+}
+
+/* ——— 问穗仓 ——— */
+.ask-panel {
+  margin: 8px 0 16px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--hair);
+}
+.ask-line {
+  margin-top: 0;
+}
+.ask-note {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.ask-a {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hair);
+}
+.ask-q {
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.ask-text {
+  margin-top: 4px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.ask-refs {
+  margin-top: 6px;
+}
+.sq-ask.on {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+/* ——— 发出去前看一眼 / 出站 ——— */
+.out-backdrop {
+  z-index: 120;
+}
+.out-paper {
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+}
+.out-meta {
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.out-text {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: 46vh;
+  overflow: auto;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--hair);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.out-img {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 12px;
+  font-size: 14px;
+  min-height: 44px;
+}
+.out-img input {
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+}
+.out-noimg {
+  margin-top: 10px;
+}
+.out-mode-note {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.out-month {
+  margin-top: 16px;
+}
+.out-table .trow {
+  grid-template-columns: minmax(0, 1.4fr) 70px minmax(0, 2fr);
+}
+.out-host {
+  overflow-wrap: anywhere;
+}
+.out-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-2);
+  overflow-wrap: anywhere;
+}
+.out-list .fail {
+  color: var(--danger);
+}
+@media (min-width: 1024px) {
+  .out-paper {
+    width: 640px;
+  }
+}
