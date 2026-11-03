@@ -21,13 +21,62 @@ fn show_view(app: &tauri::AppHandle, view: &str) {
   let _ = app.emit("glean-go", view.to_string());
 }
 
+/// v0.20 系统钥匙串：只认两个固定名字，错误信息不带平台细节和值
+#[cfg(desktop)]
+mod vault {
+  const SERVICE: &str = "com.q1f730.lingan";
+  fn entry(name: &str) -> Result<keyring::Entry, String> {
+    if !matches!(name, "chat.apiKey" | "embed.apiKey") {
+      return Err("bad secret name".into());
+    }
+    keyring::Entry::new(SERVICE, name).map_err(|_| "keychain unavailable".to_string())
+  }
+  #[tauri::command]
+  pub fn secret_get(name: String) -> Result<Option<String>, String> {
+    match entry(&name)?.get_password() {
+      Ok(v) => Ok(Some(v)),
+      Err(keyring::Error::NoEntry) => Ok(None),
+      Err(_) => Err("keychain read failed".into()),
+    }
+  }
+  #[tauri::command]
+  pub fn secret_set(name: String, value: String) -> Result<(), String> {
+    entry(&name)?.set_password(&value).map_err(|_| "keychain write failed".to_string())
+  }
+  #[tauri::command]
+  pub fn secret_delete(name: String) -> Result<(), String> {
+    match entry(&name)?.delete_credential() {
+      Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+      Err(_) => Err("keychain delete failed".into()),
+    }
+  }
+}
+
+/// 移动端：钥匙串走 Android Keystore 的 JS 桥（LinganVault），这里只占位
+#[cfg(mobile)]
+mod vault {
+  #[tauri::command]
+  pub fn secret_get(_name: String) -> Result<Option<String>, String> {
+    Err("unsupported".into())
+  }
+  #[tauri::command]
+  pub fn secret_set(_name: String, _value: String) -> Result<(), String> {
+    Err("unsupported".into())
+  }
+  #[tauri::command]
+  pub fn secret_delete(_name: String) -> Result<(), String> {
+    Err("unsupported".into())
+  }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   let builder = tauri::Builder::default()
     .plugin(tauri_plugin_http::init())
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_fs::init())
-    .plugin(tauri_plugin_clipboard_manager::init());
+    .plugin(tauri_plugin_clipboard_manager::init())
+    .invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete]);
 
   #[cfg(desktop)]
   let builder = builder
