@@ -25,14 +25,15 @@ export function Hits({ text, q }: { text: string; q?: string }): ReactNode {
 export const ItemCard = memo(ItemCardImpl);
 
 /** 网格里的一穗：4:5 图块。照片满铺 + 底部压暗小字说明；文字穗是浅灰色块，左上正文，左下来源与类型·日期 */
-function ItemCardImpl({ item, onOpen, compact, q }: { item: Item; onOpen?: (i: Item) => void; compact?: boolean; q?: string }) {
+function ItemCardImpl({ item, onOpen, compact, q, selected }: { item: Item; onOpen?: (i: Item) => void; compact?: boolean; q?: string; selected?: boolean }) {
   const img = itemHasImage(item);
   const quote = item.type === 'text' && !!item.content;
   const src = quote ? quoteSource(item) : item.type === 'link' ? '' : item.creator || '';
   return (
     <article
-      className={`card card-${item.type}${img ? ' has-img' : ' no-img'}${compact ? ' compact' : ''}`}
+      className={`card card-${item.type}${img ? ' has-img' : ' no-img'}${compact ? ' compact' : ''}${selected ? ' selected' : ''}${selected === false ? ' selectable' : ''}`}
       data-item-id={item.id}
+      aria-pressed={selected === undefined ? undefined : selected}
       data-sample={item.sample ? '1' : undefined}
       onClick={() => onOpen?.(item)}
       role={onOpen ? 'button' : undefined}
@@ -46,6 +47,7 @@ function ItemCardImpl({ item, onOpen, compact, q }: { item: Item; onOpen?: (i: I
     >
       {img && <CardImage item={item} />}
       {item.sample && <span className="tag sample-badge">示例</span>}
+      {selected !== undefined && <span className="sel-mark" aria-hidden>{selected ? '✓' : ''}</span>}
       <div className="card-cap">
         <h3 className={`card-title${quote ? ' quote' : ''}`}>
           <Hits text={displayTitle(item)} q={q} />
@@ -72,10 +74,11 @@ function ItemCardImpl({ item, onOpen, compact, q }: { item: Item; onOpen?: (i: I
 }
 
 /** 列表视图的一行（无线表格）：穗 / 类型 / 来源 / 标签（桌面）/ 日期右对齐 */
-export const ItemRow = memo(function ItemRow({ item, onOpen, q, onHover }: { item: Item; onOpen: (i: Item) => void; q?: string; onHover?: (i: Item | null, e?: React.PointerEvent) => void }) {
+export const ItemRow = memo(function ItemRow({ item, onOpen, q, onHover, selected }: { item: Item; onOpen: (i: Item) => void; q?: string; onHover?: (i: Item | null, e?: React.PointerEvent) => void; selected?: boolean }) {
   return (
     <div
-      className="trow card-row"
+      className={`trow card-row${selected ? ' selected' : ''}`}
+      aria-pressed={selected === undefined ? undefined : selected}
       role="button"
       tabIndex={0}
       data-item-id={item.id}
