@@ -2833,3 +2833,64 @@ details summary {
 .crash-hint {
   margin-top: 16px;
 }
+
+/* v0.22 极速采集 */
+.quick-draft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px 6px 16px;
+  margin-bottom: 8px;
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  border-radius: 18px;
+  box-shadow: var(--sh-1);
+}
+.quick-top .quick-draft {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  width: 100%;
+  z-index: 29;
+}
+.np-btn {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  font-weight: 600;
+}
+.np-btn:hover {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.np-btn:disabled {
+  opacity: 0.55;
+}
+.capture-np {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 10px;
+}
+.kv dd.todo {
+  color: var(--sun-ink);
+  font-weight: 600;
+}
+.cap-entry {
+  display: grid;
+  gap: 2px;
+}
+.cap-entry .cap-k {
+  font-weight: 600;
+  color: var(--fg);
+}
+.cap-entry .cap-v {
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.cap-switch[aria-checked='true'] .tc-date {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
