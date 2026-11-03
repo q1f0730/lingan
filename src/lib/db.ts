@@ -196,7 +196,7 @@ export interface MetaRow {
 export const SYNC_TABLES = ['items', 'developments', 'cliches', 'rejects', 'works'] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 const STAMP_META = ['hlc', 'hc', 'fh'];
-const ITEM_LOCAL = new Set([...STAMP_META, 'imgSha', 'thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'touchedAt', 'embedding', 'embedModel', 'graftCount', 'graftedAt', 'uid', 'deviceId', 'updatedAt', 'dup', 'tagSugg']);
+const ITEM_LOCAL = new Set([...STAMP_META, 'imgSha', 'thumb', 'thumbW', 'thumbH', 'thumbTodo', 'thumbFail', 'hasImage', 'image', 'touchedAt', 'embedding', 'embedModel', 'graftCount', 'graftedAt', 'uid', 'deviceId', 'updatedAt', 'dup', 'tagSugg', 'metaTodo']);
 const DEV_LOCAL = new Set([...STAMP_META, 'uid', 'deviceId', 'updatedAt']);
 const CLICHE_LOCAL = new Set([...STAMP_META, 'listed', 'blocked', 'lastAt', 'uid', 'deviceId', 'updatedAt']);
 
