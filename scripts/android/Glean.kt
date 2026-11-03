@@ -30,6 +30,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object Glean {
+  /**
+   * v0.23 后台同步：主界面的 WebView 还活着（App 在后台、没被系统杀）时，收件箱一有新条目就叫 JS 立刻收进 IndexedDB，
+   * 不用等下次回到前台。WebView 已经没了（进程被杀 / 从没打开过）就什么也不做，仍按 v0.22 的方式下次打开时收。
+   */
+  @Volatile var onPut: (() -> Unit)? = null
+
   const val PREFS = "glean_capture"
   const val ACTION_QUICK = "com.q1f730.lingan.QUICK"
   const val ACTION_REPLY = "com.q1f730.lingan.NOTE_REPLY"
@@ -75,6 +81,10 @@ object Glean {
     val tmp = File(d, "$uid.json.tmp")
     tmp.writeText(o.toString(), Charsets.UTF_8)
     tmp.renameTo(File(d, "$uid.json"))
+    try {
+      onPut?.invoke()
+    } catch (e: Exception) {
+    }
     return uid
   }
 
