@@ -4788,7 +4788,8 @@ async function v037() {
 async function v038() {
   const tag = 'v038';
   const MODEL = process.env.GLEAN_MODEL || new URL('../models/mini-zh-v1.bin', import.meta.url);
-  const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+  // v0.39 起中国大陆时区先走国内镜像：这一组固定在境外时区测 jsDelivr → raw（国内镜像在 v039 组测）
+  const c = await b.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'America/New_York' });
   let cdn = 0, raw = 0;
   // jsDelivr 故意 503，测退到 GitHub raw；模型文件来自仓库 models/（和发版 tag 下的是同一份）
   await c.route('**/cdn.jsdelivr.net/**', (r) => (cdn++, r.fulfill({ status: 503, body: 'down', headers: { 'access-control-allow-origin': '*' } })));
@@ -4906,14 +4907,210 @@ async function v038() {
   console.log(`v038: mini cdn ${cdn} → raw ${raw}, embedded ${nv}/${rows.length}, offline new ${off ? 'ok' : 'no'}; 孤独 → ${sem.slice(0, 3).map((t) => t.split('\n')[0]).join(' / ')}; motifs ${motifs}, stars ${pts.length}; work ${wl}; co ${co.length}`);
 }
 
+// v0.39 外面的东西拾进来：公众号 + 正文快照、待补重试、网易云歌单、RSS 待拾、接入停用、上锁、模型国内镜像、字放大 1.3 倍
+async function v039() {
+  const tag = 'v039';
+  const FX = (n) => fs.readFileSync(new URL(`./fx39/${n}`, import.meta.url), 'utf8');
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  const H = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, OPTIONS' };
+  const serve = (body, type) => (r) => (r.request().method() === 'OPTIONS' ? r.fulfill({ status: 204, headers: H }) : r.fulfill({ status: 200, body, headers: { ...H, 'content-type': type } }));
+  const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+  await c.route('https://mp.weixin.qq.com/**', serve(FX('wx.html'), 'text/html; charset=utf-8'));
+  await c.route('https://mmbiz.qpic.cn/**', serve(PNG, 'image/png'));
+  let down = true;
+  await c.route('https://blog.example.com/**', (r) => (down ? r.abort() : serve(FX('article.html'), 'text/html; charset=utf-8')(r)));
+  const pl = JSON.parse(FX('playlist.json'));
+  await c.route('https://music.163.com/api/v6/playlist/detail**', serve(JSON.stringify(pl), 'application/json'));
+  await c.route('https://music.163.com/api/v3/song/detail**', serve(JSON.stringify({ code: 200, songs: [{ id: 13, name: '稻香', ar: [{ name: '周杰伦' }], al: { name: '魔杰座', picUrl: 'http://p3.music.126.net/c.jpg' } }] }), 'application/json'));
+  await c.route(/^https:\/\/p\d\.music\.126\.net\//, serve(PNG, 'image/png'));
+  await c.route('https://feeds.example.com/**', serve(FX('rss.xml'), 'application/rss+xml'));
+  const pg = await c.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  const waitRow = async (pred, ms = 15000) => {
+    for (let t = 0; t < ms; t += 300) {
+      const r = (await dbRaw(pg, 'items')).find(pred);
+      if (r) return r;
+      await pg.waitForTimeout(300);
+    }
+    return null;
+  };
+  // 1. 0013 / 0017 公众号链接：标题 / 公众号名 / 封面 + 正文快照
+  await pg.fill('.quick-input', 'https://mp.weixin.qq.com/s/AbCdEf123');
+  await pg.press('.quick-input', 'Enter');
+  const wx = await waitRow((r) => r.snap && r.title === '一盏灯的夜晚');
+  if (!wx) errs.push(`[${tag}] wechat article not parsed: ${JSON.stringify((await dbRaw(pg, 'items')).map((r) => [r.title, r.creator, !!r.snap]))}`);
+  else {
+    if (wx.creator !== '夜里写字的人') errs.push(`[${tag}] wechat nickname ${wx.creator}`);
+    if (!wx.snap.startsWith('末班车开过来的时候')) errs.push(`[${tag}] snap head ${wx.snap.slice(0, 20)}`);
+    if (!wx.hasImage) errs.push(`[${tag}] wechat cover not saved`);
+    await pg.click('.card:has-text("一盏灯的夜晚")');
+    await pg.waitForSelector('.detail-snap');
+    await pg.click('.detail-snap summary');
+    const st = await pg.locator('.snap-text').innerText();
+    if (!st.includes('灯是一种等待')) errs.push(`[${tag}] snap text in detail`);
+    if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v039-snap.png' });
+    await pg.keyboard.press('Escape');
+  }
+  // 2. 0054 没网时收的链接打「待补」，网回来自动补上标题和快照
+  await pg.fill('.quick-input', 'https://blog.example.com/p/1');
+  await pg.press('.quick-input', 'Enter');
+  const todo = await waitRow((r) => r.url === 'https://blog.example.com/p/1' && r.metaTodo === 1);
+  if (!todo) errs.push(`[${tag}] metaTodo not marked`);
+  if (!(await pg.locator('.card .todo-mark').count())) errs.push(`[${tag}] 待补 mark missing on card`);
+  down = false;
+  await pg.evaluate(() => window.dispatchEvent(new Event('online')));
+  const fixed = await waitRow((r) => r.url === 'https://blog.example.com/p/1' && !r.metaTodo && r.snap);
+  if (!fixed || fixed.title !== 'Blog') errs.push(`[${tag}] metaTodo retry ${JSON.stringify(fixed && [fixed.title, fixed.metaTodo])}`);
+  // 3. 0015 / 0801 网易云歌单：读公开歌单（缺的曲目补一批）→ 去掉一首 → 每首一穗，标签 = 歌单名，后台补封面
+  await openSettings(pg);
+  await pg.click('.pl-open');
+  await pg.fill('.pl-url', '分享歌单 https://music.163.com/playlist?id=123456&userid=1 (@网易云音乐)');
+  await pg.click('.pl-read');
+  await pg.waitForSelector('.pl-head[data-n="3"]', { timeout: 10000 }).catch(() => errs.push(`[${tag}] playlist head`));
+  await pg.locator('.pl-song', { hasText: '夜曲' }).locator('input').uncheck();
+  await pg.click('.pl-go');
+  await pg.waitForSelector('.toast:has-text("拾进 2 首")', { timeout: 10000 }).catch(() => errs.push(`[${tag}] playlist import toast`));
+  const songs = (await dbRaw(pg, 'items')).filter((r) => r.source === '网易云音乐');
+  if (songs.length !== 2 || !songs.every((r) => r.type === 'music' && r.tags.includes('夜里听的') && !r.why && r.bundles?.[0] === '歌单 · 夜里 #听的')) errs.push(`[${tag}] playlist items ${JSON.stringify(songs.map((r) => [r.title, r.tags, r.bundles]))}`);
+  if (!songs.some((r) => r.title === '稻香')) errs.push(`[${tag}] missing track batch not fetched`);
+  const covered = await waitRow((r) => r.title === '稻香' && r.hasImage, 10000);
+  if (!covered) errs.push(`[${tag}] playlist cover not fetched`);
+  // 4. 0805 停用「网易云歌单」：再读就被拦下
+  await pg.click('.set-link:has-text("接入与权限")');
+  await pg.click('.plug-row[data-plug="netease"]');
+  if ((await pg.getAttribute('.plug-row[data-plug="netease"]', 'aria-checked')) !== 'false') errs.push(`[${tag}] plug toggle`);
+  await pg.click('.set-link:has-text("备份与导入")');
+  await pg.fill('.pl-url', 'https://music.163.com/playlist?id=123456');
+  await pg.click('.pl-read');
+  await pg.waitForSelector('.toast:has-text("已停用")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] disabled plug not enforced`));
+  await pg.click('.set-link:has-text("接入与权限")');
+  await pg.click('.plug-row[data-plug="netease"]');
+  // 5. 0804 / 0847 订阅进待拾：模板预览、订阅、穗仓里「待拾」条 → 丢一条、拾一条（必须写为什么或标签）
+  await pg.click('.set-link:has-text("订阅 · 待拾")');
+  await pg.click('.tpl-lbxd');
+  await pg.fill('.tpl-val', 'q1f730');
+  const prev = await pg.locator('.tpl-preview').innerText();
+  if (prev !== 'https://letterboxd.com/q1f730/rss/') errs.push(`[${tag}] letterboxd template ${prev}`);
+  await pg.fill('.tpl-val', '');
+  await pg.fill('.feed-url', 'https://feeds.example.com/rss');
+  await pg.click('.feed-add');
+  await pg.waitForSelector('.toast:has-text("2 条进了待拾")', { timeout: 8000 }).catch(() => errs.push(`[${tag}] feed subscribe`));
+  const nBefore = (await dbRaw(pg, 'items')).length;
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.waitForSelector('.feed-bar', { timeout: 5000 }).catch(() => errs.push(`[${tag}] 待拾 bar missing`));
+  await pg.click('.feed-open');
+  await pg.waitForSelector('.feed-entry');
+  if ((await pg.locator('.feed-entry').count()) !== 2) errs.push(`[${tag}] feed entries ${await pg.locator('.feed-entry').count()}`);
+  await pg.locator('.feed-entry', { hasText: '第 11 期' }).locator('.fe-drop').click();
+  const e12 = pg.locator('.feed-entry', { hasText: '第 12 期' });
+  await e12.locator('.fe-pick').click();
+  if (!(await e12.locator('.fe-keep').isDisabled())) errs.push(`[${tag}] keep should need why/tag`);
+  await e12.locator('.fe-why-input').fill('夜里的声音 #播客');
+  await e12.locator('.fe-keep').click();
+  const kept = await waitRow((r) => r.url === 'https://example.com/ep12');
+  if (!kept || kept.why !== '夜里的声音' || !kept.tags.includes('播客') || kept.source !== '某某的播客') errs.push(`[${tag}] feed keep ${JSON.stringify(kept && [kept.why, kept.tags, kept.source])}`);
+  if ((await dbRaw(pg, 'items')).length !== nBefore + 1) errs.push(`[${tag}] feed should only add the picked one`);
+  await pg.waitForSelector('.fe-empty', { timeout: 3000 }).catch(() => errs.push(`[${tag}] 待拾 not empty after drop + keep`));
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v039-feed.png' });
+  await pg.click('.feed-inbox .btn:has-text("回穗仓")');
+  // 6. 0907 上锁：设 PIN → 详情里上锁 → 穗仓只剩空壳、秒搜搜不到 → 输错 / 输对 PIN
+  await openSettings(pg);
+  await pg.click('.set-link:has-text("上锁")');
+  await pg.fill('.pin-new', '2468');
+  await pg.fill('.pin-again', '2468');
+  await pg.click('.pin-set');
+  await pg.waitForSelector('.toast:has-text("PIN 设好了")');
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.click('.card:has-text("稻香")');
+  await pg.click('.detail-lock');
+  await pg.waitForSelector('.toast:has-text("上锁了")');
+  await pg.keyboard.press('Escape');
+  await pg.waitForSelector('.card:has-text("上锁的一穗")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] locked card not masked`));
+  if (await pg.locator('.card:has-text("稻香")').count()) errs.push(`[${tag}] locked title still on a card`);
+  await pg.click('.search-toggle');
+  await pg.fill('.sq-input', '稻香');
+  await pg.waitForTimeout(400);
+  if (await pg.locator('.sq-results [data-item-id]:has-text("稻香")').count()) errs.push(`[${tag}] locked item found by search`);
+  await pg.keyboard.press('Escape');
+  await pg.click('.card:has-text("上锁的一穗")');
+  await pg.waitForSelector('.pin-gate');
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v039-lock.png' });
+  await pg.fill('.pin-input', '1111');
+  await pg.click('.pin-go');
+  await pg.waitForSelector('.pin-err', { timeout: 5000 }).catch(() => errs.push(`[${tag}] wrong PIN accepted?`));
+  await pg.fill('.pin-input', '2468');
+  await pg.click('.pin-go');
+  await pg.waitForSelector('.detail-title:has-text("稻香")', { timeout: 8000 }).catch(() => errs.push(`[${tag}] right PIN did not unlock`));
+  const lockRow = await waitRow((r) => r.title === '稻香');
+  if (lockRow?.locked !== 1) errs.push(`[${tag}] locked flag not saved`);
+  await pg.keyboard.press('Escape');
+  await c.close();
+
+  // 7. 本机小模型国内镜像：中国大陆时区先走 cdn.jsdmirror.com，挂了换 jsd.onmicrosoft.cn；不碰 cdn.jsdelivr.net
+  const MODEL = process.env.GLEAN_MODEL || new URL('../models/mini-zh-v1.bin', import.meta.url);
+  const c2 = await b.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'Asia/Shanghai' });
+  const hit = {};
+  const count = (h) => (hit[h] = (hit[h] || 0) + 1);
+  await c2.route('**/cdn.jsdmirror.com/**', (r) => (count('jsdmirror'), r.fulfill({ status: 503, body: 'down', headers: H })));
+  await c2.route('**/jsd.onmicrosoft.cn/**', (r) => (count('onmicrosoft'), r.fulfill({ status: 200, body: fs.readFileSync(MODEL), headers: { ...H, 'content-type': 'application/octet-stream' } })));
+  await c2.route('**/cdn.jsdelivr.net/**', (r) => (count('jsdelivr'), r.abort()));
+  await c2.route('**/raw.githubusercontent.com/**', (r) => (count('raw'), r.abort()));
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p2.goto(base);
+  await p2.waitForSelector('text=穗仓还是空的');
+  await openSettings(p2);
+  await p2.click('.set-link:has-text("向量")');
+  await p2.click('.mini-btn');
+  await p2.waitForSelector('.toast:has-text("已就绪")', { timeout: 30000 }).catch(() => errs.push(`[${tag}] mini via CN mirror never ready`));
+  if (hit.jsdmirror !== 1 || hit.onmicrosoft !== 1 || hit.jsdelivr || hit.raw) errs.push(`[${tag}] CN mirror order ${JSON.stringify(hit)}`);
+  await c2.close();
+
+  // 8. 0415 字放大 1.3 倍（模拟安卓 textZoom：每个元素字号 ×1.3，盒子不变）：主要页面不横向溢出
+  const c3 = await b.newContext({ viewport: { width: 360, height: 780 }, isMobile: true, hasTouch: true });
+  await c3.addInitScript(() => {
+    const done = new WeakSet();
+    const scale = (root) => { for (const el of [root, ...root.querySelectorAll('*')]) { if (done.has(el)) continue; done.add(el); const f = parseFloat(getComputedStyle(el).fontSize); if (f) el.style.setProperty('font-size', f * 1.3 + 'px', 'important'); } };
+    const go = () => { scale(document.body); new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) scale(n); }).observe(document.body, { childList: true, subtree: true }); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  });
+  const p3 = await c3.newPage();
+  p3.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p3.goto(base);
+  await p3.click('text=先放点示例');
+  await p3.waitForSelector('.card');
+  const wide = [];
+  const chk = async (name) => { const w = await p3.evaluate(() => document.scrollingElement.scrollWidth); if (w > 361) wide.push(`${name}:${w}`); if (process.env.E2E_SHOTS && name === '设置') await p3.screenshot({ path: process.env.E2E_SHOTS + '/v039-zoom-settings.png' }); };
+  await chk('穗仓');
+  for (const v of ['嫁接', '新枝', '作品', '口味', '设置']) {
+    await p3.click(`.nav-btn:has-text("${v}")`);
+    await p3.waitForTimeout(600);
+    await chk(v);
+  }
+  await p3.evaluate(() => scrollTo(0, 0));
+  await p3.click('.nav-btn:has-text("穗仓")', { force: true });
+  await p3.click('.card >> nth=1');
+  await p3.waitForSelector('.detail');
+  await chk('详情');
+  if (process.env.E2E_SHOTS) await p3.screenshot({ path: process.env.E2E_SHOTS + '/v039-zoom-detail.png' });
+  if (wide.length) errs.push(`[${tag}] text zoom 1.3 overflow: ${wide.join(' ')}`);
+  await c3.close();
+  console.log(`v039: wx ${wx ? 'ok' : 'no'} snap ${wx?.snap?.length || 0}; todo→${fixed ? 'fixed' : 'no'}; playlist ${songs.length} (cover ${covered ? 'ok' : 'no'}); feed kept ${kept ? 1 : 0}; lock ok; CN mirror ${JSON.stringify(hit)}; zoom overflow ${wide.length}`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v039') {
+    await v039();
+    throw Object.assign(new Error('v039 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v038') {
     await v038();
     throw Object.assign(new Error('v038 only'), { only: true });
   }
   if (process.env.E2E_ONLY === 'v037') {
     await v037();
-  await v038();
     throw Object.assign(new Error('v037 only'), { only: true });
   }
   if (process.env.E2E_ONLY === 'v036') {
@@ -4997,6 +5194,9 @@ try {
   await v035();
   await v036();
   await v037();
+  // v0.39：v0.38 把 v038() 误放进了 E2E_ONLY=v037 的分支，整套跑时没跑到；挪回主序列
+  await v038();
+  await v039();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
