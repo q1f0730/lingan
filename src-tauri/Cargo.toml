@@ -32,3 +32,7 @@ tauri-plugin-clipboard-manager = "2"
 tauri-plugin-global-shortcut = "2"
 # v0.20：AI 密钥存系统钥匙串（Windows 凭据管理器）；安卓走 MainActivity 里的 Android Keystore 桥
 keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
+
+# v0.22：Windows「正在播放一键拾」读系统媒体传输控件（SMTC）
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = ["Media_Control", "Storage_Streams", "Foundation"] }
