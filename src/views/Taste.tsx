@@ -44,7 +44,8 @@ export function Taste() {
   const { settings, toast, go, openItem } = useApp();
   const all = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   // v0.24 0206：「我讨厌的」不算进口味统计，单独列出来
-  const items = useMemo(() => all?.filter((x) => x.polarity !== -1), [all]);
+  // v0.39 0907 上锁的穗不进口味（母题 / 星图 / 侧写都看不到）
+  const items = useMemo(() => all?.filter((x) => x.polarity !== -1 && !x.locked), [all]);
   const stats = useMemo(() => (items ? computeTaste(items) : null), [items]);
   const [portrait, setPortrait] = useState<string>(() => localStorage.getItem(TASTE_KEY) || '');
   const [at, setAt] = useState<string>(() => localStorage.getItem(TASTE_AT) || '');
@@ -141,7 +142,7 @@ export function Taste() {
 
         <StylePanel />
 
-        <DislikePanel items={all || []} />
+        <DislikePanel items={(all || []).filter((x) => !x.locked)} />
 
         <section className="taste-sec">
           <div className="table two-col">
