@@ -244,7 +244,7 @@ export function writeAutoBak(patch: Partial<AutoBakState>): AutoBakState {
 
 /** 库有没有变：条数 + 最近修改时间（穗、新枝、回收站、套路墙、不要的理由） */
 export async function librarySig(d: LinganDB = defaultDb): Promise<string> {
-  const [n, last, dn, devs, tn, cn, rn] = await Promise.all([
+  const [n, last, dn, devs, tn, cn, rn, wn, wl] = await Promise.all([
     d.items.count(),
     d.items.orderBy('updatedAt').last(),
     d.developments.count(),
@@ -252,9 +252,11 @@ export async function librarySig(d: LinganDB = defaultDb): Promise<string> {
     d.items.where('deletedAt').above(0).count(),
     d.cliches.count(),
     d.rejects.count(),
+    d.works.count(),
+    d.works.orderBy('updatedAt').last(),
   ]);
   const dl = devs.reduce((m, x) => Math.max(m, x.updatedAt || x.createdAt || 0, x.deletedAt || 0), 0);
-  return [n, last?.updatedAt || 0, dn, dl, tn, cn, rn].join('|');
+  return [n, last?.updatedAt || 0, dn, dl, tn, cn, rn, wn, wl?.updatedAt || 0].join('|');
 }
 
 // ───────── 目标：Windows（plugin-fs）/ 安卓（LinganBackup 桥）─────────
