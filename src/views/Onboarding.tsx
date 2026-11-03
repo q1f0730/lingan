@@ -9,7 +9,7 @@ const KEY = 'glean.onboarded';
 export async function needsOnboarding(): Promise<boolean> {
   try {
     if (localStorage.getItem(KEY)) return false;
-    const n = await db.items.count();
+    const n = await db.items.count(); // 回收站里的也算「用过」
     if (n > 0 || localStorage.getItem('lingan.settings.v1')) {
       localStorage.setItem(KEY, '1');
       return false;
