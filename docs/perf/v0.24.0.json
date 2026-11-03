@@ -1,0 +1,366 @@
+{
+  "seed": {
+    "items": 1000,
+    "images": 300,
+    "avgOrigKB": 333,
+    "maxOrigKB": 335
+  },
+  "firstOpenWithMigrationMs": 1446,
+  "thumbJob": {
+    "made": 300,
+    "failed": 0,
+    "ms": 6473,
+    "wallMs": 7762
+  },
+  "storage": {
+    "version": 100,
+    "items": 1000,
+    "inline": 0,
+    "withThumb": 300,
+    "hasImage": 300,
+    "images": 300,
+    "imageBytes": 102224504,
+    "avgThumbKB": 11.8,
+    "maxThumbKB": 12.5,
+    "avgOrigKB": 333
+  },
+  "searchIndex": {
+    "built": 1000,
+    "buildMs": 45,
+    "rows": 1000,
+    "reopenLoadMs": 14,
+    "reopenRebuilt": 0
+  },
+  "search": {
+    "items": 1000,
+    "offline": true,
+    "runs": [
+      {
+        "q": "黄昏",
+        "ms": 18.3,
+        "results": 176,
+        "coreMs": 1.9
+      },
+      {
+        "q": "海边",
+        "ms": 16.9,
+        "results": 178,
+        "coreMs": 0.7
+      },
+      {
+        "q": "钢琴",
+        "ms": 16.8,
+        "results": 172,
+        "coreMs": 0.6
+      },
+      {
+        "q": "夜车",
+        "ms": 17,
+        "results": 174,
+        "coreMs": 0.6
+      },
+      {
+        "q": "麦田",
+        "ms": 16.9,
+        "results": 63,
+        "coreMs": 0.4
+      },
+      {
+        "q": "黄昏",
+        "ms": 17.1,
+        "results": 176,
+        "coreMs": 0.4
+      }
+    ],
+    "maxMs": 18.3,
+    "medianMs": 17,
+    "cpu4x": [
+      {
+        "q": "黄昏",
+        "ms": 38.6,
+        "results": 176,
+        "coreMs": 1.3
+      },
+      {
+        "q": "便利",
+        "ms": 38.4,
+        "results": 125,
+        "coreMs": 1.9
+      },
+      {
+        "q": "霓虹",
+        "ms": 41,
+        "results": 176,
+        "coreMs": 1.3
+      }
+    ]
+  },
+  "coldStartMs": {
+    "median": 204,
+    "runs": [
+      180,
+      209,
+      204
+    ],
+    "firstThumbsDecodedMedian": 242,
+    "cardsOnFirstScreen": 12
+  },
+  "coldStartCpu4xMs": {
+    "median": 568,
+    "runs": [
+      546,
+      569,
+      568
+    ],
+    "firstThumbsDecodedMedian": 653
+  },
+  "scrollMasonry": {
+    "frames": 420,
+    "scrolledPx": 16834,
+    "scrollHeight": 115306,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 24,
+    "maxLiveObjectUrls": 10,
+    "virtual": {
+      "total": 1000,
+      "mounted": 22,
+      "cols": 2
+    },
+    "liveObjectUrlsAfter": 4,
+    "objectUrlsCreated": 60
+  },
+  "scrollTimeline": {
+    "frames": 360,
+    "scrolledPx": 14402,
+    "scrollHeight": 66314,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 83,
+    "maxLiveObjectUrls": 27,
+    "virtual": {
+      "total": 38,
+      "mounted": 2
+    }
+  },
+  "scrollList": {
+    "frames": 360,
+    "scrolledPx": 14439,
+    "scrollHeight": 45355,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 58,
+    "maxLiveObjectUrls": 1,
+    "virtual": {
+      "total": 1000,
+      "mounted": 58
+    }
+  },
+  "scrollMasonryCpu4x": {
+    "frames": 300,
+    "scrolledPx": 8012,
+    "scrollHeight": 115306,
+    "avgFps": 60,
+    "p50Ms": 16.7,
+    "p95Ms": 16.8,
+    "maxMs": 16.8,
+    "jankPct": 0,
+    "longPct": 0,
+    "maxMountedCards": 22,
+    "maxLiveObjectUrls": 9
+  },
+  "detailOriginalPx": 1280,
+  "cardThumbPx": 400,
+  "backup": {
+    "ms": 723,
+    "bytes": 102748606,
+    "items": 1000,
+    "images": 300,
+    "imageMB": 97.5,
+    "heap": {
+      "baseMB": 8.4,
+      "peakMB": 43.5,
+      "deltaMB": 35.1
+    },
+    "badHashes": 0
+  },
+  "restore": {
+    "ms": 957,
+    "heap": {
+      "baseMB": 6,
+      "peakMB": 50.3,
+      "deltaMB": 44.2
+    },
+    "items": 1000,
+    "images": 300
+  },
+  "interleavedBench": {
+    "note": "InstaBox 同一会话交替测冷启动（work/bench3.mjs，每轮轮换先后顺序；1000 穗 / 300 图，ready = 穗仓首屏卡片画出）。v0.22.0 / v0.23.0 dist = 对应 Release 源码构建（v0.23 为最终瘦首包版）；v0.24.0 = 本次发版的最终构建（dist/index.html md5 e44eef53…）",
+    "final_9rounds": {
+      "v0.22.0": {
+        "normalMedian": 203,
+        "cpu4xMedian": 596,
+        "normalRuns": [
+          203,
+          195,
+          198,
+          214,
+          200,
+          222,
+          209,
+          193,
+          203
+        ],
+        "cpu4xRuns": [
+          596,
+          547,
+          604,
+          571,
+          696,
+          630,
+          627,
+          577,
+          581
+        ]
+      },
+      "v0.23.0": {
+        "normalMedian": 200,
+        "cpu4xMedian": 618,
+        "normalRuns": [
+          210,
+          183,
+          200,
+          220,
+          187,
+          212,
+          180,
+          187,
+          212
+        ],
+        "cpu4xRuns": [
+          569,
+          530,
+          618,
+          674,
+          658,
+          630,
+          557,
+          585,
+          654
+        ]
+      },
+      "v0.24.0": {
+        "normalMedian": 188,
+        "cpu4xMedian": 539,
+        "normalRuns": [
+          179,
+          188,
+          193,
+          188,
+          185,
+          208,
+          170,
+          191,
+          177
+        ],
+        "cpu4xRuns": [
+          479,
+          604,
+          552,
+          548,
+          553,
+          539,
+          531,
+          510,
+          517
+        ]
+      }
+    },
+    "earlier_7rounds_v024a": {
+      "v0.22.0": {
+        "normalMedian": 207,
+        "cpu4xMedian": 574,
+        "normalRuns": [
+          206,
+          185,
+          181,
+          209,
+          210,
+          208,
+          207
+        ],
+        "cpu4xRuns": [
+          556,
+          563,
+          571,
+          574,
+          617,
+          612,
+          596
+        ]
+      },
+      "v0.23.0": {
+        "normalMedian": 197,
+        "cpu4xMedian": 595,
+        "normalRuns": [
+          251,
+          195,
+          182,
+          204,
+          193,
+          205,
+          197
+        ],
+        "cpu4xRuns": [
+          627,
+          531,
+          600,
+          596,
+          595,
+          593,
+          594
+        ]
+      },
+      "v024a": {
+        "normalMedian": 173,
+        "cpu4xMedian": 540,
+        "normalRuns": [
+          168,
+          177,
+          165,
+          190,
+          173,
+          190,
+          170
+        ],
+        "cpu4xRuns": [
+          495,
+          546,
+          524,
+          540,
+          575,
+          543,
+          500
+        ]
+      }
+    },
+    "summary": "9 轮中位数：v0.24 188ms / 4× 539ms；v0.23 200 / 618（v0.24 快 6% / 13%）；v0.22 203 / 596（快 7% / 10%）。修掉了 v0.23 在 4× 降速下比 v0.22 慢的回退。早一轮 7 轮（v024a = 中间构建）方向一致：173/540 vs 197/595"
+  },
+  "bundle": {
+    "firstScreenJsKB": {
+      "v0.24.0": "app 550.8（gzip 186.5）+ index 门面 + runtime"
+    }
+  }
+}
