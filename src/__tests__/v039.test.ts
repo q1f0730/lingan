@@ -289,3 +289,39 @@ describe('本机小模型国内镜像', () => {
     expect(M.miniUrls('Asia/Taipei')[0]).toBe(M.MINI_URLS[0]);
   });
 });
+
+describe('0934 每穗出口', () => {
+  const mk = (id: number, o: Partial<Item> = {}) => ({ id, type: 'idea', title: 't' + id, tags: [], createdAt: id, updatedAt: id, ...o }) as Item;
+  it('关掉的出口拿不到这一穗，别的出口照常；上锁 = 全关', async () => {
+    const { aiVisible, exitOpen, EXITS } = await import('../lib/privacy');
+    const s = { chat: { baseUrl: 'https://api.example.com/v1' } };
+    const ai = mk(1, { shut: ['ai'] });
+    expect(aiVisible(ai, s)).toBe(false);
+    expect(exitOpen(ai, 'agent')).toBe(true);
+    for (const [e] of EXITS) expect(exitOpen(mk(2, { locked: 1 }), e)).toBe(false);
+    const { visible } = await import('../lib/agentapi');
+    expect(visible(mk(3, { shut: ['agent'] }))).toBe(false);
+    expect(visible(ai)).toBe(true);
+    const { gardenItems } = await import('../lib/garden');
+    expect(gardenItems([mk(4, { garden: 1, shut: ['garden'] }), mk(5, { garden: 1, shut: ['ai'] })]).map((x) => x.id)).toEqual([5]);
+    const { branchShareText } = await import('../lib/sharekit');
+    const t = branchShareText({ title: '新枝', idea: 'x' }, [mk(6, { shut: ['share'], title: '心事' }), mk(7, { title: '晴天' })], 'show', 'Q1f730');
+    expect(t).toContain('晴天');
+    expect(t).not.toContain('心事');
+  });
+  it('按标签批量关 / 开；出口随同步', async () => {
+    const { db, addItem } = await import('../lib/db');
+    const { shutByTag } = await import('../lib/repo');
+    const a = await addItem({ type: 'idea', title: '甲', tags: ['心事934'] });
+    const b = await addItem({ type: 'idea', title: '乙', tags: ['心事934', '夜'] });
+    const c = await addItem({ type: 'idea', title: '丙', tags: ['夜'] });
+    expect(await shutByTag('心事934', 'agent', true)).toBe(2);
+    expect(await shutByTag('心事934', 'agent', true)).toBe(0);
+    expect((await db.items.get(a))!.shut).toEqual(['agent']);
+    expect((await db.items.get(c))!.shut).toBeUndefined();
+    expect(await shutByTag('心事934', 'agent', false)).toBe(2);
+    expect((await db.items.get(b))!.shut).toBeUndefined();
+    const { SKIP } = await import('../lib/sync/merge');
+    expect(SKIP.items.has('shut')).toBe(false);
+  });
+});
