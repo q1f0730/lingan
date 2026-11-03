@@ -3,7 +3,7 @@ import { db, normalizeTags } from './db';
 import { getOriginalDataUrl, itemHasImage } from './imagestore';
 import { itemText } from './similarity';
 import { aiReady, embedConfig, type Settings } from './settings';
-import { aiVisible } from './privacy';
+import { aiVisible, MINI } from './privacy';
 
 /** Background AI enrichment for one item. Returns a human-readable error or null. */
 export async function enrichItem(id: number, s: Settings, force = false): Promise<string | null> {
@@ -33,7 +33,7 @@ export async function enrichItem(id: number, s: Settings, force = false): Promis
     }
   }
   const ec = embedConfig(s);
-  if (ec && s.autoEmbed && seeEmbed) {
+  if (ec && (s.autoEmbed || ec.baseUrl === MINI) && seeEmbed) {
     const fresh = await db.items.get(id);
     if (fresh && (force || !fresh.embedding || fresh.embedModel !== ec.model)) {
       try {
