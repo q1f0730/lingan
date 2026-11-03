@@ -4,7 +4,6 @@ import { normalizeTags } from '../lib/db';
 import { extractUrl, fetchLinkMeta } from '../lib/linkmeta';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
-import { nowPlayingDraft } from '../lib/nowplaying';
 import { useNowPlaying } from './NowPlaying';
 
 const DRAFT_KEY = 'capture';
@@ -80,7 +79,7 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
   async function fillNowPlaying() {
     const got = await np.read();
     if (!got) return;
-    const nd = nowPlayingDraft(got);
+    const nd = (await import('../lib/nowplaying')).nowPlayingDraft(got);
     setD((x) => ({ ...x, type: 'music', title: nd.title, creator: nd.creator, content: x.content || nd.content, image: x.image || nd.image, source: nd.source }));
     setTagText((t) => (t.split(/\s+/).includes('正在听') ? t : (t + ' 正在听').trim()));
   }
