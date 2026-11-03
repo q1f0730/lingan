@@ -25,8 +25,9 @@ export function isLocalBaseUrl(baseUrl: string): boolean {
 export function allowPrivate(s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl = s.chat.baseUrl): boolean {
   return baseUrl === MINI || (!!s.privateLocal && isLocalBaseUrl(baseUrl));
 }
-export function aiVisible(it: { private?: 1 }, s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl?: string): boolean {
-  return !it.private || allowPrivate(s, baseUrl);
+export function aiVisible(it: { private?: 1; locked?: 1 }, s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl?: string): boolean {
+  // v0.39 0907 上锁的穗：任何模型（连本机的）都不发
+  return !it.locked && (!it.private || allowPrivate(s, baseUrl));
 }
 
 /** v0.38 端侧向量：本机小模型（lib/mini.ts）的「接口地址」——不出设备，私密穗也能算 */
