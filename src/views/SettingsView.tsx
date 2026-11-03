@@ -17,7 +17,8 @@ import { androidFiles, deliverZip, openFileSink, type ZipTarget } from '../lib/f
 import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
 import { db } from '../lib/db';
 import { PRESETS, aiReady, distinctOf, embedConfig, keyOptional, vaultKind, withPreset, type Settings } from '../lib/settings';
-import { LocalModelPanel } from '../components/LocalModelPanel';
+import { LocalModelPanel, MiniPanel } from '../components/LocalModelPanel';
+import { MINI_KEY } from '../lib/privacy';
 import { OutboundPanel } from '../components/OutboundPanel';
 import { SyncPanel, syncSummary } from '../components/SyncPanel';
 import { lanSummary, syncStateSummary } from '../lib/syncsummary';
@@ -50,6 +51,7 @@ const SnapshotP = memo(SnapshotPanel);
 const OutboundP = memo(OutboundPanel);
 const SyncP = memo(SyncPanel);
 const GardenP = memo(GardenPanel);
+const MiniP = memo(MiniPanel);
 const MoveInP = memo(MoveIn);
 
 export function SettingsView() {
@@ -221,7 +223,7 @@ export function SettingsView() {
 
   const SECTIONS: Array<[string, string, string]> = [
     ['set-ai', 'AI 服务', PRESETS.find((p) => p.id === settings.preset)?.name.replace(/（.*）/, '') || ''],
-    ['set-embed', '向量', settings.embed.model || '不用'],
+    ['set-embed', '向量', settings.embed.model || (localStorage.getItem(MINI_KEY) ? '本机小模型' : '不用')],
     ['set-look', '外观', THEME_LABEL[settings.theme]],
     ['set-capture', '极速采集', captureSummary()],
     ['set-tags', '待理与标签', inboxEnabled() ? '待理开' : '待理关'],
@@ -365,6 +367,7 @@ export function SettingsView() {
                 {embedding ? `向量化 ${embedding}` : '补全全部向量'}
               </button>
             </div>
+            <MiniP s={settings} />
           </section>
 
           <section className="set-sec" id="set-look">
