@@ -71,6 +71,7 @@ describe('0702 首屏只查最新 60 条', () => {
     const rows = Array.from({ length: 150 }, (_, i) => mk(i + 1, i % 50 === 0 ? { deletedAt: 9 } : i % 30 === 1 ? { sample: 1 } : {}));
     await db.items.bulkAdd(rows as Item[]);
     const li = await import('../lib/libitems');
+    localStorage.setItem('glean.libn', String(li.BIG + 1)); // 上次全量是大库 → 走两段
     li.primeLibraryItems(10000);
     await li.firstLibraryItems(3000);
     const s = li._libState();
@@ -85,6 +86,8 @@ describe('0702 首屏只查最新 60 条', () => {
     li.loadFullNow();
     for (let k = 0; k < 50 && li._libState().partial; k++) await new Promise((r) => setTimeout(r, 20));
     expect(li._libState()).toMatchObject({ partial: false, full: true, n: 147 });
+    // 全量 147 条 < BIG：记下来，下次打开直接读全表
+    expect(Number(localStorage.getItem('glean.libn'))).toBe(147);
     await db.items.clear();
   });
 });
