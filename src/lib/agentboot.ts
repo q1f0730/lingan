@@ -4,6 +4,7 @@ import { addItem, db } from './db';
 import { apiStart, apiStop, apiSupported, listenApi, onAgentCfg, readAgentCfg } from './agent';
 import { handleApi, type AgentDraft } from './agentapi';
 import { autoCheck } from './updatecheck';
+import { plugOn } from './plugs';
 import type { ConfirmOpts } from './store';
 
 type Toast = (msg: string, kind?: 'ok' | 'err', action?: { label: string; run: () => void }) => void;
@@ -52,10 +53,11 @@ export async function boot(opts: { toast: Toast; confirm: (o: ConfirmOpts) => Pr
         opts.toast(`本地 API 开不了：${String(e)}`, 'err');
       }
     };
-    if (last.on) void apply(true, last.port);
+    // v0.39 0805 接入清单里停用了 Agent：开机不开本地 API
+    if (last.on && plugOn('agent')) void apply(true, last.port);
     offs.push(
       onAgentCfg((c) => {
-        if (c.on !== last.on || c.port !== last.port) void apply(c.on, c.port);
+        if (c.on !== last.on || c.port !== last.port) void apply(c.on && plugOn('agent'), c.port);
         last = c;
       }),
     );
