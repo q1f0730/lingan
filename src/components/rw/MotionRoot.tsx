@@ -1,21 +1,16 @@
-import { LazyMotion, MotionConfig } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { afterFirstPaint, type MotionLevel } from '../../lib/motion';
+import { motionReady, ReducedCtx } from './lite';
 
-// 首屏画完再加载动画特性包：之前的弹簧 / 滑块直接显示最终状态，不影响使用
-const loadFeatures = () => afterFirstPaint().then(() => import('./features')).then((r) => r.default);
+// 首屏画完才开始播动画：之前的弹簧 / 进场直接显示最终状态，不影响使用、不拖冷启动
+void afterFirstPaint().then(motionReady);
 
 /**
- * Rewamp UI 的组件都用 Framer Motion 写动效。这里用 LazyMotion + `m.*`：首包只带极小的渲染器，
- * 动画特性（domAnimation；v0.34 起 layoutId 换成 Glide）在首屏后异步加载，不拖冷启动。
+ * Rewamp UI 的组件用 `m.*` 写动效（v0.38 起是自写的 ./lite，WAAPI；以前是 Framer Motion）。
  * 减少动态效果（系统设置或低端机判为 off）时一律不动，只保留最终状态。
  */
 export function MotionRoot({ level, children }: { level: MotionLevel; children: ReactNode }) {
-  return (
-    <LazyMotion features={loadFeatures} strict>
-      <MotionConfig reducedMotion={level === 'off' ? 'always' : 'user'}>{children}</MotionConfig>
-    </LazyMotion>
-  );
+  return <ReducedCtx.Provider value={level === 'off'}>{children}</ReducedCtx.Provider>;
 }
 
 /** 弹簧参数：照 Rewamp 的 morphing-tab / magnetic-pill / sidebar（stiffness 420, damping 30） */
