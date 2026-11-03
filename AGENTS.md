@@ -4,7 +4,7 @@
 
 ## 目录
 
-- `src/lib/` 逻辑层（纯函数为主，可单测）：`db.ts` Dexie schema 与迁移、`backup.ts` .glean 备份、`graft.ts` 嫁接、`search.ts` 搜索、`agentapi.ts` 本地 API / MCP、`update.ts` 自动更新、`vault.ts` 钥匙串、`autobackup.ts` 自动备份与回读校验、`snapshots.ts` 操作前快照与升级前副本、`safewrite.ts` 写入失败暂存。
+- `src/lib/` 逻辑层（纯函数为主，可单测）：`db.ts` Dexie schema 与迁移、`backup.ts` .glean 备份、`graft.ts` 嫁接、`search.ts` 搜索、`agentapi.ts` 本地 API / MCP、`update.ts` 自动更新、`vault.ts` 钥匙串、`autobackup.ts` 自动备份与回读校验、`snapshots.ts` 操作前快照与升级前副本、`safewrite.ts` 写入失败暂存、`works.ts` + `workstore.ts` 作品工坊（v0.29：形态模板、[[ 引用、分镜、歌单、情绪板、Markdown 导出；works 表引用一律存 uid）。
 - `src/views/` 页面，`src/components/` 组件，样式全在 `src/index.css`。
 - `src/__tests__/` vitest（node 环境 + fake-indexeddb）；夹具在 `src/__tests__/fixtures/`。
 - `src-tauri/` Rust：`lib.rs` 入口与托盘、`api.rs` + `apicore.rs` 本地 API、`smtc.rs` Windows 正在播放。
