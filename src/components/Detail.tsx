@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useRef } from 'react';
-import { db, findDupes, keepItems, reInbox } from '../lib/db';
+import { db, findDupes, keepItems, reInbox, updateItem } from '../lib/db';
+import { InlineText } from './InlineText';
 // v0.23 瘦首包：batch / organize 点到才加载（详情首屏不需要）
 const batch = () => import('../lib/batch');
 import { dupReason } from '../lib/dupe';
@@ -28,6 +29,12 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
   const full = useOriginalSrc(it);
   const grown = useLiveQuery(async () => (it.id != null ? branchesFrom((await db.developments.toArray()).filter((x) => !x.deletedAt), it.id) : []), [it.id]);
   const quote = it.type === 'text' && !!it.content;
+  // v0.27 0409 点一下直接改：改了内容就让向量重算
+  const save = async (patch: Partial<Item>) => {
+    if (it.id == null) return;
+    await updateItem(it.id, { ...patch, embedding: undefined, embedModel: undefined });
+    toast('已保存');
+  };
   async function copy() {
     try {
       await navigator.clipboard.writeText(it.content || it.title);
@@ -103,11 +110,19 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
         ) : null}
         {quote ? (
           <>
-            <h2 className="detail-title quote">{displayTitle(it)}</h2>
+            <h2 className="detail-title quote">
+              <InlineText value={it.content || ''} label="原文" multiline allowEmpty={false} onSave={(v) => save({ content: v })}>
+                {displayTitle(it)}
+              </InlineText>
+            </h2>
             <p className="detail-src">— {quoteSource(it) || (it.source ? `摘自${it.source}` : bookTitle(it.title))}</p>
           </>
         ) : (
-          <h2 className="detail-title">{displayTitle(it)}</h2>
+          <h2 className="detail-title">
+            <InlineText value={it.title} label="标题" allowEmpty={false} maxLength={120} onSave={(v) => save({ title: v })}>
+              {displayTitle(it)}
+            </InlineText>
+          </h2>
         )}
         <dl className="kv">
           <div>
@@ -145,7 +160,9 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
           {it.creator && !quote && (
             <div>
               <dt>{CREATOR[it.type]}</dt>
-              <dd>{it.creator}</dd>
+              <dd>
+                <InlineText value={it.creator} label={CREATOR[it.type]} maxLength={80} onSave={(v) => save({ creator: v })} />
+              </dd>
             </div>
           )}
           {quote && it.title && it.title !== (it.content || '').replace(/^[「“"『]+/, '').slice(0, 18) && it.title !== (it.content || '').slice(0, 18) && (
@@ -157,7 +174,9 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
           {it.year && (
             <div>
               <dt>年份</dt>
-              <dd className="num">{it.year}</dd>
+              <dd className="num">
+                <InlineText value={it.year} label="年份" maxLength={12} onSave={(v) => save({ year: v })} />
+              </dd>
             </div>
           )}
           {it.url && (
@@ -170,7 +189,7 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
               </dd>
             </div>
           )}
-          {(it.tags.length > 0 || sugg.length > 0) && (
+          {(
             <div>
               <dt>标签</dt>
               <dd className="tags">
@@ -179,6 +198,16 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
                     #{t}
                   </span>
                 ))}
+                <InlineText
+                  value=""
+                  label="加标签"
+                  placeholder="＋标签"
+                  tags="bare"
+                  allowEmpty={false}
+                  maxLength={120}
+                  className="tag-add"
+                  onSave={(v) => save({ tags: [...it.tags, ...v.split(/[\s,，、#]+/).filter(Boolean)] })}
+                />
                 {sugg.map((t) => (
                   <span key={'s' + t} className="tag-sugg">
                     <button className="tag sugg-yes" onClick={() => void batch().then((m) => m.acceptSugg(it.id!, t))} title="AI 想加的新词：点一下才算数">
@@ -216,15 +245,21 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
         {it.content && !quote && (
           <section className="detail-sec">
             <div className="label">{it.type === 'idea' ? '展开' : '内容'}</div>
-            <p className="detail-content">{it.content}</p>
+            <p className="detail-content">
+              <InlineText value={it.content} label={it.type === 'idea' ? '展开' : '内容'} multiline onSave={(v) => save({ content: v })} />
+            </p>
           </section>
         )}
-        {it.why && (
-          <section className="detail-sec detail-why">
-            <div className="label">为什么收</div>
-            <p>{it.why}</p>
-          </section>
-        )}
+        <section className={`detail-sec detail-why${it.why ? '' : ' is-empty'}`}>
+          <div className="label">为什么收</div>
+          <p>
+            <InlineText value={it.why || ""} label="为什么收" multiline tags="hash" placeholder="还没写 · 点这里补一句为什么打动你" maxLength={1000} onSave={(v) => {
+                const tags: string[] = [];
+                const w = v.replace(/(^|\s)#([^\s#]{1,24})(?=\s|$)/g, (_, pre: string, t: string) => (tags.push(t), pre)).replace(/\s{2,}/g, ' ').trim();
+                return save({ why: w, ...(tags.length ? { tags: [...it.tags, ...tags] } : {}) });
+              }} />
+          </p>
+        </section>
         {it.caption && (
           <section className="detail-sec detail-caption">
             <div className="label">AI 看到的</div>
