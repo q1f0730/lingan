@@ -36,7 +36,7 @@ function cooled(items: Item[], now = Date.now()): Array<{ tag: string; n: number
 /** 口味（m4 / d5）：一句开头判断 → 倾向 / 来自这些穗 两列无线表格 → 构成 → 最近冷下来的 → 拾穗的日子。不出现分数、比例、雷达图 */
 export function Taste() {
   const { settings, toast, go, openItem } = useApp();
-  const items = useLiveQuery(() => db.items.toArray(), []);
+  const items = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const stats = useMemo(() => (items ? computeTaste(items) : null), [items]);
   const [portrait, setPortrait] = useState<string>(() => localStorage.getItem(TASTE_KEY) || '');
   const [at, setAt] = useState<string>(() => localStorage.getItem(TASTE_AT) || '');
