@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { db, findDupes, keepItems, reInbox, updateItem } from '../lib/db';
 import { InlineText } from './InlineText';
 import { basketHint, toggleBasket, useBasket } from '../lib/basket';
@@ -29,7 +29,9 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
   const sugg = useMemo(() => (it.tagSugg || []).filter((t) => !it.tags.includes(t)), [it.tagSugg, it.tags]);
   // 手机左右滑翻穗（0113）
   const sw = useRef<{ x: number; y: number } | null>(null);
-  const full = useOriginalSrc(it);
+  // v0.37 0713 先看详情档，点图换原图（截图里的小字）
+  const [origOf, setOrigOf] = useState<number | null>(null);
+  const full = useOriginalSrc(it, origOf === it.id);
   const grown = useLiveQuery(async () => (it.id != null ? branchesFrom((await db.developments.toArray()).filter((x) => !x.deletedAt), it.id) : []), [it.id]);
   const quote = it.type === 'text' && !!it.content;
   // v0.28 0408 待嫁接篮
@@ -87,7 +89,7 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
         </nav>
       )}
       {full && (
-        <figure className="detail-figure">
+        <figure className="detail-figure" onClick={() => setOrigOf(it.id ?? null)} data-orig={origOf === it.id ? '1' : undefined}>
           <img className="detail-img" src={full} alt={it.title} decoding="async" />
         </figure>
       )}
