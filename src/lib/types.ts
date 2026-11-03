@@ -27,6 +27,8 @@ export interface Item {
   /** v0.22 拾自哪个 App（「微信读书」「网易云音乐」）：分享 / 选字 / 正在播放时自动记，认不出就没有 */
   source?: string;
   caption?: string; // AI image caption
+  /** v0.36 0020 图里的字（Windows 系统 OCR 识别，进全文索引、随同步；'' = 识别过、没有字） */
+  ocr?: string;
   embedding?: number[];
   embedModel?: string;
   /** v0.14 示例穗（示例池抽来的），可一键清掉 */
