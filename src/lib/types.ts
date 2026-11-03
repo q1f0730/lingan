@@ -87,6 +87,14 @@ export interface Idea {
   nearest?: { sim: number; method: 'text' | 'vector'; title?: string };
   /** v0.24 0234 去 AI 腔：本地改写了几处模板句式 */
   deai?: number;
+  /** v0.30 0216 掷出的硬约束（「用了什么约束」里显示） */
+  constraint?: string;
+  /** v0.30 野一点：这一根是温度 1.5 + 破前提长出来的 */
+  wild?: 1;
+  /** v0.30 0201 用户亲手挑的张力 */
+  focus?: string[];
+  /** v0.30 0207 离「大众版」太近被换掉了 */
+  mainstream?: 'replaced';
 }
 
 /** 四步嫁接的中间产物：张力与种子（可展开看） */
@@ -112,6 +120,10 @@ export interface GraftBatch {
   seeds?: GraftSeed[];
   pattern?: string; // DEFIX 找到的重复套路
   calls?: number; // 实际调用了几次模型（含重试）
+  /** v0.30 0207 模型给的「大众版」（新枝要离它远；只在溯源里给你看） */
+  mainstream?: string;
+  /** v0.30 每次调用用的温度（野一点时第一步是 1.5） */
+  temps?: number[];
 }
 
 export interface Development {
@@ -138,7 +150,28 @@ export interface Development {
   deletedAt?: number;
   /** v0.21 最后修改时间（旧新枝迁移时 = createdAt） */
   updatedAt?: number;
+  /** v0.30 ROADMAP v0.24 新枝再嫁接：子枝挂在哪根新枝下（父枝 uid）、怎么接的 */
+  parentUid?: string;
+  regraft?: RegraftKind;
+  /** v0.30 0904 落地追踪：种子 / 试过 / 做成 / 放弃（没有 = 种子）；结果穗（uid） */
+  status?: BranchStatus;
+  statusAt?: number;
+  resultUids?: string[];
+  /** v0.30 0204 新枝追问：问答挂在这根新枝下，回答只用这批穗 */
+  followups?: Followup[];
   createdAt: number;
+}
+
+/** v0.30 再嫁接三种：更野 / 更能落地 / 换一种形式 */
+export type RegraftKind = 'wilder' | 'grounded' | 'reform';
+export type BranchStatus = 'seed' | 'tried' | 'done' | 'dropped';
+export interface Followup {
+  q: string;
+  a: string;
+  /** 回答里引用的穗（这批里的位置，1 起） */
+  refs: number[];
+  source: 'ai' | 'offline';
+  at: number;
 }
 
 export const TYPE_LABEL: Record<ItemType, string> = {
