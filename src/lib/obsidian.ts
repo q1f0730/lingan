@@ -153,7 +153,8 @@ const quoteBlock = (s: string) =>
 export function buildVault(input: VaultInput): Vault {
   const now = input.now ?? Date.now();
   const include = !!input.includeSamples;
-  const all = input.items.filter((it) => it.id != null);
+  // v0.21 回收站里的（墓碑）不导出
+  const all = input.items.filter((it) => it.id != null && !it.deletedAt);
   const items = all.filter((it) => include || !it.sample).sort((a, b) => b.createdAt - a.createdAt);
   const skippedSamples = all.length - items.length;
   const byId = new Map(all.map((it) => [it.id!, it]));
@@ -184,7 +185,7 @@ export function buildVault(input: VaultInput): Vault {
 
   // 2. 新枝：只由「未导出的示例」长出来的不导（与 v0.14「清掉示例」同一口径）
   const devs = input.developments
-    .filter((d) => d && d.idea && d.id != null)
+    .filter((d) => d && d.idea && d.id != null && !d.deletedAt)
     .filter((d) => {
       const real = (d.itemIds || []).filter((x) => x > 0);
       if (!real.length) return true;
@@ -226,7 +227,9 @@ export function buildVault(input: VaultInput): Vault {
       ['修改时间', it.updatedAt && it.updatedAt !== it.createdAt ? localStamp(it.updatedAt) : undefined],
       ['为什么', it.why || undefined],
       ['示例', it.sample ? true : undefined],
-      ['glean_id', it.id!],
+      // v0.21 glean_id = 全局 uid（跨设备 / 重新导出都不变）；glean_n = 本机编号
+      ['glean_id', it.uid || it.id!],
+      ['glean_n', it.uid ? it.id! : undefined],
     ]);
     const body: string[] = [];
     if (embed) body.push(embed, '');
@@ -269,7 +272,8 @@ export function buildVault(input: VaultInput): Vault {
       ['主题', d.theme || undefined],
       ['记录时间', localStamp(d.createdAt)],
       ['tags', ['新枝']],
-      ['glean_id', d.id!],
+      ['glean_id', d.uid || d.id!],
+      ['glean_n', d.uid ? d.id! : undefined],
     ]);
     const body: string[] = [];
     if (idea.idea) body.push(bodyText(idea.idea), '');
@@ -397,7 +401,7 @@ export async function exportObsidianZip(
   opts: { includeSamples?: boolean; now?: number } = {},
 ): Promise<{ zip: Uint8Array; stats: VaultStats }> {
   const now = opts.now ?? Date.now();
-  const [items, developments] = await Promise.all([d.items.toArray(), d.developments.toArray()]);
+  const [items, developments] = await Promise.all([d.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), d.developments.toArray().then((a) => a.filter((x) => !x.deletedAt))]);
   const images = new Map<number, VaultImage>();
   for (const it of items) {
     if (it.id == null || (!opts.includeSamples && it.sample)) continue;
