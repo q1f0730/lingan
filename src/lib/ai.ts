@@ -50,6 +50,9 @@ export class AIError extends Error {
 async function postJSON(url: string, key: string, body0: ChatBody, timeoutMs = 90000, signal?: AbortSignal, kind: OutKind = 'chat'): Promise<unknown> {
   // v0.30 发出去前看一眼（可能去掉图片）+ 出站记录（只记域名 / 种类 / 字段类别 / 字节，不记内容）
   // 出站模块按需加载（ai.ts 在首屏包里，出站逻辑不用跟着进首屏）
+  // v0.39 0805 接入清单里停用了 AI 服务：一律不发
+  const { plugOn, PLUG_NAME } = await import('./plugs');
+  if (!plugOn('ai')) throw new AIError(`「${PLUG_NAME.ai}」已停用：设置 → 出站 → 接入与权限 里打开`);
   const { fieldsOf, gateOutbound, hostOf, OutboundCancel, recordOutbound } = await import('./outbound');
   let body = body0;
   let stripped = 0;
