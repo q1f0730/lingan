@@ -802,3 +802,67 @@
   text-align: center;
   padding: 20px;
 }
+
+/* v0.30 编辑区隐藏 uid：底层画 chip，上层 textarea 文字透明只留光标 / 选区（两层同字号、同内边距、同换行） */
+.work-editor .work-hl,
+.work-editor .work-text {
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.75;
+  letter-spacing: normal;
+  padding: 16px 18px;
+  border: 1px solid transparent;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  tab-size: 4;
+}
+.work-editor .work-hl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--fg);
+  border-radius: 18px;
+  z-index: 0;
+}
+.work-editor .work-text {
+  position: relative;
+  z-index: 1;
+  border-color: var(--line);
+  background: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--fg);
+  resize: none;
+  overflow: hidden;
+}
+.work-editor .work-text::selection {
+  background: var(--accent-soft);
+  color: transparent;
+}
+.work-ed-box {
+  position: relative;
+  border-radius: 18px;
+  background: var(--surface);
+}
+.ref-chip {
+  background: var(--accent-soft);
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--accent-soft);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  color: var(--fg);
+}
+.ref-chip .ref-br {
+  color: transparent;
+}
+.ref-chip.gone {
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--line);
+  color: var(--fg-3);
+  text-decoration: line-through;
+}
