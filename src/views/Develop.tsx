@@ -7,7 +7,11 @@ import { db, depositCliches, markBlocked, markGrafted } from '../lib/db';
 import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
 import { drawForMode, graftCount, isMode, MIN_CROSS_TYPES, MODES, modeDef, modeName, type GraftMode } from '../lib/modes';
 import { MIN_EVIDENCE } from '../lib/provenance';
-import { aiReady } from '../lib/settings';
+import { aiReady, distinctOf, embedConfig, styleSamples } from '../lib/settings';
+import { aiVisible } from '../lib/privacy';
+import { feedbackBlock, recentRejects } from '../lib/feedback';
+import { nearestOld } from '../lib/distinct';
+import { lacksWhy } from '../lib/why';
 import { daySeed, mulberry32, pickItems } from '../lib/similarity';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, type Development, type GraftBatch, type Item } from '../lib/types';
@@ -29,7 +33,13 @@ function savedMode(): GraftMode {
 /** 嫁接：把几穗相距很远的东西接在一起，一次长三根新枝。v0.12 起至少 3 穗，好让每根新枝都能点回 3 穗。 */
 export function Develop({ preset, clearPreset }: { preset: number[] | null; clearPreset: () => void }) {
   const { settings, toast, openItem, go, desktop } = useApp();
-  const items = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  const all = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  // v0.24 0206 我讨厌的不当素材；0242 私密穗在用云端模型时不抽（本地模型且允许时照常）
+  const ai = aiReady(settings);
+  const items = useMemo(() => all?.filter((x) => x.polarity !== -1 && (!ai || aiVisible(x, settings))), [all, ai, settings]);
+  const avoid = useMemo(() => (all || []).filter((x) => x.polarity === -1 && aiVisible(x, settings)), [all, settings]);
+  /** 0202 钉住的主干（穗 id） */
+  const [anchor, setAnchor] = useState<number | null>(null);
   const nBranches = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt).length), []);
   // v0.19 我的套路墙：每次嫁接都带上（写进 FORBIDDEN + 生成后本地校验）
   const wall = useLiveQuery(() => db.cliches.toArray(), []);
@@ -55,8 +65,10 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   }, [items]);
 
   useEffect(() => {
-    if (preset && items) {
-      const sel = preset.map((id) => byId.get(id)).filter(Boolean) as Item[];
+    if (preset && items && all) {
+      // 从详情 / 每日一穗带进来的：私密 / 讨厌的穗也照带（嫁接时私密的会改走离线）
+      const allById = new Map(all.map((i) => [i.id!, i]));
+      const sel = preset.map((id) => byId.get(id) || allById.get(id)).filter(Boolean) as Item[];
       if (sel.length) {
         let full = sel;
         if (sel.length < MIN_EVIDENCE) {
@@ -74,15 +86,20 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       }
       clearPreset();
     }
-  }, [preset, items, byId, clearPreset, mode]);
+  }, [preset, items, all, byId, clearPreset, mode]);
 
   // 被编辑 / 删除时保持同步
   useEffect(() => {
-    if (picked && items) {
-      const fresh = picked.map((p) => byId.get(p.id!)).filter(Boolean) as Item[];
+    if (picked && all) {
+      const allById = new Map(all.map((i) => [i.id!, i]));
+      const fresh = picked.map((p) => allById.get(p.id!)).filter(Boolean) as Item[];
       if (fresh.length !== picked.length || fresh.some((f, i) => f !== picked[i])) setPicked(fresh.length ? fresh : null);
     }
-  }, [items, byId, picked]);
+  }, [all, picked]);
+  // 主干不在这组里了就松开
+  useEffect(() => {
+    if (anchor != null && !picked?.some((p) => p.id === anchor)) setAnchor(null);
+  }, [picked, anchor]);
 
   // 手机上嫁接区在已选列表下面：开始嫁接 / 长好了时把它带进视野
   useEffect(() => {
@@ -132,7 +149,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     setResult(null);
   }
 
-  async function develop(sel: Item[]) {
+  async function develop(sel0: Item[]) {
+    let sel = sel0;
     if (sel.length < Math.min(MIN_EVIDENCE, items?.length ?? 0) || sel.length < 2 || busy) return;
     setBusy(true);
     setResult(null);
@@ -145,16 +163,40 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     const quiet = document.documentElement.dataset.motion === 'off';
     const wallNow = wall || (await db.cliches.toArray());
     const wait = (ms: number) => new Promise((r) => setTimeout(r, quiet ? 0 : ms));
+    // v0.24 0202 主干排第一（离线句式以第一穗为主）
+    const anchorId = anchor != null && sel.some((x) => x.id === anchor) ? anchor : undefined;
+    if (anchorId != null) sel = [sel.find((x) => x.id === anchorId)!, ...sel.filter((x) => x.id !== anchorId)];
+    const dist = distinctOf(settings);
+    // v0.24 0242 这组里有私密穗、又是云端模型：这次离线嫁接，素材不出门
+    const hidden = sel.filter((x) => !aiVisible(x, settings)).length;
     let run: GraftResult;
     try {
-      if (aiReady(settings)) {
-        run = await graftWithAI(settings, sel, { theme: th, mode: gm, wall: wallNow, taste: localStorage.getItem(TASTE_KEY) || undefined, signal: ctrl.signal, onProgress: setProgress });
+      if (aiReady(settings) && !hidden) {
+        const ec = embedConfig(settings);
+        const feedback = feedbackBlock(await recentRejects().catch(() => []));
+        run = await graftWithAI(settings, sel, {
+          theme: th,
+          mode: gm,
+          wall: wallNow,
+          taste: localStorage.getItem(TASTE_KEY) || undefined,
+          signal: ctrl.signal,
+          onProgress: setProgress,
+          anchorId,
+          avoid,
+          feedback,
+          style: styleSamples(settings),
+          distinct: { ...dist, embed: ec ? async (texts) => (await import('../lib/ai')).embed(settings, texts) : undefined },
+        });
         if (run.partial) toast('第二步没跑完，用第一步的种子直接收拢了三根', 'err');
         else if (run.weak) toast(`有 ${run.weak} 根说不清从哪几穗长出来，标了「证据不足」`, 'err');
         else if (run.wall?.hit) toast(wallToast(run));
+        else if (run.distinct?.replaced) toast(distinctToast(run));
       } else {
+        if (hidden) toast(`这组里有 ${hidden} 穗私密的，这次离线嫁接（不发给云端模型）`);
         // 离线也走四步；给麦子一点点长的时间（减少动态效果时不等）
-        run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow });
+        run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow, anchorId, distinct: dist });
+        if (!hidden && run.wall?.hit) toast(wallToast(run));
+        else if (!hidden && run.distinct?.replaced) toast(distinctToast(run));
         if (run.wall?.hit) toast(wallToast(run));
         await wait(700);
         if (ctrl.signal.aborted) throw new Error('已取消');
@@ -169,7 +211,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
         return;
       }
       toast((e instanceof Error ? e.message : String(e)) + '，已改用离线嫁接', 'err');
-      run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow });
+      run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow, anchorId, distinct: dist });
     }
     if (ctrl.signal.aborted) {
       setBusy(false);
@@ -179,8 +221,15 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     const now = Date.now();
     const bid = `g${now.toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
     const size = run.branches.length;
+    // v0.24 0241 新颖度：和穗仓里已有新枝的最大相似度
+    const old = (await db.developments.toArray()).filter((x) => !x.deletedAt).map((x) => x.idea);
+    run.branches = run.branches.map((b) => {
+      const n = nearestOld(b, old);
+      return { ...b, nearest: { sim: n.sim, method: 'text', ...(n.title ? { title: n.title } : {}) } };
+    });
     const devs: Development[] = run.branches.map((idea, index) => ({
       itemIds: sel.map((s) => s.id!),
+      ...(anchorId != null ? { anchorId } : {}),
       theme: th,
       jump: modeDef(gm)?.jump ?? jump,
       ...(gm ? { mode: gm } : {}),
@@ -245,7 +294,9 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
             {shown && (
               <section className="graft">
                 <div className="label">已选 ({shown.length}) · 最多 5</div>
-                <PickTable items={shown} onOpen={openItem} onSwap={busy ? undefined : replaceOne} showCount={pickedBy === 'neglected'} />
+                <PickTable items={shown} onOpen={openItem} onSwap={busy ? undefined : replaceOne} showCount={pickedBy === 'neglected'} anchor={anchor} onAnchor={busy ? undefined : (id) => setAnchor(anchor === id ? null : id)} />
+                {anchor != null && <p className="anchor-note meta-text">已钉住主干：每根新枝都以它为主体，其余几穗只当养分。</p>}
+                <WhyHint items={shown} onOpen={openItem} />
                 <ModePicker mode={mode} onPick={chooseMode} disabled={busy} items={items} picked={shown} pickedBy={pickedBy} note={drawNote} />
                 <div className="graft-wrap">
                   <button className="btn primary graft-btn rw-shimmer" onClick={() => develop(shown)} disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}>
@@ -273,7 +324,10 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                   <span className="label">
                     一次三枝{result.run.mode ? <span className="three-mode"> · {modeName(result.run.mode)}</span> : null} · {result.run.source === 'ai' ? 'AI 嫁接' : '离线嫁接'}
                   </span>
-                  <span className="three-sub meta-text">三根新枝，变形法各不相同，每根都能点回它的穗。挑一根，今天就动手。</span>
+                  <span className="three-sub meta-text">
+                    三根新枝，变形法各不相同，每根都能点回它的穗。挑一根，今天就动手。
+                    {result.run.distinct?.replaced ? <span className="distinct-note"> 换掉了一根太像的（两两相似度 ≤ {Math.round(result.run.distinct.maxSim * 100)}%）。</span> : null}
+                  </span>
                 </div>
                 <div className="three">
                   {result.run.branches.map((b, i) => (
@@ -330,6 +384,12 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   );
 }
 
+/** v0.24 三枝不撞车提示 */
+function distinctToast(run: GraftResult): string {
+  const d = run.distinct!;
+  return `换掉了${d.replaced > 1 ? ` ${d.replaced} 根` : '一根'}太像的（${d.method === 'vector' ? '向量' : '字面'}相似度 ${Math.round(d.before * 100)}% → ${Math.round(d.maxSim * 100)}%）`;
+}
+
 /** v0.19 撞墙提示：怎么处理的 */
 function wallToast(run: GraftResult): string {
   const w = run.wall!;
@@ -337,10 +397,29 @@ function wallToast(run: GraftResult): string {
   return `有 ${w.hit} 根撞了套路墙，${w.retried ? (how ? `重写一次后又${how}` : '已重写') : how || '已处理'}`;
 }
 
-/** 已选的穗：无线表格，细体序号 + 标题 + 类型 + 日期（+ 换一穗） */
-function PickTable({ items, onOpen, onSwap, showCount }: { items: Item[]; onOpen: (i: Item) => void; onSwap?: (i: number) => void; showCount?: boolean }) {
+/** v0.24 0203：这组里没写为什么的穗，提示补一句（点名字直接去补） */
+function WhyHint({ items, onOpen }: { items: Item[]; onOpen: (i: Item) => void }) {
+  const miss = items.filter(lacksWhy);
+  if (!miss.length) return null;
   return (
-    <div className="table pick-table">
+    <p className="why-hint meta-text">
+      {miss.length === items.length ? '这几穗都还没写为什么' : `有 ${miss.length} 穗还没写为什么`}：补一句为什么，会让新枝更像你。{' '}
+      {miss.slice(0, 3).map((it, i) => (
+        <span key={it.id}>
+          {i > 0 && ' / '}
+          <button className="linklike why-hint-go" onClick={() => onOpen(it)}>
+            {displayTitle(it)}
+          </button>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+/** 已选的穗：无线表格，细体序号 + 标题 + 类型 + 日期（+ 换一穗）；v0.24 每行可「钉为主干」 */
+function PickTable({ items, onOpen, onSwap, showCount, anchor, onAnchor }: { items: Item[]; onOpen: (i: Item) => void; onSwap?: (i: number) => void; showCount?: boolean; anchor?: number | null; onAnchor?: (id: number) => void }) {
+  return (
+    <div className={`table pick-table${onAnchor ? ' has-pin' : ''}`}>
       <div className="thead" aria-hidden>
         <span className="tc tc-n" />
         <span className="tc tc-title">穗</span>
@@ -348,14 +427,21 @@ function PickTable({ items, onOpen, onSwap, showCount }: { items: Item[]; onOpen
         <span className="tc tc-date">日期</span>
       </div>
       {items.map((it, i) => (
-        <div key={it.id} className="trow pair-item" data-item-id={it.id}>
+        <div key={it.id} className={`trow pair-item${anchor === it.id ? ' is-anchor' : ''}`} data-item-id={it.id}>
           <span className="tc tc-n numeral small">{nn(i)}</span>
           <button className="tc tc-title linklike" onClick={() => onOpen(it)}>
             <span className="card-title">{displayTitle(it)}</span>
+            {anchor === it.id && <span className="anchor-badge label">主干</span>}
+            {it.private && <span className="private-badge label">私密</span>}
             {showCount && <span className="pick-count meta-text">{graftCount(it) ? `接过 ${graftCount(it)} 次` : '没接过'}</span>}
           </button>
           <span className="tc tc-type">{TYPE_LABEL[it.type]}</span>
           <span className="tc tc-date num">
+            {onAnchor && (
+              <button className={`btn text faint pin-anchor${anchor === it.id ? ' on' : ''}`} aria-pressed={anchor === it.id} onClick={() => onAnchor(it.id!)} title="钉为主干：每根新枝都以它为主体">
+                {anchor === it.id ? '松开' : '钉住'}
+              </button>
+            )}
             {onSwap ? (
               <button className="btn text faint swap" onClick={() => onSwap(i)}>
                 换一穗
