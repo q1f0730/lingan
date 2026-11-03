@@ -103,13 +103,21 @@ export function Works() {
   const works = useLiveQuery(() => db.works.orderBy('updatedAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const [openId, setOpenId] = useState<number | null>(() => {
     try {
+      // 只读不删：首次挂载要是被懒加载的子块挂起（慢机器上分镜 / 情绪板的包还没到），React 会丢掉这次的 state 重来，
+      // 在这里删掉的话重来时就读不到了（立项后停在作品列表）。提交之后再删（下面的 effect）
       const v = sessionStorage.getItem(FOCUS_WORK_KEY);
-      if (v) sessionStorage.removeItem(FOCUS_WORK_KEY);
       return v ? Number(v) : null;
     } catch {
       return null;
     }
   });
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(FOCUS_WORK_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [stage, setStage] = useState<WorkStage | 'all'>('all');
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -348,12 +356,14 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
   const [sel, setSel] = useState(0);
   const cliches = useLiveQuery(() => db.cliches.toArray(), []);
   const refsAll = useLiveQuery(() => itemsByUids(refUids(text)), [refUids(text).join(',')]);
-  const lib = useLiveQuery(async () => {
-    if (!pend) return [] as Item[];
+  // 结果带上本次的查询词：useLiveQuery 换依赖的第一帧会先给上一次的结果（v0.28 篮子的教训），对上了才算数
+  const libQ = useLiveQuery(async () => {
+    if (!pend) return { q: null as string | null, list: [] as Item[] };
     const q = pend.q.trim();
     const all = (await db.items.orderBy('updatedAt').reverse().toArray()).filter((x) => !x.deletedAt && x.uid);
-    return all.filter((x) => matchItem(x, q)).slice(0, 40);
+    return { q: pend.q as string | null, list: all.filter((x) => matchItem(x, q)).slice(0, 40) };
   }, [pend?.q ?? null]);
+  const lib = libQ && pend && libQ.q === pend.q ? libQ.list : undefined;
   const cands = useMemo(() => {
     if (!pend) return [];
     const q = pend.q.trim();
@@ -464,12 +474,30 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
             }}
             onClick={sync}
             onKeyDown={(e) => {
-              if (!pend || !cands.length) return;
-              if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              // 列表还在查（!lib）时回车也要接住，不能落成换行
+              if (!pend || (!cands.length && (lib || (e.key !== 'Enter' && e.key !== 'Tab' && e.key !== 'Escape')))) return;
+              if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && cands.length) {
                 e.preventDefault();
                 setSel((s) => (s + (e.key === 'ArrowDown' ? 1 : cands.length - 1)) % cands.length);
               } else if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
+                // 慢机器上打字快：弹窗还没跟上最后几个字时，按框里现在的字重新挑，不拿旧列表的第一条
+                const now = pendingRef(e.currentTarget.value, e.currentTarget.selectionStart);
+                if (now && (now.q !== pend.q || !lib)) {
+                  const q = now.q.trim();
+                  const hit = mats.find((x) => matchItem(x, q)) || (now.q === pend.q ? undefined : (libQ?.list || []).find((x) => matchItem(x, q)));
+                  if (hit) choose(hit);
+                  else
+                    void db.items
+                      .orderBy('updatedAt')
+                      .reverse()
+                      .toArray()
+                      .then((all) => {
+                        const h = all.find((x) => !x.deletedAt && x.uid && matchItem(x, q));
+                        if (h) choose(h);
+                      });
+                  return;
+                }
                 choose(cands[Math.min(sel, cands.length - 1)]);
               } else if (e.key === 'Escape') {
                 e.preventDefault();
@@ -494,7 +522,7 @@ function Draft({ work, mats, apiRef, onAddMat }: { work: Work; mats: Item[]; api
                     </span>
                   </button>
                 ))
-              ) : (
+              ) : !lib ? null : (
                 <div className="meta-text ref-none">没找到。换个字试试。</div>
               )}
             </div>
