@@ -35,6 +35,12 @@ export interface Item {
   graftCount?: number;
   /** v0.18 最后一次被嫁接的时间 */
   graftedAt?: number;
+  /** v0.21 全局唯一 id（ULID）：备份、导入去重、以后同步都认它；本机自增 id 只在这台设备上有意义 */
+  uid?: string;
+  /** v0.21 最后一次改它的设备（lib/device.ts） */
+  deviceId?: string;
+  /** v0.21 墓碑：删除时间。有它 = 在回收站里（30 天后彻底清掉），所有列表 / 搜索 / 嫁接都看不到 */
+  deletedAt?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -102,6 +108,14 @@ export interface Development {
   evidence?: 'ok' | 'weak' | 'legacy';
   /** v0.18 用哪种接法抽的穗（相近 / 远距 / 被冷落 / 跨媒介 / 反氛围）；之前长的没有 */
   mode?: GraftMode;
+  /** v0.21 全局唯一 id（ULID）：备份、导入去重、以后同步都认它；本机自增 id 只在这台设备上有意义 */
+  uid?: string;
+  /** v0.21 最后一次改它的设备（lib/device.ts） */
+  deviceId?: string;
+  /** v0.21 墓碑：删除时间。有它 = 在回收站里（30 天后彻底清掉），所有列表 / 搜索 / 嫁接都看不到 */
+  deletedAt?: number;
+  /** v0.21 最后修改时间（旧新枝迁移时 = createdAt） */
+  updatedAt?: number;
   createdAt: number;
 }
 
