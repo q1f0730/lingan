@@ -15,13 +15,13 @@ export function placeMenu(x: number, y: number, w: number, h: number, vw: number
   return { left, top: Math.max(pad, Math.min(top, vh - h - pad)) };
 }
 
-type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 'delete';
+type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 'share' | 'garden' | 'delete';
 
 /**
  * v0.27 0411：长按卡片（手机）或右键（电脑）弹出上下文菜单：打开 / 编辑 / 拿去嫁接 / 复制文字 / 复制链接 / 删掉。
  * 认 `[data-item-id]`（网格卡、列表行、时间线帧、月历行），有弹层时不出。
  */
-export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket'>, it: Item) => void }) {
+export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket' | 'share' | 'garden'>, it: Item) => void }) {
   const { toast, desktop } = useApp();
   const [st, setSt] = useState<{ it: Item; x: number; y: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -144,6 +144,13 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
       }
       return;
     }
+    // v0.34 0899 分享（逐项勾选）/ 0902 放进花园（私密穗不能放）
+    if (a === 'share') return void window.dispatchEvent(new CustomEvent('glean:share', { detail: { item: it.id } }));
+    if (a === 'garden') {
+      if (it.private && !it.garden) return toast('私密穗不能放进花园', 'err');
+      await db.items.where(':id').equals(it.id!).modify((x: Item) => void (it.garden ? delete x.garden : (x.garden = 1)));
+      return toast(it.garden ? '从花园拿出来了' : '放进花园 · 设置 → 分享与花园 里生成网页');
+    }
     if (a === 'basket') {
       // v0.28 0408 待嫁接篮
       if (it.id == null) return;
@@ -161,6 +168,8 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
     ['copy', it.type === 'text' ? '复制原文' : '复制文字'],
     ...(it.url ? ([['link', '复制链接']] as Array<[Act, string]>) : []),
     ...(it.uid ? ([['glean', '复制 glean:// 链接']] as Array<[Act, string]>) : []),
+    ['share', '分享…'],
+    ['garden', it.garden ? '拿出花园' : '放进花园'],
     ['delete', '删掉'],
   ];
   return (
