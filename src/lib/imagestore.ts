@@ -11,10 +11,20 @@ export const THUMB_MAX = 400;
 export const THUMB_QUALITY = 0.72;
 export const THUMB_TARGET_BYTES = 28 * 1024;
 
+/**
+ * v0.37 0713 三档：缩略图（网格，≤400）/ 详情档（≤1440，只给大图做）/ 原图（导出、看图 AI、OCR、分享）。
+ * 网格档保持 400 不改 256：手机双列 2x 屏一格就要 ~360 物理像素，256 会糊。
+ */
+export const MID_MAX = 1440;
+export const needsMid = (w: number, h: number, bytes: number) => Math.max(w, h) > 1600 || bytes > 400 * 1024;
+export const midSize = (w: number, h: number) => thumbSize(w, h, MID_MAX);
+
 export interface ThumbOut {
   blob: Blob;
   w: number;
   h: number;
+  /** 详情档：原图大才有 */
+  mid?: Blob;
 }
 /** 把原图做成缩略图。浏览器里用 canvas，单测里注入假的。 */
 export type ThumbMaker = (original: Blob) => Promise<ThumbOut>;
@@ -137,6 +147,12 @@ export async function getOriginalBlob(d: Pick<ImgDB, 'images' | 'items'>, id: nu
   return null;
 }
 
+/** 详情看图：有详情档读详情档，没有读原图 */
+export async function getViewBlob(d: Pick<ImgDB, 'images' | 'items'>, id: number): Promise<Blob | null> {
+  const r = await d.images.get(id);
+  return r?.mid || (r?.blob ? r.blob : getOriginalBlob(d, id));
+}
+
 export async function getOriginalDataUrl(d: Pick<ImgDB, 'images' | 'items'>, id: number): Promise<string | undefined> {
   const it = await d.items.get(id);
   if (it && isDataUrl(it.image)) return it.image;
@@ -203,6 +219,7 @@ export async function healImages(
         if (!cur || !cur.thumbTodo) continue; // 期间被删 / 换图（换图会重新排队）
         if (r.out) {
           await d.items.update(r.id, { thumb: r.out.blob, thumbW: r.out.w, thumbH: r.out.h, thumbTodo: undefined, thumbFail: undefined } as Partial<Item>);
+          await d.images.update(r.id, { mid: r.out.mid || null });
           rep.made++;
         } else {
           const has = !!(await d.images.get(r.id));
@@ -218,42 +235,89 @@ export async function healImages(
   return rep;
 }
 
-/** 浏览器里的缩略图：createImageBitmap 解码（不进 DOM），canvas 缩放，JPEG 编码；超过目标大小再压一次 */
-export const browserThumbMaker: ThumbMaker = async (original) => {
-  let src: CanvasImageSource & { width: number; height: number };
-  let close = () => {};
+async function decode(original: Blob): Promise<{ src: CanvasImageSource & { width: number; height: number }; close: () => void }> {
   if (typeof createImageBitmap === 'function') {
     const bmp = await createImageBitmap(original);
-    src = bmp;
-    close = () => bmp.close();
-  } else {
-    const url = URL.createObjectURL(original);
-    try {
-      src = await new Promise<HTMLImageElement>((res, rej) => {
-        const im = new Image();
-        im.onload = () => res(im);
-        im.onerror = () => rej(new Error('decode'));
-        im.src = url;
-      });
-    } finally {
-      setTimeout(() => URL.revokeObjectURL(url), 0);
-    }
+    return { src: bmp, close: () => bmp.close() };
   }
+  const url = URL.createObjectURL(original);
+  try {
+    const im = await new Promise<HTMLImageElement>((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = () => rej(new Error('decode'));
+      im.src = url;
+    });
+    return { src: im, close: () => {} };
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+}
+function draw(src: CanvasImageSource, w: number, h: number) {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  if (!g) throw new Error('no 2d');
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, w, h);
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(src, 0, 0, w, h);
+  return (q: number) => new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('encode'))), 'image/jpeg', q));
+}
+
+/** 浏览器里的缩略图：createImageBitmap 解码（不进 DOM），canvas 缩放，JPEG 编码；超过目标大小再压一次。原图大时顺手出详情档 */
+export const browserThumbMaker: ThumbMaker = async (original) => {
+  const { src, close } = await decode(original);
   try {
     const { w, h } = thumbSize(src.width, src.height);
-    const c = document.createElement('canvas');
-    c.width = w;
-    c.height = h;
-    const g = c.getContext('2d');
-    if (!g) throw new Error('no 2d');
-    g.fillStyle = '#fff';
-    g.fillRect(0, 0, w, h);
-    g.imageSmoothingQuality = 'high';
-    g.drawImage(src, 0, 0, w, h);
-    const enc = (q: number) => new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('encode'))), 'image/jpeg', q));
+    const enc = draw(src, w, h);
     let blob = await enc(THUMB_QUALITY);
     if (blob.size > THUMB_TARGET_BYTES) blob = await enc(0.55);
-    return { blob, w, h };
+    let mid: Blob | undefined;
+    if (needsMid(src.width, src.height, original.size)) {
+      const m = midSize(src.width, src.height);
+      mid = await draw(src, m.w, m.h)(0.82).catch(() => undefined);
+      if (mid && mid.size >= original.size) mid = undefined;
+    }
+    return { blob, w, h, mid };
+  } finally {
+    close();
+  }
+};
+
+/**
+ * 旧图补详情档（v0.37 之前入库的）：一次几张、批间让出主线程，做完记 localStorage，以后不再扫。
+ * 只看 images 行里 mid 还是 undefined 的（null = 看过了不用做）。
+ */
+export async function backfillMid(d: ImgDB, make: (b: Blob) => Promise<Blob | null>, opts: { batch?: number; yieldFn?: () => Promise<void>; shouldStop?: () => boolean } = {}): Promise<number> {
+  const keys = (await d.images.toCollection().primaryKeys()) as number[];
+  const batch = opts.batch ?? 4;
+  let made = 0;
+  for (let k = 0; k < keys.length; k += batch) {
+    if (opts.shouldStop?.()) return -1;
+    const rows = await d.images.bulkGet(keys.slice(k, k + batch));
+    for (const r of rows) {
+      if (!r || r.mid !== undefined || !r.blob) continue;
+      const mid = await make(r.blob).catch(() => null);
+      // 期间换了图（setItemImage 会整行重写）就不写
+      const cur = await d.images.get(r.itemId);
+      if (cur && cur.mid === undefined && cur.blob?.size === r.blob.size) await d.images.update(r.itemId, { mid });
+      if (mid) made++;
+    }
+    if (opts.yieldFn) await opts.yieldFn();
+  }
+  return made;
+}
+
+export const browserMidMaker = async (original: Blob): Promise<Blob | null> => {
+  if (original.size < 80 * 1024) return null;
+  const { src, close } = await decode(original);
+  try {
+    if (!needsMid(src.width, src.height, original.size)) return null;
+    const m = midSize(src.width, src.height);
+    const mid = await draw(src, m.w, m.h)(0.82);
+    return mid.size < original.size ? mid : null;
   } finally {
     close();
   }
