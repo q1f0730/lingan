@@ -1,7 +1,10 @@
 // v0.25 自动更新（0511 0751）
 // - Windows：tauri-plugin-updater 读 GitHub Releases 的 latest.json（CI 用私钥签名，公钥在 tauri.conf.json），
 //   后台下载好再提示「重启更新」。
-// - 安卓：读同一份 latest.json 比版本号，有新版就提示，点了用系统浏览器下载 APK（系统安装器装，签名链不变）。
+// - 安卓：读同一份 latest.json 比版本号，有新版就提示。v0.26（0512 0732）起在 App 里下载 APK（原生 LinganUpdate 桥，
+//   边下边算 SHA-256，必须和 Release 里 SHA256SUMS.txt 一致，签名证书必须和当前装的拾穗一致），再交给系统安装器；
+//   没有桥的老壳退回用浏览器下载。
+// - 0513 0750：装之前先自动备份（autobackup.backupBeforeUpdate），失败要用户点头才继续。
 // 隐私：只 GET 一个静态文件，不带任何设备参数；自动检查每天最多一次，设置里可关。
 
 import { isTauriEnv } from './desktop';
@@ -139,4 +142,85 @@ export function openDownload(url: string): boolean {
   if (b?.openUrl) return !!b.openUrl(url);
   window.open(url, '_blank', 'noopener');
   return true;
+}
+
+// ───────── v0.26 安卓应用内下载 + 安装（0512 0732）─────────
+
+export function sumsUrl(v: string) {
+  const x = v.replace(/^v/i, '');
+  return `https://github.com/${REPO}/releases/download/v${x}/SHA256SUMS.txt`;
+}
+/** SHA256SUMS.txt（sha256sum 格式）里找某个文件的哈希 */
+export function parseSums(text: string, file: string): string | null {
+  for (const line of String(text || '').split(/\r?\n/)) {
+    const m = /^([0-9a-f]{64})\s+\*?(.+)$/i.exec(line.trim());
+    if (m && m[2].trim() === file) return m[1].toLowerCase();
+  }
+  return null;
+}
+export function apkName(v: string) {
+  const x = v.replace(/^v/i, '');
+  return `Glean_${x}_android.apk`;
+}
+
+interface UpdateBridge {
+  download(url: string, sha256: string, version: string): boolean;
+  progress(): string;
+  install(): string;
+  canInstall(): boolean;
+}
+export function androidUpdater(): UpdateBridge | null {
+  if (typeof window === 'undefined') return null;
+  const b = (window as unknown as { LinganUpdate?: UpdateBridge }).LinganUpdate;
+  return b && typeof b.download === 'function' ? b : null;
+}
+export interface ApkProgress {
+  state: 'idle' | 'downloading' | 'ready' | 'error';
+  done: number;
+  total: number;
+  error: string;
+}
+export type ApkStep = { step: 'sums' } | { step: 'download'; done: number; total: number } | { step: 'backup' } | { step: 'install' };
+
+async function fetchSha(v: string): Promise<string> {
+  const { fetch } = await import('@tauri-apps/plugin-http');
+  const r = await fetch(sumsUrl(v), { method: 'GET' });
+  if (!r.ok) throw new Error(r.status === 404 ? '新版还在发布中（校验文件没出来），过几分钟再试' : `取校验文件失败 HTTP ${r.status}`);
+  const sha = parseSums(await r.text(), apkName(v));
+  if (!sha) throw new Error('校验文件里没有安卓安装包');
+  return sha;
+}
+
+/**
+ * 下载 → 校验 → 更新前备份 → 调起系统安装器。返回 'installing'（系统安装界面已打开）、'need-permission'（先去允许「安装未知应用」，
+ * 回来再点一次）或 'browser'（老壳没有桥，改用浏览器下载）。
+ */
+export async function installAndroidUpdate(l: Latest, opts: { onStep?: (s: ApkStep) => void; beforeInstall?: () => Promise<boolean>; poll?: number } = {}): Promise<'installing' | 'need-permission' | 'browser' | 'cancelled'> {
+  const b = androidUpdater();
+  if (!b) {
+    openDownload(l.apkUrl);
+    return 'browser';
+  }
+  let p = JSON.parse(b.progress() || '{}') as ApkProgress;
+  if (p.state !== 'ready') {
+    opts.onStep?.({ step: 'sums' });
+    const sha = await fetchSha(l.version);
+    if (!b.download(l.apkUrl, sha, l.version)) throw new Error('下载没能开始');
+    for (;;) {
+      await new Promise((r) => setTimeout(r, opts.poll ?? 400));
+      p = JSON.parse(b.progress() || '{}') as ApkProgress;
+      if (p.state === 'downloading') opts.onStep?.({ step: 'download', done: p.done, total: p.total });
+      else break;
+    }
+    if (p.state !== 'ready') throw new Error(p.error || '下载失败');
+  }
+  if (opts.beforeInstall) {
+    opts.onStep?.({ step: 'backup' });
+    if (!(await opts.beforeInstall())) return 'cancelled';
+  }
+  opts.onStep?.({ step: 'install' });
+  const r = b.install();
+  if (r === 'need-permission') return 'need-permission';
+  if (r !== 'ok') throw new Error(r === 'no-file' ? '安装包不在了，请重新下载' : `打不开系统安装器（${r}）`);
+  return 'installing';
 }
