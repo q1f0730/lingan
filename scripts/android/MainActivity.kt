@@ -305,7 +305,7 @@ class MainActivity : TauriActivity() {
     webView.addJavascriptInterface(object {
       private val alias = "glean_vault_v1"
       private val prefs by lazy { getSharedPreferences("glean_vault", android.content.Context.MODE_PRIVATE) }
-      private fun ok(name: String) = name == "chat.apiKey" || name == "embed.apiKey" || name == "sync.davPass" || name == "sync.key"
+      private fun ok(name: String) = name == "chat.apiKey" || name == "embed.apiKey" || name == "sync.davPass" || name == "sync.key" || name == "sync.lanKey"
       private fun key(): SecretKey {
         val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (ks.getKey(alias, null) as? SecretKey)?.let { return it }
@@ -354,5 +354,7 @@ class MainActivity : TauriActivity() {
     val chrome = ChromeBridge(this)
     chrome.attach(webView)
     webView.addJavascriptInterface(chrome, "LinganChrome")
+    // v0.32 局域网直连扫码（见 GleanQr.kt）
+    webView.addJavascriptInterface(QrBridge(), "LinganQr")
   }
 }
