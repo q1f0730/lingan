@@ -1,6 +1,7 @@
 // v0.17 秒搜（m18 / d8）：超大查询行 + 真实计数 → 类型 / 标签 / 日期 三行文字筛选 → 「穗 (n)」无线表格 + 「新枝 (n)」→ 最近搜过。
 // 全部在本地：内存倒排索引（lib/ftsync）+ 原文核对，断网照常。
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useUnlocked } from '../lib/lock';
 import { HoverPreview, safeHost } from '../components/ItemCard';
 import { VirtualList } from '../components/Virtual';
 import { db } from '../lib/db';
@@ -86,7 +87,9 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
     [q],
   );
 
-  const itemDocs = useMemo(() => items.filter((i) => i.id != null).map((i) => toDoc('i', i)), [items]);
+  // v0.39 0907 没解锁时上锁的穗搜不到
+  const unl = useUnlocked();
+  const itemDocs = useMemo(() => items.filter((i) => i.id != null && (unl || !i.locked)).map((i) => toDoc('i', i)), [items, unl]);
   const devDocs = useMemo(() => devs.filter((d) => d.id != null && d.idea).map((d) => toDoc('b', d)), [devs]);
   // v0.23 0111 搜索语法：type: tag: year: from: why: before: after: inbox: 先拆出来当筛选，剩下的字照常全文搜
   const parsed = useMemo(() => parseSyntax(q), [q]);
@@ -127,7 +130,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
       try {
         const [v] = await embed(settings, [semText]);
         const min = semUrl === MINI ? 0.16 : 0.35;
-        const hits = items.filter((i) => i.embedModel === semModel && !!i.embedding).map((it) => ({ it, c: cosine(v, it.embedding!) })).filter((x) => x.c >= min).sort((a, b) => b.c - a.c).slice(0, 12).map((x) => x.it);
+        const hits = items.filter((i) => i.embedModel === semModel && !!i.embedding && (unl || !i.locked)).map((it) => ({ it, c: cosine(v, it.embedding!) })).filter((x) => x.c >= min).sort((a, b) => b.c - a.c).slice(0, 12).map((x) => x.it);
         if (!dead) setSem({ q: semText, hits });
       } catch {
         /* 向量接口不可用：只给字面命中 */
@@ -137,7 +140,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
       dead = true;
       clearTimeout(t);
     };
-  }, [semText, semHas, semAuto, semGo, settings, semUrl, semModel, items]);
+  }, [semText, semHas, semAuto, semGo, settings, semUrl, semModel, items, unl]);
   // 搜索本身（索引候选 + 原文核对），记下计算耗时
   const base = useMemo(() => {
     void rev;
