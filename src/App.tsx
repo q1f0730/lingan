@@ -25,6 +25,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { collectDiagnostics } from './lib/diagcollect';
 import { isSafeMode, setErrView, setSafeMode } from './lib/errlog';
 import { onVaultError } from './lib/settings';
+import { DropIn } from './components/DropIn';
+import { CardMenu } from './components/CardMenu';
+import { initChrome, syncSystemTheme } from './lib/chrome';
 
 // v0.20：首屏只需要穗仓；其余四页拆成单独的包，首屏画完后空闲时预取（点过去时通常已经在内存里）。
 // 省下的首包体积抵掉 Framer Motion 带来的增量，冷启动不变慢。
@@ -122,12 +125,95 @@ export default function App() {
   }, [motion]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#17161a' : '#f7f5f1');
+    // v0.27 0416：状态栏 / 窗口标题栏跟着主题
+    syncSystemTheme(theme, isTauriEnv());
   }, [theme]);
+  // v0.27 0401 / 0410：软键盘高度、安卓全面屏安全区
+  useEffect(() => initChrome(), []);
+  // v0.27 0403：切页后回来，回到原来的那张卡和滚动位置（不再一律回顶）。记「锚点卡 + 它离顶的距离」，
+  // 懒加载 / 虚拟列表 / 上方模块晚到导致页面高度变化时，按锚点卡追位置，而不是死认像素。
+  const scrollPos = useRef<Partial<Record<View, { y: number; id?: string; top?: number }>>>({});
+  const viewRef = useRef(view);
+  const restoring = useRef(false);
   useEffect(() => {
-    window.scrollTo(0, 0);
+    let raf = 0;
+    const anchorAt = () => {
+      for (const y of [140, 220, 320]) {
+        for (const fx of [0.5, 0.25, 0.75]) {
+          const el = document.elementFromPoint(window.innerWidth * fx, y)?.closest<HTMLElement>('.main [data-item-id]');
+          if (el) return { id: el.dataset.itemId, top: el.getBoundingClientRect().top };
+        }
+      }
+      return {};
+    };
+    const on = () => {
+      if (raf || restoring.current) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        if (restoring.current || document.body.style.overflow === 'hidden') return;
+        scrollPos.current[viewRef.current] = window.scrollY > 0 ? { y: window.scrollY, ...anchorAt() } : { y: 0 };
+      });
+    };
+    window.addEventListener('scroll', on, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', on);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  useEffect(() => {
+    viewRef.current = view;
     setErrView(view);
+    const want = scrollPos.current[view];
+    if (!want || !want.y) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    // 最多追 1.5 秒；连续 12 帧不用再动就停；用户自己一动就停
+    restoring.current = true;
+    let n = 0;
+    let still = 0;
+    let raf = 0;
+    const tick = () => {
+      const el = want.id ? document.querySelector<HTMLElement>(`.main [data-item-id="${want.id}"]`) : null;
+      let moved = false;
+      if (el && want.top != null) {
+        const d = el.getBoundingClientRect().top - want.top;
+        if (Math.abs(d) > 2) {
+          window.scrollBy(0, d);
+          moved = true;
+        }
+      } else if (Math.abs(window.scrollY - want.y) > 2) {
+        window.scrollTo(0, want.y);
+        moved = true;
+      }
+      still = moved ? 0 : still + 1;
+      if (still >= 12 || ++n > 90) {
+        restoring.current = false;
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    const stop = () => {
+      restoring.current = false;
+      cancelAnimationFrame(raf);
+    };
+    window.addEventListener('wheel', stop, { once: true, passive: true });
+    window.addEventListener('touchstart', stop, { once: true, passive: true });
+    return () => {
+      stop();
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchstart', stop);
+    };
   }, [view]);
+  // v0.27 0417：别的窗口 / 标签页改了设置（主题等），这里跟着变；穗本身由 Dexie 跨窗口通知自动刷新
+  useEffect(() => {
+    const on = (e: StorageEvent) => {
+      if (e.key === 'lingan.settings.v1') setSettingsState(loadSettings());
+    };
+    window.addEventListener('storage', on);
+    return () => window.removeEventListener('storage', on);
+  }, []);
   // 第一次打开（空仓、没走过引导）才出引导；老用户升级不打扰
   useEffect(() => {
     let alive = true;
@@ -161,6 +247,27 @@ export default function App() {
   }, []);
 
   const openCapture = useCallback(() => setCapture({ draft: emptyDraft() }), []);
+  // v0.27 0403：关掉详情回到刚才那张卡（翻过上一穗 / 下一穗就回到最后看的那张），并轻轻标一下
+  const lastOpened = useRef<number | null>(null);
+  useEffect(() => {
+    if (detail) {
+      lastOpened.current = detail.id ?? null;
+      return;
+    }
+    const id = lastOpened.current;
+    lastOpened.current = null;
+    if (id == null) return;
+    requestAnimationFrame(() => {
+      const all = Array.from(document.querySelectorAll<HTMLElement>(`.main [data-item-id="${id}"]`));
+      const el = all.find((e) => /\b(card|trow|tl-frame)\b/.test(e.className)) || all[0];
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) el.scrollIntoView({ block: 'center' });
+      el.focus?.({ preventScroll: true });
+      el.classList.add('was-open');
+      setTimeout(() => el.classList.remove('was-open'), 1600);
+    });
+  }, [detail]);
   const openItem = useCallback((it: Item, list?: number[]) => {
     setDetail(it);
     setSeq(list && list.length > 1 ? list : null);
@@ -320,6 +427,12 @@ export default function App() {
         return;
       }
       if (capture || detail || confirmReq) return;
+      // v0.27 0406：Ctrl+N 打开完整表单（浏览器里可能被浏览器自己抢走，桌面版一定好用）
+      if ((e.key === 'n' || e.key === 'N') && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        openCapture();
+        return;
+      }
       if ((e.key === 'n' || e.key === 'N') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         openCapture();
@@ -529,6 +642,16 @@ export default function App() {
         </Sheet>
 
         {quickWin && <QuickWindow onClose={() => setQuickWin(false)} />}
+        <DropIn blocked={!!capture || !!detail || !!confirmReq || quickWin} />
+        <CardMenu
+          blocked={!!capture || !!detail || !!confirmReq || quickWin}
+          onAct={(a, it) => {
+            if (a === 'open') openItem(it);
+            else if (a === 'edit') void editDetail(it);
+            else if (a === 'graft') developFrom([it.id!]);
+            else if (a === 'delete') void onDelete(it);
+          }}
+        />
         <NowPlayingTray />
         {!capture && !detail && <ClipOffer />}
         <ConfirmLayer req={confirmReq} onDone={() => setConfirmReq(null)} />
