@@ -7,7 +7,8 @@ if (!m.includes('android.permission.INTERNET')) {
   m = m.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application');
 }
 // v0.22 极速采集：分享 / 选字菜单改由透明的半屏 QuickActivity 接（不拉起整个 App）；磁贴、通知使用权、常驻通知、小部件
-const perms = ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED'];
+// v0.26 0512：应用内更新要交给系统安装器（「安装未知应用」授权，首次安装时系统会问）
+const perms = ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.REQUEST_INSTALL_PACKAGES'];
 for (const p of perms) if (!m.includes(p)) m = m.replace('<application', `<uses-permission android:name="${p}" />\n    <application`);
 // 让桌面上的 App 对 PackageManager 可见：把来源包名翻成「网易云音乐」这样的名字（只查桌面 App，不要 QUERY_ALL_PACKAGES）
 if (!m.includes('<queries>')) {
@@ -107,6 +108,8 @@ const pathsFile = path.join(xmlDir, 'file_paths.xml');
 fs.mkdirSync(xmlDir, { recursive: true });
 let paths = fs.existsSync(pathsFile) ? fs.readFileSync(pathsFile, 'utf8') : '<?xml version="1.0" encoding="utf-8"?>\n<paths xmlns:android="http://schemas.android.com/apk/res/android">\n</paths>\n';
 if (!paths.includes('glean_export')) paths = paths.replace('</paths>', '  <cache-path name="glean_export" path="export/" />\n</paths>');
+// v0.26 0512：下载好的新版 APK 在 cache/update/，经 FileProvider 交给安装器
+if (!paths.includes('glean_update')) paths = paths.replace('</paths>', '  <cache-path name="glean_update" path="update/" />\n</paths>');
 fs.writeFileSync(pathsFile, paths);
 console.log(paths);
 fs.writeFileSync(f, m);
