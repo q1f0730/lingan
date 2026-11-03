@@ -1,6 +1,6 @@
 import { Seg } from '../components/rw/Seg';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useRef, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { testConnection } from '../lib/ai';
 import { clearAll, liveCounts } from '../lib/db';
 import { applyImport, exportGlean, gleanName, GLEAN_MIME, MODE_LABEL, planImport, previewImport, readBackupFile, type ImportCounts, type ImportMode, type Incoming } from '../lib/backup';
@@ -16,6 +16,9 @@ import { PRESETS, aiReady, distinctOf, embedConfig, keyOptional, vaultKind, with
 import { LocalModelPanel } from '../components/LocalModelPanel';
 import { AgentPanel } from '../components/AgentPanel';
 import { UpdatePanel } from '../components/UpdatePanel';
+import { AutoBackupPanel, SnapshotPanel } from '../components/SafetyPanel';
+import { withSnapshot } from '../lib/snapshots';
+import { readAutoBak, type BlobLike } from '../lib/autobackup';
 import { readAgentCfg } from '../lib/agent';
 import { readUpdatePrefs } from '../lib/update';
 import { VAULT_LABEL } from '../lib/vault';
@@ -27,6 +30,15 @@ import { DisplayTitle } from '../components/DisplayTitle';
 import { THEME_LABEL, THEME_ORDER } from '../lib/theme';
 
 export const APP_VERSION = __APP_VERSION__;
+
+// v0.26：导出进度每变一次就重画整页设置；这些面板与进度无关，memo 掉（v0.25 加了 Agent / 更新两块后导出时堆峰值多了约 5MB）
+const CaptureP = memo(CapturePanel);
+const TagP = memo(TagPanel);
+const TrashP = memo(TrashPanel);
+const AgentP = memo(AgentPanel);
+const UpdateP = memo(UpdatePanel);
+const AutoBackupP = memo(AutoBackupPanel);
+const SnapshotP = memo(SnapshotPanel);
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm, desktop } = useApp();
@@ -81,22 +93,24 @@ export function SettingsView() {
   }
 
   // v0.21 .glean 流式备份：一张一张读原图写出去，不在内存里拼整库
-  async function doExport(target: ZipTarget = 'save') {
-    if (backing) return;
+  async function doExport(target: ZipTarget = 'save'): Promise<string | null> {
+    if (backing) return null;
     const now = Date.now();
     let sink: Awaited<ReturnType<typeof openFileSink>> = null;
     try {
       sink = await openFileSink(gleanName(now), { mime: GLEAN_MIME, ext: 'glean', label: '拾穗备份', target, shareTitle: '拾穗备份' });
-      if (!sink) return;
+      if (!sink) return null;
       setBacking('0%');
       const t0 = performance.now();
       const st = await exportGlean(sink, db, { now, appVersion: APP_VERSION, onProgress: (a, t) => setBacking(`${Math.round((a / Math.max(1, t)) * 100)}%`) });
       const where = await sink.close();
       (window as unknown as { __gleanBackup?: unknown }).__gleanBackup = { ...st, ms: Math.round(performance.now() - t0) };
       if (where) toast(`已导出 ${st.items} 穗 · ${st.developments} 新枝 · ${st.images} 张图${target === 'downloads' ? `（${where}）` : ''}`);
+      return where;
     } catch (e) {
       await sink?.abort();
       toast('导出失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+      return null;
     } finally {
       setBacking('');
     }
@@ -122,17 +136,24 @@ export function SettingsView() {
   }
 
   // v0.21 导入：先读目录与条目、按 uid 去重算出三种模式各会怎样，选好再写
+  const previewRef = useRef<(name: string, f: Blob | BlobLike) => Promise<void>>(async () => undefined);
+  const onRestore = useCallback((name: string, f: BlobLike) => void previewRef.current(name, f), []);
   async function doImport(f?: File | null) {
     if (!f) return;
+    await previewFile(f.name, f);
+  }
+  async function previewFile(name: string, f: Blob | BlobLike) {
     try {
-      const inc = await readBackupFile(f);
+      const inc = await readBackupFile(f as Blob);
       const preview = await previewImport(inc, db);
-      setPending({ name: f.name, inc, preview, mode: 'merge' });
+      setPending({ name, inc, preview, mode: 'merge' });
       requestAnimationFrame(() => document.querySelector('.import-preview')?.scrollIntoView({ block: 'nearest' }));
     } catch (e) {
       toast('导入失败：' + (e instanceof Error ? e.message : String(e)), 'err');
     }
   }
+
+  previewRef.current = previewFile;
 
   async function runImport() {
     if (!pending || importing) return;
@@ -144,8 +165,8 @@ export function SettingsView() {
     }
     setImporting(true);
     try {
-      const plan = await planImport(inc, db, mode);
-      const r = await applyImport(inc, plan, db);
+      // v0.26 0621：导入前先拍一张快照（导错了能回到导入前）
+      const { result: r } = await withSnapshot(`导入（${MODE_LABEL[mode]}）前`, db, async () => applyImport(inc, await planImport(inc, db, mode), db), { appVersion: APP_VERSION });
       setPending(null);
       const parts = [`新增 ${r.items.add} 穗`];
       if (r.items.update) parts.push(`更新 ${r.items.update} 穗`);
@@ -161,11 +182,24 @@ export function SettingsView() {
     }
   }
 
+  // v0.26 0622：清空 = 先导出一份完整备份（存好了才往下走）→ 再确认一次 → 拍快照（连原图）→ 清空
   async function wipe() {
-    if (!(await confirm({ title: '清空所有穗和新枝？', body: '此操作不能撤销。建议先导出备份。', ok: '清空', cancel: '留着', danger: true }))) return;
-    if (!(await confirm({ title: '再确认一次：真的清空？', ok: '真的清空', cancel: '算了', danger: true }))) return;
-    await clearAll();
-    toast('已清空');
+    if (backing) return;
+    const ok1 = await confirm({ title: '清空所有穗和新枝？', body: '会先把整个穗仓（含原图）导出成一份 .glean 备份，存好了才清；清之前还会在本机拍一张快照，可以在「操作前快照」里回到清空前。', ok: '先导出备份', cancel: '算了', danger: true });
+    if (!ok1) return;
+    const where = await doExport(onAndroid ? 'downloads' : 'save');
+    if (!where) {
+      toast('备份没存成，什么都没删', 'err');
+      return;
+    }
+    if (!(await confirm({ title: '备份存好了。真的清空？', body: `备份在：${where}`, ok: '真的清空', cancel: '算了', danger: true }))) return;
+    try {
+      const ids = (await db.items.toCollection().primaryKeys()) as number[];
+      const { snapId } = await withSnapshot('清空所有前', db, () => clearAll(), { imagesOf: ids, required: false, appVersion: APP_VERSION });
+      toast(snapId ? '已清空（在「操作前快照」里可以回到清空前）' : '已清空（快照没拍成，用刚导出的备份恢复）');
+    } catch (e) {
+      toast('清空失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    }
   }
 
   async function copyDiag() {
@@ -180,6 +214,8 @@ export function SettingsView() {
     ['set-capture', '极速采集', captureSummary()],
     ['set-tags', '待理与标签', inboxEnabled() ? '待理开' : '待理关'],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
+    ['set-autobak', '自动备份', readAutoBak().on ? '开' : '关'],
+    ['set-snap', '操作前快照', ''],
     ['set-trash', '回收站', counts ? `${counts.trash} 件` : ''],
     ['set-obsidian', '搬去 Obsidian', 'Markdown'],
     ['set-agent', 'Agent 与 API', readAgentCfg().on ? (readAgentCfg().write ? '开 · 可写' : '开 · 只读') : '关'],
@@ -334,9 +370,9 @@ export function SettingsView() {
             <p className="hint meta-text">只有黑、白两套。跟随系统时随手机 / 电脑的深色模式切换。系统开启「减少动态效果」时，弹簧、淡入、流光这些动效全部关闭。</p>
           </section>
 
-          <CapturePanel />
+          <CaptureP />
 
-          <TagPanel />
+          <TagP />
 
           <section className="set-sec" id="set-data">
             <h2 className="sec-title">备份与导入</h2>
@@ -374,7 +410,7 @@ export function SettingsView() {
               </button>
               <button className="trow danger" onClick={wipe}>
                 <span className="tc tc-title">清空</span>
-                <span className="tc tc-src">删掉这台设备上的所有穗和新枝</span>
+                <span className="tc tc-src">先导出完整备份，再删掉这台设备上的所有穗和新枝</span>
                 <span className="tc tc-date" />
               </button>
             </div>
@@ -422,7 +458,11 @@ export function SettingsView() {
             <p className="hint meta-text">手机和电脑之间可以用「导出 → 导入」搬运。旧版的 .json 备份照样能导入。</p>
           </section>
 
-          <TrashPanel />
+          <AutoBackupP version={APP_VERSION} onRestore={onRestore} />
+
+          <SnapshotP version={APP_VERSION} />
+
+          <TrashP />
 
           <section className="set-sec obsidian-panel" id="set-obsidian">
             <h2 className="sec-title">搬去 Obsidian</h2>
@@ -448,9 +488,9 @@ export function SettingsView() {
             </div>
           </section>
 
-          <AgentPanel />
+          <AgentP />
 
-          <UpdatePanel version={APP_VERSION} />
+          <UpdateP version={APP_VERSION} />
 
           <section className="set-sec" id="set-diag">
             <h2 className="sec-title">诊断</h2>
