@@ -30,7 +30,7 @@ declare global {
 }
 
 // v0.21 deletedAt：进回收站 = 从索引里拿掉，恢复 = 重新切词
-const ITEM_KEYS = new Set(['title', 'creator', 'year', 'content', 'why', 'tags', 'caption', 'url', 'deletedAt']);
+const ITEM_KEYS = new Set(['title', 'creator', 'year', 'content', 'why', 'tags', 'caption', 'ocr', 'url', 'deletedAt']);
 const DEV_KEYS = new Set(['idea', 'theme', 'deletedAt']);
 
 type Yield = () => Promise<void>;
