@@ -159,7 +159,7 @@ describe('v0.17 索引表（Dexie version 5）', () => {
     const d = new LinganDB(name);
     expect(await d.items.count()).toBe(2);
     expect(await d.ftidx.count()).toBe(0);
-    expect(d.verno).toBe(11); // v0.29 起是 11（作品） // v0.24 起是 10（不要的理由） // v0.23 起是 9（待理 + 重复钥匙） // v0.19 起是 7（套路墙） // v0.18 起是 6
+    expect(d.verno).toBe(12); // v0.31 起是 12（HLC） // v0.29 起是 11（作品） // v0.24 起是 10（不要的理由） // v0.23 起是 9（待理 + 重复钥匙） // v0.19 起是 7（套路墙） // v0.18 起是 6
     const ft = new FtSync(d);
     ft.attach();
     await ft.load();
