@@ -43,6 +43,12 @@ export interface Item {
   deviceId?: string;
   /** v0.21 墓碑：删除时间。有它 = 在回收站里（30 天后彻底清掉），所有列表 / 搜索 / 嫁接都看不到 */
   deletedAt?: number;
+  /** v0.23 待理：刚收进来、还没整理（速记 / 分享 / 极速拾 / 选字 / 正在播放）。留下、编辑、一键入仓后去掉；超过 7 天自动出现在穗仓 */
+  inbox?: 1;
+  /** v0.23 重复钥匙（u:链接 / i:原图哈希 / t:文字指纹，多值索引），lib/dupe.ts 算 */
+  dup?: string[];
+  /** v0.23 AI 想加、但不在你标签词汇里的新词：要你点一下才算数（0110） */
+  tagSugg?: string[];
   createdAt: number;
   updatedAt: number;
 }
