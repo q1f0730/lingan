@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { basketHint, getBasket, toggleBasket } from '../lib/basket';
 import { db } from '../lib/db';
+import { setGarden } from '../lib/repo';
 import { useApp } from '../lib/store';
 import { displayTitle } from '../lib/studio';
 import type { Item } from '../lib/types';
@@ -148,7 +149,7 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
     if (a === 'share') return void window.dispatchEvent(new CustomEvent('glean:share', { detail: { item: it.id } }));
     if (a === 'garden') {
       if (it.private && !it.garden) return toast('私密穗不能放进花园', 'err');
-      await db.items.where(':id').equals(it.id!).modify((x: Item) => void (it.garden ? delete x.garden : (x.garden = 1)));
+      await setGarden([it.id!], !it.garden);
       return toast(it.garden ? '从花园拿出来了' : '放进花园 · 设置 → 分享与花园 里生成网页');
     }
     if (a === 'basket') {
