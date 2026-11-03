@@ -51,6 +51,10 @@ export default function SharePanel({ req, onClose }: { req: ShareReq; onClose: (
 
   /** 0909：发出去前本地扫一遍；私密穗再确认一次。返回 true = 可以发 */
   async function guard(extra = ''): Promise<boolean> {
+    if (it?.locked) {
+      toast('上锁的穗不能分享', 'err');
+      return false;
+    }
     const hits = scanPersonal(text + '\n' + extra, prefs.words);
     if (isPrivate && !(await confirm({ title: '这是一穗私密的', body: '它不会发给云端模型，平时也只在你自己的设备上。确定要分享出去？', ok: '仍然分享', cancel: '不分享' }))) return false;
     if (!hits.length) return true;
