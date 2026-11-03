@@ -249,7 +249,7 @@
 0248,B1 AI 创意引擎,嫁接增强,情绪对撞模式：自动选 why 情绪极性相反的两穗为核心,反氛围模式只看整体氛围，情绪对撞更细粒度，能产出有张力的作品,离线用情绪词典给 why 打极性分（存 item.mood）；有 key 时 LLM 批量打分；mode='moodclash',4,M,P2,待做,
 0249,B1 AI 创意引擎,口味建模,口味向量快照：每月存一次全库向量均值，画出口味漂移曲线,让「我变了」有证据，回应用户对记忆/时间的诉求,tasteSnapshots 表存月度质心+top 标签；口味页一条折线显示与首月的余弦距离,4,M,P2,待做,
 0250,B1 AI 创意引擎,新生成玩法,对话里的两个我：让「三年前的你」和「现在的你」基于各自时期的穗辩论一个题目,把个人档案变成有趣的创作对话,按时间切两段穗子集，两个角色交替 6 轮，每句须引用自己时期的穗 ID,4,M,P2,待做,
-0251,B1 AI 创意引擎,对话陪伴,MCP 服务：把穗仓作为本地 MCP 工具暴露给 Claude Code/Cherry Studio,用户用多个 agent 并想要共享记忆,Tauri 侧起本地 stdio/HTTP MCP，提供 search_items/get_item 只读工具，默认关闭,4,L,P2,待做,
+0251,B1 AI 创意引擎,对话陪伴,MCP 服务：把穗仓作为本地 MCP 工具暴露给 Claude Code/Cherry Studio,用户用多个 agent 并想要共享记忆,Tauri 侧起本地 stdio/HTTP MCP，提供 search_items/get_item 只读工具，默认关闭,4,L,P2,已做,v0.25.0
 0252,B1 AI 创意引擎,嫁接增强,嫁接历史防重：同一组穗（集合）30 天内再嫁接时提示并自动换掉 1 穗,避免反复在同一堆素材上打转,grafts 记 itemIds 排序哈希；命中时弹「这组 10/21 接过」，提供「换一穗」「仍然接」,3,S,P2,待做,
 0253,B1 AI 创意引擎,嫁接增强,跳跃度可视化：滑杆旁实时显示当前选穗两两距离的小矩阵,用户不知道选的几穗到底远不远，跳跃度是盲调,有向量用余弦，无向量用类型/标签/年代差拼的启发式距离；3–5 穗画 5×5 灰度格,3,S,P2,待做,
 0254,B1 AI 创意引擎,新枝增强,新枝反方：生成一段「这根为什么会失败」的冷评,用户讨厌千篇一律也需要有人戳破自嗨,一次短调用，角色设为挑剔的同行，只针对俗套与可行性；折叠显示,3,S,P2,待做,
@@ -509,7 +509,7 @@
 0508,C2 平台与系统集成,跨端同步,每天自动备份到本机文件夹，保留最近 7 份,现在只有手动导出，WebView 数据被清就全没了,Windows 默认 文档\Glean\backup，安卓写 Download/Glean；JSON+图片 ZIP，滚动删除旧份,5,S,P0,待做,
 0509,C2 平台与系统集成,跨端同步,所有系统入口先写本地收件队列再合并,通知回复、磁贴、小组件、右键在 App 未启动时也要能存，原生侧写不了 IndexedDB,原生侧写 App 私有目录 inbox/*.json，前端启动和回前台时导入并删除；断网、无 key 照常,5,M,P0,待做,
 0510,C2 平台与系统集成,深链接,注册 glean:// 协议：capture、item/<id>、graft?ids=,小组件、通知、扩展、Obsidian 回链、自动化都要统一入口,tauri-plugin-deep-link 注册 Windows 协议与安卓 intent-filter，前端统一路由解析，未知参数安全忽略,5,M,P0,待做,
-0511,C2 平台与系统集成,自动更新,Windows 自动更新：tauri-plugin-updater + GitHub Releases,版本迭代很快，用户手动下载安装包根本跟不上,CI 产出签名的 latest.json，启动后后台检查，下载完提示「重启后更新」；设置可关,5,M,P0,待做,
+0511,C2 平台与系统集成,自动更新,Windows 自动更新：tauri-plugin-updater + GitHub Releases,版本迭代很快，用户手动下载安装包根本跟不上,CI 产出签名的 latest.json，启动后后台检查，下载完提示「重启后更新」；设置可关,5,M,P0,已做,v0.25.0
 0512,C2 平台与系统集成,自动更新,安卓应用内更新：检查 GitHub Release，下载 APK 调系统安装,安卓没有应用商店渠道，更新全靠手动去 GitHub,读 releases/latest，下载到 cache，FileProvider + PackageInstaller 安装；需 REQUEST_INSTALL_PACKAGES,5,M,P0,待做,
 0513,C2 平台与系统集成,自动更新,更新前自动备份数据库，迁移失败可回滚,Dexie 已迭代到 v7，任何一次迁移出错都会丢穗,安装更新前导出完整备份到本地备份目录；新版迁移失败时提示并提供「恢复到更新前」,5,S,P0,待做,
 0514,C2 平台与系统集成,安卓系统,剪贴板一键收跳过验证码、密码等敏感内容,剪贴板提示弹出「收进拾穗：384920」既尴尬又不安全,读 ClipDescription EXTRA_IS_SENSITIVE，再加本地规则（4–8 位纯数字、含「验证码」）跳过,4,S,P0,待做,
@@ -702,7 +702,7 @@
 0701,D1 数据、隐私、同步与可靠性,隐私,安卓可选防截屏（FLAG_SECURE）,最近任务缩略图和录屏会露出穗的内容,patch-android 读取设置后对 Activity 设置 FLAG_SECURE；默认关,2,S,P3,待做,
 0702,D2 工程质量、性能与发布,启动,首屏只查最新 60 条，其余空闲分页加载,Library 现在 useLiveQuery 全表 toArray，1 万穗时启动和每次写入都要读全量,orderBy('createdAt').reverse().limit(60) 先出首屏；requestIdleCallback 续读；虚拟滚动按需扩展,5,M,P0,待做,
 0703,D2 工程质量、性能与发布,大数据量,10k / 50k 穗压力夹具与基准,现在最大测试规模 1000 穗，没有任何证据证明更大时可用,e2e 种子脚本生成 1 万（3000 图）和 5 万（纯文字）；测冷启动、滚动、搜索、导出、内存,5,M,P0,待做,
-0704,D2 工程质量、性能与发布,测试,新增 ci.yml：每次推送跑 tsc + oxlint + vitest + build,现在只有 release 工作流在 Windows 上跑 npm test，平时推上去的代码坏了也不知道,ghsync 每次 contents API 提交都会触发 push 事件；ubuntu 单 job，几分钟出结果,5,S,P0,待做,
+0704,D2 工程质量、性能与发布,测试,新增 ci.yml：每次推送跑 tsc + oxlint + vitest + build,现在只有 release 工作流在 Windows 上跑 npm test，平时推上去的代码坏了也不知道,ghsync 每次 contents API 提交都会触发 push 事件；ubuntu 单 job，几分钟出结果,5,S,P0,已做,v0.25.0
 0705,D2 工程质量、性能与发布,测试,e2e 搬进 GitHub Actions,发版质量门依赖手动在 InstaBox 跑 e2e，靠记性就会漏,Actions 装 playwright chromium，静态服务 dist 跑 e2e/run.mjs；ALL PASS 才允许 release,5,M,P0,待做,
 0706,D2 工程质量、性能与发布,崩溃上报,全局 ErrorBoundary + onerror/unhandledrejection,代码里没有任何错误边界，组件一抛错整个 App 白屏，用户只能杀进程,App 外层与每个 view 包 ErrorBoundary，显示「这一页出错了 · 重试 · 复制诊断」；全局事件写日志,5,S,P0,已做,v0.20.0
 0707,D2 工程质量、性能与发布,崩溃上报,「复制诊断信息」按钮,用户靠把问题丢给 AI 排查，一段干净的诊断文本价值最大,设置「关于」：版本、平台、WebView 版本、库规模、索引/缩略图状态、最近 20 条错误；自动脱敏,5,S,P0,已做,v0.20.0
@@ -710,9 +710,9 @@
 0709,D2 工程质量、性能与发布,代码结构,仓储层：所有写入经 repo（统一盖章、索引、历史）,现在写入点分散，ftidx 增量要在多处手动触发；同步、历史、回收站上线后更会漏,lib/repo/items.ts 提供 add/update/remove/restore；内部做 HLC、ftsync、history；oxlint 规则禁止视图直接写 db,5,M,P0,待做,
 0710,D2 工程质量、性能与发布,测试,Dexie 迁移回归套件：为 v1–v7 每个历史版本存一份夹具库，CI 逐个升级到最新并比对,保证每次加 schema 都不丢旧数据,fake-indexeddb + 夹具 JSON，断言条数与关键字段,5,M,P0,已做,v0.21.0
 0711,D2 工程质量、性能与发布,崩溃上报,本地错误日志环形缓冲,出问题后无从复现；用户不写代码，需要现成的证据,Dexie logs 表保留最近 500 条：时间、版本、页面、错误名与栈；不记录穗内容,4,S,P0,已做,v0.20.0
-0712,D2 工程质量、性能与发布,CI/CD,质量门 job 前置：全绿才建 release,现在 create-release 第一步就建好正式 release，构建失败会留下没有安装包的空 release,新增 verify job（tsc/lint/test/build/e2e）；create-release needs verify,4,S,P0,待做,
+0712,D2 工程质量、性能与发布,CI/CD,质量门 job 前置：全绿才建 release,现在 create-release 第一步就建好正式 release，构建失败会留下没有安装包的空 release,新增 verify job（tsc/lint/test/build/e2e）；create-release needs verify,4,S,P0,已做,v0.25.0
 0713,D2 工程质量、性能与发布,性能,图片入库时生成 3 档缩略图（256/768/原图），网格只读 256,大图库滚动和内存占用都降下来,OffscreenCanvas 后台生成，WebP 编码，旧穗后台补建,4,M,P0,待做,
-0714,D2 工程质量、性能与发布,CI/CD,npm ci 替代 npm install,release 工作流用 npm install，每次可能装到不同版本，构建不可复现,三个 job 统一 npm ci；setup-node 打开 cache: npm,3,S,P0,待做,
+0714,D2 工程质量、性能与发布,CI/CD,npm ci 替代 npm install,release 工作流用 npm install，每次可能装到不同版本，构建不可复现,三个 job 统一 npm ci；setup-node 打开 cache: npm,3,S,P0,已做,v0.25.0
 0715,D2 工程质量、性能与发布,启动,10k 穗冷启动基准纳入 docs/perf,长期使用必然过千，1000 穗基准掩盖了线性退化,perf json 增加 10k 档（含 3000 图）；release notes 表格同时给 1k/10k,4,S,P1,待做,
 0716,D2 工程质量、性能与发布,包体,去掉或懒载 framer-motion,v0.16 起动效只剩淡入 + 慢放大 3%，却仍有 11 个文件引用 framer-motion，主包 507KB,用 CSS transition + IntersectionObserver 替代；确有需要处用 LazyMotion + domAnimation；对比前后体积,4,S,P1,待做,
 0717,D2 工程质量、性能与发布,包体,安卓 APK 按 ABI 拆分，主推 arm64,现在 aarch64+armv7 打进一个 apk，体积接近翻倍；用户的 vivo X300 Pro 是 arm64,tauri android build --split-per-abi；release 附 arm64 与 armv7 两个 apk，说明里写怎么选,4,S,P1,待做,
@@ -734,22 +734,22 @@
 0733,D2 工程质量、性能与发布,插件架构,统一捕获源接口 CaptureSource,速记、剪贴板、安卓分享、导入器各自把输入变成穗，规则不一致,定义 normalize(raw)→Item 管道（类型识别、链接规范化、去重提示）；各入口只写适配,4,M,P1,待做,
 0734,D2 工程质量、性能与发布,插件架构,链接解析器注册表（按域名）,v0.27 要专门解析网易云/QQ 音乐/豆瓣/B 站/小红书，写成 if-else 会失控,linkmeta 改为 resolvers[]：match(url)+resolve()；每个解析器配真实链接 fixture 单测,4,S,P1,待做,
 0735,D2 工程质量、性能与发布,代码结构,导入数据与模型返回用 zod 运行时校验,importAll 只检查 title 和 type，模型返回 JSON 也靠手写判断，脏数据会进库,定义 ItemSchema/BackupSchema/GraftResponseSchema；校验失败给出具体字段错误,4,S,P1,待做,
-0736,D2 工程质量、性能与发布,代码结构,AGENTS.md：给 Claude Code / Qoder 的仓库指南,用户主要靠多 agent 写代码，统一的质量门命令和禁忌能减少返工,写清目录结构、质量门、Dexie 迁移规则、Studio 设计约束、禁止写入 key；runbook 链接过去,4,S,P1,待做,
+0736,D2 工程质量、性能与发布,代码结构,AGENTS.md：给 Claude Code / Qoder 的仓库指南,用户主要靠多 agent 写代码，统一的质量门命令和禁忌能减少返工,写清目录结构、质量门、Dexie 迁移规则、Studio 设计约束、禁止写入 key；runbook 链接过去,4,S,P1,已做,v0.25.0
 0737,D2 工程质量、性能与发布,可观测性,AI 调用本地指标：延迟、token、重试、429,免费模型限流是嫁接失败的主因，现在看不到,ai.ts 包装层记录每次调用到 metrics 表；设置 AI 区显示近 7 天成功率与平均延迟,4,S,P1,待做,
 0738,D2 工程质量、性能与发布,可观测性,统一后台任务调度器,thumbJob、ftsync 各自 setTimeout/idle，再加同步、向量、自动备份会互相抢资源,lib/scheduler.ts：优先级队列、并发上限、暂停/恢复、状态订阅；现有任务迁入,4,M,P1,待做,
 0739,D2 工程质量、性能与发布,发布质量,一键发版前检查 tools/preflight.sh,RELEASE_RUNBOOK 7 步质量门靠人记，容易漏 e2e 或版本号,脚本依次跑 tsc/vitest/build/本地 e2e/体积预算/版本一致/notes 存在，全过才打印可发,4,S,P1,待做,
 0740,D2 工程质量、性能与发布,启动,启动分段打点并在「关于」可见,现在 e2e 只测冷启动总时长（约 180ms），一旦变慢不知道慢在 Dexie、索引还是字体,performance.mark：脚本执行/DB open/首查/首帧/字体就绪；写入本地指标表；e2e 同时断言各段,3,S,P1,待做,
 0741,D2 工程质量、性能与发布,启动,主窗口先隐藏，首屏渲染完成再 show,WebView2 冷启动有白屏闪一下，黑主题下尤其刺眼,tauri.conf windows.visible=false；前端首帧后 getCurrentWindow().show()；超时 1.5s 强制显示,3,S,P1,待做,
-0742,D2 工程质量、性能与发布,包体,体积预算进 CI：主 chunk 超标即失败,没有预算，体积只会越积越大,vite build 后脚本读取 dist/assets 大小；主 JS ≤350KB、首屏字体 ≤350KB；输出 visualizer 报告为 artifact,3,S,P1,待做,
+0742,D2 工程质量、性能与发布,包体,体积预算进 CI：主 chunk 超标即失败,没有预算，体积只会越积越大,vite build 后脚本读取 dist/assets 大小；主 JS ≤350KB、首屏字体 ≤350KB；输出 visualizer 报告为 artifact,3,S,P1,已做,v0.25.0
 0743,D2 工程质量、性能与发布,渲染,搜索结果列表虚拟化,现在一次渲染 170+ 条结果，1 万穗时可能上千条，输入每个字都整列重排,复用 components/Virtual.tsx；桌面无线表格按行高估算；e2e 断言挂载行数上限,3,S,P1,待做,
 0744,D2 工程质量、性能与发布,大数据量,导出/导入大库显示进度并可取消,现在点了导出就只能干等，大库时看起来像卡死,生成器式遍历上报进度；AbortController 取消；Studio 细线进度条（无百分比装饰）,3,S,P1,待做,
 0745,D2 工程质量、性能与发布,测试,拆分 1808 行的 e2e/run.mjs,单文件越来越难维护，一处失败全部重跑，agent 改起来也容易冲突,按功能拆为 e2e/specs/*.mjs + 共享 fixtures；runner 支持只跑指定用例与并行,3,M,P1,待做,
 0746,D2 工程质量、性能与发布,崩溃上报,Rust panic hook 写崩溃文件，下次启动提示,原生层崩溃前端完全感知不到,std::panic::set_hook 写 AppData/logs/panic-*.txt；启动时检测并提示可复制,3,S,P1,待做,
 0747,D2 工程质量、性能与发布,崩溃上报,生产环境也启用 tauri-plugin-log（Warn 级、轮转）,lib.rs 只在 debug 构建启用日志，正式版出问题零记录,release 构建 LevelFilter::Warn，文件目标 + 1MB×3 轮转；前端错误也转发写入,3,S,P1,待做,
-0748,D2 工程质量、性能与发布,CI/CD,release 附 SHA256SUMS 与校验说明,用户从镜像或网盘拿到的包需要能确认没被改过,CI 最后一步对全部产物 sha256sum 上传；release notes 模板加 PowerShell Get-FileHash 一行,3,S,P1,待做,
+0748,D2 工程质量、性能与发布,CI/CD,release 附 SHA256SUMS 与校验说明,用户从镜像或网盘拿到的包需要能确认没被改过,CI 最后一步对全部产物 sha256sum 上传；release notes 模板加 PowerShell Get-FileHash 一行,3,S,P1,已做,v0.25.0
 0749,D2 工程质量、性能与发布,CI/CD,锁定 Rust 与 Node 工具链版本,dtolnay/rust-toolchain@stable 每次可能拿到新版本，同一 tag 重跑结果不同,加 rust-toolchain.toml 与 .nvmrc；Actions 读取这两个文件,3,S,P1,待做,
 0750,D2 工程质量、性能与发布,自动更新,更新前自动备份并展示中文更新说明,每版都可能有 Dexie 迁移，更新前留一份备份最稳妥,updater 下载完成、安装前调用自动备份；弹层显示 docs/releases 对应版本摘要,3,S,P1,待做,
-0751,D2 工程质量、性能与发布,自动更新,更新检查隐私：每日最多一次、只请求静态文件、可关,更新检查不应变成遥测,GET 静态 latest.json，不带任何设备参数；设置「自动检查更新」开关并写进联网清单,3,S,P1,待做,
+0751,D2 工程质量、性能与发布,自动更新,更新检查隐私：每日最多一次、只请求静态文件、可关,更新检查不应变成遥测,GET 静态 latest.json，不带任何设备参数；设置「自动检查更新」开关并写进联网清单,3,S,P1,已做,v0.25.0
 0752,D2 工程质量、性能与发布,多语言,prompt 模板独立成文件并带版本号,嫁接提示词散在 ai.ts/graft.ts 里，改一处难追溯，v0.32 也要记 prompt 版本,"src/prompts/*.ts 导出 {id, version, build()}；新枝记录 promptVersion；契约测试按版本",3,S,P1,待做,
 0753,D2 工程质量、性能与发布,代码结构,拆分 db.ts：schema / migrations / backup / import,一个文件里混着 7 版迁移、备份、导入、套路墙合并，下一次大迁移极易改错,按职责拆 4 个文件，公共导出不变；先补测试再搬代码,3,S,P1,待做,
 0754,D2 工程质量、性能与发布,代码结构,ADR 决策记录 docs/adr/,Dexie 不换 sqlite、无 git、Studio 视觉等决策散在 PLAN 和对话里，后来的 agent 会推翻重来,每条决策一页：背景/选项/结论/依据；先补 6–8 条既有决策,3,S,P1,待做,
@@ -804,10 +804,10 @@
 0803,E1 超级应用生态,视频与社区接入,B站视频带时间戳拾取,B站视频灵感点往往在某一分钟，整条视频太粗,识别 b23.tv 短链与 ?t= 参数，调 api.bilibili.com/x/web-interface/view 取标题/UP主/封面，时间戳显示为可点「从 3:12 看」,5,S,P0,待做,
 0804,E1 超级应用生态,播客与阅读源,RSS 订阅进「待拾」而非穗仓,RSS 是最开放的源，但直接灌进穗仓会污染「我拾的」这个核心定义,订阅源列表 + 每日拉取进独立「待拾」流，只显示标题与一行摘要，左滑丢、右滑拾（拾时必须给一个为什么或标签）,5,M,P0,待做,
 0805,E1 超级应用生态,插件与小程序体系,插件权限清单与一键停用,私人工具装插件最大风险是数据外泄,每个插件 manifest 声明权限：读元数据/读正文/读图片/联网域名白名单；安装时逐条展示，运行时 CSP 限制 fetch 只能访问声明域名,5,M,P0,待做,
-0806,E1 超级应用生态,MCP 与 Agent 接入,官方 glean-mcp 服务器（stdio）,他同时用 Claude Code、OpenClaw、Hermes、Cherry Studio，并想要跨 Agent 共享记忆；MCP 让所有 Agent 都能用他的穗仓,实现 MCP server，tools：search_items、get_item、add_item、graft、list_branches、get_taste；resources：taste 侧写；走本地 API，默认只读,5,M,P0,待做,
-0807,E1 超级应用生态,MCP 与 Agent 接入,MCP 只读模式与写入确认,Agent 乱加穗会破坏「我拾的」定义,默认只暴露读工具；写工具开启后，Agent 新增的穗标「Agent 代拾」，进待拾而非穗仓，需本人确认,5,S,P0,待做,
+0806,E1 超级应用生态,MCP 与 Agent 接入,官方 glean-mcp 服务器（stdio）,他同时用 Claude Code、OpenClaw、Hermes、Cherry Studio，并想要跨 Agent 共享记忆；MCP 让所有 Agent 都能用他的穗仓,实现 MCP server，tools：search_items、get_item、add_item、graft、list_branches、get_taste；resources：taste 侧写；走本地 API，默认只读,5,M,P0,已做,v0.25.0
+0807,E1 超级应用生态,MCP 与 Agent 接入,MCP 只读模式与写入确认,Agent 乱加穗会破坏「我拾的」定义,默认只暴露读工具；写工具开启后，Agent 新增的穗标「Agent 代拾」，进待拾而非穗仓，需本人确认,5,S,P0,已做,v0.25.0
 0808,E1 超级应用生态,插件与小程序体系,「接法插件」：让嫁接接法可扩展,五种接法是核心差异，开放成插件能让他（和社区）长出第六、第七种,"定义 Graft Mode 接口：draw(pool, n) 返回穗 id + 规则说明 + prompt 片段；插件是单个 JS 文件放入插件目录，沙箱 iframe 运行，只读穗元数据",5,M,P1,待做,
-0809,E1 超级应用生态,MCP 与 Agent 接入,「口味」作为 Agent 的系统提示资源,大模型偏大众平均，拾穗的核心就是反平均；把他的口味喂给别的 Agent 也能用,MCP resource glean://taste 输出：高频标签、最近升温/冷下来、套路墙前 30 条；他在 Claude 写东西时可引用,5,S,P1,待做,
+0809,E1 超级应用生态,MCP 与 Agent 接入,「口味」作为 Agent 的系统提示资源,大模型偏大众平均，拾穗的核心就是反平均；把他的口味喂给别的 Agent 也能用,MCP resource glean://taste 输出：高频标签、最近升温/冷下来、套路墙前 30 条；他在 Claude 写东西时可引用,5,S,P1,已做,v0.25.0
 0810,E1 超级应用生态,双向联动,Obsidian 双向同步（不只是导出 ZIP）,v0.15 是一次性搬家，他在 Obsidian 改了为什么，App 不知道,选一个 Obsidian 仓库文件夹，按 glean_id 双向同步：App→md 写入，md 的 YAML/正文改动回写 App；冲突按修改时间+弹层选择,5,L,P1,待做,
 0811,E1 超级应用生态,自动化规则,规则引擎：如果…就…,来源多了以后，手工整理成本暴涨,设置→规则：触发（新穗/来自某平台/含某词）→条件→动作（加标签/改类型/进某集合/推送）；规则按顺序执行，可试运行看命中,5,M,P1,待做,
 0812,E1 超级应用生态,音乐源接入,网易云单曲带「热评第一」做摘抄,网易云的灵魂在评论区，热评常是他被打动的真正原因，比歌名更能喂嫁接,解析单曲 id 后拉公开热评前 3 条，让用户点选一条存进摘抄字段，标「来自热评」，不选不存,4,S,P1,待做,
@@ -832,11 +832,11 @@
 0831,E1 超级应用生态,插件与小程序体系,插件可读不可写的数据沙箱,防止插件误删穗或篡改溯源,插件 API 写操作只允许「提议」：返回待新增穗/标签，由用户在确认弹层点「收下」才落库，可撤销,4,S,P1,待做,
 0832,E1 超级应用生态,开放 API 与 URL Scheme,API Token 分权限与过期,不同脚本给不同权限，丢了也只影响一个,token 有 scope（read/write/graft）与过期时间，设置里列出每个 token 最近调用时间与次数，可单独吊销,4,S,P1,待做,
 0833,E1 超级应用生态,开放 API 与 URL Scheme,Webhook 出站：新枝诞生时通知,新枝出来后他想自动推到飞书/企业微信/Notion,设置里配置 webhook URL，事件 item.created / branch.created / daily.ready，payload 只含标题与 id（正文需勾选），失败重试 3 次,4,S,P1,待做,
-0834,E1 超级应用生态,开放 API 与 URL Scheme,glean CLI,他用 Claude Code、Qoder 这类终端 Agent，CLI 是它们最好用的接口,Node 单文件 CLI 调本地 API：glean add/search/graft/export，支持 --json 输出，npm 发布或随安装包附带,4,S,P1,待做,
+0834,E1 超级应用生态,开放 API 与 URL Scheme,glean CLI,他用 Claude Code、Qoder 这类终端 Agent，CLI 是它们最好用的接口,Node 单文件 CLI 调本地 API：glean add/search/graft/export，支持 --json 输出，npm 发布或随安装包附带,4,S,P1,已做,v0.25.0
 0835,E1 超级应用生态,开放 API 与 URL Scheme,开放数据格式规范 glean.json,备份 JSON 已有，但没有公开 schema，别人写不了兼容工具,发布 JSON Schema（穗、新枝、套路墙、溯源 refs），版本号随 Dexie version，README 给示例；导入时按 schema 校验,4,S,P1,待做,
-0836,E1 超级应用生态,MCP 与 Agent 接入,套路墙作为全局「禁用词」服务,套路墙是独家资产，他用任何 AI 写作都想避开这些,MCP tool check_cliches(text) 返回命中词与位置；CLI glean lint 文件.md 同样可用,4,S,P1,待做,
+0836,E1 超级应用生态,MCP 与 Agent 接入,套路墙作为全局「禁用词」服务,套路墙是独家资产，他用任何 AI 写作都想避开这些,MCP tool check_cliches(text) 返回命中词与位置；CLI glean lint 文件.md 同样可用,4,S,P1,已做,v0.25.0
 0837,E1 超级应用生态,MCP 与 Agent 接入,在 Claude/Qoder 里「用我的穗嫁接」,嫁接引擎在 App 外也有价值，例如写剧本时调用,"MCP tool graft(mode, n, seed_query) 返回三根新枝与 refs；结果同时写回 App 新枝页，标来源「来自 Agent」",4,M,P1,待做,
-0838,E1 超级应用生态,MCP 与 Agent 接入,Agent 访问审计,哪个 Agent 读了哪些穗必须看得见,每次 MCP 调用写审计：客户端名、工具、返回的穗 id 数；口味页「谁看过我的穗仓」本周汇总,4,S,P1,待做,
+0838,E1 超级应用生态,MCP 与 Agent 接入,Agent 访问审计,哪个 Agent 读了哪些穗必须看得见,每次 MCP 调用写审计：客户端名、工具、返回的穗 id 数；口味页「谁看过我的穗仓」本周汇总,4,S,P1,已做,v0.25.0
 0839,E1 超级应用生态,双向联动,每日一穗推到微信（Server酱³ / PushPlus）,他明确说不看邮件、要微信/QQ 提醒,设置里填 SendKey，每日一穗到点通过 Server酱³ 推送标题+一句为什么+glean:// 链接；只发标题级信息，正文不外发,4,S,P1,待做,
 0840,E1 超级应用生态,双向联动,系统日历联动：嫁接结果变成日程,新枝的「20 分钟小实验」不排进日程就不会做,新枝→「排进日历」生成 .ics（标题、20 分钟、正文带 glean:// 链接），安卓走系统日历 Intent，Windows 打开默认日历,4,S,P1,待做,
 0841,E1 超级应用生态,双向联动,相册「灵感」相簿自动导入,手机截图和随手拍的灵感照片散在相册,安卓选一个相簿（如 Screenshots 或自建「拾穗」相簿），App 打开时检测新增照片进待拾，不自动入库,4,M,P1,待做,
