@@ -9,6 +9,8 @@ import { checkRefs, evidenceClean, evidenceIds, minEvidence, padRefs, weakNote, 
 import type { Settings } from './settings';
 import { TYPE_LABEL, type GraftSeed, type GraftTension, type Idea, type Item, type ItemType } from './types';
 import { branchHits, emptyReport, enforcedKeys, enforceWall, findHits, forbiddenBlock, promptWall, type Cliche, type WallReport } from './wall';
+import { deaiIdea } from './deai';
+import { branchCore, enforceDistinct, maxPairSim, type DistinctReport } from './distinct';
 
 export interface Transform {
   id: string;
@@ -90,16 +92,40 @@ export function pickObliqueClean(rand: () => number = Math.random, keys: string[
   return OBLIQUE[start];
 }
 
-/** 每件素材前面标上它的素材 ID（穗在库里的真实 id），模型必须用这个 ID 引用 */
-export function describeForGraft(it: Item, idx: number): string {
+/**
+ * 每件素材前面标上它的素材 ID（穗在库里的真实 id），模型必须用这个 ID 引用。
+ * v0.24 0203：块内顺序改成「为什么打动我」→ 画面 → 作者 / 年份 / 内容（标题跟在 ID 后面只当名字）；
+ * 0202：主干穗在方括号里标「主干」。
+ */
+export function describeForGraft(it: Item, idx: number, anchorId?: number): string {
   const id = typeof it.id === 'number' ? it.id : idx + 1;
-  const parts = [`[#${id} | ${TYPE_LABEL[it.type]}${it.tags.length ? ` | 标签：${it.tags.slice(0, 6).join('、')}` : ''}] ${it.title}`];
+  const anchor = anchorId != null && it.id === anchorId;
+  const parts = [`[#${id} | ${TYPE_LABEL[it.type]}${anchor ? ' | 主干' : ''}${it.tags.length ? ` | 标签：${it.tags.slice(0, 6).join('、')}` : ''}] ${it.title}`];
+  if (it.why) parts.push(`为什么打动我：${it.why}`);
+  if (it.caption) parts.push(`画面：${it.caption.slice(0, 160)}`);
   if (it.creator) parts.push(`作者：${it.creator}`);
   if (it.year) parts.push(`年份：${it.year}`);
   if (it.content) parts.push(`内容：${it.content.slice(0, 240)}`);
-  if (it.caption) parts.push(`画面：${it.caption.slice(0, 160)}`);
-  if (it.why) parts.push(`为什么打动我：${it.why}`);
   return parts.join('\n');
+}
+
+/** v0.24 0206 反口味：我讨厌的东西（不是素材，不带 ID） */
+export function avoidBlock(items: Item[], n = 8): string {
+  const list = items.filter((i) => i.polarity === -1).slice(0, n);
+  if (!list.length) return '';
+  return [
+    'AVOID — 我讨厌的东西（不是素材，不要引用；新枝不许往它们的方向长，可以拿来当反面参照）：',
+    ...list.map((i) => `- 《${i.title.replace(/^《|》$/g, '').slice(0, 30)}》（${TYPE_LABEL[i.type]}）${i.why ? `：${i.why.slice(0, 60)}` : ''}`),
+  ].join('\n');
+}
+
+/** v0.24 0210 我的文风：few-shot 样本（只学语气） */
+export function styleBlock(samples: string[]): string {
+  if (!samples.length) return '';
+  return [
+    'STYLE — 我自己写的几段文字（只学语气、句子长短和用词温度；不要照抄内容，不要提到这些样本）：',
+    ...samples.map((x, i) => `样本 ${i + 1}：${x}`),
+  ].join('\n');
 }
 
 function minRefs(n: number) {
@@ -111,16 +137,40 @@ function idList(refs: number[], ids: number[]): string {
   return refs.map((r) => `#${ids[r - 1] ?? r}`).join('、');
 }
 
-type Ctx = { theme?: string; oblique: string; taste?: string; mode?: GraftMode; /** v0.19 套路墙（原文，写进 FORBIDDEN） */ wall?: string[] };
+type Ctx = {
+  theme?: string;
+  oblique: string;
+  taste?: string;
+  mode?: GraftMode;
+  /** v0.19 套路墙（原文，写进 FORBIDDEN） */
+  wall?: string[];
+  /** v0.24 0202 主干穗 id */
+  anchorId?: number;
+  /** v0.24 0206 我讨厌的穗（AVOID 段） */
+  avoid?: Item[];
+  /** v0.24 0212 不要的理由（FEEDBACK 段，已拼好） */
+  feedback?: string;
+  /** v0.24 0210 我的文风样本 */
+  style?: string[];
+};
+
+function anchorOf(items: Item[], opts: Ctx): Item | undefined {
+  return opts.anchorId != null ? items.find((i) => i.id === opts.anchorId) : undefined;
+}
 
 function context(items: Item[], opts: Ctx) {
+  const a = anchorOf(items, opts);
   return [
     modeBrief(opts.mode, items),
     opts.theme ? `创作方向：${opts.theme}` : '创作方向：没有指定，自由嫁接。',
     `斜策略（作为额外约束）：${opts.oblique}`,
     opts.taste ? `我的口味（参考，不要复述）：${opts.taste.slice(0, 400)}` : '',
-    '素材（只能用这些；方括号里 # 后面的数字是素材 ID）：',
-    items.map(describeForGraft).join('\n\n'),
+    a ? `主干：#${a.id}（${a.title}）。每根新枝都必须以它为主体，其余素材只能提供手法、材料或情绪。` : '',
+    '素材（只能用这些；方括号里 # 后面的数字是素材 ID；每件先看「为什么打动我」，那才是我在意的）：',
+    items.map((it, i) => describeForGraft(it, i, a?.id)).join('\n\n'),
+    avoidBlock(opts.avoid || []),
+    opts.feedback || '',
+    styleBlock(opts.style || []),
   ]
     .filter(Boolean)
     .join('\n\n');
@@ -130,9 +180,16 @@ function sysHead(opts: Ctx): string {
   return [
     '你是只为一个人的私人收藏工作的「嫁接器」：把相距很远的几件素材嫁接出新枝。',
     '只能使用给出的素材。不要引入大众流行梗、名人名作、行业套路或泛泛建议。证据不够就直说。',
+    '每件素材的「为什么打动我」比标题重要：新枝要接住的是这些理由，而不是题材。',
+    opts.anchorId != null ? `素材 #${opts.anchorId} 是主干：每根新枝的主体都必须是它，refs 里必须有 ${opts.anchorId}；其余素材只当养分（手法 / 材料 / 情绪）。` : '',
+    opts.avoid?.some((i) => i.polarity === -1) ? '用户消息里的 AVOID 段是我讨厌的东西：不许引用、不许靠近，只能当反面参照。' : '',
+    opts.feedback ? '用户消息里的 FEEDBACK 段是我最近不要的新枝和理由：同样的毛病不许再犯。' : '',
+    opts.style?.length ? '新枝的文字（title / idea / experiment）照 STYLE 段样本的语气写：短句、具体、不要 AI 腔（不要「不仅…更是」「在…的同时」「值得一提的是」）。' : '',
     '不要输出思考过程，只输出要求的 JSON。',
     forbiddenBlock(opts.wall || []),
-  ].join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 export function buildMapPrompt(items: Item[], opts: Ctx): { system: string; user: string } {
@@ -526,6 +583,61 @@ export interface GraftResult {
   cliches?: string[];
   /** v0.19 套路墙校验：撞墙几根、重写 / 重长 / 删字各几根 */
   wall?: WallReport;
+  /** v0.24 三枝不撞车：换掉了几根太像的、最后两两最大相似度、用的字面还是向量 */
+  distinct?: DistinctReport;
+  /** v0.24 0234 去 AI 腔：一共改写了几处 */
+  deai?: number;
+}
+
+/** v0.24 三枝不撞车的设置：字面 / 向量阈值，有向量模型时传 embed */
+export interface DistinctCfg {
+  text: number;
+  vector: number;
+  embed?: (texts: string[]) => Promise<number[][]>;
+}
+
+/** v0.24 三枝不撞车：有向量先用向量（三根不撞就不再多调），撞了就把候选也向量化再换；向量失败退回字面 */
+export async function distinctBranches(branches: Idea[], pool: () => Idea[], cfg: DistinctCfg): Promise<{ branches: Idea[]; report: DistinctReport }> {
+  if (cfg.embed) {
+    try {
+      const vecs = new Map<string, number[]>();
+      const k = (b: Idea) => b.title + '|' + b.idea;
+      const v0 = await cfg.embed(branches.map(branchCore));
+      if (v0.length !== branches.length) throw new Error('向量数量不对');
+      branches.forEach((b, i) => vecs.set(k(b), v0[i]));
+      const vec = (b: Idea) => vecs.get(k(b));
+      const before = maxPairSim(branches, { threshold: cfg.vector, method: 'vector', vec });
+      if (before < cfg.vector) return { branches, report: { replaced: 0, maxSim: +before.toFixed(3), before: +before.toFixed(3), method: 'vector' } };
+      const cands = pool();
+      if (cands.length) {
+        const vc = await cfg.embed(cands.map(branchCore));
+        cands.forEach((c, i) => vc[i] && vecs.set(k(c), vc[i]));
+      }
+      return enforceDistinct(branches, () => cands, { threshold: cfg.vector, method: 'vector', vec });
+    } catch {
+      /* 向量不可用：用字面 */
+    }
+  }
+  return enforceDistinct(branches, pool, { threshold: cfg.text, method: 'text' });
+}
+
+/** 替补池（撞墙 / 撞车共用），去掉撞墙的 */
+function cleanPool(seeds: GraftSeed[], items: Item[], oblique: string, keys: string[], theme?: string, mode?: GraftMode): () => Idea[] {
+  const p = wallPool(seeds, items, oblique, theme, mode);
+  return () => p().filter((c) => !branchHits(c, keys).length);
+}
+
+/** v0.24 0202 离线：每根新枝都带上主干（refs 里有它，正文点名） */
+function withAnchor(branches: Idea[], items: Item[], anchorId?: number): Idea[] {
+  if (anchorId == null) return branches;
+  const pos = items.findIndex((i) => i.id === anchorId) + 1;
+  if (pos <= 0) return branches;
+  const a = items[pos - 1];
+  return branches.map((b) => ({
+    ...b,
+    refs: [pos, ...(b.refs || []).filter((r) => r !== pos)],
+    idea: b.idea.includes(q(a)) ? b.idea : `以${q(a)}为主干：${b.idea}`,
+  }));
 }
 
 /** v0.19 撞墙时的替补：先用没被选中的种子长，再用离线句式（8 种变形 × 2 种句式）长 */
@@ -556,7 +668,7 @@ export function applyWall(branches: Idea[], keys: string[], pool: () => Idea[], 
 }
 
 /** 离线四步：张力 → 8 种变形各一粒 → 换掉最相像的 3 粒 → 收拢 3 根变形法两两不同的 */
-export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number; mode?: GraftMode; wall?: Cliche[] } = {}): GraftResult {
+export function graftOffline(items: Item[], opts: { theme?: string; rand?: () => number; mode?: GraftMode; wall?: Cliche[]; anchorId?: number; distinct?: { text: number } } = {}): GraftResult {
   const rand = opts.rand || Math.random;
   if (!items.length) throw new Error('没有穗');
   const list = items.length === 1 ? [items[0], items[0]] : items;
@@ -585,8 +697,10 @@ export function graftOffline(items: Item[], opts: { theme?: string; rand?: () =>
   const chosen = [first, ...rest];
   const branches = chosen.map((i, k) => branchFromSeed(seeds[i], list, oblique, k, opts.theme, opts.mode));
   const fin = finishBranches(branches, seeds, chosen);
-  const walled = applyWall(fin.branches, keys, wallPool(fin.seeds, list, oblique, opts.theme, opts.mode));
-  return { mode: opts.mode, branches: walled.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0, wall: walled.report };
+  const walled = applyWall(withAnchor(fin.branches, list, opts.anchorId), keys, wallPool(fin.seeds, list, oblique, opts.theme, opts.mode));
+  // v0.24 三枝不撞车（离线只有字面相似度）
+  const dist = enforceDistinct(walled.branches, () => withAnchor(cleanPool(fin.seeds, list, oblique, keys, opts.theme, opts.mode)(), list, opts.anchorId), { threshold: opts.distinct?.text ?? 0.45, method: 'text' });
+  return { mode: opts.mode, branches: dist.branches, seeds: fin.seeds, tensions, pattern: '同一个句式反复出现（「把…放进…」），换掉了最像的三粒。', source: 'offline', calls: 0, wall: walled.report, distinct: dist.report };
 }
 
 /** 给模型的「上一次哪里不对」 */
@@ -665,12 +779,31 @@ export async function graftWithAI(
     sleep?: (ms: number) => Promise<void>;
     /** v0.19 套路墙 */
     wall?: Cliche[];
+    /** v0.24 主干 / 讨厌的 / 不要的理由 / 文风 / 不撞车 */
+    anchorId?: number;
+    avoid?: Item[];
+    feedback?: string;
+    style?: string[];
+    distinct?: DistinctCfg;
   } = {},
 ): Promise<GraftResult> {
   const wall = opts.wall || [];
   const baseKeys = enforcedKeys(wall);
   const oblique = pickObliqueClean(opts.rand || Math.random, baseKeys);
-  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode, wall: promptWall(wall) };
+  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode, wall: promptWall(wall), anchorId: opts.anchorId, avoid: opts.avoid, feedback: opts.feedback, style: opts.style };
+  const dcfg: DistinctCfg = opts.distinct || { text: 0.45, vector: 0.9 };
+  /** v0.24 收尾：去 AI 腔 → 过墙 → 不撞车 */
+  const polish = async (branches: Idea[], seeds: GraftSeed[], keys: string[], report: WallReport) => {
+    let deai = 0;
+    const clean = branches.map((b) => {
+      const x = deaiIdea(b);
+      deai += x.deai || 0;
+      return x;
+    });
+    const walled = applyWall(clean, keys, wallPool(seeds, items, oblique, opts.theme, opts.mode), report);
+    const dist = await distinctBranches(walled.branches, cleanPool(seeds, items, oblique, keys, opts.theme, opts.mode), dcfg);
+    return { branches: dist.branches, wall: walled.report, distinct: dist.report, deai };
+  };
   const temp = Math.max(0.2, Math.min(1.3, s.temperature || 1));
   let calls = 0;
   const rOpts = (stage: GraftStage) => ({
@@ -745,17 +878,17 @@ export async function graftWithAI(
       }
       keys = enforcedKeys(wall, conv.cliches);
     }
-    const walled = applyWall(conv.branches, keys, wallPool(conv.seeds, items, oblique, opts.theme, opts.mode), { ...report, hit: 0 });
-    walled.report.hit = Math.max(report.hit, walled.report.hit);
+    const walled = await polish(conv.branches, conv.seeds, keys, { ...report, hit: 0 });
+    walled.wall.hit = Math.max(report.hit, walled.wall.hit);
     opts.onProgress?.({ stage: 'done' });
     const weak = walled.branches.filter((b) => b.evidence === 'weak').length;
-    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak, cliches: conv.cliches, wall: walled.report };
+    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, pattern: conv.pattern, source: 'ai', calls, recheck, weak, cliches: conv.cliches, wall: walled.wall, distinct: walled.distinct, deai: walled.deai };
   } catch (e) {
     if (opts.signal?.aborted) throw e;
     // 第二步没跑完：用第一步的 8 粒种子本地收拢
     const conv = normalizeConverge({}, map.seeds, items, oblique);
-    const walled = applyWall(conv.branches, baseKeys, wallPool(conv.seeds, items, oblique, opts.theme, opts.mode));
+    const walled = await polish(conv.branches, conv.seeds, baseKeys, emptyReport());
     opts.onProgress?.({ stage: 'done' });
-    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true, wall: walled.report };
+    return { mode: opts.mode, branches: walled.branches, seeds: conv.seeds, tensions: map.tensions, source: 'ai', calls, partial: true, wall: walled.wall, distinct: walled.distinct, deai: walled.deai };
   }
 }
