@@ -25,9 +25,13 @@ export function isLocalBaseUrl(baseUrl: string): boolean {
 export function allowPrivate(s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl = s.chat.baseUrl): boolean {
   return baseUrl === MINI || (!!s.privateLocal && isLocalBaseUrl(baseUrl));
 }
-export function aiVisible(it: { private?: 1; locked?: 1 }, s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl?: string): boolean {
-  // v0.39 0907 上锁的穗：任何模型（连本机的）都不发
-  return !it.locked && (!it.private || allowPrivate(s, baseUrl));
+/** v0.39 0934 每穗的出口：关掉的出口永远拿不到这一穗；上锁（0907）= 全关。拾穗没有第三方插件，「插件」出口就是 Agent / MCP */
+export type Exit = 'ai' | 'agent' | 'share' | 'garden';
+export const EXITS: [Exit, string][] = [['ai', 'AI'], ['agent', 'Agent / MCP'], ['share', '分享'], ['garden', '花园']];
+export const exitOpen = (it: { locked?: 1; shut?: string[] }, e: Exit): boolean => !it.locked && !it.shut?.includes(e);
+export function aiVisible(it: { private?: 1; locked?: 1; shut?: string[] }, s: { privateLocal?: boolean; chat: { baseUrl: string } }, baseUrl?: string): boolean {
+  // v0.39 0907 上锁的穗：任何模型（连本机的）都不发；0934 关了 AI 出口的也不发
+  return exitOpen(it, 'ai') && (!it.private || allowPrivate(s, baseUrl));
 }
 
 /** v0.38 端侧向量：本机小模型（lib/mini.ts）的「接口地址」——不出设备，私密穗也能算 */
