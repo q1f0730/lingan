@@ -9,6 +9,7 @@
 //   POST /mcp                       MCP Streamable HTTP（JSON 应答，无 SSE）
 // 私密穗（0242）永远不给 Agent；不返回图片原图和向量。
 
+import { outboundOff } from './gate';
 import type { LinganDB } from './db';
 import type { Item, Development, ItemType } from './types';
 import { parseQuery, searchDocs, toDoc } from './search';
@@ -199,6 +200,8 @@ export function parseDraft(a: Record<string, unknown>): AgentDraft | string {
 }
 
 async function writeItem(deps: ApiDeps, client: string, a: Record<string, unknown>): Promise<{ ok: true; id: string; n: number } | { ok: false; status: number; error: string }> {
+  // v0.34 0905 出站总开关关着：Agent 写入一律停用（读还在，本地 API 只在本机）
+  if (outboundOff()) return { ok: false, status: 403, error: '拾穗关了出站总开关：Agent 写入已停用' };
   if (!deps.canWrite()) return { ok: false, status: 403, error: '拾穗没开「允许 Agent 写入」：请本人在 设置 → Agent 与 API 里打开' };
   const d = parseDraft(a);
   if (typeof d === 'string') return { ok: false, status: 400, error: d };
