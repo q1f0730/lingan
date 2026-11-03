@@ -37,8 +37,8 @@ declare global {
 
 export function Library() {
   const { openItem, openCapture, toast, developFrom, desktop } = useApp();
-  const items = useLiveQuery(() => db.items.orderBy('createdAt').reverse().toArray(), []);
-  const devs = useLiveQuery(() => db.developments.toArray(), []);
+  const items = useLiveQuery(() => db.items.orderBy('createdAt').reverse().toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  const devs = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const q = '';
   const [searching, setSearching] = useState(false);
   const [type, setType] = useState<ItemType | 'all'>('all');
