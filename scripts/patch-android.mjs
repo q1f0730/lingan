@@ -8,7 +8,9 @@ if (!m.includes('android.permission.INTERNET')) {
 }
 // v0.22 极速采集：分享 / 选字菜单改由透明的半屏 QuickActivity 接（不拉起整个 App）；磁贴、通知使用权、常驻通知、小部件
 // v0.26 0512：应用内更新要交给系统安装器（「安装未知应用」授权，首次安装时系统会问）
-const perms = ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.REQUEST_INSTALL_PACKAGES'];
+// v0.32 局域网直连扫码：CAMERA（WebView 的 getUserMedia 由 wry 的 RustWebChromeClient 在第一次用时请求），相机不是必需硬件
+const perms = ['android.permission.POST_NOTIFICATIONS', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.CAMERA'];
+if (!m.includes('android.hardware.camera')) m = m.replace('<application', '<uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application');
 for (const p of perms) if (!m.includes(p)) m = m.replace('<application', `<uses-permission android:name="${p}" />\n    <application`);
 // 让桌面上的 App 对 PackageManager 可见：把来源包名翻成「网易云音乐」这样的名字（只查桌面 App，不要 QUERY_ALL_PACKAGES）
 if (!m.includes('<queries>')) {
@@ -150,6 +152,16 @@ const dir = path.dirname(kt);
 for (const f of fs.readdirSync('scripts/android').filter((x) => x.endsWith('.kt'))) {
   fs.writeFileSync(path.join(dir, f), fs.readFileSync(path.join('scripts/android', f), 'utf8').replaceAll('__PKG__', pkg));
   console.log('wrote', path.join(dir, f));
+}
+// v0.32 扫码用 ZXing core（纯 Java，Apache-2.0）：加进 app 模块依赖
+for (const g of ['src-tauri/gen/android/app/build.gradle.kts', 'src-tauri/gen/android/app/build.gradle']) {
+  if (!fs.existsSync(g)) continue;
+  let t = fs.readFileSync(g, 'utf8');
+  if (!t.includes('com.google.zxing:core')) {
+    t += '\ndependencies {\n    implementation("com.google.zxing:core:3.5.3")\n}\n';
+    fs.writeFileSync(g, t);
+    console.log('zxing ->', g);
+  }
 }
 console.log('patched', kt);
 
