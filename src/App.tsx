@@ -9,7 +9,7 @@ import { notifyDupe, savedMsg } from './lib/dupnotice';
 import { getOriginalDataUrl } from './lib/imagestore';
 import { enrichItem } from './lib/enrich';
 import { detectMotionLevel } from './lib/motion';
-import { onQuickFocus, onTrayGo } from './lib/desktop';
+import { isTauriEnv, onQuickFocus, onTrayGo } from './lib/desktop';
 import { shareToDraft, takeGo, takeShared } from './lib/share';
 import { afterAdd } from './components/QuickBar';
 import { NowPlayingTray } from './components/NowPlaying';
@@ -246,6 +246,24 @@ export default function App() {
       window.removeEventListener('glean:inbox', bg);
     };
   }, [toast]);
+
+  // v0.25 安卓 / 桌面：空闲时才加载 本地 API（按设置开）+ 每天一次的更新检查；网页版不加载这块
+  useEffect(() => {
+    if (!isTauriEnv()) return;
+    let off = () => {};
+    let dead = false;
+    const t = setTimeout(() => {
+      void import('./lib/agentboot')
+        .then((m) => m.boot({ toast, confirm, version: __APP_VERSION__ }))
+        .then((f) => (dead ? f() : (off = f)))
+        .catch(() => {});
+    }, 4000);
+    return () => {
+      dead = true;
+      clearTimeout(t);
+      off();
+    };
+  }, [toast, confirm]);
 
   // 托盘菜单：打开穗仓 / 今日一穗 / 设置
   useEffect(() => {
