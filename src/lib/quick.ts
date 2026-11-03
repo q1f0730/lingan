@@ -1,6 +1,6 @@
 import { normalizeTags } from './db';
 import { extractUrl, guessType } from './linkmeta';
-import type { Item, ItemType } from './types';
+import { TYPE_ORDER, type Item, type ItemType } from './types';
 
 export type QuickDraft = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -115,4 +115,9 @@ export async function readClipboard(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/** v0.27 0412：速记时识别出的类型小标，点一下换下一种（只换这一穗） */
+export function nextType(t: ItemType): ItemType {
+  return TYPE_ORDER[(TYPE_ORDER.indexOf(t) + 1) % TYPE_ORDER.length];
 }
