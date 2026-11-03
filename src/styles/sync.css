@@ -54,3 +54,112 @@
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }
+
+/* v0.32 局域网直连：二维码必须白底黑块（任何主题下相机都认得出），其余沿用面板 / 大数字 / 文字按钮 */
+.lan-big {
+  font-size: 28px;
+  overflow-wrap: anywhere;
+}
+.lan-qr-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px 20px;
+  margin: 12px 0 8px;
+}
+.lan-qr {
+  width: min(232px, 70vw);
+  aspect-ratio: 1;
+  padding: 0;
+  background: #fff;
+  border: 1px solid var(--fg);
+  line-height: 0;
+}
+.lan-qr svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.lan-qr-text {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.lan-qr-left .num {
+  font-weight: 700;
+  color: var(--fg);
+}
+.lan-scan {
+  margin: 12px 0 6px;
+}
+.lan-video {
+  display: block;
+  width: min(320px, 100%);
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #000;
+  border: 1px solid var(--fg);
+}
+.lan-err,
+.lan-msg,
+.st-msg-out {
+  overflow-wrap: anywhere;
+}
+
+/* v0.32 同步状态：无线表格（只有表头一条线），窄屏可横向滑 */
+.st-table-wrap {
+  overflow-x: auto;
+  margin: 10px 0 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.st-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.st-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--fg-2);
+  padding: 4px 10px 6px 0;
+  border-bottom: 1px solid var(--fg);
+  white-space: nowrap;
+}
+.st-table td {
+  padding: 6px 10px 6px 0;
+  vertical-align: top;
+}
+.st-table td:first-child {
+  white-space: nowrap;
+}
+.st-table td:nth-child(2) {
+  min-width: 5.5em;
+}
+.st-table .n {
+  text-align: right;
+  width: 3em;
+}
+.st-table tr.bad td {
+  color: var(--danger);
+}
+.st-msg {
+  min-width: 12em;
+  overflow-wrap: anywhere;
+}
+.st-retry {
+  margin-left: 8px;
+}
+.st-space {
+  margin-top: 12px;
+}
+.st-space-h {
+  margin: 0;
+}
+.st-devtable td:last-child {
+  text-align: right;
+  width: 4em;
+}
+.lan-qr svg path {
+  fill: #000;
+  shape-rendering: crispEdges;
+}
