@@ -297,7 +297,7 @@ export function ClipOffer() {
       try {
         const t = (await readClipboard())?.trim();
         if (!t) return;
-        const existing = await db.items.toArray();
+        const existing = (await db.items.toArray()).filter((x) => !x.deletedAt);
         if (shouldOffer(t, clipMemory.get(), existing)) setClip(t);
       } finally {
         checking.current = false;
