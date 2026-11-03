@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-/** 超大标题 + 真实计数：「穗仓 (10)」。计数与标题同字号同字重、不变灰。aside 放网格 | 列表这类文字切换 */
+/** 页面标题 + 真实计数：「穗仓 (10)」，计数用浅一档的颜色。aside 放 网格 / 列表 这类分段切换 */
 export function DisplayTitle({ title, count, aside, extra, sub }: { title: string; count?: number; aside?: ReactNode; extra?: ReactNode; sub?: ReactNode }) {
   return (
     <header className="page-head">
@@ -22,11 +22,17 @@ export function DisplayTitle({ title, count, aside, extra, sub }: { title: strin
   );
 }
 
-/** 读库时的占位：只有一行小字，不闪骨架 */
+/** 读库时的占位：Rewamp「Skeleton」移植——几块圆角浅底，上面一道很淡的流光（减少动态效果时不扫） */
 export function Loading({ text = '读取中' }: { text?: string }) {
   return (
-    <div className="loading label" role="status">
-      {text}
+    <div className="loading" role="status" aria-label={text}>
+      <span className="sk sk-title" />
+      <span className="sk sk-line" />
+      <span className="sk-grid" aria-hidden>
+        <span className="sk sk-card" />
+        <span className="sk sk-card" />
+        <span className="sk sk-card" />
+      </span>
     </div>
   );
 }
