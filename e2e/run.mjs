@@ -4680,6 +4680,8 @@ async function v037() {
   await pg.goto(base);
   await pg.waitForSelector('text=穗仓还是空的');
   await seedMany(pg, 1000);
+  // 两段只给大库（> 4000，看上次全量条数）：这里假装上次是 1 万穗的库，1000 条照样测首段逻辑
+  await pg.evaluate(() => localStorage.setItem('glean.libn', '10000'));
   await pg.reload();
   await pg.waitForFunction(() => window.__first, null, { timeout: 15000 });
   const first = await pg.evaluate(() => window.__first);
