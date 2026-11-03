@@ -40,7 +40,7 @@ export async function enrichItem(id: number, s: Settings, force = false): Promis
 export async function embedAllMissing(s: Settings, onProgress?: (done: number, total: number) => void): Promise<{ done: number; failed: number; error?: string }> {
   const ec = embedConfig(s);
   if (!ec) return { done: 0, failed: 0, error: '没有配置向量模型' };
-  const all = await db.items.toArray();
+  const all = (await db.items.toArray()).filter((x) => !x.deletedAt);
   const todo = all.filter((i) => !i.embedding || i.embedModel !== ec.model);
   let done = 0, failed = 0, error: string | undefined;
   for (let k = 0; k < todo.length; k += 16) {
