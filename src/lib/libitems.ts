@@ -3,7 +3,8 @@
  *
  * 以前 Library 用 useLiveQuery 查 1000 穗：它在 useEffect 里才订阅，而 useEffect 要等外壳第一帧画完才跑，
  * 于是「读库」被排在「画空外壳」后面串行（profile：q:items:start 比 Library 第一次渲染晚 60–100ms）。
- * 现在 main.tsx 在 root.render 之前就 prime（读库和渲染外壳并行），Library 用 useSyncExternalStore 读同一个订阅：
+ * 现在 main.tsx 在 root.render 之前就 prime（读库和渲染外壳并行；不等结果，外壳照常先画——等结果会让首次绘制晚很多），
+ * Library 用 useSyncExternalStore 读同一个订阅：
  * 订阅前结果已到就在提交时直接补渲染；库变了照常实时刷新（同一个 liveQuery，不会查两遍）。
  * 没人看（离开穗仓、prime 5 秒内没人接）就退订并清掉结果，回来重新查，不拿旧结果（v0.28 篮子误清的教训）。
  */
