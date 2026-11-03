@@ -98,8 +98,9 @@ jobs:
             --v1-signing-enabled false --v2-signing-enabled false --min-sdk-version 28 \
             --out "Glean_${TAG#v}_android.apk" aligned.apk
           rm -f "$KS"
-          $BT/apksigner verify --print-certs -v "Glean_${TAG#v}_android.apk" | grep -E "Verifies|v3 scheme|Signer #1 certificate (DN|SHA-256)"
-          FP=$($BT/apksigner verify --print-certs "Glean_${TAG#v}_android.apk" | grep 'Signer #1 certificate SHA-256' | awk '{print $NF}')
+          $BT/apksigner verify --print-certs -v "Glean_${TAG#v}_android.apk" | grep -E "Verifies|v3 scheme|certificate (DN|SHA-256 digest)"
+          # 新版 apksigner 对带 SDK 范围的 v3 签名打印 "Signer (minSdkVersion=…) certificate …"，不一定是 "Signer #1"
+          FP=$($BT/apksigner verify --print-certs "Glean_${TAG#v}_android.apk" | grep -E 'certificate SHA-256 digest' | head -1 | awk '{print $NF}')
           if [ "$FP" != "9771c62b20a081c6c3d17d0928f2314f969105f1cfaa8cc1ab6bfee4cfb36d88" ]; then echo "::error::unexpected signer $FP"; exit 1; fi
           $BT/apksigner lineage --in "Glean_${TAG#v}_android.apk" --print-certs | grep -E "Signer #. in lineage certificate SHA-256"
       - uses: softprops/action-gh-release@v2
