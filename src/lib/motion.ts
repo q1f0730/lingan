@@ -1,4 +1,5 @@
 // v0.16 Studio：动效只剩两种——进入视口淡入、图片缓慢放大（见 index.css）。这里只留档位判断与错开延迟。
+import { useEffect, useState } from 'react';
 
 export type MotionLevel = 'full' | 'lite' | 'off';
 
@@ -53,4 +54,33 @@ export function afterFirstPaint(timeout = 1500): Promise<void> {
     window.addEventListener('glean:ready', go);
     setTimeout(go, timeout);
   });
+}
+
+/** v0.24：首屏画完之后、主线程空闲时（最多等 timeout 毫秒）才 resolve。给「首屏用不上」的计算（标签云、回顾、今日一穗）用 */
+export function afterReadyIdle(timeout = 800): Promise<void> {
+  return afterFirstPaint(2000).then(
+    () =>
+      new Promise<void>((res) => {
+        const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+        if (ric) ric(() => res(), { timeout });
+        else setTimeout(res, 50);
+      }),
+  );
+}
+let idleDone = false;
+/** React 里用：首屏后空闲了没有（一旦为 true 就一直是 true；之后再挂载的组件直接拿 true） */
+export function useAfterReady(): boolean {
+  const [ok, setOk] = useState(idleDone);
+  useEffect(() => {
+    if (ok) return;
+    let alive = true;
+    void afterReadyIdle().then(() => {
+      idleDone = true;
+      if (alive) setOk(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [ok]);
+  return ok;
 }
