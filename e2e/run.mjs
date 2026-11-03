@@ -1257,7 +1257,7 @@ async function datafound() {
   const z = readZipBuf(gbuf);
   const man = JSON.parse(new TextDecoder().decode(z.get('manifest.json')));
   const imgs = [...z.keys()].filter((k) => k.startsWith('images/'));
-  if (man.format !== 'glean' || man.schema !== 11 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
+  if (man.format !== 'glean' || man.schema !== 12 || man.counts.items !== live.length || man.counts.images !== 1 || imgs.length !== 1) errs.push(`[datafound] manifest ${JSON.stringify(man.counts)} files ${[...z.keys()]}`);
   for (const [k, v] of z) if (k !== 'manifest.json' && man.files[k]?.sha256 !== sha256(v)) errs.push(`[datafound] sha256 mismatch ${k}`);
   if (imgs[0] && imgs[0] !== `images/${sha256(z.get(imgs[0]))}.png`) errs.push(`[datafound] image not named by content hash ${imgs[0]}`);
   const lines = new TextDecoder().decode(z.get('data.jsonl')).trim().split('\n').map((l) => JSON.parse(l));
@@ -2381,10 +2381,10 @@ async function legacy() {
     await pg.locator('.hrow.open .hrow-head').click();
   }
   const ver = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('lingan'); r.onsuccess = () => { const v = r.result.version; r.result.close(); res(v); }; }));
-  if (ver !== 110) errs.push(`[legacy] db version expected 110 (Dexie v11) got ${ver}`);
+  if (ver !== 120) errs.push(`[legacy] db version expected 120 (Dexie v12) got ${ver}`);
   // v0.26 0624：迁移前先把旧库原样存了一份（glean-snap 里的 pre-upgrade），记下当前库版本；再打开不会重复存
   const pu = await pg.evaluate(() => ({ g: window.__gleanPreUpgrade, seen: localStorage.getItem('glean.schema.v1') }));
-  if (!pu.g || pu.g.from !== 1 || pu.g.to !== 11 || !pu.g.id || pu.seen !== '11') errs.push(`[legacy] pre-upgrade dump ${JSON.stringify(pu)}`);
+  if (!pu.g || pu.g.from !== 1 || pu.g.to !== 12 || !pu.g.id || pu.seen !== '12') errs.push(`[legacy] pre-upgrade dump ${JSON.stringify(pu)}`);
   const snaps = await pg.evaluate(() => new Promise((res) => { const r = indexedDB.open('glean-snap'); r.onsuccess = () => { const q = r.result.transaction('snaps').objectStore('snaps').getAll(); q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ kind: x.kind, schema: x.schema, items: x.items.map((i) => i.title), devs: x.developments.length, graft: x.items.map((i) => i.graftCount) }))); }; }; }));
   const pre = snaps.filter((x) => x.kind === 'pre-upgrade');
   if (pre.length !== 1 || pre[0].schema !== 1 || pre[0].items.join() !== '旧片子,旧歌,旧念头' || pre[0].devs !== 2 || pre[0].graft.some((x) => x != null)) errs.push(`[legacy] pre-upgrade snapshot should hold the untouched v1 rows ${JSON.stringify(snaps)}`);
@@ -2639,7 +2639,7 @@ async function perf() {
     };
   }));
   PERF.storage = integ;
-  if (integ.version !== 110) errs.push(`[perf] db version (expected 110 = Dexie v11) ${integ.version}`);
+  if (integ.version !== 120) errs.push(`[perf] db version (expected 120 = Dexie v12) ${integ.version}`);
   if (integ.items !== 1000 || integ.images !== 300 || integ.hasImage !== 300) errs.push(`[perf] data lost in migration ${JSON.stringify(integ)}`);
   if (integ.inline !== 0) errs.push(`[perf] ${integ.inline} rows still carry inline originals`);
   if (integ.withThumb !== 300) errs.push(`[perf] thumbnails ${integ.withThumb}/300`);
@@ -3689,8 +3689,10 @@ async function v030() {
   await pg.click('.ask-go');
   await pg.waitForSelector('.ask-a .ask-text', { timeout: 4000 }).catch(() => errs.push(`[${tag}] ask answer missing`));
   const at = await pg.textContent('.ask-a .ask-text').catch(() => '');
-  if (!/找到 2 穗/.test(at || '')) errs.push(`[${tag}] ask offline answer: ${at}`);
-  if ((await pg.locator('.ask-a .ask-ref').count()) !== 2) errs.push(`[${tag}] ask refs`);
+  // 「做成」的结果穗标题里带着新枝标题；离线新枝标题是从素材里随机拼的，碰巧带「灯」时它也该被找到（v0.31 修偶发）
+  const wantAsk = 2 + (((res?.title || '') + (res?.why || '')).includes('灯') ? 1 : 0);
+  if (!new RegExp(`找到 ${wantAsk} 穗`).test(at || '')) errs.push(`[${tag}] ask offline answer (want ${wantAsk}): ${at}`);
+  if ((await pg.locator('.ask-a .ask-ref').count()) !== wantAsk) errs.push(`[${tag}] ask refs (want ${wantAsk})`);
   await pg.screenshot({ path: `${out}/v030-ask.png` });
   const nBefore = (await dbRaw(pg, 'items')).length;
   await pg.click('.ask-save');
@@ -3748,7 +3750,161 @@ async function v030() {
   console.log('v030: deck (pin/write/dice/wild) / constraints used / status+result / regraft tree / followup / branch filter / atoms / ask+save / preview=request (temp 1.5) / tension pick / outbound log ok');
 }
 
+// v0.31 同步：两台设备（手机 + 电脑）经同一个（被路由拦下的内存）WebDAV 同步；新建 → 恢复码强制确认 → 另一台用恢复码加入 →
+// 两边 5 条 → 回到同步前 → 别的设备跟着回去。云上只有密文，口令 / 应用密码不出现在任何请求体里。
+function davRoute(store, log) {
+  return async (route) => {
+    const req = route.request();
+    const u = new URL(req.url());
+    const p = decodeURIComponent(u.pathname);
+    const m = req.method();
+    const auth = req.headers()['authorization'] || '';
+    log.push({ m, p, auth: !!auth, body: req.postDataBuffer() || Buffer.alloc(0) });
+    if (auth !== 'Basic ' + Buffer.from('e2e@glean.test:app-pass-1').toString('base64')) return route.fulfill({ status: 401, body: '' });
+    if (m === 'MKCOL') {
+      const d = p.replace(/\/?$/, '/');
+      if (store.dirs.has(d)) return route.fulfill({ status: 405, body: '' });
+      store.dirs.add(d);
+      return route.fulfill({ status: 201, body: '' });
+    }
+    if (m === 'PUT') {
+      if (req.headers()['if-none-match'] === '*' && store.files.has(p)) return route.fulfill({ status: 412, body: '' });
+      store.files.set(p, req.postDataBuffer() || Buffer.alloc(0));
+      return route.fulfill({ status: 201, body: '' });
+    }
+    if (m === 'GET') return store.files.has(p) ? route.fulfill({ status: 200, body: store.files.get(p), contentType: 'application/octet-stream' }) : route.fulfill({ status: 404, body: '' });
+    if (m === 'DELETE') return (store.files.delete(p), route.fulfill({ status: 204, body: '' }));
+    if (m === 'PROPFIND') {
+      const d = p.replace(/\/?$/, '/');
+      if (!store.dirs.has(d)) return route.fulfill({ status: 404, body: '' });
+      const kids = new Set();
+      for (const x of [...store.files.keys(), ...store.dirs]) if (x.startsWith(d) && x !== d) { const rest = x.slice(d.length); kids.add(d + rest.split('/')[0] + (rest.includes('/') ? '/' : '')); }
+      const resp = (href, dir, size = 0) => `<d:response><d:href>${encodeURI(href)}</d:href><d:propstat><d:prop>${dir ? '<d:resourcetype><d:collection/></d:resourcetype>' : `<d:resourcetype/><d:getcontentlength>${size}</d:getcontentlength>`}</d:prop></d:propstat></d:response>`;
+      return route.fulfill({ status: 207, contentType: 'application/xml', body: `<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">${resp(d, true)}${[...kids].map((k) => resp(k, k.endsWith('/'), store.files.get(k)?.length || 0)).join('')}</d:multistatus>` });
+    }
+    return route.fulfill({ status: 400, body: '' });
+  };
+}
+async function syncAccount(pg, origin) {
+  await pg.click('.nav-btn:has-text("设置")');
+  await pg.waitForSelector('#set-sync');
+  await pg.locator('#set-sync').scrollIntoViewIfNeeded();
+  await pg.click('#set-sync .radio:has-text("自定义 WebDAV")');
+  await pg.fill('#set-sync .sync-url', `${origin}/dav/`);
+  await pg.fill('#set-sync .sync-user', 'e2e@glean.test');
+  await pg.fill('#set-sync .sync-davpass', 'app-pass-1');
+  await pg.click('#set-sync .sync-next');
+  await pg.waitForSelector('#set-sync .sync-secret', { timeout: 6000 });
+}
+async function v031() {
+  const tag = 'v031';
+  const origin = new URL(base).origin;
+  const store = { files: new Map(), dirs: new Set(['/dav/']) };
+  const log = [];
+  // 手机 A：先收 3 条，新建同步
+  const ca = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await ca.route('**/dav/**', davRoute(store, log));
+  const pa = await ca.newPage();
+  pa.on('pageerror', (e) => errs.push(`[${tag}] A pageerror ${e.message}`));
+  pa.on('dialog', (d) => d.accept());
+  await pa.goto(base);
+  await pa.waitForSelector('text=穗仓还是空的');
+  for (const t of ['手机收的一 > 夜里的灯', '手机收的二 > 楼梯', '手机收的三 > 雨']) await quickSave(pa, t);
+  await syncAccount(pa, origin);
+  if (!(await pa.textContent('#set-sync .sync-found')).includes('还没有同步数据')) errs.push(`[${tag}] A should be offered 新建`);
+  await pa.fill('#set-sync .sync-secret', 'glean-e2e-口令');
+  await pa.click('#set-sync .sync-go');
+  await pa.waitForSelector('#set-sync .sync-code', { timeout: 15000 }).catch(() => errs.push(`[${tag}] recovery code not shown`));
+  const groups = await pa.locator('#set-sync .sync-code-g').allTextContents();
+  const code = groups.join('-');
+  if (groups.length !== 8 || !groups.every((g) => /^[0-9A-HJKMNP-TV-Z]{4}$/.test(g))) errs.push(`[${tag}] recovery code shape ${code}`);
+  await pa.screenshot({ path: `${out}/v031-recovery-mobile.png` });
+  // 强制确认：最后一组不对不让开
+  await pa.fill('#set-sync .sync-check', groups[7] === 'ZZZZ' ? 'YYYY' : 'ZZZZ');
+  await pa.click('#set-sync .sync-confirm');
+  await pa.waitForSelector('#set-sync .sync-err', { timeout: 4000 }).catch(() => errs.push(`[${tag}] wrong last group should be rejected`));
+  if (log.some((x) => x.p.includes('/ops/'))) errs.push(`[${tag}] must not sync before recovery code confirmed`);
+  await pa.fill('#set-sync .sync-check', groups[7] || '');
+  await pa.click('#set-sync .sync-confirm');
+  await pa.waitForSelector('#set-sync .sync-now', { timeout: 15000 }).catch(() => errs.push(`[${tag}] A sync did not start`));
+  await pa.waitForFunction(() => /推 3 行/.test(document.querySelector('#set-sync .sync-msg, #set-sync .sync-last')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] A first push: ${await pa.textContent('#set-sync').catch(() => '')}`));
+  await pa.locator('#set-sync').screenshot({ path: `${out}/v031-sync-mobile.png` });
+  // 云上：glean-sync.json 明文只有参数；包是密文，看不到标题；口令 / 应用密码不在任何请求体里
+  const hdr = store.files.get('/dav/Glean/glean-sync.json');
+  const hj = hdr ? JSON.parse(hdr.toString()) : {};
+  if (hj.format !== 'glean-sync' || hj.kdf?.alg !== 'argon2id' || !hj.pass || !hj.rec?.w) errs.push(`[${tag}] header ${hdr?.toString().slice(0, 120)}`);
+  const ops = [...store.files.keys()].filter((k) => k.includes('/ops/'));
+  if (!ops.length) errs.push(`[${tag}] no op files`);
+  for (const [k, v] of store.files) if (v.includes(Buffer.from('手机收的')) || v.includes(Buffer.from('楼梯'))) errs.push(`[${tag}] plaintext on server: ${k}`);
+  for (const x of log) if (x.body.includes(Buffer.from('glean-e2e-口令')) || x.body.includes(Buffer.from('app-pass-1')) || x.body.includes(Buffer.from(code))) errs.push(`[${tag}] secret leaked in ${x.m} ${x.p}`);
+  const vaultA = await pa.evaluate(() => JSON.parse(localStorage.getItem('glean.sync.v1') || '{}'));
+  if (JSON.stringify(vaultA).includes('app-pass-1')) errs.push(`[${tag}] app password in sync config`);
+
+  // 电脑 B：先收 2 条；错的口令进不去；用恢复码加入
+  const cb = await b.newContext({ viewport: { width: 1440, height: 900 } });
+  await cb.route('**/dav/**', davRoute(store, log));
+  const pb = await cb.newPage();
+  pb.on('pageerror', (e) => errs.push(`[${tag}] B pageerror ${e.message}`));
+  pb.on('dialog', (d) => d.accept());
+  await pb.goto(base);
+  await pb.waitForSelector('text=穗仓还是空的');
+  for (const t of ['电脑收的一 > 屏幕的光', '电脑收的二 > 键盘声']) await quickSave(pb, t);
+  await syncAccount(pb, origin);
+  if (!(await pb.textContent('#set-sync .sync-found')).includes('已经有同步数据')) errs.push(`[${tag}] B should be offered 加入`);
+  await pb.fill('#set-sync .sync-secret', 'not-the-pass');
+  await pb.click('#set-sync .sync-go');
+  await pb.waitForSelector('#set-sync .sync-err', { timeout: 15000 }).catch(() => errs.push(`[${tag}] wrong pass should fail`));
+  if (!(await pb.textContent('#set-sync .sync-err').catch(() => '')).includes('同步口令不对')) errs.push(`[${tag}] wrong pass message`);
+  await pb.click('#set-sync .sync-seg button:has-text("恢复码")');
+  await pb.fill('#set-sync .sync-secret', code.toLowerCase().replace(/-/g, ' '));
+  await pb.click('#set-sync .sync-go');
+  await pb.waitForSelector('#set-sync .sync-now', { timeout: 15000 }).catch(() => errs.push(`[${tag}] B join failed`));
+  await pb.waitForFunction(() => /收 3 行/.test(document.querySelector('#set-sync .sync-msg, #set-sync .sync-last')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] B join sync: ${await pb.textContent('#set-sync').catch(() => '')}`));
+  let bi = await dbRaw(pb, 'items');
+  if (bi.length !== 5) errs.push(`[${tag}] B should have 5 items, has ${bi.length}`);
+  await pb.locator('#set-sync').screenshot({ path: `${out}/v031-sync-desktop.png` });
+  // A 再同步：也是 5 条、无重复
+  await pa.click('#set-sync .sync-now');
+  await pa.waitForFunction(() => /收 2 行/.test(document.querySelector('#set-sync .sync-msg')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] A second sync: ${await pa.textContent('#set-sync').catch(() => '')}`));
+  let ai = await dbRaw(pa, 'items');
+  const titles = (xs) => xs.map((x) => x.title).sort().join('|');
+  if (ai.length !== 5 || titles(ai) !== titles(bi)) errs.push(`[${tag}] A/B differ: ${titles(ai)} vs ${titles(bi)}`);
+  if (new Set(ai.map((x) => x.uid)).size !== 5) errs.push(`[${tag}] duplicate uids on A`);
+  // 回到同步前（B）：本机回到 2 条；同步后 A 那 3 条进回收站
+  if (!(await pb.locator('#set-sync .sync-undo').count())) errs.push(`[${tag}] undo button missing on B`);
+  await pb.click('#set-sync .sync-undo');
+  await pb.click('.confirm .confirm-ok');
+  await pb.waitForFunction(() => /已回去/.test(document.querySelector('#set-sync .sync-msg')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] undo: ${await pb.textContent('#set-sync').catch(() => '')}`));
+  bi = await dbRaw(pb, 'items');
+  if (titles(bi) !== '电脑收的一|电脑收的二') errs.push(`[${tag}] B after undo: ${titles(bi)}`);
+  await pb.click('#set-sync .sync-now');
+  await pb.waitForFunction(() => !document.querySelector('#set-sync .sync-busy'), null, { timeout: 15000 }).catch(() => {});
+  await pa.click('#set-sync .sync-now');
+  await pa.waitForFunction(() => !document.querySelector('#set-sync .sync-busy') && /收 3 行/.test(document.querySelector('#set-sync .sync-msg')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] A after B undo: ${await pa.textContent('#set-sync').catch(() => '')}`));
+  ai = await dbRaw(pa, 'items');
+  const trashed = (await dbRaw(pa, 'items', true)).filter((x) => x.deletedAt).map((x) => x.title).sort().join('|');
+  if (titles(ai) !== '电脑收的一|电脑收的二' || trashed !== '手机收的一|手机收的三|手机收的二') errs.push(`[${tag}] A should follow undo: live ${titles(ai)} trash ${trashed}`);
+  // 换同步口令：只重包数据钥（云上 glean-sync.json 的 pass 变了，恢复码那份不动）
+  const before = JSON.parse(store.files.get('/dav/Glean/glean-sync.json').toString());
+  await pa.click('#set-sync .sync-pass');
+  await pa.fill('#set-sync .sync-newpass', 'second-口令-2');
+  await pa.click('#set-sync .sync-newpass-save');
+  await pa.waitForFunction(() => /口令已换/.test(document.querySelector('#set-sync .sync-msg')?.textContent || ''), null, { timeout: 15000 }).catch(async () => errs.push(`[${tag}] change pass: ${await pa.textContent('#set-sync').catch(() => '')}`));
+  const after = JSON.parse(store.files.get('/dav/Glean/glean-sync.json').toString());
+  if (after.pass === before.pass || after.rec.w !== before.rec.w) errs.push(`[${tag}] rewrap should change pass only`);
+  // 设置目录里有「同步」一项，显示服务
+  const idx = await pb.locator('.settings-index .set-link:has-text("同步")').innerText().catch(() => '');
+  if (!idx.includes('WebDAV')) errs.push(`[${tag}] settings index: ${idx}`);
+  await ca.close();
+  await cb.close();
+  console.log(`v031: create + recovery confirm / ciphertext only (${store.files.size} files, ${log.length} requests) / wrong pass / join by recovery code / 3+2=5 both sides / undo last sync propagates ok`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v031') {
+    await v031();
+    throw Object.assign(new Error('v031 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v030') {
     await v030();
     throw Object.assign(new Error('v030 only'), { only: true });
@@ -3799,6 +3955,7 @@ try {
   await v028();
   await v029();
   await v030();
+  await v031();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
