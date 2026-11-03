@@ -4,6 +4,8 @@ import { chat } from '../lib/ai';
 import { db } from '../lib/db';
 import { HeatmapPanel } from '../components/Heatmap';
 import { ClicheWall } from '../components/ClicheWall';
+import { DislikePanel, RejectsPanel, StylePanel } from '../components/GraftFeedback';
+import { aiVisible } from '../lib/privacy';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { aiReady } from '../lib/settings';
 import { useApp } from '../lib/store';
@@ -38,7 +40,9 @@ function cooled(items: Item[], now = Date.now()): Array<{ tag: string; n: number
 /** 口味（m4 / d5）：一句开头判断 → 倾向 / 来自这些穗 两列无线表格 → 构成 → 最近冷下来的 → 拾穗的日子。不出现分数、比例、雷达图 */
 export function Taste() {
   const { settings, toast, go, openItem } = useApp();
-  const items = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  const all = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
+  // v0.24 0206：「我讨厌的」不算进口味统计，单独列出来
+  const items = useMemo(() => all?.filter((x) => x.polarity !== -1), [all]);
   const stats = useMemo(() => (items ? computeTaste(items) : null), [items]);
   const [portrait, setPortrait] = useState<string>(() => localStorage.getItem(TASTE_KEY) || '');
   const [at, setAt] = useState<string>(() => localStorage.getItem(TASTE_AT) || '');
@@ -71,7 +75,8 @@ export function Taste() {
             content:
               '你是一个毒舌但精准的审美侧写师。根据用户的私人收藏，写出他的口味画像。不要恭维，不要泛泛而谈，不要用"独特""多元"这类空词。用中文，分四段，每段以【】小标题开头：【反复出现的母题】【你被什么击中】【你在回避什么】【盲区与下一步】。每段 2-3 句，总共不超过 320 字。',
           },
-          { role: 'user', content: tastePrompt(items) },
+          // v0.24 0242：私密穗不发给云端模型
+          { role: 'user', content: tastePrompt(items.filter((x) => aiVisible(x, settings))) },
         ],
         { temperature: 0.8, maxTokens: 900 },
       );
@@ -127,6 +132,12 @@ export function Taste() {
         )}
 
         <ClicheWall />
+
+        <RejectsPanel />
+
+        <StylePanel />
+
+        <DislikePanel items={all || []} />
 
         <section className="taste-sec">
           <div className="table two-col">
