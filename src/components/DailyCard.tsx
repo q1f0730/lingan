@@ -39,7 +39,7 @@ export function DailyCard({ items }: { items: Item[] }) {
   const day = useToday();
   const [pick, setPick] = useState<DailyPick | null>(null);
   const [folded, setFolded] = useState(() => localStorage.getItem(FOLD_KEY) === day);
-  const devs = useLiveQuery(() => db.developments.toArray().then((ds) => ds.map((x) => ({ itemIds: x.itemIds, createdAt: x.createdAt }))), []);
+  const devs = useLiveQuery(() => db.developments.toArray().then((ds) => ds.filter((x) => !x.deletedAt).map((x) => ({ itemIds: x.itemIds, createdAt: x.createdAt }))), []);
   const byId = useMemo(() => new Map(items.map((i) => [i.id!, i])), [items]);
   // 穗的「身份」变了（增删 / 示例被清）才需要重新确认今天的内容；改个标题、碰一下不会让内容变
   const sig = useMemo(() => items.map((i) => `${i.id}${i.sample ? 's' : ''}`).join(','), [items]);
