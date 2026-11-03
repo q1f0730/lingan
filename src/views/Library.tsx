@@ -1,7 +1,7 @@
 import { BUNDLE_EVENT, BUNDLE_OPEN_KEY, graftFromBundle } from '../lib/bundles';
 import { readHanded } from '../lib/handed';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useLibraryItems } from '../lib/libitems';
+import { loadFullNow, useLibraryItems, useLibraryMeta } from '../lib/libitems';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { HoverPreview, Hits, ItemCard, ItemRow } from '../components/ItemCard';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
@@ -73,6 +73,8 @@ export function Library() {
   const { openItem, openCapture, toast, developFrom, desktop, go } = useApp();
   // v0.30：和 main.tsx 的 prime 共用一个订阅（读库不再排在外壳第一帧之后）
   const items = useLibraryItems();
+  // v0.37 0702：首段只有最新 60 条时 meta 给真实计数，待理 / 缺为什么 / 类型 / 穗束这些要全量的等全表到了再出
+  const meta = useLibraryMeta();
   const devs = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const q = '';
   const [searching, setSearching] = useState(false);
@@ -112,7 +114,7 @@ export function Library() {
   // v0.23 穗仓只放整理过的，和在待理里超过 7 天的
   // v0.24 冷启动：穗仓 / 待理数 / 缺为什么数 / 类型计数 / 示例数合成一遍扫完（原来是五遍）；标签云、回顾、今日一穗等首屏画完、主线程空闲再算
   const inboxOn = inboxEnabled();
-  const idle = useAfterReady();
+  const idle = useAfterReady() && !meta;
   const { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples, bundleN } = useMemo(() => {
     const shelf: Item[] = [];
     const typeN = new Map<ItemType, number>();
@@ -197,6 +199,10 @@ export function Library() {
       window.removeEventListener('glean:search', open);
     };
   }, []);
+  // v0.37：搜索、多选要全量，不等空闲
+  useEffect(() => {
+    if (meta && (searching || sel)) loadFullNow();
+  }, [meta, searching, sel]);
   // 示例不是你拾的：不进「一周前 / 那年今天」
   const backs = useMemo(() => (items && idle ? throwbacks(items.filter((i) => !i.sample)) : []), [items, idle]);
 
@@ -237,10 +243,11 @@ export function Library() {
   }
 
   if (!items) return <Loading />;
+  if (searching && meta) return <Loading />;
   if (searching && devs) return <Suspense fallback={<Loading />}><SearchView items={items} devs={devs} onClose={() => setSearching(false)} /></Suspense>;
   if (sub === 'inbox') return <Suspense fallback={<Loading />}><InboxView onClose={() => setSub(null)} /></Suspense>;
   if (sub === 'why') return <Suspense fallback={<Loading />}><WhyView onClose={() => setSub(null)} /></Suspense>;
-  const own = shelf.length - nShelfSamples;
+  const own = meta ? meta.live - meta.samples - (inboxOn ? meta.inbox : 0) : shelf.length - nShelfSamples;
   const filtering = type !== 'all' || !!tag;
 
   if (items.length === 0) {
@@ -285,7 +292,7 @@ export function Library() {
     );
   }
 
-  const notesEl = !filtering ? (
+  const notesEl = !filtering && !meta ? (
         <div className="lib-notes">
           {nInbox + nHanded > 0 && (
             <div className="inbox-bar note-row">
@@ -346,7 +353,7 @@ export function Library() {
         </div>
       ) : null;
   const title = tag ? `#${tag}` : '穗仓';
-  const count = tag ? filtered.length : own > 0 || nShelfSamples === 0 ? own : 0;
+  const count = tag ? filtered.length : own > 0 || (meta ? !meta.samples : nShelfSamples === 0) ? own : 0;
   return (
     <section className="view library">
       <DisplayTitle
@@ -354,7 +361,7 @@ export function Library() {
         count={count}
         extra={
           <>
-            {nSamples > 0 ? <span className="title-note">示例 ({nSamples}) 不计数</span> : null}
+            {(meta ? meta.samples : nSamples) > 0 ? <span className="title-note">示例 ({meta ? meta.samples : nSamples}) 不计数</span> : null}
             <SyncBadge onOpen={() => go('settings')} />
           </>
         }
@@ -375,9 +382,9 @@ export function Library() {
         <div className="lib-main">
       <div className="chips scroll filter-row" role="toolbar" aria-label="类型">
         <button className={`chip${type === 'all' ? ' on' : ''}`} onClick={() => setType('all')}>
-          全部 <span className="n">({shelf.length})</span>
+          全部 <span className="n">({meta ? meta.live - (inboxOn ? meta.inbox : 0) : shelf.length})</span>
         </button>
-        {TYPE_ORDER.filter((t) => typeN.get(t)).map((t) => (
+        {!meta && TYPE_ORDER.filter((t) => typeN.get(t)).map((t) => (
           <button key={t} className={`chip${type === t ? ' on' : ''}`} onClick={() => setType(type === t ? 'all' : t)}>
             {TYPE_LABEL[t]} <span className="n">({typeN.get(t)})</span>
           </button>
@@ -392,7 +399,7 @@ export function Library() {
             束 · {bundle} ✕
           </button>
         )}
-        {bundleList.map(([b, n]) => (
+        {!meta && bundleList.map(([b, n]) => (
           <button key={'b' + b} className={`chip bundle-chip${bundle === b ? ' on' : ''}`} onClick={() => setBundle(bundle === b ? null : b)} title={`穗束「${b}」`}>
             束 · {b} <span className="n">({n})</span>
             {bundle === b && ' ✕'}
