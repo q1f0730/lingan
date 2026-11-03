@@ -5,12 +5,12 @@ export function isTauriEnv(w: unknown = typeof window === 'undefined' ? undefine
   return !!w && typeof w === 'object' && '__TAURI_INTERNALS__' in (w as object);
 }
 
-/** Desktop only: the Rust side (global shortcut / tray) asks the UI to focus the quick bar. */
-export async function onQuickFocus(cb: () => void): Promise<() => void> {
+/** Desktop only: the Rust side (global shortcut / tray) asks the UI to focus the quick bar. v0.33 0004：payload = 选中的文字 */
+export async function onQuickFocus(cb: (text?: string) => void): Promise<() => void> {
   if (!isTauriEnv()) return () => {};
   try {
     const { listen } = await import('@tauri-apps/api/event');
-    return await listen(QUICK_EVENT, cb);
+    return await listen<unknown>(QUICK_EVENT, (e) => cb(typeof e.payload == 'string' ? e.payload : ''));
   } catch {
     return () => {};
   }
