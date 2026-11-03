@@ -2,6 +2,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DisplayTitle, Loading } from '../components/DisplayTitle';
 import { GraftGrowing } from '../components/GraftGrowing';
+import { GraftDeck, TensionPick, type DeckState } from '../components/GraftDeck';
+import { drawCard } from '../lib/constraints';
+import { topAtoms } from '../lib/atoms';
+import { findHits, enforcedKeys } from '../lib/wall';
 import { GraftTrail, IdeaCard } from '../components/IdeaCard';
 import { db, depositCliches, markBlocked, markGrafted } from '../lib/db';
 import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
@@ -15,11 +19,23 @@ import { lacksWhy } from '../lib/why';
 import { daySeed, mulberry32, pickItems } from '../lib/similarity';
 import { bundleCounts, inBundle, takePool } from '../lib/bundles';
 import { useApp } from '../lib/store';
-import { TYPE_LABEL, type Development, type GraftBatch, type Item } from '../lib/types';
+import { TYPE_LABEL, type Development, type GraftBatch, type GraftTension, type Item } from '../lib/types';
 import { displayTitle, nn, shortDate } from '../lib/studio';
 
 const TASTE_KEY = 'lingan.taste.ai';
 const MODE_KEY = 'glean.graft.mode';
+const DECK_KEY = 'glean.graft.deck';
+
+/** v0.30 约束台：钉住的卡 / 野一点 / 先挑张力 记在本机（硬约束每次重新掷） */
+function savedDeck(): DeckState {
+  let o: Partial<DeckState> = {};
+  try {
+    o = JSON.parse(localStorage.getItem(DECK_KEY) || '{}');
+  } catch {
+    /* ignore */
+  }
+  return { card: o.pinned && o.card ? o.card : drawCard(), pinned: !!(o.pinned && o.card), constraint: null, wild: !!o.wild, pick: !!o.pick };
+}
 
 function savedMode(): GraftMode {
   try {
@@ -60,6 +76,22 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<GraftProgress | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // v0.30 约束台 + 0201 挑张力（graftWithAI 停下来等这里的选择）
+  const [deck, setDeckState] = useState<DeckState>(savedDeck);
+  const setDeck = (p: Partial<DeckState>) =>
+    setDeckState((d) => {
+      const n = { ...d, ...p };
+      try {
+        localStorage.setItem(DECK_KEY, JSON.stringify({ card: n.card, pinned: n.pinned, wild: n.wild, pick: n.pick }));
+      } catch {
+        /* ignore */
+      }
+      return n;
+    });
+  const wallHit = (c: string) => !!wall && findHits(c, enforcedKeys(wall)).length > 0;
+  const drawNew = () => setDeck({ card: drawCard(deck.card, Math.random, undefined, wallHit) });
+  const pickRef = useRef<((idx: number[] | null) => void) | null>(null);
+  const [pickNames, setPickNames] = useState<string[]>([]);
 
   const byId = useMemo(() => new Map((items || []).map((i) => [i.id!, i])), [items]);
   const pickPool = (p: string | null) => {
@@ -179,6 +211,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     const anchorId = anchor != null && sel.some((x) => x.id === anchor) ? anchor : undefined;
     if (anchorId != null) sel = [sel.find((x) => x.id === anchorId)!, ...sel.filter((x) => x.id !== anchorId)];
     const dist = distinctOf(settings);
+    // v0.30 这次的约束：翻到 / 钉住的那张斜策略、掷出的硬约束、野一点
+    const dk = { oblique: deck.card, constraint: deck.constraint || undefined, wild: deck.wild };
     // v0.24 0242 这组里有私密穗、又是云端模型：这次离线嫁接，素材不出门
     const hidden = sel.filter((x) => !aiVisible(x, settings)).length;
     let run: GraftResult;
@@ -198,7 +232,18 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
           feedback,
           style: styleSamples(settings),
           distinct: { ...dist, embed: ec ? async (texts) => (await import('../lib/ai')).embed(settings, texts) : undefined },
+          ...dk,
+          atoms: topAtoms(),
+          pickTensions: deck.pick
+            ? (_t: GraftTension[]) =>
+                new Promise<number[] | null>((res) => {
+                  setPickNames(sel.map((x) => x.title));
+                  pickRef.current = res;
+                  ctrl.signal.addEventListener('abort', () => res(null), { once: true });
+                })
+            : undefined,
         });
+        pickRef.current = null;
         if (run.partial) toast('第二步没跑完，用第一步的种子直接收拢了三根', 'err');
         else if (run.weak) toast(`有 ${run.weak} 根说不清从哪几穗长出来，标了「证据不足」`, 'err');
         else if (run.wall?.hit) toast(wallToast(run));
@@ -206,7 +251,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       } else {
         if (hidden) toast(`这组里有 ${hidden} 穗私密的，这次离线嫁接（不发给云端模型）`);
         // 离线也走四步；给麦子一点点长的时间（减少动态效果时不等）
-        run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow, anchorId, distinct: dist });
+        run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow, anchorId, distinct: dist, ...dk });
         if (!hidden && run.wall?.hit) toast(wallToast(run));
         else if (!hidden && run.distinct?.replaced) toast(distinctToast(run));
         if (run.wall?.hit) toast(wallToast(run));
@@ -223,7 +268,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
         return;
       }
       toast((e instanceof Error ? e.message : String(e)) + '，已改用离线嫁接', 'err');
-      run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow, anchorId, distinct: dist });
+      run = graftOffline(sel, { theme: th, mode: gm, wall: wallNow, anchorId, distinct: dist, ...dk });
     }
     if (ctrl.signal.aborted) {
       setBusy(false);
@@ -248,7 +293,10 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       idea,
       source: run.source,
       evidence: idea.evidence || 'ok',
-      batch: index === 0 ? { id: bid, index, size, tensions: run.tensions, seeds: run.seeds, pattern: run.pattern, calls: run.calls } : { id: bid, index, size },
+      batch:
+        index === 0
+          ? { id: bid, index, size, tensions: run.tensions, seeds: run.seeds, pattern: run.pattern, calls: run.calls, ...(run.mainstream ? { mainstream: run.mainstream.text } : {}), ...(run.temps?.length ? { temps: run.temps } : {}) }
+          : { id: bid, index, size },
       createdAt: now + index,
     }));
     const ids = (await db.developments.bulkAdd(devs, { allKeys: true })) as number[];
@@ -260,6 +308,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     setResult({ run, ids, batch: devs[0].batch!, names: sel.map((s) => s.title) });
     setProgress(null);
     setBusy(false);
+    // 没钉住的卡：长完换一张（下次是新的斜策略）
+    if (!deck.pinned) drawNew();
   }
 
   const shown = picked || null;
@@ -332,6 +382,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                 {anchor != null && <p className="anchor-note meta-text">已钉住主干：每根新枝都以它为主体，其余几穗只当养分。</p>}
                 <WhyHint items={shown} onOpen={openItem} />
                 <ModePicker mode={mode} onPick={chooseMode} disabled={busy} items={items} picked={shown} pickedBy={pickedBy} note={drawNote} />
+                <GraftDeck st={deck} set={setDeck} onDraw={drawNew} theme={theme} ai={aiReady(settings)} disabled={busy} />
                 <div className="graft-wrap">
                   <button className="btn primary graft-btn rw-shimmer" onClick={() => develop(shown)} disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}>
                     {busy ? '正在嫁接…' : pickedBy ? `按「${modeName(pickedBy)}」嫁接这 ${shown.length} 穗` : `嫁接这 ${shown.length} 穗`}
@@ -352,6 +403,17 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
 
           <div className="graft-main">
             {busy && progress && <GraftGrowing stage={progress.stage} retry={progress.retry} recheck={progress.recheck} wall={progress.wall} onCancel={() => abortRef.current?.abort()} />}
+            {busy && progress?.stage === 'pick' && progress.tensions && (
+              <TensionPick
+                tensions={progress.tensions}
+                names={pickNames}
+                onDone={(idx) => {
+                  setProgress({ stage: 'defix' });
+                  pickRef.current?.(idx);
+                  pickRef.current = null;
+                }}
+              />
+            )}
             {result && (
               <>
                 <div className="three-head">
