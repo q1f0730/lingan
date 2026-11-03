@@ -196,3 +196,69 @@ export interface Reject {
   updatedAt?: number;
   createdAt: number;
 }
+
+// ——— v0.29 B2 创作产出：作品工坊（0301–0309、0314、0322、0339、0340）———
+/** 作品形态（0302）：短篇 / 短片 / 歌单 / 影评 / 海报 / 播客 */
+export type WorkForm = 'story' | 'film' | 'playlist' | 'review' | 'poster' | 'podcast';
+/** 进度：构思 → 在做 → 完成 */
+export type WorkStage = 'idea' | 'doing' | 'done';
+/** 0304 分镜一行：景别 / 画面 / 声音 / 时长（秒）；0305 参考帧 = 库里一穗图（存 uid，跨设备 / 备份不断） */
+export interface WorkShot {
+  id: string;
+  size: string;
+  visual: string;
+  sound: string;
+  sec: number;
+  frameUid?: string;
+}
+/** 0306 灵感歌单一首：只用库里的音乐穗（uid）+ 一句「为什么在这」 */
+export interface WorkTrack {
+  uid: string;
+  why: string;
+}
+/** 0308 情绪板上一块：穗（图 / 字）、自由文字、色块。坐标是板内单位（不随缩放变） */
+export interface BoardNode {
+  id: string;
+  kind: 'item' | 'text' | 'color';
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  uid?: string;
+  text?: string;
+  color?: string;
+}
+export interface WorkTodo {
+  id: string;
+  text: string;
+  done?: 1;
+}
+/**
+ * v0.29 0301 作品：新枝「立项」后有自己的页面，挂素材、草稿、待办。
+ * 引用一律存全局 uid（穗 uid / 新枝 uid），不存本机自增 id：备份导到别的设备、快照恢复后引用都不断。
+ */
+export interface Work {
+  id?: number;
+  title: string;
+  form: WorkForm;
+  stage: WorkStage;
+  /** 从哪几根新枝立的项（新枝 uid） */
+  devUids: string[];
+  /** 0309 素材（穗 uid，按加入顺序） */
+  itemUids: string[];
+  /** 0303 草稿（Markdown；引用穗写成 [[标题|uid]]） */
+  draft: string;
+  todos: WorkTodo[];
+  /** 0304 分镜表 + 目标时长（秒） */
+  shots?: WorkShot[];
+  targetSec?: number;
+  /** 0306 灵感歌单 */
+  tracks?: WorkTrack[];
+  /** 0308 情绪板 */
+  board?: { nodes: BoardNode[] };
+  uid?: string;
+  deviceId?: string;
+  deletedAt?: number;
+  updatedAt?: number;
+  createdAt: number;
+}
