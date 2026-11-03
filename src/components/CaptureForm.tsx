@@ -77,7 +77,16 @@ export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDele
   }, [d, tagText, editing]);
   useEffect(() => {
     const w = writer.current;
-    return () => w.flush();
+    // v0.39：和速记条一样，页面被关 / 切走（App 被杀之前）立刻写下防抖里还没写的草稿（之前只有卸载时写，刚打完 0.5 秒内被杀就丢）
+    const f = () => w.flush();
+    const vis = () => document.visibilityState === 'hidden' && w.flush();
+    window.addEventListener('pagehide', f);
+    document.addEventListener('visibilitychange', vis);
+    return () => {
+      window.removeEventListener('pagehide', f);
+      document.removeEventListener('visibilitychange', vis);
+      w.flush();
+    };
   }, []);
 
   async function fillNowPlaying() {
