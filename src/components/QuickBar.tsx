@@ -5,13 +5,18 @@ import { addItem, db, normalizeTags, updateItem } from '../lib/db';
 import { itemHasImage } from '../lib/imagestore';
 import { enrichItem } from '../lib/enrich';
 import { fetchLinkMeta } from '../lib/linkmeta';
-import { clipMemory, parseQuick, readClipboard, shouldOffer, type QuickDraft } from '../lib/quick';
+import { clipMemory, nextType, parseQuick, readClipboard, shouldOffer, type QuickDraft } from '../lib/quick';
 import type { Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
 import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
 import { NowPlayingButton } from './NowPlaying';
 import { notifyDupe, savedMsg } from '../lib/dupnotice';
+import { useTagSuggest } from './TagSuggest';
+import { takeTransfer } from './DropIn';
+import { readTransfer } from '../lib/dropin';
+import { compressImage } from '../lib/image';
+
 
 /** v0.22 速记草稿：输入防抖写本地，App 被杀后下次打开接着写；存了或清空就删 */
 function useDraft(key: string, text: string, setText: (t: string) => void): [boolean, () => void] {
@@ -135,11 +140,20 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   const [focus, setFocus] = useState(false);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const whyRef = useRef<HTMLInputElement>(null);
   const [restored, dropDraft] = useDraft('quick', text, setText);
+  const [typeOv, setTypeOv] = useState<ItemType | null>(null);
+  const guess = useMemo(() => (text.trim() ? parseQuick(text) : null), [text]);
+  useEffect(() => {
+    if (!text.trim()) setTypeOv(null);
+  }, [text]);
+  const ts = useTagSuggest(text, setText, inputRef, { className: 'tag-suggest-quick' });
+  const tsWhy = useTagSuggest(why, setWhy, whyRef, { className: 'tag-suggest-quick' });
 
   async function save() {
-    const d = parseQuick(text);
-    if (!d || busy) return;
+    const d0 = parseQuick(text);
+    if (!d0 || busy) return;
+    const d = typeOv ? { ...d0, type: typeOv } : d0;
     setBusy(true);
     try {
       const id = await quickAdd(d, settings, (m) => toast(m, 'err'));
@@ -196,9 +210,11 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
           <span className="quick-after-k">已拾 · 补一句？</span>
           <input
             className="quick-why"
+            ref={whyRef}
             value={why}
             onChange={(e) => setWhy(e.target.value)}
             onKeyDown={(e) => {
+              if (tsWhy.onKey(e)) return;
               if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 saveWhy();
@@ -209,6 +225,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
             aria-label="补充为什么"
             maxLength={240}
           />
+          {tsWhy.box}
           {why.trim() ? (
             <button className="btn text strong" onClick={saveWhy}>
               补上
@@ -246,6 +263,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           onKeyDown={(e) => {
+            if (ts.onKey(e)) return;
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               save();
@@ -261,6 +279,18 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
             已拾
           </span>
         )}
+        {guess && (
+          <button
+            type="button"
+            className={`quick-type${typeOv ? ' set' : ''}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setTypeOv(nextType(typeOv || guess.type))}
+            aria-label={`类型：${TYPE_LABEL[typeOv || guess.type]}${typeOv ? '' : '（自动识别）'}，点一下换`}
+            title="点一下换类型"
+          >
+            {TYPE_LABEL[typeOv || guess.type]}
+          </button>
+        )}
         {text.trim() ? (
           <button className="btn quick-go" onClick={save} disabled={busy} aria-label="拾（回车）">
             拾 <IconEnter size={14} />
@@ -271,6 +301,7 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
           </button>
         )}
       </m.div>
+      {ts.box}
     </div>
   );
 }
@@ -286,6 +317,37 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLInputElement>(null);
   const guess = useMemo(() => parseQuick(text), [text]);
   const [, dropDraft] = useDraft('qw', text, setText);
+  const ts = useTagSuggest(text, setText, ref);
+  // v0.27 0405：粘贴 / 拖进来的图片先放在小窗里预览，回车连同文字一起存成图片穗
+  const [img, setImg] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
+  async function takeImage(f: File) {
+    try {
+      setImg(await compressImage(f));
+    } catch {
+      toast('这张图读不出来', 'err');
+    }
+  }
+  async function onDropQw(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setOver(false);
+    const { t, files } = readTransfer(e.dataTransfer);
+    const firstImg = files.find((f) => f.type.startsWith('image/'));
+    if (firstImg && files.length === 1) return void takeImage(firstImg);
+    if (!t.files.length && (t.text || t.uris.length)) {
+      setText((x) => (x ? x + ' ' : '') + (t.uris[0] || t.text).trim());
+      return;
+    }
+    const r = await takeTransfer(e.dataTransfer, (d) => quickAdd(d, settings, (m) => toast(m, 'err')), text);
+    if (r) {
+      toast(r.msg, r.ids.length ? 'ok' : 'err');
+      if (r.ids.length) {
+        dropDraft();
+        onClose();
+      }
+    }
+  }
   useEffect(() => {
     ref.current?.focus();
     const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -293,12 +355,14 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', h);
   }, [onClose]);
   async function save() {
-    const d = parseQuick(text);
+    const base = parseQuick(text);
+    const d: QuickDraft | null = img ? { type: 'image', title: (base?.title || '粘贴的图片').slice(0, 60), image: img, content: '', creator: '', year: '', url: base?.url || '', why: '', tags: base?.tags || [] } : base;
     if (!d || busy) return;
     setBusy(true);
     try {
-      const id = await quickAdd(type ? { ...d, type } : d, settings, (m) => toast(m, 'err'));
+      const id = await quickAdd(type && !img ? { ...d, type } : d, settings, (m) => toast(m, 'err'));
       dropDraft();
+      setImg(null);
       toast(savedMsg());
       void notifyDupe(id, toast);
       onClose();
@@ -314,7 +378,19 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
   }
   return (
     <div className="qw-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="quick-window" role="dialog" aria-modal="true" aria-label="随手拾速记">
+      <div
+        className={`quick-window${over ? ' drag-over' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="随手拾速记"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => void onDropQw(e)}
+      >
         <header className="qw-head">
           <span>
             <b>拾穗 · GLEAN</b> <span className="dim">/ 随手拾速记</span>
@@ -329,19 +405,37 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
+              if (ts.onKey(e)) return;
               if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 save();
               }
             }}
-            placeholder="此刻戳到你的是什么"
+            onPaste={(e) => {
+              const f = Array.from(e.clipboardData?.files || []).find((x) => x.type.startsWith('image/'));
+              if (f) {
+                e.preventDefault();
+                void takeImage(f);
+              }
+            }}
+            placeholder={img ? '给这张图说一句（可选），回车存' : '此刻戳到你的是什么 · 可以直接粘贴图片'}
             aria-label="速记小窗"
             maxLength={4000}
           />
-          <button className="btn primary" onClick={save} disabled={!guess || busy}>
+          <button className="btn primary" onClick={save} disabled={(!guess && !img) || busy}>
             拾 ↵
           </button>
         </div>
+        {ts.box}
+        {img && (
+          <div className="qw-img">
+            <img src={img} alt="要拾的图片" />
+            <span className="meta-text">回车存成图片穗</span>
+            <button className="btn text faint qw-img-drop" onClick={() => setImg(null)}>
+              不要这张
+            </button>
+          </div>
+        )}
         <div className="qw-types">
           <span className="qw-chips" role="radiogroup" aria-label="类型">
             {TYPE_ORDER.map((t) => (
@@ -353,7 +447,7 @@ export function QuickWindow({ onClose }: { onClose: () => void }) {
           {guess && !type && <span className="meta-text">自动识别：{TYPE_LABEL[guess.type]}</span>}
           <NowPlayingButton onDone={onClose} />
         </div>
-        <footer className="qw-foot meta-text">Esc 关闭 · Ctrl+Shift+L 在任何程序里唤出 · 托盘菜单「拾正在播放的歌」一键收歌</footer>
+        <footer className="qw-foot meta-text">Esc 关闭 · 可粘贴图片、拖文件进来 · Ctrl+Shift+L 在任何程序里唤出 · 托盘菜单「拾正在播放的歌」一键收歌</footer>
       </div>
     </div>
   );
