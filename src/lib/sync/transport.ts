@@ -33,16 +33,21 @@ export class TransportError extends Error {
 export class MemoryTransport implements SyncTransport {
   readonly label = '内存';
   files = new Map<string, Uint8Array>();
+  /** 每个文件的版本号（etag 用：同样长度、内容不同也能分清） */
+  vers = new Map<string, number>();
   puts = 0;
   gets = 0;
+  lists = 0;
+  deletes = 0;
   async list(dir: string): Promise<RemoteEntry[]> {
+    this.lists++;
     const pre = dir.replace(/\/?$/, '/').replace(/^\//, '');
     const out = new Map<string, RemoteEntry>();
     for (const [p, b] of this.files) {
       if (!p.startsWith(pre)) continue;
       const rest = p.slice(pre.length);
       const i = rest.indexOf('/');
-      if (i < 0) out.set(p, { path: p, size: b.length, etag: String(b.length) });
+      if (i < 0) out.set(p, { path: p, size: b.length, etag: `${b.length}-${this.vers.get(p) || 0}` });
       else out.set(pre + rest.slice(0, i), { path: pre + rest.slice(0, i), size: 0, dir: true });
     }
     return [...out.values()].sort((a, b) => (a.path < b.path ? -1 : 1));
@@ -56,9 +61,11 @@ export class MemoryTransport implements SyncTransport {
     if (opts.ifNone && this.files.has(path)) return false;
     this.puts++;
     this.files.set(path, data.slice());
+    this.vers.set(path, this.puts);
     return true;
   }
   async delete(path: string) {
+    this.deletes++;
     this.files.delete(path);
   }
 }
@@ -114,14 +121,26 @@ export class WebDavTransport implements SyncTransport {
     this.label = new URL(root).host;
     this.fetchFn = fetchFn || null;
   }
+  /** 请求数（测试 / 状态里看「这次同步发了几个请求」） */
+  requests = 0;
+  /** 测试里换成不真等 */
+  static sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
   private async f(path: string, init: RequestInit & { headers?: Record<string, string> }): Promise<Response> {
     const fn = this.fetchFn || (this.fetchFn = await getFetch());
     let r: Response;
-    try {
-      r = await fn(this.base + path.split('/').map(encodeURIComponent).join('/'), { ...init, headers: { Authorization: this.auth, ...(init.headers || {}) } });
-    } catch (e) {
-      throw new TransportError(`连不上同步服务（${(e as Error)?.message || '网络错误'}）`, 0);
+    // v0.32 0659 坚果云限频：429 / 503 / 502 / 504 按 Retry-After（最多 30 秒）或 1 / 2 / 4 秒退避，最多再试 3 次
+    for (let attempt = 0; ; attempt++) {
+      this.requests++;
+      try {
+        r = await fn(this.base + path.split('/').map(encodeURIComponent).join('/'), { ...init, headers: { Authorization: this.auth, ...(init.headers || {}) } });
+      } catch (e) {
+        throw new TransportError(`连不上同步服务（${(e as Error)?.message || '网络错误'}）`, 0);
+      }
+      if (![429, 502, 503, 504].includes(r.status) || attempt >= 3) break;
+      const ra = Number(r.headers.get('Retry-After'));
+      await WebDavTransport.sleep(Number.isFinite(ra) && ra > 0 ? Math.min(ra, 30) * 1000 : 1000 * 2 ** attempt);
     }
+    if (r.status === 429) throw new TransportError('同步服务说请求太频繁（坚果云免费版每 30 分钟有次数上限），稍后会自动再试', 429);
     if (r.status === 401 || r.status === 403) throw new TransportError('同步服务拒绝了账号或应用密码', r.status);
     if (r.status === 507) throw new TransportError('同步空间满了', r.status);
     return r;
