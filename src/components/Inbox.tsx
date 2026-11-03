@@ -12,6 +12,7 @@ import { useApp } from '../lib/store';
 import { displayTitle, shortDate } from '../lib/studio';
 import { TYPE_LABEL, type Item } from '../lib/types';
 import { DisplayTitle, Loading } from './DisplayTitle';
+import { Handed } from './Handed';
 
 const DAY = 86400000;
 
@@ -255,6 +256,7 @@ export function InboxView({ onClose }: { onClose: () => void }) {
           </div>
         }
       />
+      <Handed />
       {inbox.length === 0 ? (
         <div className="empty small inbox-empty">
           <p className="lead">待理清空了</p>
