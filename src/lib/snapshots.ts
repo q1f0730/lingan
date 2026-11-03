@@ -29,6 +29,8 @@ export interface SnapRow {
   rejects: Reject[];
   images: StoredImage[];
   meta?: Array<{ k: string; v: unknown }>;
+  /** 升级前副本里没复制的内联大原图条数（v0.12 以前的旧库） */
+  omittedImages?: number;
 }
 export type SnapInfo = Omit<SnapRow, 'items' | 'developments' | 'cliches' | 'rejects' | 'images' | 'meta'>;
 
@@ -183,7 +185,18 @@ export async function dumpBeforeUpgrade(name: string, fromIdbVersion: number, to
     for (const st of RAW_STORES) {
       got[st] = idb.objectStoreNames.contains(st) ? await idbReq(idb.transaction(st).objectStore(st).getAll()) : [];
     }
-    const items = got.items as Item[];
+    // 只存「丢了就找不回」的：缩略图、向量是派生的（新版会重建），不进副本；v0.12 以前行里内联的大原图（data URL）
+    // 不复制——迁移失败时 IndexedDB 整体回滚、原图还在旧库里，而把上百 MB 字符串再写一遍会让第一次打开卡住
+    let omitted = 0;
+    const items = (got.items as Item[]).map((it) => {
+      const { thumb: _t, embedding: _e, ...rest } = it as Item & Record<string, unknown>;
+      void _t, void _e;
+      if (typeof rest.image === 'string' && rest.image.length > 200_000) {
+        delete rest.image;
+        omitted++;
+      }
+      return rest as Item;
+    });
     if (!items.length && !got.developments.length) return null; // 空库没什么可保的
     const row: SnapRow = {
       kind: 'pre-upgrade',
@@ -192,6 +205,7 @@ export async function dumpBeforeUpgrade(name: string, fromIdbVersion: number, to
       schema: Math.round(fromIdbVersion / 10),
       appVersion: opts.appVersion,
       counts: { items: items.length, developments: got.developments.length, cliches: got.cliches.length, images: 0 },
+      omittedImages: omitted || undefined,
       items,
       developments: got.developments as Development[],
       cliches: got.cliches as Cliche[],
