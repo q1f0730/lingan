@@ -380,7 +380,7 @@ mark.hit {
 }
 .dock .nav {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   height: 48px;
 }
 .dock .nav-btn {
