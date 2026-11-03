@@ -19,6 +19,7 @@ import { activeMonths, displayTitle, groupByWeek, monthGrid, tagCounts } from '.
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 import { Seg } from '../components/rw/Seg';
+import { masked, useUnlocked } from '../lib/lock';
 import { WordReveal } from '../components/rw/WordReveal';
 import { IconSearch } from '../components/rw/icons';
 
@@ -32,6 +33,9 @@ const SearchView = lazy(() => loadSearch().then((m) => ({ default: m.SearchView 
 const InboxView = lazy(() => loadInbox().then((m) => ({ default: m.InboxView })));
 const WhyView = lazy(() => loadWhy().then((m) => ({ default: m.WhyView })));
 const SelectBar = lazy(() => loadSelect().then((m) => ({ default: m.SelectBar })));
+// v0.39 0804 待拾（订阅来的）：点开才加载
+const FeedInbox = lazy(() => import('../components/Feeds').then((m) => ({ default: m.FeedInbox })));
+const feedNew = () => +(localStorage.getItem('glean.feeds.new') || 0);
 let prefetched = false;
 function prefetchSubviews() {
   if (prefetched) return;
@@ -72,13 +76,22 @@ function takeBundleOpen(): string | null {
 export function Library() {
   const { openItem, openCapture, toast, developFrom, desktop, go } = useApp();
   // v0.30：和 main.tsx 的 prime 共用一个订阅（读库不再排在外壳第一帧之后）
-  const items = useLibraryItems();
+  const raw = useLibraryItems();
+  // v0.39 0907 没解锁时上锁的穗只剩空壳（卡片 / 列表 / 时间线 / 标签云 / 筛选都看不到内容）
+  const unl = useUnlocked();
+  const items = useMemo(() => (raw && !unl && raw.some((x) => x.locked) ? raw.map(masked) : raw), [raw, unl]);
   // v0.37 0702：首段只有最新 60 条时 meta 给真实计数，待理 / 缺为什么 / 类型 / 穗束这些要全量的等全表到了再出
   const meta = useLibraryMeta();
   const devs = useLiveQuery(() => db.developments.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   const q = '';
   const [searching, setSearching] = useState(false);
-  const [sub, setSub] = useState<'inbox' | 'why' | null>(takeLibSub);
+  const [sub, setSub] = useState<'inbox' | 'why' | 'feed' | null>(takeLibSub);
+  const [nFeed, setNFeed] = useState(feedNew);
+  useEffect(() => {
+    const on = () => setNFeed(feedNew());
+    window.addEventListener('glean:feeds', on);
+    return () => window.removeEventListener('glean:feeds', on);
+  }, []);
   // v0.34 0900 别人递来的（本机 localStorage，不在库里）
   const [nHanded, setNHanded] = useState(() => readHanded().length);
   useEffect(() => {
@@ -247,6 +260,7 @@ export function Library() {
   if (searching && devs) return <Suspense fallback={<Loading />}><SearchView items={items} devs={devs} onClose={() => setSearching(false)} /></Suspense>;
   if (sub === 'inbox') return <Suspense fallback={<Loading />}><InboxView onClose={() => setSub(null)} /></Suspense>;
   if (sub === 'why') return <Suspense fallback={<Loading />}><WhyView onClose={() => setSub(null)} /></Suspense>;
+  if (sub === 'feed') return <Suspense fallback={<Loading />}><FeedInbox onClose={() => setSub(null)} /></Suspense>;
   const own = meta ? meta.live - meta.samples - (inboxOn ? meta.inbox : 0) : shelf.length - nShelfSamples;
   const filtering = type !== 'all' || !!tag;
 
@@ -301,6 +315,17 @@ export function Library() {
               <span className="note-acts">
                 <button className="btn text strong inbox-open" onClick={() => setSub('inbox')}>
                   去整理
+                </button>
+              </span>
+            </div>
+          )}
+          {nFeed > 0 && (
+            <div className="feed-bar note-row">
+              <span className="label">待拾 <span className="num">({nFeed})</span></span>
+              <span className="meta-text">订阅来的，写一句为什么拾下才进穗仓</span>
+              <span className="note-acts">
+                <button className="btn text strong feed-open" onClick={() => setSub('feed')}>
+                  去看看
                 </button>
               </span>
             </div>
