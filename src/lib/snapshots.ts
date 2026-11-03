@@ -9,7 +9,7 @@
 //   IndexedDB 会整体回滚（库仍是旧版本），兜底页可以把这份副本存成文件，用「导入备份」恢复。
 import Dexie, { type Table } from 'dexie';
 import { markRawTransaction, type LinganDB } from './db';
-import type { Development, Item, Reject, StoredImage } from './types';
+import type { Development, Item, Reject, StoredImage, Work } from './types';
 import type { Cliche } from './wall';
 
 export type SnapKind = 'op' | 'pre-upgrade';
@@ -27,12 +27,14 @@ export interface SnapRow {
   developments: Development[];
   cliches: Cliche[];
   rejects: Reject[];
+  /** v0.29 作品（旧快照没有：恢复时不动作品表） */
+  works?: Work[];
   images: StoredImage[];
   meta?: Array<{ k: string; v: unknown }>;
   /** 升级前副本里没复制的内联大原图条数（v0.12 以前的旧库） */
   omittedImages?: number;
 }
-export type SnapInfo = Omit<SnapRow, 'items' | 'developments' | 'cliches' | 'rejects' | 'images' | 'meta'>;
+export type SnapInfo = Omit<SnapRow, 'items' | 'developments' | 'cliches' | 'rejects' | 'works' | 'images' | 'meta'>;
 
 export const SNAP_DB = 'glean-snap';
 export const KEEP: Record<SnapKind, number> = { op: 10, 'pre-upgrade': 3 };
@@ -52,8 +54,8 @@ export function snapDb(name = SNAP_DB): SnapDB {
 }
 
 function info(r: SnapRow): SnapInfo {
-  const { items: _i, developments: _d, cliches: _c, rejects: _r, images: _im, meta: _m, ...rest } = r;
-  void _i, void _d, void _c, void _r, void _im, void _m;
+  const { items: _i, developments: _d, cliches: _c, rejects: _r, works: _w, images: _im, meta: _m, ...rest } = r;
+  void _i, void _d, void _c, void _r, void _w, void _im, void _m;
   return rest;
 }
 
@@ -68,7 +70,7 @@ async function prune(s: SnapDB, kind: SnapKind) {
 /** 拍一张操作快照。imagesOf = 这次操作会彻底删掉原图的穗 id（把这几张原图也存进来） */
 export async function takeSnapshot(label: string, d: LinganDB, opts: { imagesOf?: number[]; now?: number; appVersion?: string; s?: SnapDB } = {}): Promise<number> {
   const s = opts.s || snapDb();
-  const [items, developments, cliches, rejects] = await d.transaction('r', [d.items, d.developments, d.cliches, d.rejects], () => Promise.all([d.items.toArray(), d.developments.toArray(), d.cliches.toArray(), d.rejects.toArray()]));
+  const [items, developments, cliches, rejects, works] = await d.transaction('r', [d.items, d.developments, d.cliches, d.rejects, d.works], () => Promise.all([d.items.toArray(), d.developments.toArray(), d.cliches.toArray(), d.rejects.toArray(), d.works.toArray()]));
   const imagesOf = [...new Set(opts.imagesOf || [])];
   const images = imagesOf.length ? ((await d.images.bulkGet(imagesOf)).filter(Boolean) as StoredImage[]) : [];
   const row: SnapRow = {
@@ -82,6 +84,7 @@ export async function takeSnapshot(label: string, d: LinganDB, opts: { imagesOf?
     developments,
     cliches,
     rejects,
+    works,
     images,
   };
   const id = await s.snaps.add(row);
@@ -138,8 +141,12 @@ export async function restoreSnapshot(id: number, d: LinganDB, opts: { s?: SnapD
   if (snap.schema > Math.round(d.verno)) throw new Error('这张快照来自更新的版本，当前版本恢复不了');
   const undoId = await takeSnapshot(`恢复「${snap.label}」前`, d, { s, appVersion: opts.appVersion });
   const keep = new Set(snap.items.map((x) => x.id!));
-  await d.transaction('rw', [d.items, d.developments, d.cliches, d.rejects, d.images, d.daily], async () => {
+  await d.transaction('rw', [d.items, d.developments, d.cliches, d.rejects, d.works, d.images, d.daily], async () => {
     markRawTransaction();
+    if (snap.works) {
+      await d.works.clear();
+      if (snap.works.length) await d.works.bulkPut(snap.works);
+    }
     await d.items.clear();
     await d.developments.clear();
     await d.cliches.clear();
@@ -165,7 +172,7 @@ function idbReq<T>(r: IDBRequest<T>): Promise<T> {
     r.onerror = () => rej(r.error);
   });
 }
-const RAW_STORES = ['items', 'developments', 'cliches', 'rejects', 'meta'] as const;
+const RAW_STORES = ['items', 'developments', 'cliches', 'rejects', 'works', 'meta'] as const;
 
 /** 用原生 IndexedDB 按现有版本打开（不触发升级），原样读出各表存进快照库 */
 export async function dumpBeforeUpgrade(name: string, fromIdbVersion: number, toSchema: number, opts: { s?: SnapDB; appVersion?: string; now?: number } = {}): Promise<number | null> {
@@ -210,6 +217,7 @@ export async function dumpBeforeUpgrade(name: string, fromIdbVersion: number, to
       developments: got.developments as Development[],
       cliches: got.cliches as Cliche[],
       rejects: got.rejects as Reject[],
+      works: got.works as Work[],
       images: [],
       meta: got.meta as Array<{ k: string; v: unknown }>,
     };
@@ -241,6 +249,7 @@ export function snapshotToBackupJson(snap: SnapRow): string {
     items: snap.items.map(strip),
     developments: snap.developments,
     cliches: snap.cliches.map(({ id: _id, ...c }) => (void _id, c)),
+    ...(snap.works?.length ? { works: snap.works.map(({ id: _id, ...w }) => (void _id, w)) } : {}),
   });
 }
 
