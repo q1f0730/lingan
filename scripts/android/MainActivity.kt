@@ -114,10 +114,20 @@ class MainActivity : TauriActivity() {
   }
 
   private var myPut: (() -> Unit)? = null
+  /** v0.36 说一句就收（GleanVoice.kt） */
+  private val voice by lazy { VoiceBridge(this) }
 
   override fun onDestroy() {
     if (Glean.onPut === myPut) Glean.onPut = null
+    voice.destroy()
     super.onDestroy()
+  }
+
+  @Deprecated("系统语音输入框的结果")
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    @Suppress("DEPRECATION")
+    super.onActivityResult(requestCode, resultCode, data)
+    voice.onResult(requestCode, resultCode, data)
   }
 
   override fun onNewIntent(intent: Intent) {
@@ -380,5 +390,6 @@ class MainActivity : TauriActivity() {
     webView.addJavascriptInterface(chrome, "LinganChrome")
     // v0.32 局域网直连扫码（见 GleanQr.kt）
     webView.addJavascriptInterface(QrBridge(), "LinganQr")
+    webView.addJavascriptInterface(voice, "LinganVoice")
   }
 }
