@@ -26,6 +26,10 @@ export interface Cliche {
   blocked: number;
   createdAt: number;
   lastAt: number;
+  /** v0.21 全局唯一 id（ULID）、最后修改时间、最后改它的设备 */
+  uid?: string;
+  updatedAt?: number;
+  deviceId?: string;
 }
 
 export const MAX_CLICHE_LEN = 40;
