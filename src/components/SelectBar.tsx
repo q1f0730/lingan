@@ -1,9 +1,10 @@
 // v0.23 一次整理一把（ROADMAP v0.40 / 0159）：多选后批量 加标签 · 改类型 · 入仓 · 删除（可撤销）· 带进嫁接。
 import { useState } from 'react';
 import { db, keepItems, reInbox, trashItems, untrashItems } from '../lib/db';
+import { setGarden } from '../lib/repo';
 import { addTagsTo, removeTagFrom, restoreTypes, setTypeOf } from '../lib/batch';
 import { useApp } from '../lib/store';
-import { TYPE_LABEL, TYPE_ORDER, type Item } from '../lib/types';
+import { TYPE_LABEL, TYPE_ORDER } from '../lib/types';
 
 export function SelectBar({ ids, total, onAll, onNone, onDone }: { ids: number[]; total: number; onAll: () => void; onNone: () => void; onDone: () => void }) {
   const { toast, developFrom } = useApp();
@@ -40,8 +41,8 @@ export function SelectBar({ ids, total, onAll, onNone, onDone }: { ids: number[]
   async function garden() {
     const rows = (await db.items.bulkGet(ids)).filter((x) => x && !x.private && !x.garden);
     const list = rows.map((x) => x!.id!);
-    await db.items.where(':id').anyOf(list).modify((x: Item) => void (x.garden = 1));
-    toast(list.length ? `${list.length} 穗放进花园` : '选中的已经在花园里了（私密穗不放）', 'ok', list.length ? { label: '撤销', run: () => void db.items.where(':id').anyOf(list).modify((x: Item) => void delete x.garden) } : undefined);
+    await setGarden(list, true);
+    toast(list.length ? `${list.length} 穗放进花园` : '选中的已经在花园里了（私密穗不放）', 'ok', list.length ? { label: '撤销', run: () => void setGarden(list, false) } : undefined);
   }
   async function keep() {
     const list = [...ids];
