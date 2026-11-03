@@ -158,7 +158,7 @@ export async function extractAtoms(s: Settings | null, items: Item[]): Promise<A
 
 /** ≤300 字的 Markdown：只含原子与代表作（不含私密穗、不含为什么原文） */
 export function atomsPrompt(st: AtomStore, items: Item[], name = 'Q1f730'): string {
-  const byUid = new Map(items.filter((i) => i.uid && !i.private && !i.deletedAt).map((i) => [i.uid!, i]));
+  const byUid = new Map(items.filter((i) => i.uid && !i.private && !i.locked && !i.deletedAt).map((i) => [i.uid!, i]));
   const top = topAtoms(st, 12);
   const score = new Map<string, number>();
   for (const a of st.atoms) for (const u of a.uids) if (byUid.has(u)) score.set(u, (score.get(u) || 0) + a.weight);
