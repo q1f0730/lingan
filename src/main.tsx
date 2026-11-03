@@ -74,6 +74,11 @@ function boot() {
     void afterFirstPaint(3000)
       .then(() => new Promise((r) => setTimeout(r, 20000)))
       .then(() => import('./lib/autobackup').then((m) => m.autoBackupTick(__APP_VERSION__)).catch((e) => logError(e, 'error', { view: 'autobackup' })));
+  // v0.31：开着同步才加载同步引擎（启动 6 秒后、空闲时），否则首屏和后台都不碰它
+  if (localStorage.getItem('glean.sync.v1'))
+    void afterFirstPaint(3000)
+      .then(() => new Promise((r) => setTimeout(r, 6000)))
+      .then(() => import('./lib/sync').then((m) => m.startAutoSync(__APP_VERSION__)).catch((e) => logError(e, 'error', { view: 'sync' })));
   // v0.20：其余四页的包在穗仓首屏画完之后预取
   void afterFirstPaint(2500).then(prefetchViews);
   // v0.20：申请持久存储（浏览器 / WebView 在空间紧张时不清本库）
