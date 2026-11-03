@@ -7,13 +7,27 @@ import crypto from 'node:crypto';
 import { startLanMock } from './lanmock.mjs';
 fs.mkdirSync(out, { recursive: true });
 const errs = [];
-const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
+// v0.37 0705：CI 用 E2E_CHROMIUM 指到 runner 自带的 Chrome；E2E_SKIP=perf,… 跳过只在 InstaBox 上当门的组
+const SKIP = new Set((process.env.E2E_SKIP || '').split(',').filter(Boolean));
+const b = await chromium.launch({ executablePath: process.env.E2E_CHROMIUM || '/usr/bin/chromium', args: ['--no-sandbox', '--enable-precise-memory-info', '--js-flags=--expose-gc'] });
 // v0.16 引导只在第一次打开时出现：其余用例都当作「走过引导」的老用户（onboard: true 的上下文才看引导）
 const _newContext = b.newContext.bind(b);
 // v0.23 待理：默认开着（速记 / 分享来的穗先进待理）。老用例测的是「收了就在穗仓里」，上下文里先把待理关掉；inbox: true 的上下文（inbox() 用例）保持默认开
+// v0.37 0755：E2E_TRACE=1 时每个上下文录 Playwright trace，这个上下文期间新增了错误才存 <out>/trace-N.zip（CI 失败时作为附件上传）
+let traceN = 0;
 b.newContext = async (opts = {}) => {
   const { onboard, inbox, ...o } = opts;
   const c = await _newContext(o);
+  if (process.env.E2E_TRACE) {
+    const e0 = errs.length;
+    const n = ++traceN;
+    await c.tracing.start({ screenshots: true, snapshots: true }).catch(() => {});
+    const close = c.close.bind(c);
+    c.close = async (...a) => {
+      await c.tracing.stop(errs.length > e0 ? { path: `${out}/trace-${n}.zip` } : undefined).catch(() => {});
+      return close(...a);
+    };
+  }
   if (!onboard) await c.addInitScript(() => { try { localStorage.setItem('glean.onboarded', '1'); } catch { /* svg doc */ } });
   if (!inbox) await c.addInitScript(() => { try { if (!sessionStorage.getItem('e2e.inbox.set')) { localStorage.setItem('glean.inbox', 'off'); sessionStorage.setItem('e2e.inbox.set', '1'); } } catch { /* svg doc */ } });
   return c;
@@ -4652,7 +4666,127 @@ async function v036() {
   console.log('v036: ext img capture, hold-to-talk saved + offline toast / desktop: shot hotkey → image → OCR → search 图中文字 + detail, clip=1 frame, Win+H, settings shot key/now/backfill, nolang hint ok');
 }
 
+// v0.37 工程底座：0702 首屏只查最新 60 条（标题计数照常是真实总数，类型 / 穗束等全量到了再出）、0723 速记回车到卡片出现 ≤100ms、0713 三档图
+async function v037() {
+  const tag = 'v037';
+  const c = await b.newContext({ viewport: { width: 390, height: 844 } });
+  await c.addInitScript(() => {
+    window.addEventListener('glean:ready', () => {
+      window.__first = { count: document.querySelector('.page-title .count')?.textContent || '', chips: document.querySelectorAll('.filter-row .chip').length, cards: document.querySelectorAll('.masonry .card').length };
+    });
+  });
+  const pg = await c.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  await seedMany(pg, 1000);
+  await pg.reload();
+  await pg.waitForFunction(() => window.__first, null, { timeout: 15000 });
+  const first = await pg.evaluate(() => window.__first);
+  if (first.count !== '(1000)') errs.push(`[${tag}] head phase title count should be real total, got ${first.count}`);
+  if (first.chips !== 1) errs.push(`[${tag}] head phase should show only 全部 chip, got ${first.chips}`);
+  // 全量到了：类型 chip 出现，计数不变
+  await pg.waitForFunction(() => document.querySelectorAll('.filter-row .chip').length > 1, null, { timeout: 6000 }).catch(() => errs.push(`[${tag}] full list never arrived`));
+  const after = await pg.evaluate(() => ({ count: document.querySelector('.page-title .count')?.textContent, all: document.querySelector('.filter-row .chip')?.textContent }));
+  if (after.count !== '(1000)' || !/\(1000\)/.test(after.all || '')) errs.push(`[${tag}] full phase counts ${JSON.stringify(after)}`);
+  // 不在首段里的最老一穗也搜得到
+  await pg.click('.search-toggle');
+  await pg.fill('.sq-input', '批量穗 999');
+  await pg.waitForSelector('.sq-items .sq-row', { timeout: 4000 }).catch(() => errs.push(`[${tag}] oldest item not searchable`));
+  await pg.keyboard.press('Escape');
+  await pg.waitForSelector('.masonry .card');
+  // 0723 速记回车 → 新卡片挂进 DOM（1000 穗）：5 次中位数 ≤ 100ms
+  const lat = [];
+  for (let k = 0; k < 5; k++) {
+    const title = `回车计时 ${k}`;
+    await pg.evaluate((title) => {
+      window.__lat = null;
+      const inp = document.querySelector('.quick-input');
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') window.__t0 = performance.now(); }, { once: true, capture: true });
+      const mo = new MutationObserver(() => {
+        if ([...document.querySelectorAll('.masonry .card')].some((x) => x.textContent.includes(title))) {
+          window.__lat = performance.now() - window.__t0;
+          mo.disconnect();
+        }
+      });
+      mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+    }, title);
+    await pg.fill('.quick-input', title);
+    await pg.press('.quick-input', 'Enter');
+    await pg.waitForFunction(() => window.__lat != null, null, { timeout: 5000 }).catch(() => errs.push(`[${tag}] quick card never appeared`));
+    lat.push(Math.round(await pg.evaluate(() => window.__lat ?? 9999)));
+    await pg.waitForTimeout(300);
+  }
+  const latMed = [...lat].sort((a, b) => a - b)[2];
+  PERF.quickEnterMs = { median: latMed, runs: lat, items: 1000 };
+  if (latMed > 100) errs.push(`[${tag}] quick enter → card ${latMed}ms > 100ms (${lat.join(',')})`);
+  await c.close();
+
+  // 0713 三档图：新收的大图后台出详情档（长边 1440）；v0.37 之前的旧图一次性补；详情先看详情档，点图换原图
+  const c2 = await b.newContext({ viewport: { width: 1366, height: 860 } });
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[${tag}] img pageerror ${e.message}`));
+  await p2.goto(base);
+  await p2.waitForSelector('text=穗仓还是空的');
+  await p2.evaluate(async () => {
+    const big = await new Promise((res) => {
+      const cv = document.createElement('canvas'); cv.width = 2400; cv.height = 1800;
+      const g = cv.getContext('2d');
+      const id = g.createImageData(2400, 1800);
+      let s = 7;
+      for (let i = 0; i < id.data.length; i += 4) { s = (s * 1103515245 + 12345) & 0x7fffffff; id.data[i] = s & 255; id.data[i + 1] = (s >> 8) & 255; id.data[i + 2] = (s >> 16) & 255; id.data[i + 3] = 255; }
+      g.putImageData(id, 0, 0);
+      cv.toBlob(res, 'image/jpeg', 0.9);
+    });
+    const thumb = await new Promise((res) => { const cv = document.createElement('canvas'); cv.width = 400; cv.height = 300; cv.getContext('2d').fillRect(0, 0, 400, 300); cv.toBlob(res, 'image/jpeg', 0.7); });
+    await new Promise((res, rej) => {
+      const r = indexedDB.open('lingan');
+      r.onsuccess = () => {
+        const tx = r.result.transaction(['items', 'images'], 'readwrite');
+        const it = tx.objectStore('items'), im = tx.objectStore('images');
+        const now = Date.now();
+        const a = it.add({ type: 'image', title: '新大图', content: '', creator: '', year: '', url: '', why: '', tags: [], hasImage: 1, thumbTodo: 1, createdAt: now, updatedAt: now, uid: '01BIGNEW00000000000000000A' });
+        a.onsuccess = () => im.put({ itemId: a.result, blob: big });
+        const o = it.add({ type: 'image', title: '旧大图', content: '', creator: '', year: '', url: '', why: '', tags: [], hasImage: 1, thumb, thumbW: 400, thumbH: 300, createdAt: now - 1000, updatedAt: now - 1000, uid: '01BIGOLD00000000000000000A' });
+        o.onsuccess = () => im.put({ itemId: o.result, blob: big });
+        tx.oncomplete = () => { r.result.close(); res(); };
+        tx.onerror = () => rej(tx.error);
+      };
+    });
+  });
+  // 模拟从 v0.36 升上来：旧版没有补详情档的完成标记（空库首启时任务已跑过一遍并记了完成）
+  await p2.evaluate(() => localStorage.removeItem('glean.mid.v1'));
+  await p2.reload();
+  await p2.waitForSelector('.card');
+  const mids = () => p2.evaluate(() => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => { const q = r.result.transaction('images').objectStore('images').getAll(); q.onsuccess = () => { r.result.close(); res(q.result.map((x) => ({ orig: x.blob?.size, mid: x.mid ? x.mid.size : x.mid === null ? null : 'none' }))); }; };
+  }));
+  let m = [];
+  for (let k = 0; k < 40; k++) {
+    m = await mids();
+    if (m.length === 2 && m.every((x) => x.mid > 0)) break;
+    await p2.waitForTimeout(250);
+  }
+  if (!(m.length === 2 && m.every((x) => x.mid > 0 && x.mid < x.orig))) errs.push(`[${tag}] mid tier not made ${JSON.stringify(m)}`);
+  if ((await p2.evaluate(() => localStorage.getItem('glean.mid.v1'))) !== '1') errs.push(`[${tag}] old-image backfill not marked done`);
+  await p2.click('.card:has-text("新大图")');
+  await p2.waitForSelector('.detail-img');
+  await p2.waitForFunction(() => document.querySelector('.detail-img')?.naturalWidth > 0, null, { timeout: 4000 });
+  const w1 = await p2.evaluate(() => document.querySelector('.detail-img').naturalWidth);
+  await p2.click('.detail-figure');
+  await p2.waitForFunction(() => document.querySelector('.detail-img')?.naturalWidth === 2400, null, { timeout: 4000 }).catch(() => {});
+  const w2 = await p2.evaluate(() => document.querySelector('.detail-img')?.naturalWidth);
+  if (w1 !== 1440 || w2 !== 2400) errs.push(`[${tag}] detail should show 1440 mid then 2400 original, got ${w1} → ${w2}`);
+  await c2.close();
+  console.log(`v037: head phase count ${first.count} chips ${first.chips} → full; oldest searchable; quick enter→card median ${latMed}ms (${lat.join(',')}); mid tier ${JSON.stringify(m)}; detail ${w1}→${w2}`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v037') {
+    await v037();
+    throw Object.assign(new Error('v037 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v036') {
     await v036();
     throw Object.assign(new Error('v036 only'), { only: true });
@@ -4733,6 +4867,7 @@ try {
   await v034();
   await v035();
   await v036();
+  await v037();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
@@ -4785,7 +4920,7 @@ try {
   await run('desktop', { width: 1366, height: 860 });
   await run('mobile', { width: 390, height: 844 });
   await shots();
-  await perf();
+  if (!SKIP.has('perf')) await perf();
 } catch (e) {
   if (Object.keys(PERF).length) console.log('PERF partial ' + JSON.stringify(PERF).slice(0, 600));
   if (!e.only) errs.push('FATAL ' + e.message + ' @ ' + ((e.stack || '').split('\n').find((l) => l.includes('run.mjs')) || '').trim());
@@ -4799,3 +4934,4 @@ if (PERF.scrollMasonryCpu4x && PERF.scrollTimeline) {
   console.log(`PERF scroll masonry ${P.scrollMasonry.avgFps}fps p95 ${P.scrollMasonry.p95Ms}ms jank ${P.scrollMasonry.jankPct}% mounted≤${P.scrollMasonry.maxMountedCards} · 4x ${P.scrollMasonryCpu4x.avgFps}fps jank ${P.scrollMasonryCpu4x.jankPct}% · timeline ${P.scrollTimeline.avgFps}fps jank ${P.scrollTimeline.jankPct}%${P.scrollList ? ` · list ${P.scrollList.avgFps}fps jank ${P.scrollList.jankPct}% mounted≤${P.scrollList.maxMountedCards}` : ''}`);
 }
 console.log(errs.length ? 'ERRORS:\n' + errs.join('\n') : 'ALL PASS');
+process.exitCode = errs.length ? 1 : 0;
