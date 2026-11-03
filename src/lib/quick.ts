@@ -105,10 +105,18 @@ export function hashText(s: string): string {
   return (h >>> 0).toString(36);
 }
 
+/** v0.33 0018 / 0514：验证码、像密码的一串不提示收（剪贴板守望 / 安卓粘贴拾） */
+export function looksSensitive(text: string): boolean {
+  const s = text.trim();
+  if (/^\d{4,8}$/.test(s)) return true;
+  if (s.length < 200 && /验证码|校验码|动态码|动态密码|verification code|\bOTP\b/i.test(s) && /(^|\D)\d{4,8}(\D|$)/.test(s)) return true;
+  return s.length >= 8 && s.length <= 64 && !/[\s/\u3000-\u9fff]/.test(s) && /[a-z]/.test(s) && /[A-Z]/.test(s) && /\d/.test(s) && /[^A-Za-z0-9]/.test(s);
+}
+
 /** Should we offer this clipboard text? Not empty, not huge, not already offered, not already in the library. */
 export function shouldOffer(text: string | null | undefined, lastHash: string | null, existing: Array<Pick<Item, 'title' | 'url' | 'content'>>): boolean {
   const t = (text || '').trim();
-  if (t.length < 2 || t.length > 2000) return false;
+  if (t.length < 2 || t.length > 2000 || looksSensitive(t)) return false;
   if (lastHash && hashText(t) === lastHash) return false;
   const url = extractUrl(t);
   return !existing.some((i) => (url && i.url === url) || i.title === t || (i.content && i.content === t));
