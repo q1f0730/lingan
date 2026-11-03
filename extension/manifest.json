@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "拾穗 · Glean",
+  "version": "0.36.0",
+  "description": "右键拾进拾穗：这一句（带跳回原句的链接）、这张图、这个页面、B 站 / YouTube 当前时间点。只交给本机的拾穗 App，不联网、不收集任何东西。",
+  "author": "Q1f730",
+  "permissions": ["contextMenus", "activeTab", "scripting", "clipboardWrite"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_title": "拾进拾穗（视频页 = 拾当前时间点）", "default_icon": { "32": "icons/32.png", "128": "icons/128.png" } },
+  "icons": { "32": "icons/32.png", "128": "icons/128.png" }
+}
