@@ -104,7 +104,8 @@ def main():
         name = f'glean-sans-{i}.woff2'
         txt = tmp / f'slice{i}.txt'
         txt.write_text(''.join(chars), encoding='utf-8')
-        extra = [f'--text-file={txt}', '--no-hinting', '--desubroutinize', f'--layout-features={CJK_FEATURES}']
+        # v0.44：去掉竖排度量 vhea / vmtx 和基线表 BASE（横排用不到；截图逐像素比 8 张 0 差），6 片共 −3.4KB
+        extra = [f'--text-file={txt}', '--no-hinting', '--desubroutinize', f'--layout-features={CJK_FEATURES}', '--drop-tables+=vhea,vmtx,BASE']
         if i == 0:
             extra.append(f'--unicodes={PUNCT}')
         sub(sans, name, *extra)
