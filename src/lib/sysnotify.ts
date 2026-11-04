@@ -4,8 +4,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { isTauriEnv } from './desktop';
 
-/** graft = 嫁接在后台完成（0527） */
-export type NotifyKind = 'graft';
+/** graft = 嫁接在后台完成（0527）；daily = v0.45 到点递一穗（电脑；安卓由原生发） */
+export type NotifyKind = 'graft' | 'daily';
 
 export const NOTIFY_OFF_KEY = 'glean.sysnotify.off';
 
@@ -18,8 +18,8 @@ export function inBackground(d: Pick<Document, 'visibilityState' | 'hasFocus'> =
   return d.visibilityState === 'hidden' || !d.hasFocus();
 }
 
-export async function notify(kind: NotifyKind, title: string, body: string): Promise<boolean> {
-  if (!isTauriEnv() || notifyOff(kind)) return false;
+export async function notify(kind: NotifyKind, title: string, body: string, force = false): Promise<boolean> {
+  if (!isTauriEnv() || (!force && notifyOff(kind))) return false;
   try {
     const ok = await invoke<boolean | null>('plugin:notification|is_permission_granted');
     if (!ok) return false;
