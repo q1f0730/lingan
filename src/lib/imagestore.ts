@@ -134,7 +134,7 @@ export async function setItemImage(d: ImgDB, id: number, image: string | Blob | 
       return;
     }
     const blob = typeof image === 'string' ? dataUrlToBlob(image) : image;
-    await d.images.put({ itemId: id, blob });
+    await d.images.put({ itemId: id, blob, fresh: Date.now() });
     await d.items.update(id, { image: undefined, hasImage: 1, thumbTodo: 1, thumb: undefined, thumbW: undefined, thumbH: undefined, thumbFail: undefined } as Partial<Item>);
   });
 }
@@ -174,7 +174,7 @@ export interface HealReport {
 export async function healImages(
   d: ImgDB,
   make: ThumbMaker,
-  opts: { batch?: number; yieldFn?: () => Promise<void>; shouldStop?: () => boolean; onProgress?: (r: HealReport) => void } = {},
+  opts: { batch?: number; yieldFn?: () => Promise<void>; shouldStop?: () => boolean; onProgress?: (r: HealReport) => void; clean?: (b: Blob) => Promise<{ blob: Blob; shotAt?: number; changed: boolean }> } = {},
 ): Promise<HealReport> {
   const batch = opts.batch ?? 8;
   const rep: HealReport = { detached: 0, made: 0, failed: 0, left: 0 };
@@ -199,7 +199,7 @@ export async function healImages(
     if (opts.shouldStop?.()) break;
     const todo = await d.items.where('thumbTodo').equals(1).limit(batch).toArray();
     if (!todo.length) break;
-    const results: Array<{ id: number; out?: ThumbOut }> = [];
+    const results: Array<{ id: number; out?: ThumbOut; fresh?: number; cl?: { blob: Blob; shotAt?: number; changed: boolean } }> = [];
     for (const it of todo) {
       const id = it.id!;
       const orig = await d.images.get(id);
@@ -207,16 +207,23 @@ export async function healImages(
         results.push({ id });
         continue;
       }
+      // v0.43 0651 / 0636 刚收的图：先抹 GPS / 缩图，缩略图用清过的那份做
+      const fresh = orig.fresh;
+      const cl = fresh && opts.clean ? await opts.clean(orig.blob).catch(() => undefined) : undefined;
       try {
-        results.push({ id, out: await make(orig.blob) });
+        results.push({ id, fresh, cl, out: await make(cl?.blob || orig.blob) });
       } catch {
-        results.push({ id });
+        results.push({ id, fresh, cl });
       }
     }
     await d.transaction('rw', d.items, d.images, async () => {
       for (const r of results) {
         const cur = await d.items.get(r.id);
         if (!cur || !cur.thumbTodo) continue; // 期间被删 / 换图（换图会重新排队）
+        if (r.fresh && (await d.images.get(r.id))?.fresh === r.fresh) {
+          await d.images.update(r.id, { ...(r.cl?.changed ? { blob: r.cl.blob } : {}), fresh: undefined });
+          if (r.cl?.shotAt) await d.items.update(r.id, { shotAt: r.cl.shotAt });
+        }
         if (r.out) {
           await d.items.update(r.id, { thumb: r.out.blob, thumbW: r.out.w, thumbH: r.out.h, thumbTodo: undefined, thumbFail: undefined } as Partial<Item>);
           await d.images.update(r.id, { mid: r.out.mid || null });
