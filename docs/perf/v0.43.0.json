@@ -1,0 +1,366 @@
+{
+  "version": "0.43.0",
+  "date": "2026-11-04",
+  "build": "app-C-hgJCX6.js",
+  "e2e": {
+    "coldStartMs": 183,
+    "coldStartCpu4xMs": 527,
+    "searchMaxMs": 21.7,
+    "searchMedianMs": 16.9,
+    "backup": {
+      "items": 1000,
+      "images": 300,
+      "ms": 650,
+      "heapDeltaMB": 35.3,
+      "peakMB": 49.8,
+      "runs": [
+        68.3,
+        32.5,
+        15.7,
+        35.3,
+        40.5
+      ],
+      "rule": "同一页连续导出 5 次取中位数 ≤ 48MB（v0.43 起 5 次，原 3 次；阈值不变）"
+    },
+    "restoreMs": 847,
+    "scroll": "masonry/timeline/list 60fps jank 0%",
+    "note": "InstaBox 整套 e2e ALL PASS（dist app-C-hgJCX6，4502=d43c），定稿构建跑两遍整套；之前 app-Du3ioImB（只差 CaptureForm 草稿恢复）整套 perf-backup 已过（5 次 59.2/23.3/23.7/23.9/21.5，中位 23.7MB），唯一错误是 capture「form draft not restored」→ 已修。e2e 冷启动不和旧版交替，不能跨会话比"
+  },
+  "backupHeapAB": {
+    "why": "v0.43 第一次整套（app-75yW4A6n）perf-backup 3 次 70.8/56.3/42.9MB，中位 56.3 > 48",
+    "inputPath": "perf() 的 300 张图由 seedLegacy1000 直写 IndexedDB 旧行，升级时 migrateInlineImages 搬进 images 表、不带 fresh → v0.43 入库清洗（imgclean 只处理 fresh）不参与；backup.ts / zipstream.ts 与 v0.42 逐字节相同；设置页新面板 StoreHealth 无 props + memo",
+    "method": "InstaBox 同一会话交替 E2E_ONLY=perf 各 9 轮（奇偶换先后），4490=d42 app-YDKbQtx3 / 4501=d43b app-Du3ioImB（哈希已核对），每轮 3 次导出（旧 run.mjs）",
+    "v042": {
+      "perRunMedians": [
+        33.1,
+        28.6,
+        34.8,
+        38.4,
+        34,
+        35.7,
+        33.4,
+        27.3,
+        34.5
+      ],
+      "medianOfMedians": 34,
+      "allRuns": [
+        54.1,
+        25.9,
+        33.1,
+        61.9,
+        28.6,
+        26.4,
+        73.1,
+        34.8,
+        23.6,
+        45.4,
+        33.1,
+        38.4,
+        67.9,
+        34,
+        19.6,
+        44.5,
+        33.4,
+        35.7,
+        48.5,
+        33.4,
+        15.3,
+        57.3,
+        23.6,
+        27.3,
+        43.4,
+        34.5,
+        33.4
+      ],
+      "medianAll": 34
+    },
+    "v043": {
+      "perRunMedians": [
+        34,
+        32.5,
+        34.6,
+        33.5,
+        33.1,
+        34.5,
+        32.9,
+        32.1,
+        33.1
+      ],
+      "medianOfMedians": 33.1,
+      "allRuns": [
+        70.3,
+        33.7,
+        34,
+        70.2,
+        32.5,
+        31.8,
+        50,
+        34.6,
+        32,
+        51.8,
+        32.7,
+        33.5,
+        70.2,
+        33.1,
+        15.4,
+        70.6,
+        32.5,
+        34.5,
+        70.3,
+        32.9,
+        31.9,
+        49.2,
+        32.1,
+        31.8,
+        45.5,
+        33.1,
+        14.5
+      ],
+      "medianAll": 33.5
+    },
+    "mannWhitney": {
+      "perRunMedians_v043_gt_v042": {
+        "U": 31.0,
+        "z": -0.8388704928078611,
+        "p": 0.7992290061920775
+      },
+      "allRuns_v043_gt_v042": {
+        "U": 377.0,
+        "z": 0.21624970671153415,
+        "p": 0.41439655484852045
+      }
+    },
+    "verdict": "噪声，不是回归：中位数 34.0 → 33.1MB，单侧 p=0.80 / 0.41。每页第一次导出总是最高（v0.42 首次 43–73MB，v0.43 45–71MB，首次中位 54.1 / 70.2MB，MW p≈0.10 不显著），后几次 15–38MB；测量改为 5 次取中位数"
+  },
+  "interleavedBench": {
+    "script": "e2e/bench5.mjs (painted)，InstaBox 4490=d42 app-YDKbQtx3 / 4502=d43c app-C-hgJCX6（新端口，哈希已核对）",
+    "rounds": 9,
+    "run1": {
+      "v042": {
+        "normalMedian": 208,
+        "cpu4xMedian": 610,
+        "normalRuns": [
+          225,
+          208,
+          193,
+          202,
+          198,
+          182,
+          210,
+          215,
+          210
+        ],
+        "cpu4xRuns": [
+          610,
+          646,
+          616,
+          586,
+          544,
+          599,
+          688,
+          643,
+          585
+        ]
+      },
+      "v043": {
+        "normalMedian": 200,
+        "cpu4xMedian": 585,
+        "normalRuns": [
+          180,
+          200,
+          210,
+          203,
+          188,
+          194,
+          222,
+          213,
+          183
+        ],
+        "cpu4xRuns": [
+          585,
+          619,
+          578,
+          568,
+          584,
+          591,
+          654,
+          675,
+          568
+        ]
+      }
+    },
+    "run2": {
+      "v043": {
+        "normalMedian": 199,
+        "cpu4xMedian": 614,
+        "normalRuns": [
+          209,
+          196,
+          195,
+          203,
+          181,
+          209,
+          200,
+          199,
+          192
+        ],
+        "cpu4xRuns": [
+          588,
+          627,
+          614,
+          559,
+          584,
+          622,
+          631,
+          621,
+          576
+        ]
+      },
+      "v042": {
+        "normalMedian": 193,
+        "cpu4xMedian": 581,
+        "normalRuns": [
+          190,
+          205,
+          200,
+          187,
+          193,
+          204,
+          204,
+          186,
+          178
+        ],
+        "cpu4xRuns": [
+          604,
+          527,
+          542,
+          552,
+          590,
+          579,
+          635,
+          592,
+          581
+        ]
+      }
+    },
+    "gate": "perf-gate 两轮都 OK：普通 −3.8% / +3.1%，4× −4.1% / +5.7%（z ≤ 1.37，不显著）",
+    "earlier": {
+      "note": "app-Du3ioImB 同会话两轮",
+      "run1": {
+        "v042": {
+          "normalMedian": 194,
+          "cpu4xMedian": 579,
+          "normalRuns": [
+            194,
+            196,
+            192,
+            179,
+            191,
+            197,
+            207,
+            177,
+            202
+          ],
+          "cpu4xRuns": [
+            571,
+            518,
+            563,
+            590,
+            604,
+            599,
+            555,
+            579,
+            579
+          ]
+        },
+        "v043": {
+          "normalMedian": 196,
+          "cpu4xMedian": 575,
+          "normalRuns": [
+            198,
+            203,
+            194,
+            192,
+            196,
+            197,
+            210,
+            183,
+            175
+          ],
+          "cpu4xRuns": [
+            566,
+            553,
+            585,
+            564,
+            575,
+            587,
+            615,
+            559,
+            595
+          ]
+        }
+      },
+      "run2": {
+        "v043": {
+          "normalMedian": 186,
+          "cpu4xMedian": 559,
+          "normalRuns": [
+            191,
+            170,
+            180,
+            184,
+            211,
+            188,
+            186,
+            181,
+            192
+          ],
+          "cpu4xRuns": [
+            567,
+            599,
+            543,
+            580,
+            578,
+            546,
+            559,
+            547,
+            547
+          ]
+        },
+        "v042": {
+          "normalMedian": 184,
+          "cpu4xMedian": 555,
+          "normalRuns": [
+            187,
+            190,
+            178,
+            172,
+            198,
+            184,
+            178,
+            173,
+            192
+          ],
+          "cpu4xRuns": [
+            581,
+            600,
+            543,
+            542,
+            555,
+            578,
+            537,
+            557,
+            517
+          ]
+        }
+      }
+    }
+  },
+  "bundle": {
+    "firstScreenJsKB": "526.9 → 528.1",
+    "firstScreenCssKB": "118.5 → 118.5",
+    "firstFontKB": "286.0 → 286.0",
+    "totalKB": "2223.3 → 2224.8（预算 2226.6 不放宽）",
+    "note": "hash-wasm 两段 wasm 改 deflate 压缩进包（−11KB）腾出 imgclean / nudge / StoreHealth / 隐私条款测试相关代码；imgclean 懒加载"
+  }
+}
