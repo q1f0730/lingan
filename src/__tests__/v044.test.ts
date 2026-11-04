@@ -159,12 +159,12 @@ describe('v0.43 遗留：速记条草稿首帧恢复', () => {
 });
 
 describe('外壳：窗口 / 托盘 / 崩溃 / 日志（源码核对）', () => {
-  const rs = import.meta.glob(['../../src-tauri/src/lib.rs', '../../src-tauri/src/shell.rs', '../../src-tauri/src/entry.rs', '../../src-tauri/Cargo.toml', '../../scripts/android/GleanChrome.kt', '../main.tsx', '../lib/entryboot.ts'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+  const rs = import.meta.glob(['../../src-tauri/src/lib.rs', '../../src-tauri/src/shell.rs', '../../src-tauri/src/shelllogic.rs', '../../src-tauri/src/entry.rs', '../../src-tauri/Cargo.toml', '../../scripts/android/GleanChrome.kt', '../main.tsx', '../lib/entryboot.ts'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
   const f = (end: string) => Object.entries(rs).find(([k]) => k.endsWith(end))![1];
   it('0741 / 0563：setup 不再直接亮窗口，前端首帧后 main_ready；静默启动后台活再晚 60 秒', () => {
     expect(f('lib.rs')).not.toMatch(/if !std::env::args\(\)\.any\(\|a\| a == "--hidden"\) \{\s*entry::show_main/);
     expect(f('lib.rs')).toMatch(/shell::main_ready,/);
-    expect(f('lib.rs')).toMatch(/now_playing, shell::main_ready, shell::crash_take\]/);
+    expect(f('lib.rs')).toMatch(/now_playing, shell::main_ready, shell::crash_take, shell::quiet_now\]/); // v0.45 安卓也注册 quiet_now
     expect(f('main.tsx')).toMatch(/invoke<boolean>\('main_ready'\)/);
     expect(f('main.tsx').match(/void later\(/g)?.length).toBe(4);
     expect(f('main.tsx')).toMatch(/h \? 60000 : 0/);
@@ -182,7 +182,9 @@ describe('外壳：窗口 / 托盘 / 崩溃 / 日志（源码核对）', () => {
   it('0561 / 0538 / 0562：第一次关窗口提示、托盘从剪贴板拾 + 暂停提示、热键 / 托盘唤出挪到鼠标所在屏', () => {
     expect(f('lib.rs')).toMatch(/shell::first_close\(/);
     expect(f('lib.rs')).toMatch(/"clip", "从剪贴板拾"/);
-    expect(f('lib.rs')).toMatch(/"clippause", "暂停剪贴板提示 1 小时"/);
+    // v0.45：菜单文字只从状态算（shelllogic::pause_label），初始 = 没暂停
+    expect(f('lib.rs')).toMatch(/"clippause", shelllogic::pause_label\(false\)/);
+    expect(f('shelllogic.rs')).toMatch(/"暂停剪贴板提示 1 小时"/);
     expect(f('entry.rs')).toMatch(/crate::shell::clip_paused\(&app\)/);
     expect(f('entry.rs')).toMatch(/crate::shell::to_cursor_monitor\(app\)/);
     expect(f('lib.rs')).toMatch(/fn show_quick[\s\S]{0,80}shell::to_cursor_monitor\(app\)/);
