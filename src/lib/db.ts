@@ -6,7 +6,7 @@ import { hlcFromWall, isHlc, tick } from './hlc';
 import { DAILY_COMBO, pickDaily, pickStillValid, todayKey } from './daily';
 import { graftStatsFromDevs } from './modes';
 import { migrateDevelopment } from './provenance';
-import { drawSamples, sampleTimes } from './samples';
+import { drawSamples, sampleTimes } from './sampledraw';
 import { blobToDataUrl, dataUrlToBlob, detachInlineImage, isDataUrl, migrateInlineImages, setItemImage } from './imagestore';
 import type { DailyPick, Development, FtRow, Item, Reject, StoredImage, Work } from './types';
 import { cleanText, clicheKey, validKey, wallCandidates, type Cliche } from './wall';
@@ -838,7 +838,8 @@ export async function markGrafted(ids: number[], d: LinganDB = db, now = Date.no
 
 /** v0.14 从示例池随机抽 n 条放进穗仓（打上 sample 标记），返回新 id */
 export async function addSamples(n = 10, d: LinganDB = db, rand: () => number = Math.random, now = Date.now()): Promise<number[]> {
-  const picks = drawSamples(n, rand);
+  // v0.42 示例池是压缩包（samplepack），只在点「放几条示例」时才下载 / 解开，不进首屏
+  const picks = drawSamples(n, rand, await (await import('./samplepack')).loadSamplePool());
   const times = sampleTimes(picks.length, now, rand);
   const rows: Item[] = picks.map((s, i) => ({ ...s, tags: normalizeTags(s.tags), sample: 1, graftCount: 0, createdAt: times[i], updatedAt: times[i] }));
   return (await d.items.bulkAdd(rows, { allKeys: true })) as number[];
