@@ -15,6 +15,8 @@ import { TrashPanel } from '../components/Trash';
 import { TagPanel } from '../components/TagPanel';
 import { inboxEnabled } from '../lib/db';
 import { CapturePanel, captureSummary } from '../components/CapturePanel';
+import { PingPanel } from '../components/PingPanel';
+import { readPing } from '../lib/rhythm';
 import { StoreHealth } from '../components/StoreHealth';
 import { LASTEXP_KEY } from '../lib/nudge';
 import { embedAllMissing } from '../lib/enrich';
@@ -47,6 +49,7 @@ export const APP_VERSION = __APP_VERSION__;
 
 // v0.26：导出进度每变一次就重画整页设置；这些面板与进度无关，memo 掉（v0.25 加了 Agent / 更新两块后导出时堆峰值多了约 5MB）
 const CaptureP = memo(CapturePanel);
+const PingP = memo(PingPanel);
 const TagP = memo(TagPanel);
 const TrashP = memo(TrashPanel);
 const AgentP = memo(AgentPanel);
@@ -259,6 +262,7 @@ export function SettingsView() {
     ['set-embed', '向量', settings.embed.model || (localStorage.getItem(MINI_KEY) ? '本机小模型' : '不用')],
     ['set-look', '外观', THEME_LABEL[settings.theme]],
     ['set-capture', '极速采集', captureSummary()],
+    ['set-ping', '到点递一穗', readPing().on ? `每天 ${readPing().at}` : '关'],
     ['set-tags', '待理与标签', inboxEnabled() ? '待理开' : '待理关'],
     ['set-data', '备份与导入', counts ? `${counts.items} 穗 · ${counts.devs} 新枝` : ''],
     ['set-feed', '订阅 · 待拾', localStorage.getItem('glean.feeds.n') ? `${localStorage.getItem('glean.feeds.n')} 个源 · 待拾 ${localStorage.getItem('glean.feeds.new') || 0}` : '没订阅'],
@@ -427,6 +431,8 @@ export function SettingsView() {
           </section>
 
           <CaptureP />
+
+          <PingP />
 
           <TagP />
 
