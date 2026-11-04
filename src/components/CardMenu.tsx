@@ -22,7 +22,7 @@ type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 's
  * v0.27 0411：长按卡片（手机）或右键（电脑）弹出上下文菜单：打开 / 编辑 / 拿去嫁接 / 复制文字 / 复制链接 / 删掉。
  * 认 `[data-item-id]`（网格卡、列表行、时间线帧、月历行），有弹层时不出。
  */
-export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket' | 'share' | 'garden'>, it: Item) => void }) {
+export function CardMenu({ blocked, onAct, early }: { blocked: boolean; early?: { el: Element; x: number; y: number } | null; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket' | 'share' | 'garden'>, it: Item) => void }) {
   const { toast, desktop } = useApp();
   const [st, setSt] = useState<{ it: Item; x: number; y: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -103,6 +103,10 @@ export function CardMenu({ blocked, onAct }: { blocked: boolean; onAct: (a: Excl
       document.removeEventListener('click', onClick, true);
     };
   }, []);
+  // v0.40：菜单还没挂上时就右键的那一下（App 先拦下记住），挂上后补发一次
+  useEffect(() => {
+    if (early) early.el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: early.x, clientY: early.y }));
+  }, [early]);
 
   useEffect(() => {
     if (!st) return;
