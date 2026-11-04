@@ -33,6 +33,13 @@ export async function boot(ref: { current: LinkCtx }): Promise<void> {
     },
     true,
   );
+  // v0.44 0746：上次 Rust 层崩了（panic 写的 crash.txt）→ 记进本地错误日志（设置 → 诊断能复制），提示一次
+  const crash = await invoke<string | null>('crash_take').catch(() => null);
+  if (crash) {
+    const { logError } = await import('./errlog');
+    logError(Object.assign(new Error(crash), { name: 'RustPanic' }), 'error', { view: 'rust' });
+    ref.current.toast('上次拾穗意外退出了，原因已记在设置 → 诊断里', 'err');
+  }
   if (share) return; // 安卓：深链接走 MainActivity → takeGo，没有热键 / 发送到
   const { listen } = await import('@tauri-apps/api/event');
   const links = await invoke<string[]>('link_take').catch(() => [] as string[]);
