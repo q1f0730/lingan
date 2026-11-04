@@ -21,6 +21,9 @@ export interface Transform {
   experiment: string; // 离线 / 兜底的 20 分钟小实验
 }
 
+/** v0.42 ROADMAP v0.32 提示词版本：改了 buildMapPrompt / buildConvergePrompt 的要求就 +1（存进每根新枝的 batch.prompt） */
+export const PROMPT_V = 'p42';
+
 export const TRANSFORMS: Transform[] = [
   { id: 'invert', name: '反转', hint: '把关系、方向、因果或主次倒过来', short: '倒过来的', experiment: '把两件素材各写成三句话，再把每一句的主语和宾语对调，留下最别扭的那一句。' },
   { id: 'medium', name: '换媒介', hint: '把它搬进另一种媒介（声音→画面、电影→物件、文字→动作）', short: '换个身体的', experiment: '用手机录 60 秒声音或拍 3 张照片来表达其中一件素材，不许出现它原本的样子。' },
@@ -163,6 +166,8 @@ type Ctx = {
   focus?: GraftTension[];
   /** v0.30 0207 大众版答案（第一步模型给的，不展示） */
   mainstream?: string;
+  /** v0.42 0240 我过去更常用上的变形法（id） */
+  prefer?: string[];
 };
 
 function anchorOf(items: Item[], opts: Ctx): Item | undefined {
@@ -244,6 +249,7 @@ export function buildConvergePrompt(
     '每根新枝给出：seed（种子编号 1-8）、title（12 字内，不要冒号）、idea（100-180 字，具体到画面 / 声音 / 结构）、form（形式，如短片 / 歌 / 海报 / 装置 / 文案 / 游戏）、refs（这根新枝真正用到的素材 ID，至少 ${k} 个，只能是上面方括号里的数字）、unlike（它和另外两根哪里不同，40 字内）、experiment（我 20 分钟内就能完成的一个小实验）。',
     'idea 正文里用到哪件素材，就点出它的名字（如《花样年华》），方便我对照。说不出依据的新枝宁可不写。',
     opts.focus?.length ? `我从 PHASE A 里亲手挑了 ${opts.focus.length} 条张力（见用户消息「我挑的张力」）：三根新枝都必须沿着它们长，优先选和它们相关的种子。` : '',
+    opts.prefer?.length ? `我过去更常用上「${opts.prefer.map(transformName).join('」「')}」长出来的新枝：挑选标准相当时优先它们，但三根仍要变形法两两不同。` : '',
     opts.mainstream ? `大众版是「${opts.mainstream.slice(0, 60)}」：三根新枝都要离它最远，不许是它的变体或换皮。` : '',
     '再列出 3-5 个这组素材最容易落入的套路（cliches，每条 2-16 字的词或短语，不要整句），三根新枝都必须避开；它们会被加进我的套路墙。',
     wallNote ? `注意：上一版新枝里${wallNote}。这一次三根新枝都不许出现套路墙上的任何一条。` : '',
@@ -868,12 +874,14 @@ export async function graftWithAI(
     atoms?: string[];
     /** v0.30 0201 张力手选：第一步之后停下来给用户挑；返回挑中的下标（空 / null = 都要） */
     pickTensions?: (t: GraftTension[]) => Promise<number[] | null>;
+    /** v0.42 0240 变形法胜率：收拢时偏向的变形法 */
+    prefer?: string[];
   } = {},
 ): Promise<GraftResult> {
   const wall = opts.wall || [];
   const baseKeys = enforcedKeys(wall);
   const oblique = opts.oblique?.trim() || pickObliqueClean(opts.rand || Math.random, baseKeys);
-  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode, wall: promptWall(wall), anchorId: opts.anchorId, avoid: opts.avoid, feedback: opts.feedback, style: opts.style, constraint: opts.constraint, wild: opts.wild, atoms: opts.atoms };
+  const ctx: Ctx = { theme: opts.theme, oblique, taste: opts.taste, mode: opts.mode, wall: promptWall(wall), anchorId: opts.anchorId, avoid: opts.avoid, feedback: opts.feedback, style: opts.style, constraint: opts.constraint, wild: opts.wild, atoms: opts.atoms, prefer: opts.prefer };
   const dcfg: DistinctCfg = opts.distinct || { text: 0.45, vector: 0.9 };
   /** v0.24 收尾：去 AI 腔 → 过墙 → 不撞车 */
   const polish = async (branches: Idea[], seeds: GraftSeed[], keys: string[], report: WallReport) => {
