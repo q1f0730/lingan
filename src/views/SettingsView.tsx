@@ -15,6 +15,8 @@ import { TrashPanel } from '../components/Trash';
 import { TagPanel } from '../components/TagPanel';
 import { inboxEnabled } from '../lib/db';
 import { CapturePanel, captureSummary } from '../components/CapturePanel';
+import { StoreHealth } from '../components/StoreHealth';
+import { LASTEXP_KEY } from '../lib/nudge';
 import { embedAllMissing } from '../lib/enrich';
 import { androidFiles, deliverZip, openFileSink, type ZipTarget } from '../lib/files';
 import { exportObsidianZip, vaultZipName } from '../lib/obsidian';
@@ -67,6 +69,18 @@ const plugsOff = () => {
     return 0;
   }
 };
+
+const ym = (t: number) => `${new Date(t).getFullYear()}.${new Date(t).getMonth() + 1}`;
+/** v0.43 0641 恢复前预览：拾于的日期范围、和本机重叠几穗、带了几个配方 / 智能穗束 */
+function importSpan(inc: Incoming, m: ImportCounts): string {
+  const ts = inc.items.filter((x) => !x.deletedAt && x.createdAt > 0).map((x) => x.createdAt);
+  const lo = ts.length ? ts.reduce((a, b) => Math.min(a, b)) : 0;
+  const hi = ts.length ? ts.reduce((a, b) => Math.max(a, b)) : 0;
+  const parts = [lo ? `拾于 ${ym(lo)}${ym(hi) !== ym(lo) ? ` – ${ym(hi)}` : ''}` : '没有穗', `和本机重叠 ${m.items.update + m.items.skip} 穗`];
+  if (inc.local?.recipes?.length) parts.push(`配方 ${inc.local.recipes.length}`);
+  if (inc.local?.smart?.length) parts.push(`智能穗束 ${inc.local.smart.length}`);
+  return parts.join(' · ');
+}
 
 export function SettingsView() {
   const { settings, setSettings, toast, confirm, desktop } = useApp();
@@ -133,6 +147,11 @@ export function SettingsView() {
       const st = await exportGlean(sink, db, { now, appVersion: APP_VERSION, onProgress: (a, t) => setBacking(`${Math.round((a / Math.max(1, t)) * 100)}%`) });
       const where = await sink.close();
       (window as unknown as { __gleanBackup?: unknown }).__gleanBackup = { ...st, ms: Math.round(performance.now() - t0) };
+      // v0.43 0639 记下这次手动备份（设置页「上次备份」和启动后的提醒都看它）
+      if (where) {
+        localStorage.setItem(LASTEXP_KEY, String(now));
+        window.dispatchEvent(new Event('glean:backed'));
+      }
       if (where) toast(`已导出 ${st.items} 穗 · ${st.developments} 新枝 · ${st.images} 张图${target === 'downloads' ? `（${where}）` : ''}`);
       return where;
     } catch (e) {
@@ -419,6 +438,7 @@ export function SettingsView() {
                 <dd className="num backup-counts">{counts ? `${counts.items} 穗 · ${counts.devs} 新枝 · ${counts.imgs} 张图` : '…'}</dd>
               </div>
             </dl>
+            <StoreHealth />
             <div className="table action-table">
               {onAndroid ? (
                 <>
@@ -458,6 +478,7 @@ export function SettingsView() {
                   {pending.name} · {pending.inc.format === 'glean' ? '.glean' : '旧版 JSON'}
                   {pending.inc.exportedAt ? ` · ${new Date(pending.inc.exportedAt).toLocaleString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 导出` : ''} · {pending.inc.items.length} 穗 · {pending.inc.developments.length} 新枝 · {pending.inc.imageCount} 张图
                 </p>
+                <p className="meta-text import-span">{importSpan(pending.inc, pending.preview.merge)}</p>
                 {pending.inc.problems.length > 0 && <p className="meta-text import-problems">注意：{pending.inc.problems.join('；')}</p>}
                 <div className="radio-list" role="radiogroup" aria-label="导入方式">
                   {(['merge', 'missing', 'replace'] as ImportMode[]).map((m) => {
