@@ -1,0 +1,58 @@
+/* v0.40 时间与回看：周记 / 麦捆卡、再看一句、口味会说话、田埂、休耕格 */
+.review-card {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.review-qs {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+.review-lost {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+.lost-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+  font-size: 14px;
+}
+.lost-row .linklike {
+  margin-right: auto;
+}
+.revisit-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.revisit-pair p,
+.revisit-list {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.detail-revisit .actions {
+  margin-top: 6px;
+}
+.talk-line {
+  margin: 6px 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.ridge-list li {
+  padding: 4px 0;
+}
+.heat-cell.fallow {
+  background: repeating-linear-gradient(45deg, var(--hair) 0 2px, transparent 2px 4px);
+}
+@media (max-width: 420px) {
+  .revisit-pair {
+    grid-template-columns: 1fr;
+  }
+}
