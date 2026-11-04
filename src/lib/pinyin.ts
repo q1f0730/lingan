@@ -2,7 +2,14 @@
  * v0.28 0112 拼音与首字母搜索：输入 wjw 或 wangjiawei 能找到王家卫。
  * 只在搜索框里打的是纯字母时才懒加载（字表约 29KB，不进首屏）。多音字最多认 3 个读音（重庆 = chongqing）。
  */
-import { PINYIN_ALT, PINYIN_TABLE } from './pinyin-table';
+import { PINYIN_Z } from './pinyin-table';
+import { inflate } from './inflate';
+
+let src = '';
+/** v0.42 字表是压缩包：import 之后要先 await ready（Search 里 import(...).then(m => m.ready)）再查 */
+export const ready: Promise<void> = inflate(PINYIN_Z).then((s) => {
+  src = s.replace('\n', '|');
+});
 
 let map: Map<string, string[]> | null = null;
 /** v0.35 字表改成紧凑编码（见 scripts/pinyin/gen.py）：必须和那边的 DIGITS / NT 一致 */
@@ -16,10 +23,11 @@ export function gb2312Chars(): string[] {
 }
 function table(): Map<string, string[]> {
   if (map) return map;
+  if (!src) return new Map(); // 还没解开（调用方应先 await ready）：这一次当没有字表，下次再建
   map = new Map();
   const chars = gb2312Chars();
   // 先常用读音，再补多音字的其它读音：每个字的第一个读音就是常用的
-  for (const seg of (PINYIN_TABLE + '|' + PINYIN_ALT).split('|')) {
+  for (const seg of src.split('|')) {
     const i = seg.indexOf(':');
     const py = seg.slice(0, i);
     let prev = -1, v = 0;
