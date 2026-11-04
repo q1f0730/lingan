@@ -56,7 +56,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   const all = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   // v0.24 0206 我讨厌的不当素材；0242 私密穗在用云端模型时不抽（本地模型且允许时照常）
   const ai = aiReady(settings);
-  const usable = useMemo(() => all?.filter((x) => x.polarity !== -1 && !x.locked && (!ai || aiVisible(x, settings))), [all, ai, settings]);
+  const usable = useMemo(() => all?.filter((x) => x.polarity !== -1 && !x.locked && !x.sealUntil && (!ai || aiVisible(x, settings))), [all, ai, settings]);
   // v0.28 0108 嫁接池：只在某个穗束里抽（null = 整个穗仓）
   const [pool, setPool] = useState<string | null>(takePool);
   const pools = useMemo(() => bundleCounts(usable || []).filter(([, n]) => n >= MIN_EVIDENCE), [usable]);
