@@ -18,6 +18,8 @@ import { computeTaste, tastePrompt } from '../lib/taste';
 import { organizeStats } from '../lib/organize';
 import { openLibSub } from '../lib/libsub';
 import { TYPE_LABEL, TYPE_ORDER, type Item } from '../lib/types';
+import { findGaps } from '../lib/gaps';
+import '../styles/v041.css';
 
 const TASTE_KEY = 'lingan.taste.ai';
 const TASTE_AT = 'lingan.taste.at';
@@ -52,6 +54,8 @@ export function Taste() {
   const [fallow, setF] = useState(readFallow);
   const setFallow = (f: Fallow) => (writeFallow(f), setF(f));
   const stats = useMemo(() => (items ? computeTaste(items) : null), [items]);
+  // ROADMAP v0.41 穗仓的空地：只提示 + 一个问题，不推荐任何外部内容
+  const gaps = useMemo(() => (items ? findGaps(items) : []), [items]);
   const [portrait, setPortrait] = useState<string>(() => localStorage.getItem(TASTE_KEY) || '');
   const [at, setAt] = useState<string>(() => localStorage.getItem(TASTE_AT) || '');
   const [busy, setBusy] = useState(false);
@@ -243,6 +247,20 @@ export function Taste() {
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {gaps.length > 0 && (
+          <section className="taste-sec gap-sec">
+            <div className="label">穗仓的空地</div>
+            <ul className="gap-list">
+              {gaps.map((g) => (
+                <li key={g.kind + g.key} className="gap-row" data-gap={g.kind + ':' + g.key}>
+                  <span className="gap-hint">{g.hint}</span>
+                  <span className="gap-q meta-text">{g.ask}</span>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 
