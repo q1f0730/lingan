@@ -47,13 +47,47 @@ export function LockPanel() {
     clear();
     toast('上锁功能关了');
   }
-  async function forgot() {
-    const ok = await confirm({ title: '忘了 PIN？', body: '可以重设一个新的。上锁的穗仍然上锁，用新 PIN 打开。上锁防的是别人随手翻和所有外发，不是加密。', ok: '重设', cancel: '算了', danger: true });
-    if (!ok) return;
-    localStorage.removeItem('glean.lock.v1');
-    setReady(false);
-    relock();
+  // v0.40 忘了 PIN：24 小时冷静期（可取消），或立即重设但清空上锁穗内容（二次确认）
+  const [left, setLeft] = useState<number | null>(null);
+  const [forget, setForget] = useState(false);
+  useEffect(() => {
+    if (!ready) return;
+    let t: ReturnType<typeof setInterval> | undefined;
+    void import('../lib/lockpin').then((P) => {
+      const tick = () => setLeft(P.resetLeft());
+      tick();
+      t = setInterval(tick, 30000);
+    });
+    return () => clearInterval(t);
+  }, [ready]);
+  async function slow() {
+    const P = await import('../lib/lockpin');
+    P.startReset();
+    setLeft(P.resetLeft());
+    setForget(false);
+    toast('24 小时后可以重设；这期间上锁的穗照样锁着，想起来了随时取消');
   }
+  async function cancel() {
+    (await import('../lib/lockpin')).cancelReset();
+    setLeft(null);
+    toast('取消了，PIN 不变');
+  }
+  async function finish() {
+    if (!(await (await import('../lib/lockpin')).finishReset())) return toast('冷静期还没满', 'err');
+    setLeft(null);
+    setReady(false);
+    toast('旧 PIN 清掉了：设一个新的，上锁的穗用新 PIN 打开');
+  }
+  async function wipe() {
+    if (!(await confirm({ title: '立即重设？', body: `${n || 0} 穗上锁的穗会被清空内容（标题、正文、为什么、图都没了），只剩空壳进回收站。旧备份和快照里的不动。`, ok: '继续', cancel: '算了', danger: true }))) return;
+    if (!(await confirm({ title: '再确认一次', body: '清空之后找不回来。确定现在就清空上锁穗、重设 PIN？', ok: '清空并重设', cancel: '算了', danger: true }))) return;
+    const k = await (await import('../lib/lockpin')).wipeLocked();
+    setLeft(null);
+    setForget(false);
+    setReady(false);
+    toast(`清空了 ${k} 穗上锁的穗：设一个新 PIN`);
+  }
+  const h = left == null ? 0 : Math.ceil(left / 3600000);
   return (
     <section className="set-sec lock-panel" id="set-lock">
       <h2 className="sec-title">上锁</h2>
@@ -93,6 +127,32 @@ export function LockPanel() {
           )}
         </div>
       ) : null}
+      {ready && left != null && (
+        <p className="meta-text lock-reset">
+          {left > 0 ? <>申请了重设：还要等约 <span className="num">{h}</span> 小时。这期间上锁的穗照样锁着。</> : '冷静期满了，可以重设 PIN。'}{' '}
+          {left === 0 && (
+            <button className="btn text strong lock-reset-go" onClick={finish}>
+              现在重设
+            </button>
+          )}
+          <button className="btn text lock-reset-cancel" onClick={cancel}>
+            取消重设
+          </button>
+        </p>
+      )}
+      {ready && forget && left == null && (
+        <div className="lock-forget">
+          <p className="meta-text">两条路：等 24 小时冷静期再重设（期间可取消，改系统时间不算数）；或者现在就重设，但上锁穗的内容会被清空。</p>
+          <div className="actions">
+            <button className="btn primary lock-slow" onClick={slow}>
+              24 小时后重设
+            </button>
+            <button className="btn text faint lock-wipe" onClick={wipe}>
+              立即重设并清空上锁穗
+            </button>
+          </div>
+        </div>
+      )}
       <div className="actions">
         {!ready ? (
           <button className="btn primary pin-set" onClick={set} disabled={a.length < 4 || b.length < 4}>
@@ -120,9 +180,11 @@ export function LockPanel() {
             <button className="btn text faint" onClick={() => setMode('off')}>
               关闭上锁
             </button>
-            <button className="btn text faint lock-forgot" onClick={forgot}>
-              忘了 PIN
-            </button>
+            {left == null && (
+              <button className="btn text faint lock-forgot" onClick={() => setForget(!forget)}>
+                忘了 PIN
+              </button>
+            )}
           </>
         )}
       </div>
