@@ -563,6 +563,13 @@ export default function App() {
     if (idle && isTauriEnv()) void import('./lib/entryboot').then((m) => m.boot(linkCtx as never));
     return () => window.removeEventListener('glean:link', on);
   }, [idle]);
+  // v0.45 ROADMAP v0.33 到点递一穗：App 里（电脑托盘 / 安卓）空闲后才起，网页版不起
+  useEffect(() => {
+    if (!idle || !isTauriEnv()) return;
+    let stop = () => {};
+    void import('./lib/ping').then((m) => (stop = m.startPing()));
+    return () => stop();
+  }, [idle]);
 
   // 全局速记小窗（托盘 / Ctrl+Shift+L 唤出；浏览器里由 glean:quick 事件唤出）
   useEffect(() => {
