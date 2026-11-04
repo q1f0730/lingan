@@ -16,8 +16,10 @@ export async function enrichItem(id: number, s: Settings, force = false): Promis
   const errs: string[] = [];
   if (seeChat && itemHasImage(it) && s.autoCaption && aiReady(s) && s.chat.visionModel && (force || !it.caption)) {
     try {
-      const img = await getOriginalDataUrl(db, id);
-      if (!img) throw new Error('原图不见了');
+      const raw = await getOriginalDataUrl(db, id);
+      if (!raw) throw new Error('原图不见了');
+      // v0.43 0650 发给看图模型前去掉 EXIF / GPS
+      const img = await (await import('./imgclean')).stripDataUrl(raw);
       // v0.23 0110：只从你已有的标签词汇里选；新词放进 tagSugg，要你点头才加
       const vocab = (await db.items.orderBy('tags').uniqueKeys()) as string[];
       const wallKeys = (await db.cliches.toArray()).filter((c) => !c.struck).map((c) => c.key);
