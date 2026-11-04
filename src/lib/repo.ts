@@ -36,6 +36,10 @@ export const addDevelopments = (devs: Development[]) => db.developments.bulkAdd(
 export const setStar = (ids: number | number[], on: boolean) =>
   db.developments.bulkUpdate((Array.isArray(ids) ? ids : [ids]).map((key) => ({ key, changes: { starred: on } })));
 export const setDevStatus = (id: number, status: Development['status']) => db.developments.update(id, { status, statusAt: Date.now() });
+/** v0.42 ROADMAP v0.32 意外程度（再点同一格 = 取消） */
+export const setSurprise = (id: number, n: number | undefined) => db.developments.update(id, { surprise: n && n >= 1 && n <= 5 ? Math.round(n) : undefined });
+/** v0.42 0238 复制 / 分享出去了（采用信号） */
+export const markOut = (id: number) => db.developments.update(id, { out: Date.now() });
 export const setFollowups = (id: number, followups: Development['followups']) => db.developments.update(id, { followups });
 /** 挂一穗结果：做过了（tried 保持 tried） */
 export async function attachResult(id: number, uid: string | undefined) {
