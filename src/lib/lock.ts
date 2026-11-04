@@ -57,5 +57,5 @@ export const LOCKED_TITLE = '上锁的一穗';
 /** 没解锁时把上锁的穗换成只剩类型和时间的空壳（穗仓卡片 / 列表 / 时间线 / 标签云都用它，筛选也匹配不到内容） */
 export function masked<T extends Item>(it: T): T {
   if (!it.locked || unlocked()) return it;
-  return { ...it, title: LOCKED_TITLE, content: '', creator: '', year: '', url: '', why: '', tags: [], caption: undefined, ocr: undefined, snap: undefined, hasImage: undefined, thumb: undefined, image: undefined, bundles: undefined, links: undefined, work: undefined, source: undefined };
+  return { ...it, title: LOCKED_TITLE, content: '', creator: '', year: '', url: '', why: '', tags: [], caption: undefined, ocr: undefined, snap: undefined, revisits: undefined, hasImage: undefined, thumb: undefined, image: undefined, bundles: undefined, links: undefined, work: undefined, source: undefined };
 }
