@@ -9,7 +9,8 @@ import { findHits, enforcedKeys } from '../lib/wall';
 import { GraftTrail, IdeaCard } from '../components/IdeaCard';
 import { db, depositCliches, markBlocked, markGrafted } from '../lib/db';
 import { addDevelopments } from '../lib/repo';
-import { graftOffline, graftWithAI, type GraftProgress, type GraftResult } from '../lib/graft';
+import { graftOffline, graftWithAI, PROMPT_V, type GraftProgress, type GraftResult } from '../lib/graft';
+import { drawClash, drawSpan, loadRecipes, preferTransforms, recipeName, removeRecipe, RULE_LABEL, saveRecipe, type DrawRule, type Recipe } from '../lib/graftlab';
 import { drawForMode, graftCount, isMode, MIN_CROSS_TYPES, MODES, modeDef, modeName, type GraftMode } from '../lib/modes';
 import { MIN_EVIDENCE } from '../lib/provenance';
 import { aiReady, distinctOf, embedConfig, styleSamples } from '../lib/settings';
@@ -71,6 +72,10 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
   /** 当前这组穗是按哪种接法抽的；从每日一穗 / 详情带进来的是 null（不按接法） */
   const [pickedBy, setPickedBy] = useState<GraftMode | null>(null);
   const [drawNote, setDrawNote] = useState<string | undefined>();
+  // v0.42 0214 / 0217 特别抽法（时间差 / 标签对撞）：当前这组是按它抽的；ruleNote 是抽到的说明
+  const [rule, setRule] = useState<{ r: DrawRule; note: string } | null>(null);
+  // v0.42 0213 嫁接配方（本机）
+  const [recipes, setRecipes] = useState<Recipe[]>(loadRecipes);
   const jump = modeDef(mode)?.jump ?? 0.8;
   const [theme, setTheme] = useState('');
   const [picked, setPicked] = useState<Item[] | null>(null);
@@ -128,6 +133,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
         setPicked(full);
         setPickedBy(null);
         setDrawNote(undefined);
+        setRule(null);
         setResult(null);
       }
       clearPreset();
@@ -163,7 +169,46 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
     setPicked(r.items);
     setPickedBy(m);
     setDrawNote(r.note);
+    setRule(null);
     setResult(null);
+  }
+
+  /** v0.42 特别抽法：抽不出来（没有满一年的穗 / 标签不够）就说明原因，不动当前这组 */
+  function drawRule(r: DrawRule, n: number = count) {
+    if (!items || busy) return;
+    const d = r === 'span' ? drawSpan(items, n) : drawClash(items, n);
+    if (!d.ok) return toast(d.note, 'err');
+    setPicked(d.items);
+    setPickedBy(null);
+    setDrawNote(undefined);
+    setRule({ r, note: d.note });
+    setResult(null);
+  }
+
+  /** v0.42 0213 用配方：接法、几穗、方向、野一点 / 先挑张力、穗束都照它，再按它抽一组 */
+  function applyRecipe(rc: Recipe) {
+    if (busy || !items) return;
+    setModeState(rc.mode);
+    setCount(rc.count);
+    setTheme(rc.theme || '');
+    setDeck({ wild: !!rc.wild, pick: !!rc.pick });
+    if ((rc.pool || null) !== pool) {
+      // 穗束换了：items 要等下一帧才是那个穗束的，先换池子，抽穗交给用户点「按…重新抽」
+      setPool(rc.pool && pools.some(([b]) => b === rc.pool) ? rc.pool : null);
+      setPicked(null);
+      setRule(null);
+      setResult(null);
+      return toast(`用配方「${rc.name}」：先换到${rc.pool ? `穗束「${rc.pool}」` : '整个穗仓'}，再点抽几穗`);
+    }
+    if (rc.rule) drawRule(rc.rule, rc.count);
+    else draw(rc.mode, rc.count);
+    toast(`用配方「${rc.name}」`);
+  }
+  function keepRecipe() {
+    const base = { mode, count: (picked ? Math.min(5, Math.max(3, picked.length)) : count) as 3 | 4 | 5, ...(rule ? { rule: rule.r } : {}), ...(theme.trim() ? { theme: theme.trim() } : {}), ...(deck.wild ? { wild: true } : {}), ...(deck.pick ? { pick: true } : {}), pool };
+    const name = recipeName(base, modeName(pickedBy || mode));
+    setRecipes(saveRecipe({ name, ...base }));
+    toast(`存成配方「${name}」，下次在「配方」里一点就照这样嫁接`);
   }
 
   function shuffle() {
@@ -222,6 +267,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       if (aiReady(settings) && !hidden) {
         const ec = embedConfig(settings);
         const feedback = feedbackBlock(await recentRejects().catch(() => []));
+        // v0.42 0240 变形法胜率：用上得多的变形法，收拢时同等条件下优先
+        const prefer = preferTransforms(await db.developments.toArray());
         run = await graftWithAI(settings, sel, {
           theme: th,
           mode: gm,
@@ -236,6 +283,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
           distinct: { ...dist, embed: ec ? async (texts) => (await import('../lib/ai')).embed(settings, texts) : undefined },
           ...dk,
           atoms: topAtoms(),
+          prefer,
           pickTensions: deck.pick
             ? (_t: GraftTension[]) =>
                 new Promise<number[] | null>((res) => {
@@ -289,6 +337,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       const n = nearestOld(b, old);
       return { ...b, nearest: { sim: n.sim, method: 'text', ...(n.title ? { title: n.title } : {}) } };
     });
+    // v0.42 ROADMAP v0.32 可复现：每根都记模型 / 提示词版本 / 特别抽法
+    const meta = { prompt: PROMPT_V, ...(run.source === 'ai' && settings.chat.chatModel ? { model: settings.chat.chatModel } : {}), ...(rule && sel0 === picked ? { draw: rule.note } : {}) };
     const devs: Development[] = run.branches.map((idea, index) => ({
       itemIds: sel.map((s) => s.id!),
       ...(anchorId != null ? { anchorId } : {}),
@@ -300,8 +350,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
       evidence: idea.evidence || 'ok',
       batch:
         index === 0
-          ? { id: bid, index, size, tensions: run.tensions, seeds: run.seeds, pattern: run.pattern, calls: run.calls, ...(run.mainstream ? { mainstream: run.mainstream.text } : {}), ...(run.temps?.length ? { temps: run.temps } : {}) }
-          : { id: bid, index, size },
+          ? { id: bid, index, size, tensions: run.tensions, seeds: run.seeds, pattern: run.pattern, calls: run.calls, ...(run.mainstream ? { mainstream: run.mainstream.text } : {}), ...(run.temps?.length ? { temps: run.temps } : {}), ...meta }
+          : { id: bid, index, size, ...meta },
       createdAt: now + index,
     }));
     const ids = await addDevelopments(devs);
@@ -368,6 +418,7 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                       setPicked(daily);
                       setPickedBy(null);
                       setDrawNote(undefined);
+                      setRule(null);
                       develop(daily);
                     }}
                     disabled={busy}
@@ -379,6 +430,9 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
             )}
 
             {!shown && <ModePicker mode={mode} onPick={chooseMode} disabled={busy} items={items} picked={null} pickedBy={null} note={drawNote} />}
+            {!shown && (
+              <LabRow rule={rule} onRule={drawRule} recipes={recipes} onRecipe={applyRecipe} onRemove={(n) => setRecipes(removeRecipe(n))} disabled={busy} />
+            )}
 
             {shown && (
               <section className="graft">
@@ -386,7 +440,8 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                 <PickTable items={shown} onOpen={openItem} onSwap={busy ? undefined : replaceOne} showCount={pickedBy === 'neglected'} anchor={anchor} onAnchor={busy ? undefined : (id) => setAnchor(anchor === id ? null : id)} />
                 {anchor != null && <p className="anchor-note meta-text">已钉住主干：每根新枝都以它为主体，其余几穗只当养分。</p>}
                 <WhyHint items={shown} onOpen={openItem} />
-                <ModePicker mode={mode} onPick={chooseMode} disabled={busy} items={items} picked={shown} pickedBy={pickedBy} note={drawNote} />
+                <ModePicker mode={mode} onPick={chooseMode} disabled={busy} items={items} picked={shown} pickedBy={pickedBy} note={drawNote} ruled={!!rule} />
+                <LabRow rule={rule} onRule={drawRule} recipes={recipes} onRecipe={applyRecipe} onRemove={(n) => setRecipes(removeRecipe(n))} disabled={busy} />
                 <GraftDeck st={deck} set={setDeck} onDraw={drawNew} theme={theme} ai={aiReady(settings)} disabled={busy} />
                 <div className="graft-wrap">
                   <button className="btn primary graft-btn rw-shimmer" onClick={() => develop(shown)} disabled={busy || shown.length < Math.min(MIN_EVIDENCE, items.length)}>
@@ -426,7 +481,10 @@ export function Develop({ preset, clearPreset }: { preset: number[] | null; clea
                     一次三枝{result.run.mode ? <span className="three-mode"> · {modeName(result.run.mode)}</span> : null} · {result.run.source === 'ai' ? 'AI 嫁接' : '离线嫁接'}
                   </span>
                   <span className="three-sub meta-text">
-                    三根新枝，变形法各不相同，每根都能点回它的穗。挑一根，今天就动手。
+                    三根新枝，变形法各不相同，每根都能点回它的穗。挑一根，今天就动手。{' '}
+                    <button className="btn text recipe-save" onClick={keepRecipe}>
+                      存成配方
+                    </button>
                     {result.run.distinct?.replaced ? <span className="distinct-note"> 换掉了一根太像的（两两相似度 ≤ {Math.round(result.run.distinct.maxSim * 100)}%）。</span> : null}
                   </span>
                 </div>
@@ -566,6 +624,7 @@ function ModePicker({
   picked,
   pickedBy,
   note,
+  ruled,
 }: {
   mode: GraftMode;
   onPick: (m: GraftMode) => void;
@@ -574,6 +633,7 @@ function ModePicker({
   picked: Item[] | null;
   pickedBy: GraftMode | null;
   note?: string;
+  ruled?: boolean;
 }) {
   const def = modeDef(mode)!;
   const libTypes = new Set(items.map((i) => i.type)).size;
@@ -596,8 +656,42 @@ function ModePicker({
         <span className="mode-rule-k">怎么抽</span>
         {def.rule}
       </p>
-      {picked && !pickedBy && <p className="mode-from meta-text">这几穗是带进来的，没按接法抽；点一种接法会按它重新抽。</p>}
+      {picked && !pickedBy && !ruled && <p className="mode-from meta-text">这几穗是带进来的，没按接法抽；点一种接法会按它重新抽。</p>}
       {warn && <p className="mode-warn">{warn}</p>}
+    </section>
+  );
+}
+
+/** v0.42 0214 / 0217 特别抽法 + 0213 配方 */
+function LabRow({ rule, onRule, recipes, onRecipe, onRemove, disabled }: { rule: { r: DrawRule; note: string } | null; onRule: (r: DrawRule) => void; recipes: Recipe[]; onRecipe: (r: Recipe) => void; onRemove: (name: string) => void; disabled?: boolean }) {
+  return (
+    <section className="lab">
+      <div className="lab-row">
+        <span className="label">特别抽法</span>
+        {(['span', 'clash'] as DrawRule[]).map((r) => (
+          <button key={r} className={`btn text lab-rule${rule?.r === r ? ' on' : ''}`} data-rule={r} aria-pressed={rule?.r === r} onClick={() => onRule(r)} disabled={disabled} title={r === 'span' ? '一穗一年以前的 + 一穗这周的' : '两个从没同时出现过的标签，各抽一穗'}>
+            {RULE_LABEL[r]}
+          </button>
+        ))}
+      </div>
+      {rule && <p className="lab-note meta-text">{rule.note}</p>}
+      {recipes.length > 0 && (
+        <div className="lab-row lab-recipes">
+          <span className="label">配方</span>
+          <div className="chips scroll">
+            {recipes.map((rc) => (
+              <span key={rc.name} className="recipe">
+                <button className="chip recipe-chip" onClick={() => onRecipe(rc)} disabled={disabled}>
+                  {rc.name}
+                </button>
+                <button className="btn text faint recipe-x" aria-label={`删掉配方「${rc.name}」`} onClick={() => onRemove(rc.name)}>
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
