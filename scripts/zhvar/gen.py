@@ -33,5 +33,8 @@ prev, out = -1, ''
 for s in sorted(m, key=lambda c: idx[c]):
     out += num(idx[s] - prev - 1) + ''.join(m[s]); prev = idx[s]
 dst = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'lib', 'zhvar-table.ts')
-open(dst, 'w', encoding='utf-8').write('// 自动生成（scripts/zhvar/gen.py，数据：OpenCC STCharacters，Apache-2.0）：%d 个简体字 → 繁体。简体记 GB2312 序号间隔，后跟繁体字。不要手改\nexport const ZHVAR_TABLE =\n  %s;\n' % (len(m), repr(out)))
+# v0.42 瘦身：GBK 编码（繁体字 2 字节）→ zlib deflate(9) → base64；运行时 inflateBytes + TextDecoder('gbk')
+import zlib, base64
+z = base64.b64encode(zlib.compress(out.encode('gbk'), 9)).decode()
+open(dst, 'w', encoding='utf-8').write('// 自动生成（scripts/zhvar/gen.py，数据：OpenCC STCharacters，Apache-2.0）：%d 个简体字 → 繁体。简体记 GB2312 序号间隔，后跟繁体字。GBK 编码后 deflate + base64（v0.42 瘦身）。不要手改\nexport const ZHVAR_Z =\n  %s;\n' % (len(m), repr(z)))
 print(len(m), sum(len(v) for v in m.values()), len(out.encode()))
