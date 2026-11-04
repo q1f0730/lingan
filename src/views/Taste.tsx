@@ -4,6 +4,8 @@ import { chat } from '../lib/ai';
 import { db } from '../lib/db';
 import { HeatmapPanel } from '../components/Heatmap';
 import { MotifPanel } from '../components/Motifs';
+import { MonthDays, Ridge, TasteTalk } from '../components/TasteMore';
+import { fieldItems, readFallow, writeFallow, type Fallow } from '../lib/review';
 import { ClicheWall } from '../components/ClicheWall';
 import { AtomsPanel } from '../components/AtomsPanel';
 import { DislikePanel, RejectsPanel, StylePanel } from '../components/GraftFeedback';
@@ -45,7 +47,10 @@ export function Taste() {
   const all = useLiveQuery(() => db.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), []);
   // v0.24 0206：「我讨厌的」不算进口味统计，单独列出来
   // v0.39 0907 上锁的穗不进口味（母题 / 星图 / 侧写都看不到）
-  const items = useMemo(() => all?.filter((x) => x.polarity !== -1 && !x.locked), [all]);
+  const items = useMemo(() => (all ? fieldItems(all) : undefined), [all]);
+  // v0.40 0923 休耕
+  const [fallow, setF] = useState(readFallow);
+  const setFallow = (f: Fallow) => (writeFallow(f), setF(f));
   const stats = useMemo(() => (items ? computeTaste(items) : null), [items]);
   const [portrait, setPortrait] = useState<string>(() => localStorage.getItem(TASTE_KEY) || '');
   const [at, setAt] = useState<string>(() => localStorage.getItem(TASTE_AT) || '');
@@ -102,10 +107,12 @@ export function Taste() {
       <DisplayTitle title="口味" />
       <p className="lead taste-lead">{lead}</p>
       <p className="taste-facts meta-text">
-        <span className="stat-n num">{stats.total}</span> 穗 · <span className="stat-n num">{stats.topTags.length}</span> 个常用标签 · 连着拾了 <span className="stat-n num">{stats.streakDays}</span> 天
+        <span className="stat-n num">{stats.total}</span> 穗 · <span className="stat-n num">{stats.topTags.length}</span> 个常用标签 · <MonthDays items={items} fallow={fallow} onFallow={setFallow} />
       </p>
 
       <div className="taste-grid">
+        <TasteTalk items={items} />
+
         {leaning.length > 0 && (
           <section className="taste-sec wide">
             <div className="table two-col">
@@ -273,7 +280,9 @@ export function Taste() {
 
       <MotifPanel items={items} />
 
-      <HeatmapPanel items={items} />
+      <HeatmapPanel items={items} fallow={fallow} />
+
+      <Ridge items={items} />
 
       <section className="taste-sec portrait">
         <div className="label">AI 侧写 {at && <span className="dim">· {at}</span>}</div>
