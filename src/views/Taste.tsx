@@ -7,6 +7,7 @@ import { MotifPanel } from '../components/Motifs';
 import { MonthDays, Ridge, TasteTalk } from '../components/TasteMore';
 import { fieldItems, readFallow, writeFallow, type Fallow } from '../lib/review';
 import { ClicheWall } from '../components/ClicheWall';
+import { GraftScore } from '../components/GraftScore';
 import { AtomsPanel } from '../components/AtomsPanel';
 import { DislikePanel, RejectsPanel, StylePanel } from '../components/GraftFeedback';
 import { aiVisible } from '../lib/privacy';
@@ -148,6 +149,8 @@ export function Taste() {
         <AtomsPanel items={items} />
 
         <ClicheWall />
+
+        <GraftScore items={items} />
 
         <RejectsPanel />
 
