@@ -51,5 +51,8 @@ def enc(d):
         parts.append(k + ':' + s)
     return '|'.join(parts)
 out = os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'lib', 'pinyin-table.ts')
-open(out, 'w', encoding='utf-8').write('// 自动生成（scripts/pinyin/gen.py，pypinyin，GB2312 一二级 6763 字，共 %d 个读音）：读音:GB2312 序号间隔的变长编码，| 分隔。不要手改\n// 常用读音\nexport const PINYIN_TABLE =\n  %s;\n// 多音字的其它读音\nexport const PINYIN_ALT =\n  %s;\n' % (n, repr(enc(g)), repr(enc(alt))))
+# v0.42 瘦身：两段字表用 \n 接起来 → zlib deflate(9) → base64（运行时 DecompressionStream 解，见 src/lib/inflate.ts）
+import zlib, base64
+z = base64.b64encode(zlib.compress((enc(g) + '\n' + enc(alt)).encode(), 9)).decode()
+open(out, 'w', encoding='utf-8').write('// 自动生成（scripts/pinyin/gen.py，pypinyin，GB2312 一二级 6763 字，共 %d 个读音）：读音:GB2312 序号间隔的变长编码，| 分隔；常用读音 \\n 多音字的其它读音，deflate + base64。不要手改\nexport const PINYIN_Z =\n  %s;\n' % (n, repr(z)))
 print(len(g), len(alt), n)
