@@ -1,3 +1,5 @@
+// v0.45：懒加载块里的中文字符串包由它解开（scripts/zhpack.mjs），必须第一个 import
+import './lib/zunpack';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
