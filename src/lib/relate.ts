@@ -4,6 +4,7 @@
 // - 0105 穗间连线：像 / 反着 / 引出 / 回应。两头各存一条（Item.links，存对方 uid；r=1 是被连的那一头），换设备也不断。
 // - 0151 一起被嫁接过：从新枝的素材里数共现。
 import { db } from './db';
+import { similarity } from './similarity';
 import type { Development, Item, ItemLink, LinkKind } from './types';
 
 export const LINK_LABEL: Record<LinkKind, [string, string]> = { like: ['像', '像'], anti: ['反着', '反着'], lead: ['引出', '由它引出'], reply: ['回应', '被回应'] };
@@ -52,6 +53,39 @@ export function coGrafted(devs: Development[], id: number, n = 5): Array<[number
   for (const d of devs) if (!d.deletedAt && d.itemIds.includes(id)) for (const x of new Set(d.itemIds)) if (x !== id) m.set(x, (m.get(x) || 0) + 1);
   return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, n);
 }
+
+/**
+ * v0.41 0132 随机漫步：从这一穗跳到和它最相关、这一趟还没走过的一穗。
+ * 优先级：连线（两头都算）> 同一部作品 > 一起被嫁接过 > 相近（有向量用向量，没有用字面 + 同类型）；都走过了就随便挑一穗没走过的。
+ */
+export interface WalkStep {
+  x: Item;
+  why: string;
+}
+export function walkNext(it: Item, all: Item[], devs: Development[], seen: Set<number>, rand: () => number = Math.random): WalkStep | null {
+  const pool = all.filter((x) => x.id != null && x.id !== it.id && !x.deletedAt && !x.down && !seen.has(x.id));
+  if (!pool.length) return null;
+  const byUid = new Map(pool.map((x) => [x.uid, x]));
+  for (const l of it.links || []) {
+    const x = byUid.get(l.to);
+    if (x) return { x, why: '连线 · ' + LINK_LABEL[l.k][l.r ? 1 : 0] };
+  }
+  for (const x of pool) if (it.uid && (x.links || []).some((l) => l.to === it.uid)) return { x, why: '连线' };
+  const mate = sameWork(it, pool)[0];
+  if (mate) return { x: mate, why: '同一部作品' };
+  const ids = new Set(pool.map((x) => x.id));
+  const co = it.id != null ? coGrafted(devs, it.id, 20).find(([id]) => ids.has(id)) : undefined;
+  if (co) return { x: pool.find((x) => x.id === co[0])!, why: `一起被嫁接过 ${co[1]} 次` };
+  let best: Item | null = null;
+  let bs = 0.08;
+  for (const x of pool) {
+    const v = similarity(it, x);
+    if (v > bs) (bs = v), (best = x);
+  }
+  if (best) return { x: best, why: '相近' };
+  return { x: pool[Math.floor(rand() * pool.length)], why: '随便走走' };
+}
+export const WALK_KEY = 'glean.walk';
 
 // ── 写入（仓储层规则：视图不直接写库）──
 export const setWork = async (id: number, work: string | undefined) => void (await db.items.update(id, { work }));
