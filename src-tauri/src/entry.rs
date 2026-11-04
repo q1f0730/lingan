@@ -457,7 +457,8 @@ pub struct ClipPeek {
 pub fn clip_peek(app: AppHandle) -> ClipPeek {
   let mut p = clip_peek_os();
   // v0.44 0538：托盘里暂停了剪贴板提示 → 当成「别记录」，速记条和小窗都不提示
-  if crate::shell::clip_paused(&app) {
+  // v0.45 0550：全屏游戏 / 演示 / 专注助手时也不提示（退出后下一次 peek 照常）
+  if crate::shell::clip_paused(&app) || crate::shell::os_quiet() {
     p.private_ = true;
   }
   p
