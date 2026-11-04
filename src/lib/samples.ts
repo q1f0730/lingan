@@ -1,6 +1,6 @@
 // v0.14 示例池：约 80 条，跨国家 / 年代 / 流派 / 媒介。空穗仓时随机抽 10 条，入库时打上 sample 标记，可一键清掉。
-import type { Item, ItemType } from './types';
-export type Sample = Omit<Item, 'id' | 'createdAt' | 'updatedAt'>;
+import { drawSamples as draw, type Sample } from './sampledraw';
+export { sampleTimes, type Sample } from './sampledraw';
 
 const film = (title: string, creator: string, year: string, why: string, tags: string[]): Sample => ({ type: 'film', title, creator, year, why, tags });
 const music = (title: string, creator: string, year: string, why: string, tags: string[]): Sample => ({ type: 'music', title, creator, year, why, tags });
@@ -107,27 +107,5 @@ export const SAMPLE_POOL: Sample[] = [
   link('东京公共厕所计划', 'https://tokyotoilet.jp/', '把最被忽视的空间当作建筑作品', ['城市', '公共空间', '建筑']),
 ];
 
-/** 随机抽 n 条：先每种类型至少 1 条（库里有的话），再随机补满，最后打乱。不重复 */
-export function drawSamples(n = 10, rand: () => number = Math.random, pool: Sample[] = SAMPLE_POOL): Sample[] {
-  const left = pool.map((_, i) => i);
-  const take = (idx: number) => left.splice(idx, 1)[0];
-  const out: number[] = [];
-  const types: ItemType[] = ['film', 'music', 'image', 'text', 'idea', 'link'];
-  for (const t of types) {
-    if (out.length >= n) break;
-    const cand = left.map((i, k) => [i, k] as const).filter(([i]) => pool[i].type === t);
-    if (cand.length) out.push(take(cand[Math.floor(rand() * cand.length)][1]));
-  }
-  while (out.length < n && left.length) out.push(take(Math.floor(rand() * left.length)));
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out.map((i) => ({ ...pool[i], tags: [...pool[i].tags], sample: 1 as const }));
-}
-
-/** 示例的「拾于」时间：铺在过去 3–90 天里，好让时间线 / 每日一穗一打开就有东西 */
-export function sampleTimes(n: number, now = Date.now(), rand: () => number = Math.random): number[] {
-  const DAY = 86400000;
-  return Array.from({ length: n }, () => now - Math.round((3 + rand() * 87) * DAY + rand() * DAY * 0.5)).sort((a, b) => b - a);
-}
+/** 随机抽 n 条（默认从上面的示例池抽）。App 里不用它：db.addSamples 从 samplepack 解压同一份数据 */
+export const drawSamples = (n = 10, rand: () => number = Math.random, pool: Sample[] = SAMPLE_POOL): Sample[] => draw(n, rand, pool);
