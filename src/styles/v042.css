@@ -1,0 +1,70 @@
+/* v0.42 嫁接成绩 · 配方（由 BranchMore 引入，跟着新枝卡懒加载） */
+.idea-rate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+}
+.rate-seg button {
+  min-width: 44px;
+  padding: 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+.rate-seg button[aria-checked='true'] {
+  color: var(--fg);
+}
+.rate-hint,
+.stay-n,
+.idea-made {
+  font-size: 12px;
+}
+.idea-made {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.sprig-frag {
+  display: block;
+  font-size: 12px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lab {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+.lab-row {
+  display: flex;
+  align-items: center;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.lab-row .chips {
+  flex: 1;
+  min-width: 0;
+}
+.lab-rule.on {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.lab-note {
+  font-size: 12px;
+  margin: 0;
+}
+.recipe {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.recipe-x {
+  min-width: 44px;
+  padding: 0;
+}
+.recipe-save {
+  font-size: inherit;
+}
