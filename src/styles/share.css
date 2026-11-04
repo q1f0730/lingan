@@ -85,13 +85,6 @@
   min-height: 84px;
   resize: vertical;
 }
-.garden-list {
-  margin: 6px 0 0;
-  padding-left: 18px;
-  max-height: 180px;
-  overflow: auto;
-  font-size: 14px;
-}
 .garden-acts {
   margin-top: 12px;
 }
