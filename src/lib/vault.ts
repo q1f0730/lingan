@@ -6,8 +6,8 @@
 
 export type VaultKind = 'android' | 'keychain' | 'browser' | 'memory';
 // v0.31 同步：WebDAV 应用密码、同步数据钥（base64）
-export type SecretName = 'chat.apiKey' | 'embed.apiKey' | 'sync.davPass' | 'sync.key' | 'sync.lanKey';
-export const SECRET_NAMES: SecretName[] = ['chat.apiKey', 'embed.apiKey', 'sync.davPass', 'sync.key', 'sync.lanKey'];
+export type SecretName = 'chat.apiKey' | 'embed.apiKey' | 'sync.davPass' | 'sync.key' | 'sync.lanKey' | 'push.key';
+export const SECRET_NAMES: SecretName[] = ['chat.apiKey', 'embed.apiKey', 'sync.davPass', 'sync.key', 'sync.lanKey', 'push.key'];
 
 export interface VaultBackend {
   kind: VaultKind;
