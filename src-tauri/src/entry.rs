@@ -141,6 +141,8 @@ pub fn on_shortcut(app: &AppHandle, s: &Shortcut, state: ShortcutState) {
   let grab = e.keys.lock().unwrap().grab;
   match act {
     Some("quick") => {
+      // v0.44 0562：窗口原本藏着就挪到鼠标所在的屏幕
+      crate::shell::to_cursor_monitor(app);
       if !grab {
         show_main(app);
         let _ = app.emit("quick-focus", "");
@@ -452,8 +454,13 @@ pub struct ClipPeek {
 
 /// 剪贴板现在是什么（不读内容）
 #[tauri::command]
-pub fn clip_peek() -> ClipPeek {
-  clip_peek_os()
+pub fn clip_peek(app: AppHandle) -> ClipPeek {
+  let mut p = clip_peek_os();
+  // v0.44 0538：托盘里暂停了剪贴板提示 → 当成「别记录」，速记条和小窗都不提示
+  if crate::shell::clip_paused(&app) {
+    p.private_ = true;
+  }
+  p
 }
 
 #[cfg(windows)]
