@@ -87,6 +87,10 @@ export interface Item {
   down?: number;
   /** v0.43 0651 照片 EXIF 里的拍摄时间（「拾于」候选；不加索引、随同步） */
   shotAt?: number;
+  /** v0.45 0924 封存到某天（拆封日 0 点的时间戳）：之前不在穗仓 / 搜索 / 每日一穗 / 嫁接里出现，到期在穗仓顶部来一封「给未来的穗」，拆开才回来。没加索引，随同步 */
+  sealUntil?: number;
+  /** v0.45 封存那一刻（来信里说「n 天前封存」） */
+  sealAt?: number;
   createdAt: number;
   updatedAt: number;
 }
