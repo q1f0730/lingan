@@ -222,6 +222,11 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
                   if (t && Math.abs(t - it.createdAt) >= 60000) onWhen(t);
                 }}
               />
+              {it.shotAt && Math.abs(it.shotAt - it.createdAt) > 864e5 && (
+                <button className="btn text faint shot-at" onClick={() => onWhen(it.shotAt!)}>
+                  用拍摄时间 {shortDate(it.shotAt)}
+                </button>
+              )}
             </dd>
           </div>
           {it.source && (
