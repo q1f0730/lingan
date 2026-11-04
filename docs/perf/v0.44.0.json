@@ -1,0 +1,30 @@
+{
+ "version": "0.44.0",
+ "date": "2026-11-04",
+ "build": "app-CTJ-fH-y.js",
+ "e2e": {
+  "coldStartMs": 172,
+  "coldStartCpu4xMs": 500,
+  "searchMaxMs": 20.1,
+  "searchMedianMs": 16.9,
+  "backup": {
+   "items": 1000,
+   "images": 300,
+   "ms": 671,
+   "heapDeltaMB": 34.7,
+   "peakMB": 44.6,
+   "rule": "同一页连续导出 5 次取中位数 ≤ 48MB（阈值不变）"
+  },
+  "restoreMs": 970,
+  "scroll": "masonry 60fps p95 16.8ms jank 0% · 4x 60fps · timeline / list 60fps",
+  "note": "InstaBox 整套 e2e ALL PASS（/tmp/e2e44.out），单次数字只作参考，跨会话不比"
+ },
+ "interleavedBench": "pending",
+ "bundle": {
+  "firstScreenJsKB": "528.1 → 528.6",
+  "firstScreenCssKB": "118.5 → 118.5",
+  "firstFontKB": "286.0 → 284.9",
+  "totalKB": "2224.8 → 2225.9（预算 2226.6 不放宽）",
+  "note": "中文字体 6 片去 vhea / vmtx / BASE（−3.4KB，截图逐像素 0 差）腾出配方同步（sync 块 +2.4KB）、main_ready / 崩溃提示 / 安卓隐藏开关；外壳其余功能都在 Rust / Kotlin"
+ }
+}
