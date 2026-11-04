@@ -355,8 +355,17 @@ export default function App() {
       const r = (e as CustomEvent<{ done: number; left: number }>).detail;
       toast(`上次没存进去的 ${r.done} 穗已补进穗仓${r.left ? `（还有 ${r.left} 穗等空间腾出来）` : ''}`);
     };
+    // v0.43 0639 / 0631 后台的一句提醒（nudge.ts）：一条提示 + 一个去处
+    const say = (e: Event) => {
+      const d = (e as CustomEvent<{ msg: string; label: string; go: string }>).detail;
+      toast(d.msg, 'ok', d.go ? { label: d.label, run: () => window.dispatchEvent(new CustomEvent('glean:link', { detail: d.go })) } : undefined);
+    };
     window.addEventListener('glean:replayed', on);
-    return () => window.removeEventListener('glean:replayed', on);
+    window.addEventListener('glean:say', say);
+    return () => {
+      window.removeEventListener('glean:replayed', on);
+      window.removeEventListener('glean:say', say);
+    };
   }, [toast]);
   const confirm = useCallback((o: ConfirmOpts) => new Promise<boolean>((resolve) => setConfirmReq({ ...o, resolve })), []);
 
