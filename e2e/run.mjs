@@ -5116,7 +5116,181 @@ async function v039() {
   console.log(`v039: wx ${wx ? 'ok' : 'no'} snap ${wx?.snap?.length || 0}; todo→${fixed ? 'fixed' : 'no'}; playlist ${songs.length} (cover ${covered ? 'ok' : 'no'}); feed kept ${kept ? 1 : 0}; lock ok; CN mirror ${JSON.stringify(hit)}; zoom overflow ${wide.length}`);
 }
 
+// v0.40 忘了 PIN 冷静期 + 时间与回看：周记 / 麦捆 / 被遗忘的好东西 / 放下 / 再看一句 / 一年后的为什么 / 本月在拾 + 休耕 / 口味会说话 / 田埂
+async function v040() {
+  const tag = 'v040';
+  // 页面时钟挪到 2026-12-06（周日、月初第 6 天）10:00 北京时间，时间照常往前走；window.__off 可以再拨
+  const T0 = Date.parse('2026-12-06T10:00:00+08:00');
+  const c = await b.newContext({ viewport: { width: +process.env.E2E_V040_W || 390, height: 844 }, timezoneId: 'Asia/Shanghai' });
+  await c.addInitScript((target) => {
+    const RD = Date;
+    const rnow = RD.now.bind(RD);
+    if (window.__off === undefined) window.__off = target - rnow();
+    class D extends RD {
+      constructor(...a) {
+        if (a.length) super(...a);
+        else super(rnow() + window.__off);
+      }
+      static now() {
+        return rnow() + window.__off;
+      }
+    }
+    window.Date = D;
+  }, T0);
+  const pg = await c.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  const at = (s) => Date.parse(s + '+08:00');
+  const rows = [
+    { type: 'music', title: '十一月深夜一', tags: ['夜路'], why: '低音', createdAt: at('2026-11-02T23:30:00') },
+    { type: 'music', title: '十一月深夜二', tags: ['夜路'], why: '鼓点', createdAt: at('2026-11-02T23:40:00') },
+    { type: 'image', title: '十一月早上', tags: ['城市'], why: '光', createdAt: at('2026-11-05T09:00:00') },
+    { type: 'image', title: '这周的雾一', tags: ['雾'], why: '远处的塔', createdAt: at('2026-12-02T08:00:00') },
+    { type: 'text', title: '这周的雾二', tags: ['雾'], why: '', createdAt: at('2026-12-04T21:00:00') },
+    { type: 'idea', title: '春天的旧穗甲', tags: ['旧'], why: '那时候的想法', createdAt: at('2026-03-01T12:00:00') },
+    { type: 'idea', title: '春天的旧穗乙', tags: ['旧'], why: '也是那时候', createdAt: at('2026-03-02T12:00:00') },
+    { type: 'film', title: '花样年华', tags: ['电影'], why: '旗袍和走廊', createdAt: at('2025-11-20T20:00:00') },
+  ];
+  await pg.evaluate((rows) => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const tx = r.result.transaction(['items', 'developments'], 'readwrite');
+      rows.forEach((x, i) => tx.objectStore('items').add({ content: '', creator: '', year: '', url: '', graftCount: 0, updatedAt: x.createdAt, uid: `01V040${String(i).padStart(20, '0')}`, ...x }));
+      tx.objectStore('developments').add({ itemIds: [], jump: 3, source: 'offline', idea: { title: '《远处的塔》', bridge: '', idea: '', cliches: [], nearest: { sim: 0.12, method: 'text' } }, createdAt: Date.parse('2026-11-10T12:00:00+08:00'), uid: '01V040DEV0000000000000001' });
+      tx.oncomplete = () => { r.result.close(); res(); };
+    };
+  }), rows);
+  await pg.reload();
+  await pg.waitForSelector('.card');
+  // 刚打开就右键一张卡（菜单可能还没挂上）：也要出拾穗自己的菜单
+  await pg.locator('.card').first().click({ button: 'right' });
+  await pg.waitForSelector('.ctxmenu', { timeout: 6000 }).catch(() => errs.push(`[${tag}] early right-click lost`));
+  await pg.keyboard.press('Escape');
+  await pg.waitForSelector('.ctxmenu', { state: 'detached', timeout: 3000 }).catch(() => {});
+  const waitRow = async (pred, ms = 8000) => {
+    for (let t = 0; t < ms; t += 250) {
+      const r = (await dbRaw(pg, 'items', true)).find(pred);
+      if (r) return r;
+      await pg.waitForTimeout(250);
+    }
+    return null;
+  };
+  // 1. 0922 / 0155 周日的周记卡：7 天统计 + 三问 → 存成想法穗（#周记）
+  await pg.waitForSelector('.week-card', { timeout: 8000 }).catch(() => errs.push(`[${tag}] week card missing`));
+  const wtxt = await pg.locator('.week-card').innerText().catch(() => '');
+  if (!wtxt.includes('7 天拾了 2 穗') || !wtxt.includes('#雾') || !wtxt.includes('1 穗还没写为什么')) errs.push(`[${tag}] week stats: ${wtxt.slice(0, 80)}`);
+  // 2. ROADMAP v0.37 月初看上个月的麦捆（数字和热力图同口径）+ 0925 被遗忘的好东西
+  const stxt = await pg.locator('.sheaf-line').innerText().catch(() => '');
+  if (!/11 月的麦捆/.test(await pg.locator('.sheaf-card').innerText().catch(() => '')) || stxt.replace(/\s+/g, ' ') !== '拾了 3 穗 · 2 天在拾 · 最常在深夜收 · 长出 1 根新枝') errs.push(`[${tag}] sheaf line: ${stxt}`);
+  if (!(await pg.locator('.sheaf-odd:has-text("远处的塔")').count())) errs.push(`[${tag}] sheaf surprise branch`);
+  const nLost = await pg.locator('.lost-row').count();
+  if (nLost !== 3) errs.push(`[${tag}] forgotten rows ${nLost}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v040-cards.png', fullPage: true });
+  if (await pg.locator('.week-a0').count()) errs.push(`[${tag}] week questions should start folded`);
+  await pg.click('.week-write');
+  await pg.fill('.week-a0', '远处的塔');
+  await pg.fill('.week-a2', '多拾点声音');
+  await pg.click('.week-save');
+  await pg.waitForSelector('.toast:has-text("周记存成了")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] week save toast`));
+  const wk = await waitRow((r) => r.title === '周记 · 12/6');
+  if (!wk || wk.type !== 'idea' || !wk.tags.includes('周记') || !wk.content.includes('本周最打动你的一穗？\n远处的塔') || wk.content.includes('哪穗你现在不同意了')) errs.push(`[${tag}] week item ${JSON.stringify(wk && [wk.type, wk.tags, wk.content])}`);
+  if (await pg.locator('.week-card').count()) errs.push(`[${tag}] week card still shown after save`);
+  // 0938 放下：被遗忘的一穗点「放下」→ 不在穗仓、「放下的」里有它 → 详情「拿回来」
+  const lostTitle = (await pg.locator('.lost-row .linklike').first().innerText()).trim();
+  await pg.locator('.lost-row .lost-down').first().click();
+  await pg.waitForSelector('.toast:has-text("放下了")');
+  if (await pg.locator(`.lib-main .card:has-text("${lostTitle}")`).count()) errs.push(`[${tag}] down item still on shelf`);
+  await pg.click('.down-chip');
+  await pg.waitForSelector(`.card:has-text("${lostTitle}")`, { timeout: 5000 }).catch(() => errs.push(`[${tag}] down list`));
+  await pg.click(`.card:has-text("${lostTitle}")`);
+  await pg.click('.detail-down:has-text("拿回来")');
+  await pg.waitForSelector('.toast:has-text("拿回来了")');
+  await pg.keyboard.press('Escape');
+  if ((await waitRow((r) => r.title === lostTitle))?.down) errs.push(`[${tag}] down not cleared`);
+  // 3. 0915 满一年的穗：详情里直接问「现在的为什么」，和当时的并排；0131 再看一句只追加
+  await pg.click('.down-chip').catch(() => {});
+  await pg.click('.card:has-text("花样年华")');
+  await pg.waitForSelector('.revisit-in', { timeout: 5000 }).catch(() => errs.push(`[${tag}] year prompt missing`));
+  if (!(await pg.locator('.detail-revisit .label:has-text("一年了")').count())) errs.push(`[${tag}] year label`);
+  await pg.fill('.revisit-in', '现在只记得雨');
+  await pg.click('.revisit-save');
+  await pg.waitForSelector('.revisit-pair:has-text("旗袍和走廊"):has-text("现在只记得雨")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] revisit pair`));
+  await pg.click('.revisit-open');
+  await pg.fill('.revisit-in', '又看了一遍，还是那条走廊');
+  await pg.press('.revisit-in', 'Enter');
+  await pg.waitForSelector('.revisit-list:has-text("又看了一遍")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] revisit list`));
+  const hy = await waitRow((r) => r.title === '花样年华' && r.revisits?.length === 2);
+  if (!hy || hy.why !== '旗袍和走廊' || hy.revisits[0].y !== 1 || hy.revisits[1].y) errs.push(`[${tag}] revisits row ${JSON.stringify(hy?.revisits)}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v040-revisit.png', fullPage: true });
+  await pg.keyboard.press('Escape');
+  // 4. 口味：本月有 n 天在拾 + 休耕；口味会说话；田埂（只记第一次，可关）
+  await pg.click('.nav-btn:has-text("口味")');
+  await pg.waitForSelector('.month-days');
+  const md = Number(await pg.locator('.month-days').innerText());
+  const decDays = new Set((await dbRaw(pg, 'items')).filter((r) => r.createdAt >= at('2026-12-01T00:00:00') && r.polarity !== -1 && !r.locked).map((r) => new Date(r.createdAt + 8 * 3600e3).toISOString().slice(0, 10))).size;
+  if (md !== decDays) errs.push(`[${tag}] month days ${md} vs ${decDays}`);
+  await pg.click('.fallow-btn:has-text("休耕 7 天")');
+  await pg.waitForSelector('.fallow-btn:has-text("结束休耕")');
+  if (!(await pg.locator('.taste-facts:has-text("休耕 1 天")').count())) errs.push(`[${tag}] fallow count`);
+  const talk = await pg.locator('.talk-line').innerText().catch(() => '');
+  if (!talk.startsWith('最近 30 天拾了')) errs.push(`[${tag}] taste talk: ${talk}`);
+  const ridge = await pg.locator('.ridge-list').innerText().catch(() => '');
+  if (!ridge.includes('拾下第一穗') || !ridge.includes('第一次嫁接') || !ridge.includes('第一次改写一年前的为什么')) errs.push(`[${tag}] ridge: ${ridge}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v040-taste.png', fullPage: true });
+  await pg.click('.ridge-toggle');
+  if (await pg.locator('.ridge-list').count()) errs.push(`[${tag}] ridge not closed`);
+  await pg.click('.ridge-toggle');
+  await pg.click('.fallow-btn:has-text("结束休耕")');
+  // 5. 忘了 PIN：24 小时冷静期（期间照样锁着、可取消、同一次运行里把时钟往后拨不算数）；立即重设 = 清空上锁穗（二次确认）
+  await openSettings(pg);
+  await pg.click('.set-link:has-text("上锁")');
+  await pg.fill('.pin-new', '2468');
+  await pg.fill('.pin-again', '2468');
+  await pg.click('.pin-set');
+  await pg.waitForSelector('.toast:has-text("PIN 设好了")');
+  await pg.click('.nav-btn:has-text("穗仓")');
+  await pg.click('.card:has-text("这周的雾一")');
+  await pg.click('.detail-lock');
+  await pg.waitForSelector('.toast:has-text("上锁了")');
+  await pg.keyboard.press('Escape');
+  await openSettings(pg);
+  await pg.click('.set-link:has-text("上锁")');
+  await pg.click('.lock-forgot');
+  await pg.click('.lock-slow');
+  await pg.waitForSelector('.lock-reset:has-text("24")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] reset pending text`));
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v040-lock-reset.png' });
+  // 页面时钟往后拨 25 小时（单调钟没动）→ 换页再回来，仍要等
+  await pg.evaluate(() => (window.__off += 25 * 3600e3));
+  await pg.click('.nav-btn:has-text("穗仓")');
+  if (!(await pg.locator('.card:has-text("上锁的一穗")').count())) errs.push(`[${tag}] locked item visible during cooldown`);
+  await openSettings(pg);
+  await pg.click('.set-link:has-text("上锁")');
+  await pg.waitForSelector('.lock-reset');
+  if (await pg.locator('.lock-reset-go').count()) errs.push(`[${tag}] clock jump bypassed cooldown`);
+  if (!(await pg.locator('.lock-state:has-text("已设")').count())) errs.push(`[${tag}] PIN gone during cooldown`);
+  await pg.click('.lock-reset-cancel');
+  await pg.waitForSelector('.toast:has-text("取消了")');
+  if (await pg.locator('.lock-reset').count()) errs.push(`[${tag}] reset not cancelled`);
+  await pg.evaluate(() => (window.__off -= 25 * 3600e3));
+  await pg.click('.lock-forgot');
+  await pg.click('.lock-wipe');
+  await pg.click('.confirm-ok');
+  await pg.click('.confirm-ok:has-text("清空并重设")');
+  await pg.waitForSelector('.toast:has-text("清空了 1 穗")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] wipe toast`));
+  const wiped = await waitRow((r) => r.uid === '01V04000000000000000000003');
+  if (!wiped || wiped.title !== '已清空的上锁穗' || wiped.why || wiped.tags.length || !wiped.deletedAt || wiped.locked) errs.push(`[${tag}] wiped row ${JSON.stringify(wiped && [wiped.title, wiped.why, wiped.deletedAt, wiped.locked])}`);
+  if (!(await pg.locator('.lock-state:has-text("没设")').count())) errs.push(`[${tag}] PIN not cleared after wipe`);
+  if ((await dbRaw(pg, 'items')).find((r) => r.title === '这周的雾二')?.why !== '') errs.push(`[${tag}] other items touched`);
+  await c.close();
+  console.log(`v040: week ok; sheaf "${stxt.replace(/\s+/g, ' ')}"; lost ${nLost}; revisits ${hy?.revisits?.length || 0}; month days ${md}; ridge ${ridge.split('\n').length}; lock reset ok`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v040') {
+    await v040();
+    throw Object.assign(new Error('v040 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v039') {
     await v039();
     throw Object.assign(new Error('v039 only'), { only: true });
@@ -5213,6 +5387,7 @@ try {
   // v0.39：v0.38 把 v038() 误放进了 E2E_ONLY=v037 的分支，整套跑时没跑到；挪回主序列
   await v038();
   await v039();
+  await v040();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
