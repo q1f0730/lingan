@@ -4172,6 +4172,16 @@ async function tauriMock(ctx, opts) {
             return null;
           case 'clip_image':
             return png;
+          // v0.44：首帧画完亮窗口（返回是不是开机静默启动）、上次崩溃记录（取走即删）
+          case 'main_ready':
+            st.ready = (st.ready || 0) + 1;
+            return !!o.hidden;
+          case 'crash_take': {
+            // 取走即删：刷新后（init 脚本重跑、o 是新的一份）也只给一次
+            if (!o.crash || sessionStorage.getItem('mock.crash')) return null;
+            sessionStorage.setItem('mock.crash', '1');
+            return o.crash;
+          }
           case 'plugin:clipboard-manager|read_text':
             return '';
           default:
@@ -5780,7 +5790,106 @@ async function v043() {
   console.log(`v043: no external requests (${navs.length} pages); intake gps/shot/cap ok (${JSON.stringify(ib2 && [ib2.w, ib2.h])}); shot-at ok; store/backup ok; obsidian strip ok; prefs backup ok; nudge ok`);
 }
 
+// v0.44 常驻得安静 · 配方跟着走（E2E_ONLY=v044；E2E_V044_W=390 跑手机版，截图 v044-*.png）
+async function v044() {
+  const tag = 'v044';
+  const W = +process.env.E2E_V044_W || 1440;
+  const H = W < 600 ? 844 : 900;
+  const P1 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  // 1. v0.43 遗留：速记条草稿在第一次挂到页面上的那一刻就在（MutationObserver 在 React 提交后、effect 之前回调）
+  const c1 = await b.newContext({ viewport: { width: W, height: H } });
+  await c1.addInitScript(() => {
+    if (sessionStorage.getItem('v044.once')) return;
+    sessionStorage.setItem('v044.once', '1');
+    localStorage.setItem('glean.draft.quick', JSON.stringify({ t: '雨夜的霓虹 #草稿', at: Date.now() }));
+    const mo = new MutationObserver(() => {
+      const el = document.querySelector('.quick-input');
+      if (el && window.__q0 === undefined) {
+        window.__q0 = el.value;
+        mo.disconnect();
+      }
+    });
+    document.addEventListener('DOMContentLoaded', () => mo.observe(document.body, { childList: true, subtree: true }));
+  });
+  const p1 = await c1.newPage();
+  p1.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p1.goto(base);
+  await p1.waitForSelector('.quick-input');
+  const q0 = await p1.evaluate(() => window.__q0);
+  if (q0 !== '雨夜的霓虹 #草稿') errs.push(`[${tag}] quick draft not in first frame: ${JSON.stringify(q0)}`);
+  if ((await p1.inputValue('.quick-input')) !== '雨夜的霓虹 #草稿') errs.push(`[${tag}] quick draft not restored`);
+  // 回车存掉 → 草稿删掉；刷新后输入框是空的
+  await p1.press('.quick-input', 'Enter');
+  await p1.waitForFunction(() => !localStorage.getItem('glean.draft.quick'), null, { timeout: 4000 }).catch(() => errs.push(`[${tag}] draft not cleared after save`));
+  await p1.reload();
+  await p1.waitForSelector('.quick-input');
+  if (await p1.inputValue('.quick-input')) errs.push(`[${tag}] draft came back after save`);
+  await c1.close();
+
+  // 2. 桌面版（模拟 Tauri）：首帧画完调 main_ready 一次；上次崩溃 → 进本地错误日志 + 提示一次
+  const c2 = await b.newContext({ viewport: { width: W, height: H } });
+  await tauriMock(c2, { png: P1, send: false, links: [], crash: '1700000000 | 0.44.0 | index out of bounds @ src/entry.rs:42' });
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[${tag}] desktop pageerror ${e.message}`));
+  await p2.goto(base);
+  await p2.waitForFunction(() => (window.__mock?.ready || 0) >= 1, null, { timeout: 6000 }).catch(() => errs.push(`[${tag}] main_ready not called`));
+  await p2.waitForSelector('.toast:has-text("意外退出")', { timeout: 9000 }).catch(() => errs.push(`[${tag}] crash toast missing`));
+  const log = await p2.evaluate(() => JSON.parse(localStorage.getItem('glean.errlog.v1') || '[]'));
+  if (!log.some((e) => e.name === 'RustPanic' && /index out of bounds/.test(e.msg) && e.view === 'rust')) errs.push(`[${tag}] crash not in errlog ${JSON.stringify(log).slice(0, 200)}`);
+  // 刷新：崩溃记录已取走，不再提示；main_ready 每次启动一次
+  await p2.reload();
+  await p2.waitForFunction(() => (window.__mock?.ready || 0) >= 1, null, { timeout: 6000 }).catch(() => {});
+  await p2.waitForTimeout(5000);
+  if (await p2.locator('.toast:has-text("意外退出")').count()) errs.push(`[${tag}] crash toast repeated`);
+  if ((await p2.evaluate(() => window.__mock.calls.filter((c) => c === 'main_ready').length)) !== 1) errs.push(`[${tag}] main_ready called more than once per load`);
+  await c2.close();
+
+  // 3. 0567 安卓：设了 PIN → 最近任务自动隐藏画面；设置里可单独关 / 开
+  const c3 = await b.newContext({ viewport: { width: W, height: H } });
+  await c3.addInitScript(() => {
+    window.__sec = [];
+    window.LinganChrome = { insets: () => '', setTheme: () => {}, secure: (on) => void window.__sec.push(on) };
+  });
+  const p3 = await c3.newPage();
+  p3.on('pageerror', (e) => errs.push(`[${tag}] android pageerror ${e.message}`));
+  await p3.goto(base);
+  await p3.waitForSelector('.view');
+  if ((await p3.evaluate(() => window.__sec)).at(-1) !== false) errs.push(`[${tag}] secure should start off (no PIN)`);
+  await p3.click('.nav-btn:has-text("设置") >> visible=true');
+  await p3.waitForSelector('#set-lock .lock-secure', { timeout: 8000 }).catch(() => errs.push(`[${tag}] secure toggle missing`));
+  await p3.fill('#set-lock .pin-new', '2468');
+  await p3.fill('#set-lock .pin-again', '2468');
+  await p3.press('#set-lock .pin-again', 'Enter');
+  await p3.waitForFunction(() => window.__sec.at(-1) === true, null, { timeout: 4000 }).catch(() => errs.push(`[${tag}] secure not on after PIN`));
+  if (!/隐藏画面/.test(await p3.locator('#set-lock .lock-secure').innerText().catch(() => ''))) errs.push(`[${tag}] secure label not on`);
+  if (process.env.E2E_SHOTS) {
+    await p3.waitForTimeout(4000);
+    await p3.evaluate(() => document.querySelector('#set-lock .lock-secure')?.scrollIntoView({ block: 'center' }));
+    await p3.screenshot({ path: process.env.E2E_SHOTS + `/v044-lock-${W}.png` });
+  }
+  await p3.click('#set-lock .lock-secure');
+  await p3.waitForFunction(() => window.__sec.at(-1) === false, null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] secure toggle off failed`));
+  await p3.reload();
+  await p3.waitForSelector('.view');
+  if ((await p3.evaluate(() => window.__sec)).at(-1) !== false) errs.push(`[${tag}] manual off not kept after reload`);
+  await c3.close();
+  // 网页版（没有安卓桥）不显示这一行
+  const c4 = await b.newContext({ viewport: { width: W, height: H } });
+  const p4 = await c4.newPage();
+  await p4.goto(base);
+  await p4.waitForSelector('.view');
+  await p4.click('.nav-btn:has-text("设置") >> visible=true');
+  await p4.waitForSelector('#set-lock', { timeout: 8000 });
+  if (await p4.locator('#set-lock .lock-secure').count()) errs.push(`[${tag}] secure toggle shown on web`);
+  await c4.close();
+  console.log(`v044: quick draft first frame ok; main_ready ok; crash log ok; android secure ok`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v044') {
+    await v044();
+    throw Object.assign(new Error('v044 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v043') {
     await v043();
     throw Object.assign(new Error('v043 only'), { only: true });
@@ -5897,6 +6006,7 @@ try {
   await v041();
   await v042();
   await v043();
+  await v044();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
