@@ -166,3 +166,36 @@ export function splitMentions(text: string, sources: Array<Pick<Item, 'id' | 'ti
   if (at < text.length) out.push({ text: text.slice(at) });
   return out;
 }
+
+// ——— v0.42 0243 新枝借了这一穗的哪句话 ———
+const PUNCT = /[\s，。、《》「」『』：:；;！!？?,.\-—…·（）()"'“”‘’]/;
+/**
+ * 新枝正文和这一穗「为什么 / 内容 / 描述 / 标签」里最长的共同片段（不算标题和作者：正文点名本来就会写到）。
+ * 汉字至少 3 个、拉丁字母至少 5 个才算；去掉首尾标点，最长 16 字。找不到返回空。
+ */
+export function borrowed(text: string, it: Pick<Item, 'title' | 'creator' | 'why' | 'content' | 'caption' | 'tags'>): string {
+  const names = namesOf(it);
+  let a = text || '';
+  for (const n of names) a = a.split(n).join('\u0000');
+  const b = [it.why, it.content, it.caption, (it.tags || []).join('\u0000')].filter(Boolean).join('\u0000').slice(0, 1200);
+  if (!a || !b) return '';
+  const A = a.slice(0, 1200);
+  let best = 0;
+  let end = 0;
+  let prev = new Uint16Array(b.length + 1);
+  let cur = new Uint16Array(b.length + 1);
+  for (let i = 1; i <= A.length; i++) {
+    const ca = A[i - 1];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = ca === b[j - 1] && ca !== '\u0000' && !PUNCT.test(ca) ? prev[j - 1] + 1 : 0;
+      if (cur[j] > best) {
+        best = cur[j];
+        end = i;
+      }
+    }
+    [prev, cur] = [cur, prev];
+  }
+  const frag = A.slice(end - best, end).slice(0, 16);
+  const han = (frag.match(/[\u3400-\u9fff]/g) || []).length;
+  return han >= 3 || (!han && frag.length >= 5) ? frag : '';
+}
