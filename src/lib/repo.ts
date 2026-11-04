@@ -43,3 +43,12 @@ export async function attachResult(id: number, uid: string | undefined) {
   if (!fresh) return;
   await db.developments.update(id, { resultUids: [...(fresh.resultUids || []), uid].filter(Boolean) as string[], status: fresh.status === 'tried' ? 'tried' : 'done', statusAt: Date.now() });
 }
+
+// ── v0.40 时间与回看 ──
+/** 0131 / 0915 再看一句（y = 满一年时的「现在的为什么」）：只追加，不改原来的为什么 */
+export const addRevisit = (id: number, prev: Item['revisits'], text: string, y?: boolean) =>
+  db.items.update(id, { revisits: [...(prev || []), { text, at: Date.now(), ...(y ? { y: 1 as const } : {}) }], touchedAt: Date.now() });
+/** 0938 放下 / 拿回来；0925「留着」= 记一次碰过 */
+export const setDown = (ids: number[], on: boolean) =>
+  db.items.where(':id').anyOf(ids).modify((x: Item) => void (on ? (x.down = Date.now()) : delete x.down));
+export const keepAround = (ids: number[]) => db.items.where(':id').anyOf(ids).modify({ touchedAt: Date.now() });
