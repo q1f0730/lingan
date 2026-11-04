@@ -180,3 +180,12 @@
 .exit-bulk-wrap {
   margin-top: 24px;
 }
+/* v0.43 上次备份 / 占用（设置）与「用拍摄时间」（详情）：跟着 GuardPanels / Detail 懒加载 */
+.kv dd.warn {
+  color: var(--sun-ink);
+  font-weight: 600;
+}
+.store-persist,
+.shot-at {
+  margin-left: 8px;
+}
