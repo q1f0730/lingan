@@ -92,6 +92,12 @@ function boot() {
       .then(() => new Promise((r) => setTimeout(r, 8000)))
       .then(() => import('./lib/linkretry').then((m) => m.backgroundTick()))
       .catch((e) => logError(e, 'error', { view: 'linkretry' }));
+  // v0.43 0639 / 0631：一天看一次「多久没备份 / 存储快满」（启动 18 秒后空闲时才加载 nudge，平时不碰）
+  if (+(localStorage.getItem('glean.nudge.next') || 0) < Date.now())
+    void afterFirstPaint(3000)
+      .then(() => new Promise((r) => setTimeout(r, +(localStorage.getItem('glean.nudge.wait') || 15000))))
+      .then(() => import('./lib/nudge').then((m) => m.nudgeTick(async () => ({ items: await db.items.count(), oldest: (await db.items.orderBy('createdAt').first())?.createdAt ?? Date.now() }))))
+      .catch((e) => logError(e, 'error', { view: 'nudge' }));
   // v0.20：其余四页的包在穗仓首屏画完之后预取
   void afterFirstPaint(2500).then(prefetchViews);
   // v0.20：申请持久存储（浏览器 / WebView 在空间紧张时不清本库）
