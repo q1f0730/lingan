@@ -5193,6 +5193,36 @@ async function v040() {
     if (before || (await g.locator('.ctxmenu').count()) > 1) errs.push(`[${tag}] gap menu count`);
     await cg.close();
   }
+  // v0.41：手机同样的空隙——idle 之后、CardMenu 块到之前长按一张卡（真触摸：CDP touchStart → 700ms → touchEnd）。
+  // 以前这一下谁都不管（菜单块到了也不补），要再按一次才有反应；现在块到了就补开底部菜单，只开一次，松手不进详情
+  {
+    const cg = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    await cg.addInitScript(() => window.addEventListener('glean:idle-ready', () => (window.__idle = 1)));
+    await cg.route(/\/assets\/CardMenu-[^/]*\.js$/, async (r) => {
+      await new Promise((ok) => setTimeout(ok, 2500));
+      await r.continue();
+    });
+    const g = await cg.newPage();
+    g.on('pageerror', (e) => errs.push(`[${tag}] pageerror(touchgap) ${e.message}`));
+    await g.goto(base);
+    await g.waitForSelector('text=穗仓还是空的');
+    await quickSave(g, '按住的一穗');
+    await g.waitForFunction(() => window.__idle === 1, null, { timeout: 8000 });
+    const card = g.locator('.main [data-item-id]:has-text("按住的一穗")').first();
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    const bx = await card.boundingBox();
+    const cdp = await cg.newCDPSession(g);
+    const pt = [{ x: Math.round(bx.x + 20), y: Math.round(bx.y + 20) }];
+    const live0 = await g.evaluate(() => !!document.querySelector('.ctxmenu'));
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: pt });
+    await g.waitForTimeout(700);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await g.waitForSelector('.ctxmenu.as-sheet', { timeout: 6000 }).catch(() => errs.push(`[${tag}] long-press between idle and menu-live lost`));
+    await g.waitForTimeout(400);
+    if (live0 || (await g.locator('.ctxmenu').count()) !== 1) errs.push(`[${tag}] touch gap menu count`);
+    if (await g.locator('.detail').count()) errs.push(`[${tag}] long-press release opened detail`);
+    await cg.close();
+  }
   const waitRow = async (pred, ms = 8000) => {
     for (let t = 0; t < ms; t += 250) {
       const r = (await dbRaw(pg, 'items', true)).find(pred);
@@ -5313,7 +5343,149 @@ async function v040() {
   console.log(`v040: week ok; sheaf "${stxt.replace(/\s+/g, ' ')}"; lost ${nLost}; revisits ${hy?.revisits?.length || 0}; month days ${md}; ridge ${ridge.split('\n').length}; lock reset ok`);
 }
 
+// v0.41 找得到 · 逛得开：繁简互搜（0134）、你忘了你收过（0133）、搜索结果挑穗嫁接（0136）、智能穗束（0128）、命令面板（0137）、
+// 没结果的下一步（0428）、小窗 ? 秒搜（0138）、穗仓全键盘（0436）、漫步（0132）、穗仓的空地（ROADMAP v0.41）
+async function v041() {
+  const tag = 'v041';
+  const W = +process.env.E2E_V041_W || 1440;
+  const c = await b.newContext({ viewport: { width: W, height: 900 } });
+  const pg = await c.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  const now = Date.now();
+  const D = 864e5;
+  const U = (i) => `01V041${String(i).padStart(20, '0')}`;
+  const rows = [
+    { type: 'film', title: '花樣年華', creator: '王家衛', tags: ['电影'], why: '走廊里的旗袍', createdAt: now - 760 * D, links: [{ to: U(1), k: 'like', at: 1 }] },
+    { type: 'film', title: '春光乍泄', creator: '王家卫', tags: ['电影'], why: '瀑布', createdAt: now - 30 * D, links: [{ to: U(0), k: 'like', at: 1, r: 1 }] },
+    { type: 'music', title: '雨夜一', tags: ['雨'], why: '很温暖', createdAt: now - 5 * D },
+    { type: 'image', title: '雨夜二', tags: ['雨'], why: '有点难过', createdAt: now - 4 * D },
+    { type: 'text', title: '雨夜三', tags: ['雨'], why: '安静', createdAt: now - 3 * D },
+    { type: 'idea', title: '一个念头', tags: ['念头'], why: '温柔', createdAt: now - 2 * D },
+    { type: 'music', title: '夜路', tags: ['夜'], why: '孤独', createdAt: now - 6 * D },
+    { type: 'image', title: '塔', tags: ['城市'], why: '平静', createdAt: now - 7 * D },
+    { type: 'text', title: '一句旧话', tags: ['旧'], why: '遗憾', createdAt: now - 8 * D },
+    { type: 'idea', title: '另一个念头', tags: ['念头'], why: '治愈', createdAt: now - 9 * D },
+    { type: 'music', title: '晨', tags: ['早'], why: '心酸', createdAt: now - 10 * D },
+  ];
+  await pg.evaluate((rows) => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const tx = r.result.transaction(['items'], 'readwrite');
+      rows.forEach((x, i) => tx.objectStore('items').add({ content: '', creator: '', year: '', url: '', graftCount: 0, updatedAt: x.createdAt, uid: `01V041${String(i).padStart(20, '0')}`, ...x }));
+      tx.oncomplete = () => { r.result.close(); res(); };
+    };
+  }), rows);
+  await pg.reload();
+  await pg.waitForSelector('.card');
+  // 1. 0134 简体查到繁体 + 0133 你忘了你收过（两年前那一穗）
+  await pg.click('.search-toggle');
+  await pg.waitForSelector('.search-view .sq-input');
+  await sqType(pg, '花样年华');
+  await pg.waitForSelector('.sq-row:has-text("花樣年華")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] simplified query missed traditional title`));
+  if (!(await pg.locator('.sq-row:has-text("花樣年華") mark.hit').count())) errs.push(`[${tag}] traditional hit not highlighted`);
+  const fg = await pg.locator('.sq-forgot').innerText().catch(() => '');
+  if (!/2 年前收过/.test(fg) || !fg.includes('花樣年華')) errs.push(`[${tag}] forgotten line: ${fg}`);
+  await sqType(pg, '王家衛');
+  if ((await sqHeads(pg)).items !== 2) errs.push(`[${tag}] traditional query should find both: ${(await sqHeads(pg)).items}`);
+  // 2. 0136 挑 3 穗直接去嫁接
+  await sqType(pg, '雨夜');
+  await pg.click('.sq-pick');
+  if (!(await pg.locator('.sq-pick-go[disabled]').count())) errs.push(`[${tag}] pick-go should wait for 3`);
+  for (const t of ['雨夜一', '雨夜二', '雨夜三']) await pg.click(`.sq-row:has-text("${t}")`);
+  if ((await pg.locator('.sq-row.picked').count()) !== 3) errs.push(`[${tag}] picked rows`);
+  if (await pg.locator('.detail').count()) errs.push(`[${tag}] pick mode opened detail`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + `/v041-pick-${W}.png` });
+  await pg.click('.sq-pick-go');
+  await pg.waitForSelector('.view.develop', { timeout: 5000 }).catch(() => errs.push(`[${tag}] pick → develop`));
+  const dtx = await pg.locator('.view.develop').innerText().catch(() => '');
+  if (!['雨夜一', '雨夜二', '雨夜三'].every((t) => dtx.includes(t))) errs.push(`[${tag}] develop preset missing picked items`);
+  // 3. 0128 智能穗束：存 tag:雨，之后新收的雨也算进来
+  await pg.click('.nav-btn:has-text("穗仓") >> visible=true');
+  await pg.waitForSelector('.search-toggle');
+  await pg.click('.search-toggle');
+  await sqType(pg, 'tag:雨');
+  await pg.click('.sq-keep');
+  await pg.waitForSelector('.sq-keep[disabled]', { timeout: 2000 }).catch(() => errs.push(`[${tag}] smart keep`));
+  await pg.click('.sq-cancel');
+  await quickSave(pg, '第四场雨 #雨');
+  await pg.click('.search-toggle');
+  await pg.waitForSelector('.sq-smart-q', { timeout: 3000 }).catch(() => errs.push(`[${tag}] smart list missing`));
+  const sm = await pg.locator('.sq-smart-q').first().innerText().catch(() => '');
+  if (!/tag:雨\s*\(4\)/.test(sm)) errs.push(`[${tag}] smart count not live: ${sm}`);
+  await pg.click('.sq-smart-q');
+  await pg.waitForFunction(() => document.querySelector('.sq-count')?.dataset.q === 'tag:雨', null, { timeout: 2000 }).catch(() => errs.push(`[${tag}] smart open`));
+  // 4. 0428 没结果：放宽日期 / 把这句拾进来
+  await pg.click('.sq-range[data-range="7d"]');
+  await sqType(pg, '花樣年華');
+  await pg.waitForSelector('.sq-loosen[data-loosen="range"]', { timeout: 2000 }).catch(() => errs.push(`[${tag}] loosen range missing`));
+  await pg.click('.sq-loosen[data-loosen="range"]');
+  await pg.waitForSelector('.sq-row:has-text("花樣年華")', { timeout: 2000 }).catch(() => errs.push(`[${tag}] loosen did not bring results`));
+  await sqType(pg, '刚想到的一句话');
+  await pg.click('.sq-glean');
+  await pg.waitForSelector('.toast:has-text("拾进来了")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] glean from no-result`));
+  await pg.waitForSelector('.sq-row:has-text("刚想到的一句话")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] gleaned item not in results`));
+  // 5. 0137 命令面板：> 设置，回车跳过去
+  await sqType(pg, '>设置');
+  const c0 = await pg.locator('.sq-cmd').first().getAttribute('data-cmd').catch(() => '');
+  if (c0 !== 'go-settings') errs.push(`[${tag}] palette first ${c0}`);
+  if (await pg.locator('.sq-filters').count()) errs.push(`[${tag}] palette should hide filters`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + `/v041-palette-${W}.png` });
+  await pg.press('.sq-input', 'Enter');
+  await pg.waitForSelector('.view.settings', { timeout: 4000 }).catch(() => errs.push(`[${tag}] palette → settings`));
+  await pg.click('.nav-btn:has-text("穗仓") >> visible=true');
+  await pg.waitForSelector('.card');
+  // 6. 0138 速记小窗 ? 秒搜（繁简互通），回车打开详情
+  await pg.evaluate(() => window.dispatchEvent(new Event('glean:quick')));
+  await pg.waitForSelector('.quick-window input');
+  await pg.fill('.quick-window input', '?花样');
+  await pg.waitForSelector('.qf-row:has-text("花樣年華")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] quick find missing`));
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + `/v041-quickfind-${W}.png` });
+  await pg.press('.quick-window input', 'Enter');
+  await pg.waitForSelector('.detail', { timeout: 4000 }).catch(() => errs.push(`[${tag}] quick find enter → detail`));
+  if (await pg.locator('.quick-window').count()) errs.push(`[${tag}] quick window should close`);
+  if ((await dbRaw(pg, 'items')).some((r) => r.title.startsWith('?'))) errs.push(`[${tag}] ? query saved as item`);
+  // 7. 0132 漫步：花樣年華 → 连线的春光乍泄
+  await pg.click('.walk-go');
+  await pg.waitForSelector('.walk-why:has-text("连线")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] walk why`));
+  if (!(await pg.locator('.detail').innerText().catch(() => '')).includes('春光乍泄')) errs.push(`[${tag}] walk did not arrive at linked item`);
+  await pg.keyboard.press('Escape');
+  await pg.waitForSelector('.detail', { state: 'detached', timeout: 3000 }).catch(async () => {
+    await pg.click('.detail .icon-btn, .sheet .icon-btn').catch(() => {});
+  });
+  // 8. 0436 穗仓全键盘：J 移动、G 进篮、E 编辑
+  await pg.waitForSelector('.card');
+  await pg.evaluate(() => document.activeElement?.blur?.());
+  await pg.keyboard.press('j');
+  const f1 = await pg.evaluate(() => document.activeElement?.closest('[data-item-id]')?.dataset.itemId || '');
+  await pg.keyboard.press('j');
+  const f2 = await pg.evaluate(() => document.activeElement?.closest('[data-item-id]')?.dataset.itemId || '');
+  if (!f1 || !f2 || f1 === f2) errs.push(`[${tag}] j/k focus ${f1} ${f2}`);
+  await pg.keyboard.press('g');
+  await pg.waitForSelector('.toast:has-text("放进嫁接篮")', { timeout: 3000 }).catch(() => errs.push(`[${tag}] g → basket`));
+  await pg.keyboard.press('e');
+  await pg.waitForSelector('.sheet .capture', { timeout: 3000 }).catch(() => errs.push(`[${tag}] e → edit`));
+  await pg.click('.sheet .icon-btn').catch(() => {});
+  // 9. ROADMAP v0.41 穗仓的空地：没有链接穗 → 提示 + 问题，不带外部内容
+  await pg.click('.nav-btn:has-text("口味") >> visible=true');
+  await pg.waitForSelector('.gap-sec', { timeout: 5000 }).catch(() => errs.push(`[${tag}] gap section missing`));
+  const gt = await pg.locator('.gap-sec').innerText().catch(() => '');
+  if (!(await pg.locator('.gap-row[data-gap="type:link"]').count())) errs.push(`[${tag}] gap type:link missing: ${gt.slice(0, 80)}`);
+  if (/https?:|推荐/.test(gt) || (await pg.locator('.gap-sec a').count())) errs.push(`[${tag}] gap has external content`);
+  if (process.env.E2E_SHOTS) {
+    await pg.locator('.gap-sec').scrollIntoViewIfNeeded().catch(() => {});
+    await pg.screenshot({ path: process.env.E2E_SHOTS + `/v041-gaps-${W}.png` });
+  }
+  await c.close();
+  console.log(`v041: zh ok; pick ok; smart ok; palette ok; quickfind ok; walk ok; keys ok; gaps "${gt.replace(/\s+/g, ' ').slice(0, 60)}"`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v041') {
+    await v041();
+    throw Object.assign(new Error('v041 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v040') {
     await v040();
     throw Object.assign(new Error('v040 only'), { only: true });
@@ -5415,6 +5587,7 @@ try {
   await v038();
   await v039();
   await v040();
+  await v041();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
