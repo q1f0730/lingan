@@ -24,7 +24,7 @@
     },
     "restoreMs": 847,
     "scroll": "masonry/timeline/list 60fps jank 0%",
-    "note": "InstaBox 整套 e2e ALL PASS（dist app-C-hgJCX6，4502=d43c），定稿构建跑两遍整套；之前 app-Du3ioImB（只差 CaptureForm 草稿恢复）整套 perf-backup 已过（5 次 59.2/23.3/23.7/23.9/21.5，中位 23.7MB），唯一错误是 capture「form draft not restored」→ 已修。e2e 冷启动不和旧版交替，不能跨会话比"
+    "note": "InstaBox 整套 e2e ALL PASS（dist app-C-hgJCX6，4502=d43c），定稿构建跑两遍整套都 ALL PASS（第二遍备份堆 +35.0MB、恢复 864ms）；之前 app-Du3ioImB（只差 CaptureForm 草稿恢复）整套 perf-backup 已过（5 次 59.2/23.3/23.7/23.9/21.5，中位 23.7MB），唯一错误是 capture「form draft not restored」→ 已修。e2e 冷启动不和旧版交替，不能跨会话比"
   },
   "backupHeapAB": {
     "why": "v0.43 第一次整套（app-75yW4A6n）perf-backup 3 次 70.8/56.3/42.9MB，中位 56.3 > 48",
