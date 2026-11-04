@@ -19,6 +19,7 @@ const mk = (o: Partial<Item> = {}): Item => ({ id: nid++, uid: 'u' + nid, type: 
 describe('0134 繁简互搜', () => {
   it('字表解码：2000+ 个简体字，常见字对得上', async () => {
     const z = await import('../lib/zhvar');
+    await z.ready; // v0.42 字表压缩进包
     expect(z.zhvarSize()).toBeGreaterThan(2000);
     expect(z.toSimp('花樣年華')).toBe('花样年华');
     expect(z.toTrads('花样年华')).toContain('花樣年華');
@@ -26,6 +27,7 @@ describe('0134 繁简互搜', () => {
   });
   it('变体：去掉原文自身；一简多繁有上限；纯 ASCII 没有变体', async () => {
     const z = await import('../lib/zhvar');
+    await z.ready; // v0.42 字表压缩进包
     expect(z.zhVariants('花样年华')).toEqual(['花樣年華']);
     expect(z.zhVariants('花樣年華')).toContain('花样年华');
     expect(z.toTrads('头发', 4).length).toBeLessThanOrEqual(4);
@@ -34,6 +36,7 @@ describe('0134 繁简互搜', () => {
   });
   it('并进搜索：简体查询找到繁体原文（不改索引）', async () => {
     const z = await import('../lib/zhvar');
+    await z.ready; // v0.42 字表压缩进包
     const s = await import('../lib/search');
     const docs = [mk({ title: '花樣年華' }), mk({ title: '春光乍泄' })].map((i) => s.toDoc('i', i));
     expect(s.searchDocs(null, docs, s.parseQuery('花样年华'))).toHaveLength(0);
