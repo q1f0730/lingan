@@ -22,7 +22,7 @@ export default function QuickFind({ q, sel, onHits, onPick }: { q: string; sel: 
   }, []);
   const s = q.trim();
   useEffect(() => {
-    if (/[\u3400-\u9fff]/.test(s) && !zh) void import('../lib/zhvar').then(setZh).catch(() => {});
+    if (/[\u3400-\u9fff]/.test(s) && !zh) void import('../lib/zhvar').then((m) => m.ready.then(() => setZh(m))).catch(() => {});
   }, [s, zh]);
   const hits = useMemo(() => {
     if (!docs || !s) return [];
