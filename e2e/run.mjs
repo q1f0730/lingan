@@ -387,7 +387,8 @@ async function run(name, viewport) {
     const shown = (await pg.locator('.sq-items .sq-row[data-item-id]').evaluateAll((els) => els.map((e) => Number(e.dataset.itemId)))) || [];
     const literal = rawItems.filter((x) => e2eMatch(itemSearchText(x), e2eTerms(pre))).map((x) => x.id);
     const extra = shown.filter((id) => !literal.includes(id));
-    const cjk = (id) => /[\u4e00-\u9fff]/.test(['title', 'creator', 'content'].map((k) => rawItems.find((x) => x.id === id)?.[k] || '').join(''));
+    // pinyinMatch 也按标签匹配（示例「Jolene」的标签「恳求」= ken，和「Kendrick」同时抽到时 CI 撞过一次），所以标签里的汉字也算
+    const cjk = (id) => /[\u4e00-\u9fff]/.test(['title', 'creator', 'content'].map((k) => rawItems.find((x) => x.id === id)?.[k] || '').join('') + (rawItems.find((x) => x.id === id)?.tags || []).join(''));
     if (hl.items < 1 || literal.some((id) => !shown.includes(id)) || extra.some((id) => !cjk(id)) || hl.items !== shown.length) errs.push(`[${name}] prefix "${pre}" 穗 (${hl.items}) literal ${literal} shown ${shown}`);
   }
   // 两个字 + 类型 / 日期 / 标签叠加：挑一个出现在 ≥2 穗里的中文二字词
