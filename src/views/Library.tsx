@@ -34,6 +34,8 @@ const InboxView = lazy(() => loadInbox().then((m) => ({ default: m.InboxView }))
 const WhyView = lazy(() => loadWhy().then((m) => ({ default: m.WhyView })));
 const SelectBar = lazy(() => loadSelect().then((m) => ({ default: m.SelectBar })));
 // v0.39 0804 待拾（订阅来的）：点开才加载
+// v0.40 周记 / 月度麦捆：空闲后才加载
+const ReviewNotes = lazy(() => import('../components/Review').then((m) => ({ default: m.ReviewNotes })));
 const FeedInbox = lazy(() => import('../components/Feeds').then((m) => ({ default: m.FeedInbox })));
 const feedNew = () => +(localStorage.getItem('glean.feeds.new') || 0);
 let prefetched = false;
@@ -105,6 +107,8 @@ export function Library() {
   const shiftDown = useRef(false);
   const [type, setType] = useState<ItemType | 'all'>('all');
   const [tag, setTag] = useState<string | null>(null);
+  // v0.40 0938 看放下的穗
+  const [downs, setDowns] = useState(false);
   // v0.28 0107 穗束筛选（详情里点「束 · X」跳过来）
   const [bundle, setBundle] = useState<string | null>(takeBundleOpen);
   useEffect(() => {
@@ -128,17 +132,18 @@ export function Library() {
   // v0.24 冷启动：穗仓 / 待理数 / 缺为什么数 / 类型计数 / 示例数合成一遍扫完（原来是五遍）；标签云、回顾、今日一穗等首屏画完、主线程空闲再算
   const inboxOn = inboxEnabled();
   const idle = useAfterReady() && !meta;
-  const { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples, bundleN } = useMemo(() => {
+  const { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples, bundleN, nDown } = useMemo(() => {
     const shelf: Item[] = [];
     const typeN = new Map<ItemType, number>();
     const bundleN = new Map<string, number>();
-    let nInbox = 0, nNoWhy = 0, nSamples = 0, nShelfSamples = 0;
+    let nInbox = 0, nNoWhy = 0, nSamples = 0, nShelfSamples = 0, nDown = 0;
     if (items) {
       const now = Date.now();
       for (const i of items) {
         if (i.inbox && inboxOn) nInbox++;
         if (lacksWhy(i)) nNoWhy++;
         if (i.sample) nSamples++;
+        if (i.down) nDown++;
         if (!inLibrary(i, now, inboxOn)) continue;
         shelf.push(i);
         if (i.sample) nShelfSamples++;
@@ -146,10 +151,10 @@ export function Library() {
         if (i.bundles) for (const b of i.bundles) bundleN.set(b, (bundleN.get(b) || 0) + 1);
       }
     }
-    return { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples, bundleN };
+    return { shelf, nInbox, nNoWhy, typeN, nSamples, nShelfSamples, bundleN, nDown };
   }, [items, inboxOn]);
   useEffect(() => { if (items) prefetchSubviews(); }, [items]);
-  const filtered = useMemo(() => (type === 'all' && !tag && !bundle ? shelf : shelf.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)) && (!bundle || !!i.bundles?.includes(bundle)))), [shelf, type, tag, bundle]);
+  const filtered = useMemo(() => (downs && items ? items.filter((i) => i.down) : type === 'all' && !tag && !bundle ? shelf : shelf.filter((i) => (type === 'all' || i.type === type) && (!tag || i.tags.includes(tag)) && (!bundle || !!i.bundles?.includes(bundle)))), [shelf, type, tag, bundle, downs, items]);
   const bundleList = useMemo(() => [...bundleN.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh')).slice(0, 12), [bundleN]);
   const seqIds = useMemo(() => filtered.map((i) => i.id!), [filtered]);
   useEffect(() => {
@@ -342,6 +347,7 @@ export function Library() {
             </div>
           )}
           {idle && <DailyCard items={items} />}
+          {idle && devs && <Suspense fallback={null}><ReviewNotes items={items} devs={devs} /></Suspense>}
           {nSamples > 0 && (
             <div className="samples-bar note-row">
               <span className="meta-text">
@@ -422,6 +428,12 @@ export function Library() {
         {bundle && !bundleN.has(bundle) && (
           <button className="chip on bundle-chip" onClick={() => setBundle(null)}>
             束 · {bundle} ✕
+          </button>
+        )}
+        {(nDown > 0 || downs) && (
+          <button className={`chip down-chip${downs ? ' on' : ''}`} onClick={() => setDowns(!downs)} title="放下的穗：不进穗仓和每日一穗，详情里能拿回来">
+            放下的 <span className="n">({nDown})</span>
+            {downs && ' ✕'}
           </button>
         )}
         {!meta && bundleList.map(([b, n]) => (
