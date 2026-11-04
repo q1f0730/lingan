@@ -6,6 +6,8 @@
 //! - 0538 托盘「暂停剪贴板提示 1 小时」：暂停期间 clip_peek 报 private，速记条和小窗都不再提示剪贴板
 //! - 0562 热键 / 托盘唤出时窗口原本藏着：挪到鼠标所在的那块屏幕正中
 use std::sync::atomic::{AtomicBool, Ordering};
+#[cfg(desktop)]
+use std::sync::atomic::AtomicU64;
 use tauri::{AppHandle, Manager};
 
 #[derive(Default)]
@@ -13,7 +15,11 @@ pub struct Shell {
   pub ready: AtomicBool,
   pub hidden: AtomicBool,
   #[cfg(desktop)]
-  pub pause: std::sync::Mutex<Option<std::time::Instant>>,
+  /// v0.45：暂停到哪一刻（Unix 秒，墙钟——睡眠 / 休眠期间也算时间），None = 没暂停
+  pub pause: std::sync::Mutex<Option<u64>>,
+  /// v0.45：每点一次托盘「暂停 / 恢复」+1；到点改回菜单文字的后台线程发现代数变了就退出（不会改错）
+  #[cfg(desktop)]
+  pub pause_gen: AtomicU64,
 }
 
 pub const PAUSE_SECS: u64 = 3600;
@@ -77,17 +83,48 @@ pub fn first_close(app: &AppHandle) {
 #[cfg(desktop)]
 pub fn clip_paused(app: &AppHandle) -> bool {
   let s = app.state::<Shell>();
-  let g = s.pause.lock().unwrap();
-  g.map(|t| crate::shelllogic::still_paused(t.elapsed().as_secs(), PAUSE_SECS)).unwrap_or(false)
+  let g = *s.pause.lock().unwrap();
+  crate::shelllogic::paused_at(now_secs(), g)
 }
 
-/// 0538 托盘点一下：没暂停 → 暂停 1 小时；暂停中 → 恢复。返回现在是不是暂停中
 #[cfg(desktop)]
-pub fn toggle_pause(app: &AppHandle) -> bool {
-  let paused = clip_paused(app);
+fn now_secs() -> u64 {
+  std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
+}
+
+/// 0538 托盘点一下：没暂停 → 暂停 1 小时；暂停中 → 恢复。返回（现在是不是暂停中, 这一次的代数）
+#[cfg(desktop)]
+pub fn toggle_pause(app: &AppHandle) -> (bool, u64) {
   let s = app.state::<Shell>();
-  *s.pause.lock().unwrap() = if paused { None } else { Some(std::time::Instant::now()) };
-  !paused
+  let mut g = s.pause.lock().unwrap();
+  let paused = crate::shelllogic::paused_at(now_secs(), *g);
+  *g = if paused { None } else { Some(now_secs() + PAUSE_SECS) };
+  let ticket = s.pause_gen.fetch_add(1, Ordering::SeqCst) + 1;
+  (!paused, ticket)
+}
+
+/// v0.45 0550 现在是不是全屏游戏 / 演示 / 专注助手：剪贴板 / 截图提示和到点递一穗都先憋着
+#[tauri::command]
+pub fn quiet_now() -> bool {
+  os_quiet()
+}
+#[cfg(windows)]
+pub fn os_quiet() -> bool {
+  unsafe { windows::Win32::UI::Shell::SHQueryUserNotificationState() }.map(|s| crate::shelllogic::quiet_state(s.0)).unwrap_or(false)
+}
+#[cfg(not(windows))]
+pub fn os_quiet() -> bool {
+  false
+}
+
+/// v0.45 到点自动恢复后菜单文字改回来用：期间又点过（代数变了）就返回 None 让线程退出
+#[cfg(desktop)]
+pub fn pause_settled(app: &AppHandle, ticket: u64) -> Option<bool> {
+  let s = app.state::<Shell>();
+  if s.pause_gen.load(Ordering::SeqCst) != ticket {
+    return None;
+  }
+  Some(!clip_paused(app))
 }
 
 /// 0562 窗口原本藏着 / 最小化：挪到鼠标所在那块屏幕的正中（已经在那块屏上就不动）
