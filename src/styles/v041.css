@@ -1,0 +1,153 @@
+/* v0.41 找得到 · 逛得开：命令面板、挑穗嫁接、智能穗束、你忘了你收过、没结果的下一步、小窗秒搜、漫步、穗仓的空地 */
+.sq-cmds {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 2px;
+  max-width: 900px;
+}
+.sq-cmds .label {
+  padding: 0 6px 8px;
+}
+.sq-cmd {
+  text-align: left;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 16px;
+  color: var(--fg);
+}
+.sq-cmd.on,
+.sq-cmd:hover {
+  background: var(--surface-2);
+}
+.sq-sec-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sq-pick {
+  margin-left: auto;
+  min-height: 32px;
+}
+.sq-pick.on {
+  color: var(--fg);
+  text-decoration: underline;
+}
+.sq-pickbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 6px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--hair);
+}
+.sq-row.picked {
+  background: var(--surface-2);
+  box-shadow: inset 3px 0 0 var(--fg);
+}
+.sq-forgot {
+  padding: 8px 2px 0;
+}
+.sq-forgot .linklike {
+  font-weight: 600;
+}
+.sq-keep {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0 2px 6px;
+  font-size: 13px;
+}
+.sq-keep[disabled] {
+  opacity: 0.55;
+  text-decoration: none;
+}
+.sq-smart {
+  margin-top: 18px;
+}
+.sq-smart-item {
+  display: inline-flex;
+  align-items: center;
+}
+.sq-smart-q {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--hair);
+  text-decoration: none;
+}
+.sq-smart-x {
+  min-width: 32px;
+}
+.sq-loosens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.sq-glean {
+  margin-top: 6px;
+  padding-left: 0;
+}
+/* 0138 速记小窗里 ? 开头秒搜 */
+.qf-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  border-top: 1px solid var(--hair);
+}
+.qf-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+.qf-row.on,
+.qf-row:hover {
+  background: var(--surface-2);
+}
+.qf-row .qf-t {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+}
+/* 0132 漫步 */
+.walk-sec .walk-go {
+  min-height: 44px;
+  padding-left: 0;
+}
+.walk-why {
+  margin-left: 8px;
+}
+/* ROADMAP v0.41 穗仓的空地 */
+.gap-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.gap-row {
+  border-top: 1px solid var(--hair);
+  padding-top: 10px;
+}
+.gap-row .gap-q {
+  display: block;
+  color: var(--fg-2);
+  margin-top: 2px;
+}
