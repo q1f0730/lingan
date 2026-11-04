@@ -3,7 +3,7 @@
 // 运行时 assertPlug 把关：停用了就拒绝，域名不在声明里也拒绝（不是 CSP，是 getFetch 之前这一层；出站总开关仍在更外面一层）。
 // 停用状态存本机 localStorage，不同步。这个文件在首屏（ai.ts 要用），所以只放判断，说明文字在设置页的面板里。
 
-export type PlugId = 'link' | 'feeds' | 'netease' | 'mini' | 'ai' | 'agent';
+export type PlugId = 'link' | 'feeds' | 'netease' | 'mini' | 'ai' | 'agent' | 'push';
 export const PLUG_OFF_KEY = 'glean.plugs.off';
 
 function offSet(): Set<string> {
@@ -29,7 +29,7 @@ export function setPlug(id: PlugId, on: boolean): void {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event('glean:plugs'));
 }
 
-export const PLUG_NAME: Record<PlugId, string> = { link: '抓链接与快照', feeds: '订阅（RSS）', netease: '网易云歌单', mini: '本机小模型下载', ai: 'AI 服务', agent: 'Agent 与 API' };
+export const PLUG_NAME: Record<PlugId, string> = { link: '抓链接与快照', feeds: '订阅（RSS）', netease: '网易云歌单', mini: '本机小模型下载', ai: 'AI 服务', agent: 'Agent 与 API', push: '微信推送（Server酱）' };
 
 /** 域名匹配：'*' = 任何（只给「抓你贴的链接」用）；'*.x.com' = x.com 及其子域 */
 export function hostAllowed(host: string, allow: string[]): boolean {
