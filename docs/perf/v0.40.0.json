@@ -1,0 +1,88 @@
+{
+  "version": "0.40.0",
+  "date": "2026-11-04",
+  "build": "app-6YCtVQwO.js",
+  "e2e": {
+    "coldStartMs": 231,
+    "coldStartCpu4xMs": 552,
+    "searchMaxMs": 21.9,
+    "searchMedianMs": 19.5,
+    "backup": {
+      "items": 1000,
+      "images": 300,
+      "ms": 717,
+      "heapDeltaMB": 34.4,
+      "peakMB": 44.8
+    },
+    "restoreMs": 982,
+    "scroll": "masonry/timeline/list 60fps jank 0%",
+    "touchTargetsSmall": 0,
+    "note": "InstaBox 整套 e2e（定稿 dist app-6YCtVQwO）。e2e 里的冷启动是单独几次、不和旧版交替，不能跨会话比；判回归只看下面的 interleavedBench"
+  },
+  "interleavedBench": {
+    "script": "e2e/bench5.mjs (painted)，InstaBox 4470=d39 app-DxVZZsD- / 4471=d40b app-6YCtVQwO（新端口，哈希已核对）",
+    "rounds": 9,
+    "v039": {
+      "normalMedian": 191,
+      "cpu4xMedian": 570,
+      "normalRuns": [
+        194,
+        209,
+        183,
+        186,
+        202,
+        191,
+        202,
+        178,
+        182
+      ],
+      "cpu4xRuns": [
+        581,
+        556,
+        564,
+        570,
+        570,
+        579,
+        580,
+        543,
+        562
+      ]
+    },
+    "v040": {
+      "normalMedian": 185,
+      "cpu4xMedian": 577,
+      "normalRuns": [
+        176,
+        170,
+        185,
+        193,
+        182,
+        192,
+        202,
+        202,
+        181
+      ],
+      "cpu4xRuns": [
+        558,
+        603,
+        577,
+        596,
+        528,
+        588,
+        580,
+        558,
+        566
+      ]
+    },
+    "perfGate": "OK 普通 191 → 185ms（-3.1%，U=51.5/81，z=-0.97）；4× 570 → 577ms（+1.2%，U=32.5/81，z=0.71）",
+    "verdict": "持平，不显著"
+  },
+  "bundle": {
+    "firstScreenJsKB": "535.6 → 537.1",
+    "firstScreenJsGzipKB": "181.1 → 181.6",
+    "firstScreenCssKB": "128.2 → 118.5",
+    "firstFontKB": "329.6 → 286.0",
+    "totalKB": "2222.0 → 2188.8（预算 2226.6 不放宽）",
+    "note": "首屏 CSS 删被 rewamp.css 覆盖的死声明；中文字体只留横排 OpenType 特性；周记 / 麦捆 / 田埂 / 再看 / PIN 重设全懒加载"
+  }
+}
