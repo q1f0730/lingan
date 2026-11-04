@@ -3,7 +3,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
 import { addItem, db } from '../lib/db';
-import { addDevelopment, attachResult, setDevStatus, setFollowups } from '../lib/repo';
+import { addDevelopment, attachResult, setDevStatus, setFollowups, setSurprise } from '../lib/repo';
 import { askFollowup, childDevelopment, regraft, REGRAFT_LABEL, resultItem, STATUS_LABEL, STATUS_ORDER, statusOf, withFollowup } from '../lib/branchplus';
 import { compressImage } from '../lib/image';
 import { aiVisible } from '../lib/privacy';
@@ -13,6 +13,7 @@ import type { BranchStatus, Development, Idea, Item, RegraftKind } from '../lib/
 import { WILD_TEMP } from '../lib/constraints';
 import { IdeaCard } from './IdeaCard';
 import '../styles/v030.css';
+import '../styles/v042.css';
 
 /** 「用了什么约束」：斜策略 / 硬约束 / 野一点 / 亲手挑的张力 */
 export function ConstraintsUsed({ idea }: { idea: Idea }) {
@@ -38,6 +39,7 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
   const [q, setQ] = useState('');
   const file = useRef<HTMLInputElement>(null);
   const st = statusOf(dev);
+  const [now] = useState(() => Date.now());
   // 私密穗 + 云端模型：不发出去，走离线
   const cloudOk = aiReady(settings) && items.every((x) => aiVisible(x, settings));
   const setStatus = async (s: BranchStatus) => {
@@ -92,6 +94,18 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
   }
   return (
     <div className="branch-more" data-status={st}>
+      {/* v0.42 ROADMAP v0.32 这根新枝怎么样：意外程度 1–5（再点一次取消） */}
+      <div className="idea-rate" role="radiogroup" aria-label="意外程度">
+        <span className="label">有多意外</span>
+        <div className="seg rate-seg">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button key={n} role="radio" aria-checked={dev.surprise === n} className={dev.surprise === n ? 'on' : ''} data-n={n} onClick={() => void setSurprise(dev.id, dev.surprise === n ? undefined : n)} title={n === 1 ? '早就想到了' : n === 5 ? '完全没想到' : undefined}>
+              {n}
+            </button>
+          ))}
+        </div>
+        <span className="rate-hint meta-text">{dev.surprise ? (dev.surprise >= 4 ? '没想到' : dev.surprise <= 2 ? '意料之中' : '有点意外') : '1 早想到了 · 5 完全没想到'}</span>
+      </div>
       <div className="idea-status" role="radiogroup" aria-label="做了吗">
         <span className="label">做了吗</span>
         <div className="seg status-seg">
@@ -110,6 +124,8 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
           </>
         )}
         {dev.resultUids?.length ? <span className="result-n meta-text">结果 {dev.resultUids.length} 穗</span> : null}
+        {/* v0.42 0221 停在这一档几天了 */}
+        {st !== 'dropped' && <span className="stay-n meta-text">「{STATUS_LABEL[st]}」第 {Math.max(0, Math.floor((now - (dev.statusAt || dev.createdAt)) / 86400000)) + 1} 天</span>}
       </div>
       {depth < 3 && (
         <div className="idea-regraft">
@@ -121,6 +137,11 @@ export function BranchMore({ dev, depth }: { dev: Development & { id: number }; 
           ))}
         </div>
       )}
+      {/* v0.42 可复现：模型 / 提示词版本 */}
+      <p className="idea-made meta-text">
+        {dev.source === 'ai' ? `模型 ${dev.batch?.model || '没记下'}` : '离线嫁接'} · 提示词 {dev.batch?.prompt || '早先的'}
+        {dev.batch?.draw ? ` · ${dev.batch.draw}` : ''}
+      </p>
       <div className="idea-ask">
         {(dev.followups || []).map((f, i) => (
           <div key={i} className="followup" data-source={f.source}>
