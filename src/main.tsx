@@ -52,6 +52,15 @@ function boot() {
     const { renderDbFailure } = await import('./views/DbFailure');
     renderDbFailure(root, e);
   });
+  // v0.44 0741：桌面版窗口在首帧画完后才亮出来（Rust main_ready；不再先闪一下白窗，5 秒兜底）。
+  // 0563：返回「这次是开机自启、只进托盘」→ 下面几样后台活（自动备份 / 同步 / 补链接 / 提醒）整体再晚 60 秒，不和开机抢资源
+  const quiet: Promise<number> = isTauriEnv()
+    ? afterFirstPaint(800)
+        .then(() => import('@tauri-apps/api/core'))
+        .then((c) => c.invoke<boolean>('main_ready'))
+        .then((h) => (h ? 60000 : 0), () => 0)
+    : Promise.resolve(0);
+  const later = (ms: number) => afterFirstPaint(3000).then(() => quiet).then((q) => new Promise((r) => setTimeout(r, ms + q)));
   if (safe) return; // 安全模式：不跑后台任务，不预取
   // v0.13：首屏之后在空闲时补缩略图（旧图迁移、新图入库）
   startThumbJob();
@@ -71,14 +80,12 @@ function boot() {
     });
   // v0.26 0606 / 0508：桌面与安卓每天一次自动备份（库没变就跳过），启动 20 秒后空闲时才加载
   if (isTauriEnv())
-    void afterFirstPaint(3000)
-      .then(() => new Promise((r) => setTimeout(r, 20000)))
+    void later(20000)
       .then(() => import('./lib/autobackup').then((m) => m.autoBackupTick(__APP_VERSION__)).catch((e) => logError(e, 'error', { view: 'autobackup' })));
   // v0.31：开着同步才加载同步引擎（启动 6 秒后、空闲时），否则首屏和后台都不碰它
   // v0.32：局域网直连（glean.lan.v1）同理：电脑开柜子、手机定时找电脑
   if (localStorage.getItem('glean.sync.v1') || localStorage.getItem('glean.lan.v1'))
-    void afterFirstPaint(3000)
-      .then(() => new Promise((r) => setTimeout(r, 6000)))
+    void later(6000)
       .then(() =>
         import('./lib/sync').then((m) => {
           if (localStorage.getItem('glean.sync.v1')) m.startAutoSync(__APP_VERSION__);
@@ -88,14 +95,12 @@ function boot() {
       .catch((e) => logError(e, 'error', { view: 'sync' }));
   // v0.39 0054 有待补的链接 / 0804 有订阅源：启动 8 秒后空闲时才加载（都没有就不碰）
   if (+(localStorage.getItem('glean.metatodo') || 0) > 0 || localStorage.getItem('glean.feeds.n'))
-    void afterFirstPaint(3000)
-      .then(() => new Promise((r) => setTimeout(r, 8000)))
+    void later(8000)
       .then(() => import('./lib/linkretry').then((m) => m.backgroundTick()))
       .catch((e) => logError(e, 'error', { view: 'linkretry' }));
   // v0.43 0639 / 0631：一天看一次「多久没备份 / 存储快满」（启动 18 秒后空闲时才加载 nudge，平时不碰）
   if (+(localStorage.getItem('glean.nudge.next') || 0) < Date.now())
-    void afterFirstPaint(3000)
-      .then(() => new Promise((r) => setTimeout(r, +(localStorage.getItem('glean.nudge.wait') || 15000))))
+    void later(+(localStorage.getItem('glean.nudge.wait') || 15000))
       .then(() => import('./lib/nudge').then((m) => m.nudgeTick(async () => ({ items: await db.items.count(), oldest: (await db.items.orderBy('createdAt').first())?.createdAt ?? Date.now() }))))
       .catch((e) => logError(e, 'error', { view: 'nudge' }));
   // v0.20：其余四页的包在穗仓首屏画完之后预取
