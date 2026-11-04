@@ -7,7 +7,7 @@ const DAY = 86400000;
 type It = Pick<Item, 'createdAt' | 'tags' | 'type'> & Partial<Item>;
 
 /** 口味页 / 热力图 / 麦捆共用的口径：没删、不是「我讨厌的」、没上锁 */
-export const fieldItems = <T extends Partial<Item>>(a: T[]) => a.filter((x) => !x.deletedAt && x.polarity !== -1 && !x.locked);
+export const fieldItems = <T extends Partial<Item>>(a: T[]) => a.filter((x) => !x.deletedAt && x.polarity !== -1 && !x.locked && !x.sealUntil);
 
 const count = <K>(a: K[]) => {
   const m = new Map<K, number>();
