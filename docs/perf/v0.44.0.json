@@ -19,7 +19,122 @@
   "scroll": "masonry 60fps p95 16.8ms jank 0% · 4x 60fps · timeline / list 60fps",
   "note": "InstaBox 整套 e2e ALL PASS（/tmp/e2e44.out），单次数字只作参考，跨会话不比"
  },
- "interleavedBench": "pending",
+ "interleavedBench": {
+  "script": "e2e/bench5.mjs (painted)，InstaBox 4502=d43c app-C-hgJCX6 / 4510=d44 app-CTJ-fH-y（新端口，哈希已核对）",
+  "rounds": 9,
+  "run1": {
+   "v043": {
+    "normalMedian": 189,
+    "cpu4xMedian": 574,
+    "normalRuns": [
+     200,
+     193,
+     177,
+     189,
+     175,
+     206,
+     194,
+     184,
+     182
+    ],
+    "cpu4xRuns": [
+     612,
+     567,
+     551,
+     552,
+     528,
+     595,
+     606,
+     574,
+     588
+    ]
+   },
+   "v044": {
+    "normalMedian": 194,
+    "cpu4xMedian": 565,
+    "normalRuns": [
+     192,
+     179,
+     186,
+     206,
+     209,
+     194,
+     195,
+     193,
+     198
+    ],
+    "cpu4xRuns": [
+     620,
+     590,
+     549,
+     539,
+     548,
+     584,
+     619,
+     548,
+     565
+    ]
+   }
+  },
+  "run2_reversedOrder": {
+   "v044": {
+    "normalMedian": 195,
+    "cpu4xMedian": 577,
+    "normalRuns": [
+     181,
+     211,
+     195,
+     182,
+     207,
+     196,
+     182,
+     182,
+     198
+    ],
+    "cpu4xRuns": [
+     544,
+     612,
+     549,
+     587,
+     638,
+     552,
+     602,
+     561,
+     577
+    ]
+   },
+   "v043": {
+    "normalMedian": 205,
+    "cpu4xMedian": 614,
+    "normalRuns": [
+     191,
+     199,
+     236,
+     205,
+     208,
+     206,
+     207,
+     181,
+     202
+    ],
+    "cpu4xRuns": [
+     642,
+     614,
+     640,
+     628,
+     645,
+     583,
+     595,
+     614,
+     552
+    ]
+   }
+  },
+  "perfGate": [
+   "run1 普通 189→194（+2.6%，z=1.24）、4× 574→565（−1.6%）OK",
+   "run2 普通 205→195（−4.9%）、4× 614→577（−6.0%）OK"
+  ]
+ },
  "bundle": {
   "firstScreenJsKB": "528.1 → 528.6",
   "firstScreenCssKB": "118.5 → 118.5",
