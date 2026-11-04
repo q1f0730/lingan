@@ -43,30 +43,29 @@ export function emptyDraft(type: ItemType = 'idea'): Draft {
 }
 
 export function CaptureForm({ initial, onSave, onCancel, saving, editing, onDelete }: { initial: Draft; onSave: (d: Draft) => void; onCancel: () => void; saving?: boolean; editing?: boolean; onDelete?: () => void }) {
-  const [d, setD] = useState<Draft>(initial);
-  const [tagText, setTagText] = useState(initial.tags.join(' '));
+  // 新建速记：打开时恢复上次没存的草稿。v0.43：在首次渲染里就读（只读不删），表单一出现就是草稿——
+  // 之前在 useEffect 里恢复，表单先画一帧空的、等被动副作用跑完才填上；机器忙时这个空窗变大，
+  // 整套 e2e 偶发「form draft not restored」（v0.39 / v0.43 各撞过一次）就是在空窗里读到了空表单
+  const [boot] = useState(() => {
+    if (editing || !isBlank(initial)) return null;
+    const o = readFormDraft();
+    if (!o) return null;
+    const { tags, ...rest } = o;
+    return { d: { ...initial, ...rest } as Draft, tags, more: !!(rest.why || tags) };
+  });
+  const [d, setD] = useState<Draft>(() => boot?.d ?? initial);
+  const [tagText, setTagText] = useState(() => boot?.tags ?? initial.tags.join(' '));
   const tagRef = useRef<HTMLInputElement>(null);
   const tagSug = useTagSuggest(tagText, setTagText, tagRef, { bare: true });
   const [err, setErr] = useState('');
   const [imgBusy, setImgBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [sniff, setSniff] = useState<'' | 'busy' | 'ok' | 'fail'>('');
-  const [more, setMore] = useState(!!(initial.why || initial.tags.length || initial.polarity || initial.private || initial.locked));
+  const [more, setMore] = useState(() => !!(boot?.more || initial.why || initial.tags.length || initial.polarity || initial.private || initial.locked));
   const np = useNowPlaying();
-  const [restored, setRestored] = useState(false);
+  const [restored, setRestored] = useState(!!boot);
   const writer = useRef(draftWriter(DRAFT_KEY));
-  // 新建速记：打开时恢复上次没存的草稿；之后每次改动防抖写回
-  useEffect(() => {
-    if (editing || !isBlank(initial)) return;
-    const o = readFormDraft();
-    if (!o) return;
-    const { tags, ...rest } = o;
-    setD((x) => ({ ...x, ...rest }));
-    if (tags) setTagText(tags);
-    if (rest.why || tags) setMore(true);
-    setRestored(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // 之后每次改动防抖写回
   useEffect(() => {
     if (editing) return;
     const o: DraftText = {};
