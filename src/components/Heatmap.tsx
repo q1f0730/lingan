@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildHeatmap, itemsOnDay } from '../lib/heatmap';
 import { formatWhen } from '../lib/quick';
+import { isFallow, type Fallow } from '../lib/review';
 import { useApp } from '../lib/store';
 import { TYPE_LABEL, type Item } from '../lib/types';
 
 const ROW_LABELS = ['一', '', '三', '', '五', '', '日'];
 
-export function HeatmapPanel({ items }: { items: Item[] }) {
+export function HeatmapPanel({ items, fallow = [] }: { items: Item[]; fallow?: Fallow }) {
   const { openItem } = useApp();
   const h = useMemo(() => buildHeatmap(items), [items]);
   const [sel, setSel] = useState<string | null>(null);
@@ -42,9 +43,9 @@ export function HeatmapPanel({ items }: { items: Item[] }) {
               <button
                 key={c.key}
                 role="gridcell"
-                className={`heat-cell lv${c.level}${sel === c.key ? ' sel' : ''}`}
+                className={`heat-cell lv${c.level}${sel === c.key ? ' sel' : ''}${!c.count && isFallow(c.key, fallow) ? ' fallow' : ''}`}
                 style={{ gridColumn: c.col + 1, gridRow: c.row + 1 }}
-                title={`${c.key} · ${c.count} 穗`}
+                title={`${c.key} · ${c.count} 穗${isFallow(c.key, fallow) ? ' · 休耕' : ''}`}
                 aria-label={`${c.key}，${c.count} 穗`}
                 onClick={() => setSel(sel === c.key ? null : c.key)}
               />
