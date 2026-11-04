@@ -20,6 +20,7 @@ import type { Item } from '../types';
 import { fieldHlc, fromSRow, mergeS, sameS, SKIP, toSRow, type Purge, type SRow } from './merge';
 import type { SyncKey } from './crypto';
 import type { SyncTransport } from './transport';
+import { syncPrefs, type PrefStore } from './prefs';
 
 export const OP_ROWS = 400;
 export const SNAP_EVERY = 40;
@@ -51,6 +52,9 @@ export interface SyncState {
   mark?: string;
   /** v0.32 上次把每台设备的目录都列过一遍的时间 */
   listedAt?: number;
+  /** v0.44 配方 / 智能穗束：我上传过的登记表指纹、合并过的各设备指纹 */
+  prefsUp?: string;
+  prefsTags?: Record<string, string>;
 }
 /** v0.32 每台设备的回执 */
 export interface DevInfo {
@@ -64,6 +68,8 @@ export interface DevInfo {
   /** 它合并到了每台设备的第几包 */
   seen: Record<string, number>;
   snapSeq?: number;
+  /** v0.44 它的配方 / 智能穗束登记表指纹（变了才去下 prefs/<设备>.json） */
+  pv?: string;
 }
 export const freshState = (): SyncState => ({ seq: null, pushed: HLC_ZERO, seen: {} });
 
@@ -86,6 +92,8 @@ export interface SyncStats {
   skippedLists: number;
   /** v0.32 因为中间的包被清掉、改读那台设备全库快照的次数 */
   gapSnaps: number;
+  /** v0.44 配方 / 智能穗束本机变了几条 */
+  prefs?: number;
 }
 export interface SyncCtx {
   d?: LinganDB;
@@ -99,6 +107,8 @@ export interface SyncCtx {
   now?: number;
   /** v0.32 写回执用：这台设备叫什么、什么平台、App 版本 */
   info?: { name: string; plat: string; app?: string };
+  /** v0.44 配方 / 智能穗束读写的地方（默认 localStorage；多设备单测各给一份） */
+  prefsStore?: PrefStore;
 }
 
 interface OpFile {
@@ -453,10 +463,10 @@ export async function writeAck(ctx: SyncCtx, gone?: Set<string>): Promise<void> 
   const st = ctx.state;
   if (st.seq == null) return;
   const path = `dev/${dev}.json`;
-  const info: DevInfo = { dev, name: ctx.info?.name || dev.slice(-4), plat: ctx.info?.plat || '', app: ctx.info?.app, at: ctx.now ?? Date.now(), seq: st.seq - 1, seen: { ...st.seen }, snapSeq: st.snapSeq };
+  const info: DevInfo = { dev, name: ctx.info?.name || dev.slice(-4), plat: ctx.info?.plat || '', app: ctx.info?.app, at: ctx.now ?? Date.now(), seq: st.seq - 1, seen: { ...st.seen }, snapSeq: st.snapSeq, ...(st.prefsUp ? { pv: st.prefsUp } : {}) };
   // 0659 少发请求：进度、名字、版本都没变且上一份回执不到 1 小时，就不重写
   const prev = st.devs?.[dev];
-  const same = prev && prev.seq === info.seq && prev.snapSeq === info.snapSeq && prev.name === info.name && prev.app === info.app && JSON.stringify(prev.seen) === JSON.stringify(info.seen);
+  const same = prev && prev.seq === info.seq && prev.snapSeq === info.snapSeq && prev.name === info.name && prev.app === info.app && prev.pv === info.pv && JSON.stringify(prev.seen) === JSON.stringify(info.seen);
   if (!(same && info.at - prev.at < 3_600_000 && !gone?.has(dev))) {
     await ctx.tr.put(path, await ctx.key.sealJson(info, path));
     st.devs = { ...(st.devs || {}), [dev]: info };
@@ -654,6 +664,7 @@ export async function syncOnce(ctx: SyncCtx, opts: { compactNow?: boolean } = {}
   await push(ctx, stats);
   const known = await readDevs(ctx);
   await pull(ctx, stats, since, known);
+  stats.prefs = await syncPrefs({ tr: ctx.tr, key: ctx.key, dev: ctx.dev || getDeviceId(), state: ctx.state, pv: new Map([...known.devs].map(([k, v]) => [k, v.pv])), store: ctx.prefsStore, now: ctx.now });
   const snapped = await maybeSnapshot(ctx, !!opts.compactNow);
   if (snapped || opts.compactNow) stats.compacted = await compact(ctx, known);
   await writeAck(ctx, known.gone);
