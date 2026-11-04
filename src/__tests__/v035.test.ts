@@ -1,14 +1,14 @@
 // v0.35 拾穗 · 认得出常用 App + 把旧仓库搬进来：0012 短链展开 / 0803 B 站时间点 / 0062 播客 / 0063 0064 平台识别 / ROADMAP v0.27 分享文案（5 平台各 3 条）/
 // 0016 再次遇见 / 0014 0802 0817 豆瓣 CSV·xlsx / ROADMAP v0.28 flomo·书签·纯文本 / 0049 Kindle·微信读书 / 0065 导入穗束 / 拼音字表紧凑编码
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseQuick } from '../lib/quick';
 import { biliId, biliMeta, clock, isShort, timeMark } from '../lib/platforms';
 import { fetchLinkMeta, guessType } from '../lib/linkmeta';
 import { dupKeys, mergedPatch } from '../lib/dupe';
 import { addItem, db, findDupes, mergeInto } from '../lib/db';
 import { bookmarkItems, csvRows, flomoItems, kindleItems, parseFile, parseWhen, plainItems, planMoveIn, runMoveIn, tableItems, wereadItems } from '../lib/importers';
-import { gb2312Chars, readingsOf, toPinyin } from '../lib/pinyin';
+import { gb2312Chars, readingsOf, toPinyin, ready as pinyinReady } from '../lib/pinyin';
 import type { Item } from '../lib/types';
 
 function memStorage(): Storage {
@@ -44,6 +44,9 @@ const SHARES: Array<[string, string, Item['type'] | null, string?]> = [
   ['【旧胶片调色思路】😆 Kp3mNq 😆 http://xhslink.com/a/xyZ9，复制本条信息，打开【小红书】App查看精彩内容！', '旧胶片调色思路', 'link'],
   ['62 北海道的雪发布了一篇小红书笔记，快来看吧！ 😆 ZtUbn9pQ8q 😆 http://xhslink.com/a/AbCdEf，复制本条信息，打开【小红书】App查看精彩内容！', '（这种格式文案里没有标题，要联网抓）', 'link'],
 ];
+
+// v0.42 拼音字表压缩进包，先解开
+beforeAll(() => pinyinReady);
 
 describe('ROADMAP v0.27 认得出常用 App', () => {
   it('5 平台各 3 条分享文案：主标题 + 类型 ≥ 13/15（b23 短链的类型要展开后才知道，见下一条）', () => {
