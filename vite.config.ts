@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'node:fs';
+import { hashWasmPack } from './scripts/wasmpack.mjs';
 
 const pkg = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), hashWasmPack()],
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   clearScreen: false,
   server: { port: 5173, strictPort: true, host: process.env.TAURI_DEV_HOST || false },
