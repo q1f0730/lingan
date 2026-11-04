@@ -22,7 +22,7 @@ type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 's
  * v0.27 0411：长按卡片（手机）或右键（电脑）弹出上下文菜单：打开 / 编辑 / 拿去嫁接 / 复制文字 / 复制链接 / 删掉。
  * 认 `[data-item-id]`（网格卡、列表行、时间线帧、月历行），有弹层时不出。
  */
-export function CardMenu({ blocked, onAct, early }: { blocked: boolean; early?: { el: Element; x: number; y: number } | null; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket' | 'share' | 'garden'>, it: Item) => void }) {
+export function CardMenu({ blocked, onAct, early, onLive }: { blocked: boolean; early?: { id: number; x: number; y: number; n: number } | null; onLive?: () => void; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket' | 'share' | 'garden'>, it: Item) => void }) {
   const { toast, desktop } = useApp();
   const [st, setSt] = useState<{ it: Item; x: number; y: number } | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -30,6 +30,7 @@ export function CardMenu({ blocked, onAct, early }: { blocked: boolean; early?: 
   const blockedRef = useRef(blocked);
   blockedRef.current = blocked;
   const lastOpen = useRef(0);
+  const openRef = useRef<(id: number, x: number, y: number) => void>(() => {});
 
   useEffect(() => {
     const hit = (t: EventTarget | null) => {
@@ -45,6 +46,7 @@ export function CardMenu({ blocked, onAct, early }: { blocked: boolean; early?: 
       setPos(null);
       setSt({ it, x, y });
     };
+    openRef.current = (id, x, y) => void open(id, x, y);
     const onCtx = (e: MouseEvent) => {
       const id = hit(e.target);
       if (id == null || blockedRef.current) return;
@@ -103,9 +105,11 @@ export function CardMenu({ blocked, onAct, early }: { blocked: boolean; early?: 
       document.removeEventListener('click', onClick, true);
     };
   }, []);
-  // v0.40：菜单还没挂上时就右键的那一下（App 先拦下记住），挂上后补发一次
+  // 上面的监听已挂好（同一组件里副作用按声明顺序执行）：从这一刻起右键归这里管，App 不再代收
+  useEffect(() => onLive?.(), [onLive]);
+  // v0.40：菜单开始监听之前右键的那一下（App 先拦下、按穗 id 记住），挂上后直接补开（不再对当时的 DOM 节点补发事件：卡片可能已经重画过）
   useEffect(() => {
-    if (early) early.el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: early.x, clientY: early.y }));
+    if (early) openRef.current(early.id, early.x, early.y);
   }, [early]);
 
   useEffect(() => {
