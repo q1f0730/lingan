@@ -35,3 +35,14 @@ export function useApp(): AppCtx {
   if (!c) throw new Error('no ctx');
   return c;
 }
+
+/** v0.42 0421 从新枝点进穗：详情顶上显示「← 回到新枝 03」（只对这根新枝的那几穗有效；详情关掉就清） */
+export interface FromBranch {
+  dev: number;
+  n: string;
+  title: string;
+  ids: number[];
+}
+let fromB: FromBranch | null = null;
+export const setFromBranch = (v: FromBranch | null) => void (fromB = v);
+export const fromBranch = (id: number | undefined): FromBranch | null => (fromB && id != null && fromB.ids.includes(id) ? fromB : null);
