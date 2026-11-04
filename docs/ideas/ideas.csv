@@ -536,7 +536,7 @@
 0535,C2 平台与系统集成,安卓系统,速记「拍」直接调起系统相机，拍完即成穗,看到海报、街景时，开相机→相册→分享太慢,ACTION_IMAGE_CAPTURE 写入 App 私有 FileProvider URI，回调直接入库，可选同时存相册,4,S,P1,待做,
 0536,C2 平台与系统集成,安卓系统,新截图出现时提示「收进拾穗？」（默认关）,截完图大多数会忘在相册里,ContentObserver 监听 MediaStore Screenshots，App 在前台或常驻通知开启时弹一行提示,4,M,P1,待做,
 0537,C2 平台与系统集成,安卓系统,配置系统备份规则，换机时数据跟着走,换手机用互传 / 云备份时，WebView 里的 IndexedDB 可能丢,allowBackup + dataExtractionRules 包含 app_webview 与图片目录；同时提示用导出备份兜底,4,S,P1,待做,
-0538,C2 平台与系统集成,Windows 托盘,托盘菜单加「从剪贴板拾」「暂停剪贴板提示 1 小时」,复制了一段东西右键托盘就收；整理资料时不想被提示打扰,tray menu 新项调用剪贴板读取并入库；暂停写 settings.clipPauseUntil,4,S,P1,待做,
+0538,C2 平台与系统集成,Windows 托盘,托盘菜单加「从剪贴板拾」「暂停剪贴板提示 1 小时」,复制了一段东西右键托盘就收；整理资料时不想被提示打扰,tray menu 新项调用剪贴板读取并入库；暂停写 settings.clipPauseUntil,4,S,P1,已做,v0.44.0
 0539,C2 平台与系统集成,Windows 托盘,任务栏跳转列表：拾一穗 / 今日一穗 / 搜索,任务栏右键是 Windows 用户最熟的快捷入口,运行时用 ICustomDestinationList 写 Tasks，参数走 glean:// 深链,4,S,P1,待做,
 0540,C2 平台与系统集成,右键菜单,文件资源管理器右键「拾进拾穗」,电脑里的图片、文档想收进来，右键是最自然的,"NSIS 安装时写 HKCU\Software\Classes\*\shell\Glean，命令 Glean.exe --capture ""%1""；卸载时清除",4,M,P1,待做,
 0541,C2 平台与系统集成,右键菜单,书签小工具：点一下把当前网页发给拾穗,不想装扩展的人也有一键收网页的办法,设置页提供可拖到书签栏的链接，打开 glean://capture?url=&title=&sel=,4,S,P1,待做,
@@ -559,13 +559,13 @@
 0558,C2 平台与系统集成,vivo 特性,OriginOS 安装 APK 的风险提示说明 + 公示签名指纹,自签名 APK 在 vivo 上会被提示风险应用，新用户以为是病毒,发布页写清 OriginOS 安装步骤，公布 SHA-256 签名指纹；App 关于页显示同一指纹供核对,3,S,P1,待做,
 0559,C2 平台与系统集成,安卓系统,选图改用 Android Photo Picker，无需存储权限,隐私敏感用户看到存储权限会犹豫,调用 PickVisualMedia（Android 13+），旧版本回落 GET_CONTENT,3,S,P1,待做,
 0560,C2 平台与系统集成,安卓系统,16KB 内存页兼容检查,新安卓机和应用商店逐步要求 16KB 页对齐，原生库不对齐会闪退,CI 加 zipalign -P 16 与 readelf 对齐检查，Rust 链接加 max-page-size=16384,3,S,P1,待做,
-0561,C2 平台与系统集成,Windows 托盘,第一次关窗口时提示「拾穗还在托盘里」,关闭后常驻托盘，很多人以为退出了或找不到入口,首次 CloseRequested 时发系统通知一次，设置给「关闭即退出」选项,3,S,P1,待做,
-0562,C2 平台与系统集成,全局热键,热键唤起的小窗出现在鼠标所在的显示器,双屏时小窗总在主屏弹，目光要跨屏,取光标坐标所在显示器，小窗居中于该屏工作区,3,S,P1,待做,
-0563,C2 平台与系统集成,开机启动,开机后延迟再做补索引和缩略图任务,开机时抢 CPU 和磁盘会让人觉得拾穗拖慢电脑,--hidden 启动时后台任务延迟 30 秒并在空闲时跑,3,S,P1,待做,
+0561,C2 平台与系统集成,Windows 托盘,第一次关窗口时提示「拾穗还在托盘里」,关闭后常驻托盘，很多人以为退出了或找不到入口,首次 CloseRequested 时发系统通知一次，设置给「关闭即退出」选项,3,S,P1,已做,v0.44.0
+0562,C2 平台与系统集成,全局热键,热键唤起的小窗出现在鼠标所在的显示器,双屏时小窗总在主屏弹，目光要跨屏,取光标坐标所在显示器，小窗居中于该屏工作区,3,S,P1,已做,v0.44.0
+0563,C2 平台与系统集成,开机启动,开机后延迟再做补索引和缩略图任务,开机时抢 CPU 和磁盘会让人觉得拾穗拖慢电脑,--hidden 启动时后台任务延迟 30 秒并在空闲时跑,3,S,P1,已做,v0.44.0
 0564,C2 平台与系统集成,跨端同步,设置里显示同步状态：上次时间、传了几条、失败原因,同步出问题时用户完全不知道，只会觉得数据不一样,sync log 存最近 20 次结果，设置页无线表格显示，失败项可重试,3,S,P1,已做,v0.32.0
-0565,C2 平台与系统集成,Tauri 插件,接入 tauri-plugin-window-state 记住窗口大小位置,每次打开回到 1100×760 屏幕中间,插件保存 main 与速记小窗状态，拔掉副屏时回到主屏,3,S,P1,待做,
+0565,C2 平台与系统集成,Tauri 插件,接入 tauri-plugin-window-state 记住窗口大小位置,每次打开回到 1100×760 屏幕中间,插件保存 main 与速记小窗状态，拔掉副屏时回到主屏,3,S,P1,已做,v0.44.0
 0566,C2 平台与系统集成,Tauri 插件,设置存到 tauri-plugin-store，与 WebView 数据分离,清 WebView 缓存或清理加速时设置和 key 一起没了,settings 双写：store 为主、IndexedDB 为缓存；启动以 store 为准,3,S,P1,待做,
-0567,C2 平台与系统集成,安卓,安卓「最近应用」卡片隐藏敏感内容（FLAG_SECURE 可选），锁穗时自动开启,私密灵感不在多任务界面露出,设置开关 + 有锁穗时强制，Tauri 安卓插件调用 Window flags,3,S,P1,待做,
+0567,C2 平台与系统集成,安卓,安卓「最近应用」卡片隐藏敏感内容（FLAG_SECURE 可选），锁穗时自动开启,私密灵感不在多任务界面露出,设置开关 + 有锁穗时强制，Tauri 安卓插件调用 Window flags,3,S,P1,已做,v0.44.0
 0568,C2 平台与系统集成,Windows,Windows 跳转列表（任务栏右键）：速记、嫁接、最近 5 穗,桌面一步到位,ICustomDestinationList，走 glean:// 深链,3,S,P1,待做,
 0569,C2 平台与系统集成,全局热键,热键存穗时自动带上当前窗口标题和浏览器网址作来源,事后看到一句摘抄，最想知道它出自哪里,GetForegroundWindow 取标题与进程名；Edge/Chrome 用 UI Automation 读地址栏；读不到只存标题,4,L,P2,待做,
 0570,C2 平台与系统集成,通知,今日一穗通知带动作按钮：「嫁接这 4 穗」「明天再说」,路线图里的到点推送只是打开 App；动作按钮能在通知里就决定,通知 action 用 PendingIntent，「嫁接」深链进嫁接页预选，「明天再说」只关闭并记 snooze,3,S,P2,待做,
@@ -716,7 +716,7 @@
 0715,D2 工程质量、性能与发布,启动,10k 穗冷启动基准纳入 docs/perf,长期使用必然过千，1000 穗基准掩盖了线性退化,perf json 增加 10k 档（含 3000 图）；release notes 表格同时给 1k/10k,4,S,P1,已做,v0.37.0
 0716,D2 工程质量、性能与发布,包体,去掉或懒载 framer-motion,v0.16 起动效只剩淡入 + 慢放大 3%，却仍有 11 个文件引用 framer-motion，主包 507KB,用 CSS transition + IntersectionObserver 替代；确有需要处用 LazyMotion + domAnimation；对比前后体积,4,S,P1,待做,
 0717,D2 工程质量、性能与发布,包体,安卓 APK 按 ABI 拆分，主推 arm64,现在 aarch64+armv7 打进一个 apk，体积接近翻倍；用户的 vivo X300 Pro 是 arm64,tauri android build --split-per-abi；release 附 arm64 与 armv7 两个 apk，说明里写怎么选,4,S,P1,待做,
-0718,D2 工程质量、性能与发布,包体,Rust release profile 优化,Cargo.toml 没有 [profile.release]，Windows 安装包和 apk 里的 so 都偏大,"lto=true、codegen-units=1、opt-level=""s""、strip=true、panic=""abort""；记录前后体积",4,S,P1,待做,
+0718,D2 工程质量、性能与发布,包体,Rust release profile 优化,Cargo.toml 没有 [profile.release]，Windows 安装包和 apk 里的 so 都偏大,"lto=true、codegen-units=1、opt-level=""s""、strip=true、panic=""abort""；记录前后体积",4,S,P1,已做,v0.44.0
 0719,D2 工程质量、性能与发布,包体,WebView2 安装方式适配国内网络,downloadBootstrapper 要现场连微软 CDN，国内或离线机器装不上,额外产出 offlineInstaller 版或改 embedBootstrapper；release 说明标明「离线完整版」,4,S,P1,待做,
 0720,D2 工程质量、性能与发布,渲染,口味统计、热力图、相似度计算移入 Web Worker,taste/heatmap/modes 在主线程全量计算，库大了切页会卡,Comlink 或原生 postMessage；Worker 内也用 Dexie 读；主线程只收结果,4,M,P1,待做,
 0721,D2 工程质量、性能与发布,渲染,接法抽样避免 O(n²) 相似度,相近/远距每换一穗都算与已选的平均相似度，全库扫描在 1 万穗时明显卡,先按类型/标签取 500 候选池再算；缓存每穗特征向量；放 Worker；单测保持抽样性质不变,4,M,P1,待做,
@@ -739,13 +739,13 @@
 0738,D2 工程质量、性能与发布,可观测性,统一后台任务调度器,thumbJob、ftsync 各自 setTimeout/idle，再加同步、向量、自动备份会互相抢资源,lib/scheduler.ts：优先级队列、并发上限、暂停/恢复、状态订阅；现有任务迁入,4,M,P1,待做,
 0739,D2 工程质量、性能与发布,发布质量,一键发版前检查 tools/preflight.sh,RELEASE_RUNBOOK 7 步质量门靠人记，容易漏 e2e 或版本号,脚本依次跑 tsc/vitest/build/本地 e2e/体积预算/版本一致/notes 存在，全过才打印可发,4,S,P1,已做,v0.37.0
 0740,D2 工程质量、性能与发布,启动,启动分段打点并在「关于」可见,现在 e2e 只测冷启动总时长（约 180ms），一旦变慢不知道慢在 Dexie、索引还是字体,performance.mark：脚本执行/DB open/首查/首帧/字体就绪；写入本地指标表；e2e 同时断言各段,3,S,P1,待做,
-0741,D2 工程质量、性能与发布,启动,主窗口先隐藏，首屏渲染完成再 show,WebView2 冷启动有白屏闪一下，黑主题下尤其刺眼,tauri.conf windows.visible=false；前端首帧后 getCurrentWindow().show()；超时 1.5s 强制显示,3,S,P1,待做,
+0741,D2 工程质量、性能与发布,启动,主窗口先隐藏，首屏渲染完成再 show,WebView2 冷启动有白屏闪一下，黑主题下尤其刺眼,tauri.conf windows.visible=false；前端首帧后 getCurrentWindow().show()；超时 1.5s 强制显示,3,S,P1,已做,v0.44.0
 0742,D2 工程质量、性能与发布,包体,体积预算进 CI：主 chunk 超标即失败,没有预算，体积只会越积越大,vite build 后脚本读取 dist/assets 大小；主 JS ≤350KB、首屏字体 ≤350KB；输出 visualizer 报告为 artifact,3,S,P1,已做,v0.25.0
 0743,D2 工程质量、性能与发布,渲染,搜索结果列表虚拟化,现在一次渲染 170+ 条结果，1 万穗时可能上千条，输入每个字都整列重排,复用 components/Virtual.tsx；桌面无线表格按行高估算；e2e 断言挂载行数上限,3,S,P1,待做,
 0744,D2 工程质量、性能与发布,大数据量,导出/导入大库显示进度并可取消,现在点了导出就只能干等，大库时看起来像卡死,生成器式遍历上报进度；AbortController 取消；Studio 细线进度条（无百分比装饰）,3,S,P1,待做,
 0745,D2 工程质量、性能与发布,测试,拆分 1808 行的 e2e/run.mjs,单文件越来越难维护，一处失败全部重跑，agent 改起来也容易冲突,按功能拆为 e2e/specs/*.mjs + 共享 fixtures；runner 支持只跑指定用例与并行,3,M,P1,待做,
-0746,D2 工程质量、性能与发布,崩溃上报,Rust panic hook 写崩溃文件，下次启动提示,原生层崩溃前端完全感知不到,std::panic::set_hook 写 AppData/logs/panic-*.txt；启动时检测并提示可复制,3,S,P1,待做,
-0747,D2 工程质量、性能与发布,崩溃上报,生产环境也启用 tauri-plugin-log（Warn 级、轮转）,lib.rs 只在 debug 构建启用日志，正式版出问题零记录,release 构建 LevelFilter::Warn，文件目标 + 1MB×3 轮转；前端错误也转发写入,3,S,P1,待做,
+0746,D2 工程质量、性能与发布,崩溃上报,Rust panic hook 写崩溃文件，下次启动提示,原生层崩溃前端完全感知不到,std::panic::set_hook 写 AppData/logs/panic-*.txt；启动时检测并提示可复制,3,S,P1,已做,v0.44.0
+0747,D2 工程质量、性能与发布,崩溃上报,生产环境也启用 tauri-plugin-log（Warn 级、轮转）,lib.rs 只在 debug 构建启用日志，正式版出问题零记录,release 构建 LevelFilter::Warn，文件目标 + 1MB×3 轮转；前端错误也转发写入,3,S,P1,已做,v0.44.0
 0748,D2 工程质量、性能与发布,CI/CD,release 附 SHA256SUMS 与校验说明,用户从镜像或网盘拿到的包需要能确认没被改过,CI 最后一步对全部产物 sha256sum 上传；release notes 模板加 PowerShell Get-FileHash 一行,3,S,P1,已做,v0.25.0
 0749,D2 工程质量、性能与发布,CI/CD,锁定 Rust 与 Node 工具链版本,dtolnay/rust-toolchain@stable 每次可能拿到新版本，同一 tag 重跑结果不同,加 rust-toolchain.toml 与 .nvmrc；Actions 读取这两个文件,3,S,P1,待做,
 0750,D2 工程质量、性能与发布,自动更新,更新前自动备份并展示中文更新说明,每版都可能有 Dexie 迁移，更新前留一份备份最稳妥,updater 下载完成、安装前调用自动备份；弹层显示 docs/releases 对应版本摘要,3,S,P1,已做,v0.26.0
