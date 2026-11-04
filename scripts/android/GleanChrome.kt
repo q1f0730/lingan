@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import org.json.JSONObject
@@ -75,6 +76,17 @@ class ChromeBridge(private val act: Activity) {
 
   @JavascriptInterface
   fun insets(): String = last
+
+  /** v0.44 0567：最近任务里不显示画面（也不能截屏）。前端按设置 / 有没有上锁 PIN 调 */
+  @JavascriptInterface
+  fun secure(on: Boolean) {
+    act.runOnUiThread {
+      try {
+        if (on) act.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else act.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+      } catch (e: Exception) {}
+    }
+  }
 
   @JavascriptInterface
   fun setTheme(isDark: Boolean, bg: String) {
