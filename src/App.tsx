@@ -851,6 +851,10 @@ export default function App() {
       it: cur,
       pos: seq && cur.id != null ? { i: seq.indexOf(cur.id), n: seq.length } : undefined,
       onStep: seq ? (dir: 1 | -1) => void stepDetail(dir) : undefined,
+      onClose: () => {
+        setDetail(null);
+        setPreview(null);
+      },
       onEdit: () => void editDetail(cur),
       onDelete: () => void onDelete(cur),
       onDevelop: () => developFrom([cur.id!]),
