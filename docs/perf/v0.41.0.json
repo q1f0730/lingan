@@ -1,0 +1,85 @@
+{
+  "version": "0.41.0",
+  "date": "2026-11-04",
+  "build": "app-D5ZtC_6t.js",
+  "e2e": {
+    "coldStartMs": 184,
+    "coldStartCpu4xMs": 568,
+    "searchMaxMs": 18.4,
+    "searchMedianMs": 17.1,
+    "backup": {
+      "items": 1000,
+      "images": 300,
+      "ms": 653,
+      "heapDeltaMB": 34,
+      "peakMB": 54.2
+    },
+    "restoreMs": 1006,
+    "scroll": "masonry/timeline/list 60fps jank 0%",
+    "note": "InstaBox 整套 e2e ALL PASS（dist app-D5ZtC_6t，含新组 v041 与 v040 组新增的「idle 后、菜单块到之前长按」用例）。e2e 里的冷启动是单独几次、不和旧版交替，不能跨会话比；判回归只看 interleavedBench"
+  },
+  "interleavedBench": {
+    "script": "e2e/bench5.mjs (painted)，InstaBox 4480=d40b app-6YCtVQwO / 4481=d41 app-D5ZtC_6t（新端口，哈希已核对）",
+    "rounds": 9,
+    "v040": {
+      "normalMedian": 188,
+      "cpu4xMedian": 565,
+      "normalRuns": [
+        178,
+        206,
+        201,
+        192,
+        171,
+        181,
+        173,
+        205,
+        188
+      ],
+      "cpu4xRuns": [
+        525,
+        608,
+        588,
+        542,
+        596,
+        541,
+        565,
+        583,
+        550
+      ]
+    },
+    "v041": {
+      "normalMedian": 190,
+      "cpu4xMedian": 552,
+      "normalRuns": [
+        183,
+        179,
+        200,
+        196,
+        188,
+        190,
+        209,
+        195,
+        190
+      ],
+      "cpu4xRuns": [
+        548,
+        578,
+        568,
+        552,
+        531,
+        542,
+        557,
+        589,
+        539
+      ]
+    },
+    "perfGate": "OK 普通 +1.1%（U=32.5/81，z=0.71）；4× -2.3%（U=48.5/81，z=-0.71）"
+  },
+  "bundle": {
+    "firstScreenJsKB": "537.1 → 539.0",
+    "firstScreenCssKB": "118.5 → 118.5",
+    "firstFontKB": "286.0 → 286.0",
+    "totalKB": "2188.8 → 2217.8（预算 2226.6 不放宽）",
+    "note": "首屏只多了早长按代收（App.tsx）和小窗 ? 秒搜的 lazy 入口；繁简字表 zhvar 10.8KB、QuickFind 1.6KB 都是懒加载块；命令面板 / 智能穗束 / 挑穗嫁接在 Search 块，全键盘在 CardMenu 块，漫步在 Detail 块，空地在 Taste 块"
+  }
+}
