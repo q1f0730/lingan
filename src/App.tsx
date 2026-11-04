@@ -66,6 +66,7 @@ import { Toasts, type ToastT } from './components/rw/Toasts';
 import { ThemeToggle } from './components/rw/ThemeToggle';
 import { IconSearch } from './components/rw/icons';
 import { outboundOff } from './lib/gate';
+import { LONG_PRESS_MS, MOVE_TOL } from './lib/press';
 
 /** 打开穗仓里的秒搜（侧栏 / 顶栏的搜索按钮、Ctrl+K 都走这里） */
 export const SEARCH_EVENT = 'glean:search';
@@ -156,12 +157,70 @@ export default function App() {
       setEarly((p) => ({ id, x: e.clientX, y: e.clientY, n: (p?.n || 0) + 1 }));
       on();
     };
+    // v0.41：手机长按同理——菜单监听挂上之前按住一张卡，以前要等懒加载完才有反应（按了没用）。
+    // App 自己计时，到点按穗 id 补开；按下时菜单还没 live 才接手（按到一半菜单 live 了也由这里开完，CardMenu 没看到这次按下）
+    let timer = 0;
+    let press: { x: number; y: number; id: number } | null = null;
+    let swallow = false;
+    let lastLong = 0;
+    const cancel = () => {
+      clearTimeout(timer);
+      press = null;
+    };
+    const down = (e: PointerEvent) => {
+      swallow = false;
+      if (menuLive.current || e.pointerType === 'mouse') return;
+      const el = (e.target as Element | null)?.closest?.('[data-item-id]') as HTMLElement | null;
+      if (!el || !el.closest('.main')) return;
+      const id = Number(el.dataset.itemId);
+      if (!Number.isFinite(id)) return;
+      press = { x: e.clientX, y: e.clientY, id };
+      timer = window.setTimeout(() => {
+        if (!press) return;
+        const p0 = press;
+        press = null;
+        swallow = true;
+        lastLong = Date.now();
+        navigator.vibrate?.(12);
+        setEarly((p) => ({ id: p0.id, x: p0.x, y: p0.y, n: (p?.n || 0) + 1 }));
+        on();
+      }, LONG_PRESS_MS);
+    };
+    const move = (e: PointerEvent) => {
+      if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > MOVE_TOL) cancel();
+    };
+    // 长按补开了菜单：松手那一下的 click 不能再打开详情
+    const click = (e: MouseEvent) => {
+      if (!swallow) return;
+      swallow = false;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const ctx2 = (e: MouseEvent) => {
+      // 安卓长按随后还会发 contextmenu：刚由这里开过就只拦系统菜单、不再开第二次
+      if (!menuLive.current && Date.now() - lastLong < 700 && (e.target as Element | null)?.closest?.('.main [data-item-id]')) {
+        e.preventDefault();
+        return;
+      }
+      ctx(e);
+    };
     window.addEventListener(IDLE_READY, on);
-    document.addEventListener('contextmenu', ctx);
+    document.addEventListener('contextmenu', ctx2);
+    document.addEventListener('pointerdown', down, { passive: true });
+    document.addEventListener('pointermove', move, { passive: true });
+    document.addEventListener('pointerup', cancel, { passive: true });
+    document.addEventListener('pointercancel', cancel, { passive: true });
+    document.addEventListener('click', click, true);
     const t = setTimeout(on, 4000);
     return () => {
+      cancel();
       window.removeEventListener(IDLE_READY, on);
-      document.removeEventListener('contextmenu', ctx);
+      document.removeEventListener('contextmenu', ctx2);
+      document.removeEventListener('pointerdown', down);
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', cancel);
+      document.removeEventListener('pointercancel', cancel);
+      document.removeEventListener('click', click, true);
       clearTimeout(t);
     };
   }, []);
