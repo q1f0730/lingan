@@ -1,0 +1,143 @@
+{
+ "version": "0.42.0",
+ "date": "2026-11-04",
+ "build": "app-YDKbQtx3.js",
+ "e2e": {
+  "coldStartMs": 194,
+  "coldStartCpu4xMs": 540,
+  "searchMaxMs": 20.6,
+  "searchMedianMs": 17,
+  "backup": {
+   "items": 1000,
+   "images": 300,
+   "ms": 658,
+   "heapDeltaMB": 33.6,
+   "peakMB": 43.3
+  },
+  "restoreMs": 1012,
+  "scroll": "masonry/timeline/list 60fps jank 0%",
+  "note": "InstaBox 整套 e2e ALL PASS（dist app-YDKbQtx3，含新组 v042）。e2e 里的冷启动是单独几次、不和旧版交替，不能跨会话比；判回归只看 interleavedBench"
+ },
+ "interleavedBench": {
+  "script": "e2e/bench5.mjs (painted)，InstaBox 4481=d41 app-D5ZtC_6t / 4490=d42 app-YDKbQtx3（新端口，哈希已核对）",
+  "rounds": 9,
+  "run1": {
+   "v041": {
+    "normalMedian": 182,
+    "cpu4xMedian": 550,
+    "normalRuns": [
+     195,
+     182,
+     192,
+     172,
+     190,
+     193,
+     177,
+     167,
+     182
+    ],
+    "cpu4xRuns": [
+     521,
+     656,
+     583,
+     532,
+     550,
+     538,
+     534,
+     553,
+     572
+    ]
+   },
+   "v042": {
+    "normalMedian": 190,
+    "cpu4xMedian": 570,
+    "normalRuns": [
+     188,
+     202,
+     190,
+     183,
+     209,
+     192,
+     179,
+     193,
+     175
+    ],
+    "cpu4xRuns": [
+     542,
+     558,
+     631,
+     594,
+     553,
+     570,
+     555,
+     589,
+     598
+    ]
+   },
+   "perfGate": "OK 普通 +4.4%（U=28.5/81，z=1.06）；4× +3.6%（U=21.5/81，z=1.68）"
+  },
+  "run2_swappedOrder": {
+   "v042": {
+    "normalMedian": 203,
+    "cpu4xMedian": 610,
+    "normalRuns": [
+     188,
+     203,
+     204,
+     202,
+     195,
+     205,
+     216,
+     208,
+     202
+    ],
+    "cpu4xRuns": [
+     587,
+     631,
+     634,
+     614,
+     610,
+     613,
+     574,
+     588,
+     609
+    ]
+   },
+   "v041": {
+    "normalMedian": 197,
+    "cpu4xMedian": 605,
+    "normalRuns": [
+     176,
+     193,
+     197,
+     182,
+     217,
+     202,
+     191,
+     205,
+     199
+    ],
+    "cpu4xRuns": [
+     590,
+     551,
+     618,
+     650,
+     587,
+     631,
+     625,
+     605,
+     584
+    ]
+   },
+   "perfGate": "OK 普通 +3.0%（U=24.5/81，z=1.41）；4× +0.8%（U=39/81，z=0.13）"
+  },
+  "note": "两轮都过回归门（阈值 10% 且显著才 FAIL），但两轮普通档都是 v0.42 略慢 3–4%（不显著）；首屏 JS 反而少了 12KB，暂判为噪声，下一版继续盯"
+ },
+ "bundle": {
+  "firstScreenJsKB": "539.0 → 526.9",
+  "firstScreenCssKB": "118.5 → 118.5",
+  "firstFontKB": "286.0 → 286.0",
+  "totalKB": "2217.8 → 2223.3（预算 2226.6 不放宽）",
+  "note": "瘦身：示例池 GBK+deflate 压缩包、只在放示例时懒加载（首屏 −13KB）；拼音字表 / 繁简字表 deflate 压缩进包（DecompressionStream）。新功能：graftlab（与 atoms 合成一个共享懒加载块 8.5KB）、Develop / IdeaCard / BranchMore / Taste / Detail 块小增，v042.css 0.8KB"
+ }
+}
