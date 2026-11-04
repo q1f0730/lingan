@@ -404,6 +404,8 @@ export async function exportObsidianZip(
   const now = opts.now ?? Date.now();
   const [items, developments] = await Promise.all([d.items.toArray().then((a) => a.filter((x) => !x.deletedAt)), d.developments.toArray().then((a) => a.filter((x) => !x.deletedAt))]);
   const images = new Map<number, VaultImage>();
+  // v0.43 0650 图离开本机前去掉 EXIF / GPS（只留方向；设置里可关）
+  const { stripForOut } = await import('./imgclean');
   for (const it of items) {
     if (it.id == null || (!opts.includeSamples && it.sample)) continue;
     let blob: Blob | null = null;
@@ -416,6 +418,7 @@ export async function exportObsidianZip(
         blob = null;
       }
     }
+    if (blob) blob = await stripForOut(blob);
     if (blob) images.set(it.id, { bytes: new Uint8Array(await blob.arrayBuffer()), mime: blob.type || 'image/jpeg' });
   }
   const cliches = d.cliches ? await d.cliches.toArray() : [];
