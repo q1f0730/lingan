@@ -15,6 +15,8 @@ const _newContext = b.newContext.bind(b);
 // v0.23 待理：默认开着（速记 / 分享来的穗先进待理）。老用例测的是「收了就在穗仓里」，上下文里先把待理关掉；inbox: true 的上下文（inbox() 用例）保持默认开
 // v0.37 0755：E2E_TRACE=1 时每个上下文录 Playwright trace，这个上下文期间新增了错误才存 <out>/trace-N.zip（CI 失败时作为附件上传）
 let traceN = 0;
+// v0.40：FATAL（某一步超时抛出）时上下文没走到 close，trace 会丢；没关的上下文在 FATAL 里统一存下来
+const tracing = new Map();
 b.newContext = async (opts = {}) => {
   const { onboard, inbox, ...o } = opts;
   const c = await _newContext(o);
@@ -22,8 +24,10 @@ b.newContext = async (opts = {}) => {
     const e0 = errs.length;
     const n = ++traceN;
     await c.tracing.start({ screenshots: true, snapshots: true }).catch(() => {});
+    tracing.set(c, n);
     const close = c.close.bind(c);
     c.close = async (...a) => {
+      tracing.delete(c);
       await c.tracing.stop(errs.length > e0 ? { path: `${out}/trace-${n}.zip` } : undefined).catch(() => {});
       return close(...a);
     };
@@ -5168,6 +5172,27 @@ async function v040() {
   await pg.waitForSelector('.ctxmenu', { timeout: 6000 }).catch(() => errs.push(`[${tag}] early right-click lost`));
   await pg.keyboard.press('Escape');
   await pg.waitForSelector('.ctxmenu', { state: 'detached', timeout: 3000 }).catch(() => {});
+  // 整套 e2e 的 v034 卡住的真因：idle 之后、CardMenu 块下载 / 解析完开始监听之前右键，以前这一下谁都不管（App 已不代收、菜单还没监听）。
+  // 把 CardMenu 块拖慢 1.5 秒，等 idle 之后再右键：菜单块到了要补开，而且只开一次
+  {
+    const cg = await b.newContext({ viewport: { width: 1440, height: 900 } });
+    await cg.addInitScript(() => window.addEventListener('glean:idle-ready', () => (window.__idle = 1)));
+    await cg.route(/\/assets\/CardMenu-[^/]*\.js$/, async (r) => {
+      await new Promise((ok) => setTimeout(ok, 1500));
+      await r.continue();
+    });
+    const g = await cg.newPage();
+    g.on('pageerror', (e) => errs.push(`[${tag}] pageerror(gap) ${e.message}`));
+    await g.goto(base);
+    await g.waitForSelector('text=穗仓还是空的');
+    await quickSave(g, '空隙里的一穗');
+    await g.waitForFunction(() => window.__idle === 1, null, { timeout: 8000 });
+    const before = await g.evaluate(() => !!document.querySelector('.ctxmenu'));
+    await g.locator('.main [data-item-id] >> text=空隙里的一穗').first().click({ button: 'right' });
+    await g.waitForSelector('.ctxmenu >> text=分享…', { timeout: 6000 }).catch(() => errs.push(`[${tag}] right-click between idle and menu-live lost`));
+    if (before || (await g.locator('.ctxmenu').count()) > 1) errs.push(`[${tag}] gap menu count`);
+    await cg.close();
+  }
   const waitRow = async (pred, ms = 8000) => {
     for (let t = 0; t < ms; t += 250) {
       const r = (await dbRaw(pg, 'items', true)).find(pred);
@@ -5263,7 +5288,9 @@ async function v040() {
   // 页面时钟往后拨 25 小时（单调钟没动）→ 换页再回来，仍要等
   await pg.evaluate(() => (window.__off += 25 * 3600e3));
   await pg.click('.nav-btn:has-text("穗仓")');
-  if (!(await pg.locator('.card:has-text("上锁的一穗")').count())) errs.push(`[${tag}] locked item visible during cooldown`);
+  // 换页后穗仓要重画一帧才有卡片：等「上锁的一穗」空壳出现（CI 上立刻数会数到 0），再确认真标题没露出来
+  await pg.waitForSelector('.card:has-text("上锁的一穗")', { timeout: 5000 }).catch(() => errs.push(`[${tag}] locked item visible during cooldown`));
+  if (await pg.locator('.card:has-text("这周的雾一")').count()) errs.push(`[${tag}] locked title shown during cooldown`);
   await openSettings(pg);
   await pg.click('.set-link:has-text("上锁")');
   await pg.waitForSelector('.lock-reset');
@@ -5444,6 +5471,7 @@ try {
 } catch (e) {
   if (Object.keys(PERF).length) console.log('PERF partial ' + JSON.stringify(PERF).slice(0, 600));
   if (!e.only) errs.push('FATAL ' + e.message + ' @ ' + ((e.stack || '').split('\n').find((l) => l.includes('run.mjs')) || '').trim());
+  for (const [c, n] of tracing) await c.tracing.stop({ path: `${out}/trace-${n}.zip` }).catch(() => {});
 }
 await b.close();
 if (PERF.scrollMasonryCpu4x && PERF.scrollTimeline) {
