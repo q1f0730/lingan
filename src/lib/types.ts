@@ -169,6 +169,11 @@ export interface GraftBatch {
   mainstream?: string;
   /** v0.30 每次调用用的温度（野一点时第一步是 1.5） */
   temps?: number[];
+  /** v0.42 ROADMAP v0.32 可复现：用的模型（离线 = 无）、提示词版本（graft.ts PROMPT_V）；每根都存一份 */
+  model?: string;
+  prompt?: string;
+  /** v0.42 0214 / 0217 特别抽法：时间差 / 标签对撞（抽到的说明） */
+  draw?: string;
 }
 
 export interface Development {
@@ -208,6 +213,10 @@ export interface Development {
   resultUids?: string[];
   /** v0.30 0204 新枝追问：问答挂在这根新枝下，回答只用这批穗 */
   followups?: Followup[];
+  /** v0.42 ROADMAP v0.32 意外程度 1–5（轻评分，不评 = 没有） */
+  surprise?: number;
+  /** v0.42 0238 最后一次复制 / 分享出去的时间（采用信号） */
+  out?: number;
   createdAt: number;
 }
 
