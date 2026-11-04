@@ -10,6 +10,7 @@ import { useApp } from '../lib/store';
 import { embedConfig } from '../lib/settings';
 import { EXITS, type Exit } from '../lib/privacy';
 import { shutByTag } from '../lib/repo';
+import { applySecure, hasSecure, SECURE_KEY, secureOn } from '../lib/chrome';
 import '../styles/v039.css';
 
 export function LockPanel() {
@@ -20,7 +21,15 @@ export function LockPanel() {
   const [mode, setMode] = useState<'' | 'change' | 'off'>('');
   const unl = useUnlocked();
   const n = useLiveQuery(() => db.items.filter((x) => !!x.locked && !x.deletedAt).count(), []);
-  const clear = () => (setA(''), setB(''), setMode(''));
+  const clear = () => (setA(''), setB(''), setMode(''), applySecure());
+  // v0.44 0567 安卓：最近任务里隐藏画面（默认跟着 PIN 走，可单独开关）
+  const [, bump] = useState(0);
+  const sec = secureOn();
+  const flipSec = () => {
+    localStorage.setItem(SECURE_KEY, sec ? '0' : '1');
+    applySecure();
+    bump((x) => x + 1);
+  };
 
   async function set() {
     const P = await import('../lib/lockpin');
@@ -101,6 +110,16 @@ export function LockPanel() {
           <dt>上锁的穗</dt>
           <dd className="num lock-n">{n ?? '…'} 穗</dd>
         </div>
+        {hasSecure() && (
+          <div>
+            <dt>最近任务</dt>
+            <dd>
+              <button className="btn text lock-secure" aria-pressed={sec} onClick={flipSec}>
+                {sec ? '隐藏画面（也不能截屏）' : '照常显示'}
+              </button>
+            </dd>
+          </div>
+        )}
       </dl>
       {!ready ? (
         <div className="row2">
