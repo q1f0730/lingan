@@ -32,7 +32,7 @@ class MainActivity : TauriActivity() {
   @Volatile private var pendingGo: String = ""
 
   private fun grab(intent: Intent?) {
-    // v0.22 长按图标「今日一穗」等快捷方式：带 glean_go 打开主界面某一页
+    // v0.22 长按图标「今日一穗」等快捷方式：带 glean_go 打开主界面某一页（v0.45 0545 起新快捷方式改成 glean://go/… 地址，这里只为旧的固定快捷方式留着）
     intent?.getStringExtra("glean_go")?.let { if (it == "daily" || it == "library" || it == "settings" || it == "search") pendingGo = it }
     // v0.33 0510：glean:// 深链接（浏览器书签、别的 App 里点开）→ 交给 JS 的 takeGo 路由
     if (intent?.action == Intent.ACTION_VIEW) intent.data?.let { u ->
@@ -80,10 +80,10 @@ class MainActivity : TauriActivity() {
         ShortcutInfo.Builder(this, id).setShortLabel(short).setLongLabel(long).setIcon(icon).setRank(rank)
           .setIntent(Glean.quickIntent(this, mode)).build()
       val daily = ShortcutInfo.Builder(this, "daily").setShortLabel("今日一穗").setLongLabel("打开今日一穗").setIcon(icon).setRank(3)
-        .setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_VIEW).putExtra("glean_go", "daily")).build()
+        .setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_VIEW).setData(Uri.parse("glean://go/daily"))).build()
       // v0.33 0506：再加「搜索」；系统最多允许几个就放几个（超了 setDynamicShortcuts 会整个失败）
       val search = ShortcutInfo.Builder(this, "search").setShortLabel("搜索").setLongLabel("搜穗仓").setIcon(icon).setRank(4)
-        .setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_VIEW).putExtra("glean_go", "search")).build()
+        .setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_VIEW).setData(Uri.parse("glean://go/search"))).build()
       sm.dynamicShortcuts = listOf(
         quick("note", "拾一穗", "随手拾一穗", "note", 0),
         quick("paste", "粘贴拾", "拾剪贴板里的内容", "paste", 1),
@@ -339,7 +339,7 @@ class MainActivity : TauriActivity() {
     webView.addJavascriptInterface(object {
       private val alias = "glean_vault_v1"
       private val prefs by lazy { getSharedPreferences("glean_vault", android.content.Context.MODE_PRIVATE) }
-      private fun ok(name: String) = name == "chat.apiKey" || name == "embed.apiKey" || name == "sync.davPass" || name == "sync.key" || name == "sync.lanKey"
+      private fun ok(name: String) = name == "chat.apiKey" || name == "embed.apiKey" || name == "sync.davPass" || name == "sync.key" || name == "sync.lanKey" || name == "push.key"
       private fun key(): SecretKey {
         val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (ks.getKey(alias, null) as? SecretKey)?.let { return it }
@@ -391,5 +391,7 @@ class MainActivity : TauriActivity() {
     // v0.32 局域网直连扫码（见 GleanQr.kt）
     webView.addJavascriptInterface(QrBridge(), "LinganQr")
     webView.addJavascriptInterface(voice, "LinganVoice")
+    // v0.45 到点递一穗 + vivo 后台保活引导（见 GleanDaily.kt）
+    webView.addJavascriptInterface(DailyBridge(this), "LinganDaily")
   }
 }
