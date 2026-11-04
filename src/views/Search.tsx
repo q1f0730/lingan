@@ -95,7 +95,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
 
   // v0.39 0907 没解锁时上锁的穗搜不到
   const unl = useUnlocked();
-  const itemDocs = useMemo(() => items.filter((i) => i.id != null && (unl || !i.locked)).map((i) => toDoc('i', i)), [items, unl]);
+  const itemDocs = useMemo(() => items.filter((i) => i.id != null && !i.sealUntil && (unl || !i.locked)).map((i) => toDoc('i', i)), [items, unl]);
   const devDocs = useMemo(() => devs.filter((d) => d.id != null && d.idea).map((d) => toDoc('b', d)), [devs]);
   // v0.23 0111 搜索语法：type: tag: year: from: why: before: after: inbox: 先拆出来当筛选，剩下的字照常全文搜
   // v0.41 0137 以 > 开头 = 命令面板，不当查询
@@ -158,7 +158,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
       try {
         const [v] = await embed(settings, [semText]);
         const min = semUrl === MINI ? 0.16 : 0.35;
-        const hits = items.filter((i) => i.embedModel === semModel && !!i.embedding && (unl || !i.locked)).map((it) => ({ it, c: cosine(v, it.embedding!) })).filter((x) => x.c >= min).sort((a, b) => b.c - a.c).slice(0, 12).map((x) => x.it);
+        const hits = items.filter((i) => i.embedModel === semModel && !!i.embedding && !i.sealUntil && (unl || !i.locked)).map((it) => ({ it, c: cosine(v, it.embedding!) })).filter((x) => x.c >= min).sort((a, b) => b.c - a.c).slice(0, 12).map((x) => x.it);
         if (!dead) setSem({ q: semText, hits });
       } catch {
         /* 向量接口不可用：只给字面命中 */
