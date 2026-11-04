@@ -512,8 +512,9 @@ export function setInboxEnabled(on: boolean) {
   }
 }
 /** 穗仓里显示它吗：整理过的，或在待理里超过 7 天的（待理关掉时全显示） */
-export function inLibrary(it: Pick<Item, 'inbox' | 'createdAt'>, now = Date.now(), on = inboxEnabled()): boolean {
-  return !it.inbox || !on || it.createdAt < now - INBOX_DAYS * 86400000;
+export function inLibrary(it: Pick<Item, 'inbox' | 'createdAt' | 'down'>, now = Date.now(), on = inboxEnabled()): boolean {
+  // v0.40 0938 放下的穗不进默认穗仓（可搜、可拿回来）
+  return !it.down && (!it.inbox || !on || it.createdAt < now - INBOX_DAYS * 86400000);
 }
 /** 留下 = 整理过了，出待理（一批） */
 export async function keepItems(ids: number[], d: LinganDB = db) {
