@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { db, findDupes, keepItems, reInbox, updateItem } from '../lib/db';
 import { InlineText } from './InlineText';
 import { Relations } from './Relations';
@@ -10,7 +10,7 @@ const batch = () => import('../lib/batch');
 import { dupReason } from '../lib/dupe';
 import { mergeDupe } from '../lib/dupnotice';
 import { fromLocalInput, toLocalInput } from '../lib/quick';
-import { useApp } from '../lib/store';
+import { fromBranch, setFromBranch, useApp } from '../lib/store';
 import { bookTitle, branchesFrom, displayTitle, quoteSource, shortDate } from '../lib/studio';
 import { TYPE_LABEL, type Item, type ItemType } from '../lib/types';
 import { useOriginalSrc } from '../lib/useImage';
@@ -26,8 +26,11 @@ import '../styles/v039.css';
 const CREATOR: Record<ItemType, string> = { music: '歌手', film: '导演', image: '来源', text: '作者', link: '来源', idea: '来源' };
 
 /** 穗详情（m12–m16 / d6）：照片满铺，下面是一张无线信息表、为什么收、长进了这些新枝、文字动作 */
-export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, pos, onStep }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void; pos?: { i: number; n: number }; onStep?: (dir: 1 | -1) => void }) {
+export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, pos, onStep, onClose }: { it: Item; onEdit: () => void; onDelete: () => void; onDevelop: () => void; onReAI: () => void; onWhen: (ts: number) => void; pos?: { i: number; n: number }; onStep?: (dir: 1 | -1) => void; onClose?: () => void }) {
   const { toast, go } = useApp();
+  // v0.42 0421 从新枝点进来的：顶上一条「← 回到新枝」；详情关掉就忘
+  const [fb] = useState(() => fromBranch(it0.id));
+  useEffect(() => () => setFromBranch(null), []);
   // v0.23 详情跟着库走：补了标签 / 留下 / 合并之后立刻刷新
   const live = useLiveQuery(() => (it0.id != null ? db.items.get(it0.id) : undefined), [it0.id]);
   const it = live && !live.deletedAt ? live : it0;
@@ -124,6 +127,19 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
       }}
       onPointerCancel={() => (sw.current = null)}
     >
+      {fb && onClose && it.id != null && fb.ids.includes(it.id) && (
+        <nav className="detail-step from-branch-nav" aria-label="回到新枝">
+          <button
+            className="btn text from-branch"
+            onClick={() => {
+              onClose();
+              requestAnimationFrame(() => document.querySelector(`.idea[data-dev="${fb.dev}"]`)?.scrollIntoView({ block: 'center' }));
+            }}
+          >
+            ← 回到新枝 {fb.n}《{fb.title}》
+          </button>
+        </nav>
+      )}
       {pos && pos.i >= 0 && onStep && (
         <nav className="detail-step" aria-label="上一穗 / 下一穗">
           <button className="btn text detail-prev" disabled={pos.i <= 0} onClick={() => onStep(-1)}>
