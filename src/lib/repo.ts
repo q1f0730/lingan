@@ -56,3 +56,10 @@ export const addRevisit = (id: number, prev: Item['revisits'], text: string, y?:
 export const setDown = (ids: number[], on: boolean) =>
   db.items.where(':id').anyOf(ids).modify((x: Item) => void (on ? (x.down = Date.now()) : delete x.down));
 export const keepAround = (ids: number[]) => db.items.where(':id').anyOf(ids).modify({ touchedAt: Date.now() });
+
+// ── v0.45 0924 封存到某天 ──
+/** 封存到 at（那天 0 点）：之前不在穗仓 / 搜索 / 每日一穗 / 嫁接里出现 */
+export const sealItem = (id: number, at: number) => db.items.update(id, { sealUntil: at, sealAt: Date.now() });
+/** 拆开：回到穗仓，记一次碰过 */
+export const unsealItem = (id: number) =>
+  db.items.where(':id').equals(id).modify((x: Item) => void (delete x.sealUntil, delete x.sealAt, (x.touchedAt = Date.now())));
