@@ -3,11 +3,11 @@ import { useThumbSrc } from '../lib/useImage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { db } from '../lib/db';
-import { setStar } from '../lib/repo';
+import { markOut, setStar } from '../lib/repo';
 import { dropWithReason } from '../lib/feedback';
-import { useApp } from '../lib/store';
+import { setFromBranch, useApp } from '../lib/store';
 import { transformName } from '../lib/graft';
-import { evidenceOf, MIN_EVIDENCE, sourceIds, splitMentions, type Evidence } from '../lib/provenance';
+import { borrowed, evidenceOf, MIN_EVIDENCE, sourceIds, splitMentions, type Evidence } from '../lib/provenance';
 import { TYPE_LABEL, type Development, type GraftBatch, type Idea, type Item } from '../lib/types';
 import { nn } from '../lib/studio';
 import { noveltyLabel } from '../lib/distinct';
@@ -68,6 +68,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
     try {
       await navigator.clipboard.writeText(t);
       toast('已复制');
+      if (devId) void markOut(devId);
     } catch {
       toast('复制失败，请长按选择文字', 'err');
     }
@@ -105,6 +106,7 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
       className={`idea${evidence === 'weak' ? ' idea-weak' : ''}${animate ? ' fade' : ''}`}
       style={animate && typeof index === 'number' ? ({ '--d': `${index * 40}ms` } as React.CSSProperties) : undefined}
       data-transform={idea.transform || undefined}
+      data-dev={devId}
       data-evidence={evidence}
     >
       <div className="idea-meta">
@@ -153,7 +155,23 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
         )
       )}
       <ConstraintsUsed idea={idea} />
-      {dev && <SourceSprigs ids={ids} items={srcItems} evidence={evidence} note={idea.evidenceNote} hl={hl} setHl={setHl} onOpen={openItem} anchor={dev.anchorId} />}
+      {dev && (
+        <SourceSprigs
+          ids={ids}
+          items={srcItems}
+          evidence={evidence}
+          note={idea.evidenceNote}
+          hl={hl}
+          setHl={setHl}
+          text={`${idea.title} ${idea.idea} ${idea.bridge || ''}`}
+          onOpen={(it) => {
+            // v0.42 0421 详情顶上给一条「← 回到新枝」
+            if (devId) setFromBranch({ dev: devId, n: nn(typeof index === 'number' ? index : (dev.batch?.index ?? 0)), title: idea.title.replace(/^《|》$/g, ''), ids });
+            openItem(it);
+          }}
+          anchor={dev.anchorId}
+        />
+      )}
       {!hideCliches && idea.cliches.length > 0 && (
         <div className="cliches">
           <span className="label">剪掉的旧枝（套路）</span>
@@ -179,7 +197,10 @@ export function IdeaCard({ idea, source, devId, animate, index, hideCliches, onA
           复制
         </button>
         {devId && (
-          <button className="btn text idea-share" onClick={() => window.dispatchEvent(new CustomEvent('glean:share', { detail: { dev: devId } }))}>
+          <button className="btn text idea-share" onClick={() => {
+              window.dispatchEvent(new CustomEvent('glean:share', { detail: { dev: devId } }));
+              void markOut(devId);
+            }}>
             分享
           </button>
         )}
@@ -290,8 +311,11 @@ export function SourceSprigs({
   setHl,
   onOpen,
   anchor,
+  text,
 }: {
   anchor?: number;
+  /** v0.42 0243 新枝正文：每穗下面标出新枝借了它的哪句话 */
+  text?: string;
   ids: number[];
   items: (Item | undefined)[] | undefined;
   evidence: Evidence;
@@ -301,6 +325,7 @@ export function SourceSprigs({
   onOpen: (it: Item) => void;
 }) {
   const press = useRef<{ t: number; long: boolean }>({ t: 0, long: false });
+  const frags = useMemo(() => (text && items ? items.map((it) => (it && !it.locked ? borrowed(text, it) : '')) : []), [text, items]);
   if (!items) return null;
   const found = items.filter(Boolean).length;
   return (
@@ -375,6 +400,7 @@ export function SourceSprigs({
                     {TYPE_LABEL[it.type]}
                     {it.creator ? ` · ${it.creator}` : ''}
                   </span>
+                  {frags[i] && <span className="sprig-frag">借了「{frags[i]}」</span>}
                 </span>
               </button>
             );
