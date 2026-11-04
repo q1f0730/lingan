@@ -6,8 +6,9 @@ import { useApp } from '../lib/store';
 import { displayTitle } from '../lib/studio';
 import type { Item } from '../lib/types';
 
-export const LONG_PRESS_MS = 480;
-const MOVE_TOL = 10;
+import { LONG_PRESS_MS, MOVE_TOL } from '../lib/press';
+
+export { LONG_PRESS_MS };
 
 /** 菜单放在哪：贴着点的位置，但不出屏幕（纯函数，单测覆盖） */
 export function placeMenu(x: number, y: number, w: number, h: number, vw: number, vh: number, pad = 8): { left: number; top: number } {
@@ -108,8 +109,47 @@ export function CardMenu({ blocked, onAct, early, onLive }: { blocked: boolean; 
   // 上面的监听已挂好（同一组件里副作用按声明顺序执行）：从这一刻起右键归这里管，App 不再代收
   useEffect(() => onLive?.(), [onLive]);
   // v0.40：菜单开始监听之前右键的那一下（App 先拦下、按穗 id 记住），挂上后直接补开（不再对当时的 DOM 节点补发事件：卡片可能已经重画过）
+  // v0.41 0436 穗仓全键盘：J / K 在卡片间移动，Enter 打开（卡片自己处理），G 放进 / 拿出嫁接篮，E 编辑，Del 删除。
+  // 打字时（输入框 / 可编辑区）、有弹层、在秒搜里都不接管；不带 Ctrl / Alt / ⌘
+  const actRef = useRef(onAct);
+  actRef.current = onAct;
   useEffect(() => {
-    if (early) openRef.current(early.id, early.x, early.y);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented || blockedRef.current) return;
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (k !== 'j' && k !== 'k' && k !== 'g' && k !== 'e' && k !== 'Delete') return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('input, textarea, select, [contenteditable="true"], [role="menu"], [role="dialog"], .sheet')) return;
+      const cards = Array.from(document.querySelectorAll<HTMLElement>('.main .view.library:not(.search-view) :is(.card, .trow, .tl-frame)[data-item-id]')).filter((el) => el.offsetParent !== null);
+      if (!cards.length) return;
+      const cur = (document.activeElement as HTMLElement | null)?.closest?.('[data-item-id]') as HTMLElement | null;
+      const i = cur ? cards.indexOf(cur) : -1;
+      if (k === 'j' || k === 'k') {
+        e.preventDefault();
+        const n = i < 0 ? 0 : Math.max(0, Math.min(cards.length - 1, i + (k === 'j' ? 1 : -1)));
+        cards[n].focus({ preventScroll: true });
+        cards[n].scrollIntoView({ block: 'nearest' });
+        return;
+      }
+      if (i < 0) return;
+      e.preventDefault();
+      const id = Number(cards[i].dataset.itemId);
+      void db.items.get(id).then((it) => {
+        if (!it || it.deletedAt || it.id == null) return;
+        if (k === 'g') {
+          const n = getBasket().length;
+          toast(toggleBasket(it.id) ? `放进嫁接篮 · ${basketHint(Math.min(n + 1, 5))}` : '从嫁接篮拿出来了');
+        } else actRef.current(k === 'e' ? 'edit' : 'delete', it);
+      });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [toast]);
+  // v0.41：手机上早长按（App 代收）补开时也记一下，安卓随后那一下 contextmenu 不再重开
+  useEffect(() => {
+    if (!early) return;
+    lastOpen.current = Date.now();
+    openRef.current(early.id, early.x, early.y);
   }, [early]);
 
   useEffect(() => {
