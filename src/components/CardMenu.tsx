@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { basketHint, getBasket, toggleBasket } from '../lib/basket';
 import { db } from '../lib/db';
-import { setGarden } from '../lib/repo';
+import { sealItem, setGarden } from '../lib/repo';
+import { parseSealDate, sealChoices } from '../lib/rhythm';
+import { shortDate } from '../lib/studio';
 import { useApp } from '../lib/store';
 import { displayTitle } from '../lib/studio';
 import type { Item } from '../lib/types';
@@ -17,7 +19,7 @@ export function placeMenu(x: number, y: number, w: number, h: number, vw: number
   return { left, top: Math.max(pad, Math.min(top, vh - h - pad)) };
 }
 
-type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 'share' | 'garden' | 'delete';
+type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 'share' | 'garden' | 'seal' | 'delete';
 
 /**
  * v0.27 0411：长按卡片（手机）或右键（电脑）弹出上下文菜单：打开 / 编辑 / 拿去嫁接 / 复制文字 / 复制链接 / 删掉。
@@ -25,7 +27,8 @@ type Act = 'open' | 'edit' | 'graft' | 'basket' | 'copy' | 'link' | 'glean' | 's
  */
 export function CardMenu({ blocked, onAct, early, onLive }: { blocked: boolean; early?: { id: number; x: number; y: number; n: number } | null; onLive?: () => void; onAct: (a: Exclude<Act, 'copy' | 'link' | 'glean' | 'basket' | 'share' | 'garden'>, it: Item) => void }) {
   const { toast, desktop } = useApp();
-  const [st, setSt] = useState<{ it: Item; x: number; y: number } | null>(null);
+  const [st, setSt] = useState<{ it: Item; x: number; y: number; seal?: boolean } | null>(null);
+  const [sealDay, setSealDay] = useState('');
   const boxRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const blockedRef = useRef(blocked);
@@ -182,7 +185,7 @@ export function CardMenu({ blocked, onAct, early, onLive }: { blocked: boolean; 
   const it = st.it;
   const text = it.content || it.title;
   const run = async (a: Act) => {
-    setSt(null);
+    if (a !== 'seal') setSt(null);
     if (a === 'copy' || a === 'link' || a === 'glean') {
       try {
         // v0.33 0510：glean://item/<uid> 在别的 App / 书签里一点回到这一穗
@@ -200,6 +203,8 @@ export function CardMenu({ blocked, onAct, early, onLive }: { blocked: boolean; 
       await setGarden([it.id!], !it.garden);
       return toast(it.garden ? '从花园拿出来了' : '放进花园 · 设置 → 分享与花园 里生成网页');
     }
+    // v0.45 0924 封存到某天：换成拆封日的几个选项（菜单不关）
+    if (a === 'seal') return void setSt({ ...st, seal: true });
     if (a === 'basket') {
       // v0.28 0408 待嫁接篮
       if (it.id == null) return;
@@ -219,8 +224,16 @@ export function CardMenu({ blocked, onAct, early, onLive }: { blocked: boolean; 
     ...(it.uid ? ([['glean', '复制 glean:// 链接']] as Array<[Act, string]>) : []),
     ['share', '分享…'],
     ['garden', it.garden ? '拿出花园' : '放进花园'],
+    ['seal', '封存到某天…'],
     ['delete', '删掉'],
   ];
+  const seal = async (at: number | null) => {
+    if (at == null || it.id == null) return toast('挑明天以后的日子（10 年内）', 'err');
+    setSt(null);
+    setSealDay('');
+    await sealItem(it.id, at);
+    toast(`封存到 ${shortDate(at)}：之前不在穗仓、搜索和每日一穗里，那天会来一封「给未来的穗」`);
+  };
   return (
     <>
       {!desktop && <div className="ctxmenu-scrim" aria-hidden onClick={() => setSt(null)} />}
@@ -239,11 +252,28 @@ export function CardMenu({ blocked, onAct, early, onLive }: { blocked: boolean; 
         }}
       >
         {!desktop && <div className="ctxmenu-title">{displayTitle(it).slice(0, 30)}</div>}
-        {items.map(([a, label]) => (
-          <button key={a} role="menuitem" className={`ctxmenu-item ctx-${a}${a === 'delete' ? ' danger' : ''}`} onClick={() => void run(a)}>
-            {label}
-          </button>
-        ))}
+        {st.seal ? (
+          <>
+            {sealChoices().map((c) => (
+              <button key={c.label} role="menuitem" className="ctxmenu-item ctx-seal-at" onClick={() => void seal(c.at)}>
+                {c.label} · {shortDate(c.at)}
+              </button>
+            ))}
+            <label className="field ctx-seal-day">
+              <span className="label">或者挑一天</span>
+              <input type="date" value={sealDay} onChange={(e) => setSealDay(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void seal(parseSealDate(sealDay))} />
+            </label>
+            <button role="menuitem" className="ctxmenu-item ctx-seal-go" disabled={!sealDay} onClick={() => void seal(parseSealDate(sealDay))}>
+              封存到这一天
+            </button>
+          </>
+        ) : (
+          items.map(([a, label]) => (
+            <button key={a} role="menuitem" className={`ctxmenu-item ctx-${a}${a === 'delete' ? ' danger' : ''}`} onClick={() => void run(a)}>
+              {label}
+            </button>
+          ))
+        )}
       </div>
     </>
   );
