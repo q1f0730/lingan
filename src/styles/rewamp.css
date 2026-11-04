@@ -1684,9 +1684,6 @@ details summary {
   backdrop-filter: blur(4px);
   animation: g-in 200ms var(--ease) both;
 }
-.sheet-backdrop.v-page {
-  padding-top: 10px;
-}
 .sheet.v-page {
   height: 100%;
   background: var(--bg);
@@ -1710,7 +1707,6 @@ details summary {
   margin: 8px auto 0;
 }
 .sheet-head {
-  height: 52px;
   background: inherit;
   border-radius: inherit;
 }
@@ -1718,7 +1714,6 @@ details summary {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 36px;
   padding: 0 12px 0 8px;
   border-radius: 999px;
   background: var(--surface-2);
@@ -1730,7 +1725,6 @@ details summary {
   transform: rotate(45deg);
 }
 .sheet-act {
-  height: 36px;
   padding: 0 14px;
   border-radius: 999px;
   background: var(--surface);
@@ -3907,7 +3901,6 @@ html[data-kb] .clip-offer {
 .tags .tag-add {
   display: inline-flex;
   align-items: center;
-  height: 26px;
   padding: 0 10px;
   border: 1px dashed var(--line);
   border-radius: 999px;
@@ -4076,7 +4069,6 @@ html[data-kb] .clip-offer {
 .tags .bundle-add {
   display: inline-flex;
   align-items: center;
-  height: 26px;
   padding: 0 10px;
   border: 1px dashed var(--line);
   border-radius: 999px;
