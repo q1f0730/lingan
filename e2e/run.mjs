@@ -5481,7 +5481,127 @@ async function v041() {
   console.log(`v041: zh ok; pick ok; smart ok; palette ok; quickfind ok; walk ok; keys ok; gaps "${gt.replace(/\s+/g, ' ').slice(0, 60)}"`);
 }
 
+async function v042() {
+  const tag = 'v042';
+  const W = +process.env.E2E_V042_W || 1440;
+  const c = await b.newContext({ viewport: { width: W, height: 900 } });
+  await c.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+  const pg = await c.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('text=穗仓还是空的');
+  const now = Date.now();
+  const D = 864e5;
+  const rows = [
+    { type: 'film', title: '旧片一', tags: ['海'], why: '海边那场长镜头一直不剪', createdAt: now - 500 * D },
+    { type: 'music', title: '旧歌二', tags: ['海', '夏'], why: '夏天的合成器', createdAt: now - 420 * D },
+    { type: 'image', title: '这周的窗', tags: ['城市'], why: '对面楼的灯一格一格灭掉', createdAt: now - 2 * D },
+    { type: 'text', title: '这周的句子', tags: ['夜', '城市'], why: '凌晨的便利店很亮', createdAt: now - 3 * D },
+    { type: 'idea', title: '一个念头', tags: ['雨'], why: '雨声当节拍器', createdAt: now - 40 * D },
+    { type: 'music', title: '夜路', tags: ['夜'], why: '一个人走回家', createdAt: now - 60 * D },
+  ];
+  await pg.evaluate((rows) => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const tx = r.result.transaction(['items'], 'readwrite');
+      rows.forEach((x, i) => tx.objectStore('items').add({ content: '', creator: '', year: '', url: '', graftCount: 0, updatedAt: x.createdAt, uid: `01V042${String(i).padStart(20, '0')}`, ...x }));
+      tx.oncomplete = () => { r.result.close(); res(); };
+    };
+  }), rows);
+  await pg.reload();
+  await pg.waitForSelector('.card');
+  await pg.click('.nav-btn:has-text("嫁接") >> visible=true');
+  await pg.waitForSelector('.lab-rule[data-rule="span"]');
+  // 1. 0214 时间差：一穗一年多以前 + 一穗这周
+  await pg.click('.lab-rule[data-rule="span"]');
+  const sn = await pg.locator('.lab-note').innerText({ timeout: 3000 }).catch(() => '');
+  if (!/时间差：「旧(片一|歌二)」是 1 年前拾的，「这周的(窗|句子)」是这周拾的/.test(sn)) errs.push(`[${tag}] span note: ${sn}`);
+  const g1 = await pg.locator('.graft').innerText().catch(() => '');
+  if (!/旧(片一|歌二)/.test(g1) || !/这周的(窗|句子)/.test(g1)) errs.push(`[${tag}] span picks`);
+  if (await pg.locator('.mode-from').count()) errs.push(`[${tag}] rule draw shown as 带进来的`);
+  // 2. 0217 标签对撞
+  await pg.click('.lab-rule[data-rule="clash"]');
+  await pg.waitForSelector('.lab-rule[data-rule="clash"][aria-pressed="true"]', { timeout: 2000 }).catch(() => errs.push(`[${tag}] clash not pressed`));
+  const cn = await pg.locator('.lab-note').innerText().catch(() => '');
+  const m = cn.match(/#(\S+) × #(\S+?)（/);
+  if (!m) errs.push(`[${tag}] clash note: ${cn}`);
+  else if (rows.some((x) => x.tags.includes(m[1]) && x.tags.includes(m[2]))) errs.push(`[${tag}] clash tags co-occur: ${m[1]} ${m[2]}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + `/v042-lab-${W}.png` });
+  // 3. 嫁接：每根都记提示词版本 + 特别抽法
+  await pg.click('.graft-btn');
+  await pg.waitForSelector('.three .idea', { timeout: 12000 });
+  await pg.waitForSelector('.recipe-save');
+  let devs = await dbRaw(pg, 'developments');
+  if (devs.length !== 3 || devs.some((d) => d.batch?.prompt !== 'p42' || !/标签对撞/.test(d.batch?.draw || ''))) errs.push(`[${tag}] batch meta ${JSON.stringify(devs.map((d) => [d.batch?.prompt, d.batch?.draw]))}`);
+  // 4. 0213 配方：存 → 刷新后还在 → 一点照它抽
+  await pg.click('.recipe-save');
+  await pg.waitForSelector('.recipe-chip', { timeout: 2000 }).catch(() => errs.push(`[${tag}] recipe not saved`));
+  const rn = await pg.locator('.recipe-chip').first().innerText().catch(() => '');
+  if (!/^标签对撞 · \d 穗/.test(rn)) errs.push(`[${tag}] recipe name: ${rn}`);
+  // 5. ROADMAP v0.32 意外程度 + 0238 复制记下来 + 0221 停留天数 + 可复现
+  const first = pg.locator('.three .idea').first();
+  await first.locator('.rate-seg button[data-n="4"]').click();
+  await pg.waitForSelector('.three .idea >> nth=0 >> .rate-seg button[data-n="4"][aria-checked="true"]', { timeout: 2000 }).catch(() => errs.push(`[${tag}] rate not checked`));
+  await first.locator('.idea-copy').click();
+  await pg.waitForTimeout(300);
+  const made = await first.locator('.idea-made').innerText().catch(() => '');
+  if (!/离线嫁接 · 提示词 p42 · 标签对撞/.test(made)) errs.push(`[${tag}] made line: ${made}`);
+  const stay = await first.locator('.stay-n').innerText().catch(() => '');
+  if (stay !== '「种子」第 1 天') errs.push(`[${tag}] stay: ${stay}`);
+  devs = await dbRaw(pg, 'developments');
+  const d0 = devs.find((d) => d.surprise === 4);
+  if (!d0) errs.push(`[${tag}] surprise not saved`);
+  else if (!(d0.out > 0)) errs.push(`[${tag}] copy not recorded as out (clipboard?)`);
+  if (process.env.E2E_SHOTS) {
+    await first.scrollIntoViewIfNeeded();
+    await pg.screenshot({ path: process.env.E2E_SHOTS + `/v042-idea-${W}.png` });
+  }
+  // 6. 0421 从新枝点进穗：详情顶上「← 回到新枝 01」，点了回来
+  await first.locator('.sprig').first().click();
+  await pg.waitForSelector('.from-branch', { timeout: 4000 }).catch(() => errs.push(`[${tag}] from-branch missing`));
+  const fbt = await pg.locator('.from-branch').innerText().catch(() => '');
+  if (!/^← 回到新枝 01《/.test(fbt)) errs.push(`[${tag}] from-branch text: ${fbt}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + `/v042-back-${W}.png` });
+  await pg.click('.from-branch');
+  await pg.waitForFunction(() => !document.querySelector('.detail'), null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] from-branch did not close detail`));
+  if (!(await pg.locator('.three .idea').count())) errs.push(`[${tag}] back lost the branches`);
+  // 从穗仓打开同一穗：没有「回到新枝」
+  await pg.click('.nav-btn:has-text("穗仓") >> visible=true');
+  await pg.waitForSelector('.card');
+  await pg.locator('.card').first().click();
+  await pg.waitForSelector('.detail');
+  if (await pg.locator('.from-branch').count()) errs.push(`[${tag}] from-branch leaked into library detail`);
+  await pg.keyboard.press('Escape');
+  await pg.waitForFunction(() => !document.querySelector('.detail'), null, { timeout: 3000 }).catch(() => {});
+  // 7. 配方在刷新后还在，一点就照它抽
+  await pg.click('.nav-btn:has-text("嫁接") >> visible=true');
+  await pg.waitForSelector('.recipe-chip', { timeout: 3000 }).catch(() => errs.push(`[${tag}] recipe gone after nav`));
+  await pg.reload();
+  await pg.click('.nav-btn:has-text("嫁接") >> visible=true');
+  await pg.waitForSelector('.recipe-chip', { timeout: 3000 }).catch(() => errs.push(`[${tag}] recipe gone after reload`));
+  await pg.click('.recipe-chip');
+  const rn2 = await pg.locator('.lab-note').innerText({ timeout: 2000 }).catch(() => '');
+  if (!/标签对撞/.test(rn2)) errs.push(`[${tag}] recipe did not redraw by rule: ${rn2}`);
+  // 8. 口味页 嫁接成绩 + 高产穗 + 变形法
+  await pg.click('.nav-btn:has-text("口味") >> visible=true');
+  await pg.waitForSelector('.graft-score', { timeout: 5000 }).catch(() => errs.push(`[${tag}] graft score missing`));
+  const gs = await pg.locator('.graft-score').innerText().catch(() => '');
+  if (!/证据覆盖\s*\d+%/.test(gs) || !/三枝差异\s*\d+%/.test(gs) || !/平均意外\s*（评了 1 根）\s*4\.0/.test(gs) || !/采用率\s*33%/.test(gs)) errs.push(`[${tag}] score: ${gs.replace(/\s+/g, ' ').slice(0, 160)}`);
+  if (!(await pg.locator('.gs-seed').count())) errs.push(`[${tag}] no 高产穗`);
+  if ((await pg.locator('.gs-t').count()) !== 3) errs.push(`[${tag}] transforms rows ${await pg.locator('.gs-t').count()}`);
+  if (process.env.E2E_SHOTS) {
+    await pg.locator('.graft-score').scrollIntoViewIfNeeded();
+    await pg.screenshot({ path: process.env.E2E_SHOTS + `/v042-taste-${W}.png` });
+  }
+  await c.close();
+  console.log(`v042: span/clash ok; meta ok; recipe ok; rate/out/stay ok; back ok; score "${gs.replace(/\s+/g, ' ').slice(0, 80)}"`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v042') {
+    await v042();
+    throw Object.assign(new Error('v042 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v041') {
     await v041();
     throw Object.assign(new Error('v041 only'), { only: true });
@@ -5588,6 +5708,7 @@ try {
   await v039();
   await v040();
   await v041();
+  await v042();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
