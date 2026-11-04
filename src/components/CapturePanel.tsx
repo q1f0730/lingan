@@ -18,6 +18,11 @@ const DESKTOP_WAYS: Array<[string, string]> = [
   ['托盘菜单', '右键托盘图标 →「拾正在播放的歌」：读系统媒体控件（网易云 / QQ 音乐 / Spotify 等），一键存成音乐穗。'],
   ['发送到', '资源管理器里右键图片或 .txt / .md →「发送到 → 拾穗 Glean」。'],
 ];
+/** v0.43 0636 / 0650 照片：开 = 默认（localStorage 值 '1' 才是关） */
+const IMG_SW: Array<[string, string, string]> = [
+  ['glean.img.full', '分享进来的大照片缩到长边 4096', '别的 App 分享进来的原图超过 4096 就重存成 JPEG（质量 0.9），长截图不缩；表单选的图本来就缩到 1280。新图都会抹掉位置（GPS），拍摄时间留作「拾于」候选'],
+  ['glean.img.keepmeta', '图发出去前去掉拍摄信息', '发给看图模型、导出到 Obsidian 时去掉 EXIF / GPS / 相机型号，只留方向；备份里仍是原样'],
+];
 const LINK_WAY: [string, string] = ['glean:// 链接', 'glean://capture?text=… 放进书签 / 快捷指令一点就拾；卡片菜单「复制链接」得到 glean://item/…'];
 
 /** v0.22 设置 → 极速采集：入口说明 + 安卓的常驻通知 / 通知使用权开关（权限都在第一次用时说明再请求） */
@@ -30,6 +35,12 @@ export function CapturePanel() {
   const [access, setAccess] = useState(() => nowPlayingAccess());
   const [asking, setAsking] = useState(false);
   const [snap, setSnap] = useState(snapOn);
+  // v0.43 键名同 lib/imgclean（FULL_KEY / OUT_KEY）；这里不 import 它，免得把它拖进设置页的包。值 '1' = 这项关掉
+  const [img, setImg] = useState<Record<string, boolean>>(() => Object.fromEntries(IMG_SW.map(([k]) => [k, localStorage.getItem(k) === '1'])));
+  const flip = (k: string) => {
+    localStorage.setItem(k, img[k] ? '0' : '1');
+    setImg({ ...img, [k]: !img[k] });
+  };
 
   const refresh = useCallback(() => {
     setNs(readNotify());
@@ -117,6 +128,13 @@ export function CapturePanel() {
           <span className="tc tc-src">把网页正文抽成纯文字（最多 50KB）存进这一穗，原链接被删了也能看；用的是抓标题时那份网页，不多发请求</span>
           <span className="tc tc-date">{snap ? '开' : '关'}</span>
         </button>
+        {IMG_SW.map(([k, title, note]) => (
+          <button key={k} className="trow cap-switch cap-img" data-k={k} role="switch" aria-checked={!img[k]} onClick={() => flip(k)}>
+            <span className="tc tc-title">{title}</span>
+            <span className="tc tc-src">{note}</span>
+            <span className="tc tc-date">{img[k] ? '关' : '开'}</span>
+          </button>
+        ))}
       </div>
       <dl className="kv cap-ways">
         {ways.map(([k, v]) => (
