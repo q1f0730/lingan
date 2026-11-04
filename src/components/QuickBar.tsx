@@ -1,5 +1,5 @@
 import { m } from './rw/lite';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IconEnter } from './rw/icons';
 import { addItem, db, normalizeTags, updateItem } from '../lib/db';
 import { amendItem, fillItem } from '../lib/repo';
@@ -9,7 +9,7 @@ import { fetchLinkMeta, snapOn } from '../lib/linkmeta';
 import { clipMemory, nextType, parseQuick, readClipboard, shouldOffer, type QuickDraft } from '../lib/quick';
 import type { Settings } from '../lib/settings';
 import { useApp } from '../lib/store';
-import { TYPE_LABEL, TYPE_ORDER, type ItemType } from '../lib/types';
+import { TYPE_LABEL, TYPE_ORDER, type Item, type ItemType } from '../lib/types';
 import { clearDraft, draftWriter, loadDraft } from '../lib/drafts';
 import { NowPlayingButton } from './NowPlaying';
 import { notifyDupe, savedMsg } from '../lib/dupnotice';
@@ -360,14 +360,26 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
 /**
  * 全局速记小窗（d20）：托盘「随手拾一穗」或 Ctrl+Shift+L 唤出。大号输入、自动识别类型（可改），回车即存，Esc 收起。
  */
+// v0.41 0138 小窗里 ? 开头秒搜：懒加载
+const QuickFind = lazy(() => import('./QuickFind'));
 export function QuickWindow({ onClose, initial = '' }: { onClose: () => void; initial?: string }) {
-  const { settings, toast } = useApp();
+  const { settings, toast, openItem } = useApp();
   const [text, setText] = useState('');
   const [type, setType] = useState<ItemType | null>(null);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
-  const guess = useMemo(() => parseQuick(text), [text]);
+  const finding = /^[?？]/.test(text);
+  const guess = useMemo(() => (finding ? null : parseQuick(text)), [text, finding]);
   const [, dropDraft] = useDraft('qw', text, setText);
+  const [found, setFound] = useState<Item[]>([]);
+  const [fsel, setFsel] = useState(0);
+  const onFound = useCallback((h: Item[]) => (setFound(h), setFsel(0)), []);
+  const pickFound = (it: Item | undefined) => {
+    if (!it) return;
+    dropDraft();
+    onClose();
+    openItem(it, found.map((x) => x.id!));
+  };
   const ts = useTagSuggest(text, setText, ref);
   // v0.27 0405：粘贴 / 拖进来的图片先放在小窗里预览，回车连同文字一起存成图片穗
   const [img, setImg] = useState<string | null>(null);
@@ -473,6 +485,17 @@ export function QuickWindow({ onClose, initial = '' }: { onClose: () => void; in
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
+              if (finding) {
+                if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && found.length) {
+                  e.preventDefault();
+                  setFsel((i) => (i + (e.key === 'ArrowDown' ? 1 : found.length - 1)) % found.length);
+                }
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  pickFound(found[fsel]);
+                }
+                return;
+              }
               if (ts.onKey(e)) return;
               if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                 e.preventDefault();
@@ -486,15 +509,27 @@ export function QuickWindow({ onClose, initial = '' }: { onClose: () => void; in
                 void takeImage(f);
               }
             }}
-            placeholder={img ? '给这张图说一句（可选），回车存' : '此刻戳到你的是什么 · 可以直接粘贴图片'}
+            placeholder={img ? '给这张图说一句（可选），回车存' : '此刻戳到你的是什么 · 可以直接粘贴图片 · ? 开头是搜'}
             aria-label="速记小窗"
             maxLength={4000}
           />
-          <button className="btn primary" onClick={save} disabled={(!guess && !img) || busy}>
-            拾 ↵
-          </button>
+          {finding ? (
+            <button className="btn primary qw-find" onClick={() => pickFound(found[fsel])} disabled={!found.length}>
+              打开 ↵
+            </button>
+          ) : (
+            <button className="btn primary" onClick={save} disabled={(!guess && !img) || busy}>
+              拾 ↵
+            </button>
+          )}
         </div>
-        {ts.box}
+        {finding ? (
+          <Suspense fallback={null}>
+            <QuickFind q={text.slice(1)} sel={fsel} onHits={onFound} onPick={pickFound} />
+          </Suspense>
+        ) : (
+          ts.box
+        )}
         {clip && !img && (
           <div className="qw-img">
             <img src={clip.url} alt="剪贴板里的图" />
