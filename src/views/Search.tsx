@@ -107,13 +107,13 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   const [py, setPy] = useState<typeof import('../lib/pinyin') | null>(null);
   const wantPy = /^[A-Za-z][A-Za-z ]+$/.test(parsed.text.trim());
   useEffect(() => {
-    if (wantPy && !py) void import('../lib/pinyin').then(setPy).catch(() => {});
+    if (wantPy && !py) void import('../lib/pinyin').then((m) => m.ready.then(() => setPy(m))).catch(() => {});
   }, [wantPy, py]);
   // v0.41 0134 繁简互搜：查询里第一次出现汉字才加载字表（约 10KB）
   const [zh, setZh] = useState<typeof import('../lib/zhvar') | null>(null);
   const wantZh = /[\u3400-\u9fff]/.test(parsed.text);
   useEffect(() => {
-    if (wantZh && !zh) void import('../lib/zhvar').then(setZh).catch(() => {});
+    if (wantZh && !zh) void import('../lib/zhvar').then((m) => m.ready.then(() => setZh(m))).catch(() => {});
   }, [wantZh, zh]);
   const varTerms = useMemo(() => (zh && wantZh ? zh.zhVariants(parsed.text.trim()).map(parseQuery).filter((t) => t.length) : []), [zh, wantZh, parsed.text]);
   // 高亮：原词 + 繁 / 简写法
