@@ -1861,9 +1861,11 @@ async function perfBackup(ctx) {
   await pg.waitForSelector('.backup-counts:has-text("1000 穗")');
   // v0.26：堆峰值取决于 GC 什么时候来（同一构建 34–64MB 都见过），单次判定会误报：
   // 同一页连续导出 3 次，每次前强制 GC 并等后台空闲，取中位数和阈值比（阈值不变），三次都记进 perf.json
+  // v0.43：3 次仍会跳（v0.43 整套里一次 70.8 / 56.3 / 42.9MB，同会话交替 A/B 见 docs/perf/v0.43.0.json 的 backupHeapAB）→ 5 次取中位数，阈值不变
   const runs = [];
+  const N = 5;
   let dl = null;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < N; i++) {
     await pg.waitForTimeout(400);
     await heapStart(pg);
     const t0 = Date.now();
@@ -1874,7 +1876,7 @@ async function perfBackup(ctx) {
     if (!dl) dl = d;
     await pg.locator('.toast').first().waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
   }
-  const mid = (k) => [...runs].sort((a, b) => a[k] - b[k])[1][k];
+  const mid = (k) => [...runs].sort((a, b) => a[k] - b[k])[N >> 1][k];
   const heap = { baseMB: mid('baseMB'), peakMB: mid('peakMB'), deltaMB: mid('deltaMB'), runs: runs.map((r) => r.deltaMB) };
   const ms = mid('ms');
   const file = await dl.path();
@@ -5597,7 +5599,192 @@ async function v042() {
   console.log(`v042: span/clash ok; meta ok; recipe ok; rate/out/stay ok; back ok; score "${gs.replace(/\s+/g, ' ').slice(0, 80)}"`);
 }
 
+// v0.43 存得干净 · 存得稳（E2E_ONLY=v043；E2E_V043_W=390 跑手机版，截图 v043-*.png）
+async function v043() {
+  const tag = 'v043';
+  const W = +process.env.E2E_V043_W || 1440;
+  const H = W < 600 ? 844 : 900;
+  // 1. 0935 P1：打开、逛一遍各页，不向任何非本机地址发请求
+  const c0 = await b.newContext({ viewport: { width: W, height: H } });
+  const p0 = await c0.newPage();
+  p0.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  const ext = [];
+  p0.on('request', (r) => {
+    try {
+      const u = new URL(r.url());
+      if (/^https?:$/.test(u.protocol) && !['127.0.0.1', 'localhost'].includes(u.hostname)) ext.push(u.href.slice(0, 80));
+    } catch { /* data: / blob: */ }
+  });
+  await p0.goto(base);
+  await p0.waitForSelector('.view');
+  const navs = await p0.locator('.nav-btn >> visible=true').allInnerTexts();
+  for (const n of navs) {
+    await p0.click(`.nav-btn:has-text("${n.trim().split(/\s/)[0]}") >> visible=true`).catch(() => {});
+    await p0.waitForTimeout(700);
+  }
+  await p0.waitForTimeout(1500);
+  if (ext.length) errs.push(`[${tag}] [v043] external request on fresh install: ${ext.slice(0, 3).join(' ')}`);
+  // 用这一页造两张带 EXIF（GPS + 拍摄时间 + 时区）的 JPEG：小图 900×600，大图 5000×2500
+  const mk = (w, h) => p0.evaluate(async ([w, h]) => {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    for (let i = 0; i < 40; i++) { g.fillStyle = `hsl(${i * 9},60%,${30 + (i % 5) * 10}%)`; g.fillRect((i * w) / 40, 0, w / 40 + 1, h); }
+    const jpg = new Uint8Array(await (await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.95))).arrayBuffer());
+    const t = new Uint8Array(162); const v = new DataView(t.buffer);
+    t.set([0x49, 0x49, 42, 0]); v.setUint32(4, 8, true);
+    const en = (at, tag, type, n, val) => { v.setUint16(at, tag, true); v.setUint16(at + 2, type, true); v.setUint32(at + 4, n, true); if (type === 3) v.setUint16(at + 8, val, true); else v.setUint32(at + 8, val, true); };
+    v.setUint16(8, 3, true); en(10, 0x112, 3, 1, 1); en(22, 0x8769, 4, 1, 50); en(34, 0x8825, 4, 1, 120);
+    v.setUint16(50, 2, true); en(52, 0x9003, 2, 20, 80); en(64, 0x9011, 2, 7, 100);
+    const enc = (s) => Array.from(s, (ch) => ch.charCodeAt(0));
+    t.set([...enc('2024:03:02 14:05:09'), 0], 80); t.set([...enc('+08:00'), 0], 100);
+    v.setUint16(120, 1, true); en(122, 2, 5, 3, 138); [31, 1, 47, 1, 1234, 100].forEach((n, i) => v.setUint32(138 + i * 4, n, true));
+    const app1 = [0xff, 0xe1, (t.length + 8) >> 8, (t.length + 8) & 255, ...enc('Exif\0\0'), ...t];
+    const out = new Uint8Array([0xff, 0xd8, ...app1, ...jpg.subarray(2)]);
+    let s = ''; for (let i = 0; i < out.length; i += 0x8000) s += String.fromCharCode(...out.subarray(i, i + 0x8000));
+    return 'data:image/jpeg;base64,' + btoa(s);
+  }, [w, h]);
+  const small = await mk(900, 600);
+  const big = await mk(5000, 2500);
+  await c0.close();
+  const SHOT = Date.UTC(2024, 2, 2, 6, 5, 9);
+
+  // 2. 0651 / 0636 分享进来的照片：抹 GPS、留拍摄时间；大图缩到长边 4096
+  const c = await b.newContext({ viewport: { width: W, height: H }, acceptDownloads: true });
+  const T = Date.now() - 3600_000;
+  const e1 = { v: 1, uid: e2eUlid(T), createdAt: T, kind: 'share', subject: '海边的小图', text: '', image: true, mime: 'image/jpeg' };
+  const e2 = { v: 1, uid: e2eUlid(T + 1000), createdAt: T + 1000, kind: 'share', subject: '很大的全景', text: '', image: true, mime: 'image/jpeg' };
+  await c.addInitScript(({ e1, e2, small, big }) => {
+    const w = window;
+    if (sessionStorage.getItem('v043.once')) return;
+    sessionStorage.setItem('v043.once', '1');
+    w.__inbox = [e1, e2];
+    w.__imgs = { [e1.uid]: small, [e2.uid]: big };
+    w.LinganInbox = { list: () => JSON.stringify(w.__inbox), image: (u) => w.__imgs[u] || '', ack: (u) => { w.__inbox = w.__inbox.filter((e) => e.uid !== u); return true; }, setHints: () => {} };
+  }, { e1, e2, small, big });
+  const pg = await c.newPage();
+  pg.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await pg.goto(base);
+  await pg.waitForSelector('.card:has-text("很大的全景")', { timeout: 10000 }).catch(() => errs.push(`[${tag}] inbox images not ingested`));
+  const imgInfo = () => pg.evaluate(() => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const q = r.result.transaction('images').objectStore('images').getAll();
+      q.onsuccess = async () => {
+        const out = [];
+        for (const x of q.result) {
+          const b = new Uint8Array(await x.blob.arrayBuffer());
+          const has = (seq) => { for (let i = 0; i + seq.length <= b.length; i++) { let k = 0; while (k < seq.length && b[i + k] === seq[k]) k++; if (k === seq.length) return true; } return false; };
+          const bmp = await createImageBitmap(x.blob);
+          out.push({ id: x.itemId, fresh: x.fresh, size: b.length, w: bmp.width, h: bmp.height, gps: has([0xd2, 0x04, 0, 0, 100, 0, 0, 0]), exif: has([0x45, 0x78, 0x69, 0x66, 0, 0]) });
+          bmp.close();
+        }
+        r.result.close();
+        res(out);
+      };
+    };
+  }));
+  let imgs = [];
+  for (let i = 0; i < 40; i++) {
+    imgs = await imgInfo();
+    if (imgs.length === 2 && imgs.every((x) => !x.fresh)) break;
+    await pg.waitForTimeout(250);
+  }
+  const rows = await dbRaw(pg, 'items');
+  const rs = rows.find((x) => x.uid === e1.uid), rb = rows.find((x) => x.uid === e2.uid);
+  const is = imgs.find((x) => x.id === rs?.id), ib2 = imgs.find((x) => x.id === rb?.id);
+  if (!is || !ib2 || is.fresh || ib2.fresh) errs.push(`[${tag}] intake clean not done ${JSON.stringify(imgs)}`);
+  else {
+    if (is.gps || !is.exif || is.w !== 900) errs.push(`[${tag}] small image: gps wiped / exif kept / size kept? ${JSON.stringify(is)}`);
+    if (ib2.gps || ib2.w !== 4096 || ib2.h !== 2048) errs.push(`[${tag}] big image not capped to 4096 ${JSON.stringify(ib2)}`);
+  }
+  if (rs?.shotAt !== SHOT) errs.push(`[${tag}] shotAt ${rs?.shotAt} != ${SHOT}`);
+  // 详情：「用拍摄时间」→ 拾于改成拍摄时间
+  await pg.click(cardSel(rs.id));
+  await pg.waitForSelector('.detail .shot-at', { timeout: 4000 }).catch(() => errs.push(`[${tag}] shot-at button missing`));
+  const sa = await pg.locator('.detail .shot-at').innerText().catch(() => '');
+  if (!/^用拍摄时间 /.test(sa)) errs.push(`[${tag}] shot-at text ${sa}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + `/v043-detail-${W}.png` });
+  await pg.click('.detail .shot-at');
+  for (let i = 0; i < 20 && (await dbRaw(pg, 'items')).find((x) => x.id === rs.id)?.createdAt !== SHOT; i++) await pg.waitForTimeout(150);
+  if ((await dbRaw(pg, 'items')).find((x) => x.id === rs.id)?.createdAt !== SHOT) errs.push(`[${tag}] createdAt not set to shotAt`);
+  await pg.keyboard.press('Escape');
+  await pg.waitForFunction(() => !document.querySelector('.detail'), null, { timeout: 3000 }).catch(() => {});
+
+  // 3. 设置：上次备份 / 占用 / 照片两个开关
+  await pg.evaluate(() => {
+    localStorage.setItem('glean.recipes', JSON.stringify([{ name: '测试配方', mode: 'far', count: 3 }]));
+    localStorage.setItem('glean.smart', JSON.stringify([{ q: '海', at: 1 }]));
+  });
+  await openSettings(pg);
+  await pg.waitForSelector('.store-health');
+  const lb = await pg.locator('.last-backup').innerText();
+  if (!/还没备份过/.test(lb)) errs.push(`[${tag}] last-backup before export: ${lb}`);
+  await pg.waitForFunction(() => /MB|GB|不告诉/.test(document.querySelector('.store-use')?.textContent || ''), null, { timeout: 3000 }).catch(() => errs.push(`[${tag}] store-use missing`));
+  if ((await pg.locator('.cap-img').count()) !== 2) errs.push(`[${tag}] image switches ${await pg.locator('.cap-img').count()}`);
+  if (process.env.E2E_SHOTS) {
+    await pg.locator('#set-data').scrollIntoViewIfNeeded();
+    await pg.screenshot({ path: process.env.E2E_SHOTS + `/v043-settings-${W}.png` });
+  }
+  // 0650 导出到 Obsidian：图里没有 EXIF（拍摄时间）了
+  const [od] = await Promise.all([pg.waitForEvent('download'), pg.click('.obsidian-export')]);
+  const oz = readZipBuf(fs.readFileSync(await od.path()));
+  const oimg = [...oz.entries()].filter(([k]) => /\.(jpe?g|png|webp)$/i.test(k));
+  if (!oimg.length) errs.push(`[${tag}] obsidian zip has no images`);
+  for (const [k, v] of oimg) if (Buffer.from(v).includes(Buffer.from('2024:03:02'))) errs.push(`[${tag}] obsidian image kept EXIF: ${k}`);
+  // 0639 导出一份 → 上次备份 = 今天 · 手动导出
+  const [dl] = await Promise.all([pg.waitForEvent('download'), pg.click('.backup-export')]);
+  const gbuf = fs.readFileSync(await dl.path());
+  await pg.waitForFunction(() => /今天 · 手动导出/.test(document.querySelector('.last-backup')?.textContent || ''), null, { timeout: 4000 }).catch(() => errs.push(`[${tag}] last-backup not updated after export`));
+  // 配方 / 智能穗束进备份：清掉本机的 → 导回 → 回来了；预览有日期范围 + 重叠
+  await pg.evaluate(() => { localStorage.removeItem('glean.recipes'); localStorage.removeItem('glean.smart'); });
+  await pickBackup(pg, { name: dl.suggestedFilename(), mimeType: 'application/octet-stream', buffer: gbuf });
+  const span = await pg.locator('.import-span').innerText().catch(() => '');
+  if (!/拾于 20\d\d\.\d+/.test(span) || !new RegExp(`和本机重叠 ${rows.length} 穗`).test(span) || !/配方 1/.test(span) || !/智能穗束 1/.test(span)) errs.push(`[${tag}] import span: ${span}`);
+  if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + `/v043-import-${W}.png` });
+  await pg.click('.import-go');
+  await pg.waitForSelector('.toast:has-text("已合并")', { timeout: 8000 }).catch(() => errs.push(`[${tag}] import toast`));
+  const back = await pg.evaluate(() => [localStorage.getItem('glean.recipes'), localStorage.getItem('glean.smart')]);
+  if (!/测试配方/.test(back[0] || '') || !/海/.test(back[1] || '')) errs.push(`[${tag}] prefs not restored ${JSON.stringify(back)}`);
+  await c.close();
+
+  // 4. 0639 启动后提醒：25 穗、最早 100 天前、从没备份 → 「还没备份过」+ 去备份 → 设置
+  const c2 = await b.newContext({ viewport: { width: W, height: H } });
+  // 空库那次启动不让 tick 跑（等 10 分钟），种好数据刷新后才 300ms 就看
+  await c2.addInitScript(() => localStorage.setItem('glean.nudge.wait', sessionStorage.getItem('v043.nudge') ? '300' : '600000'));
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p2.goto(base);
+  await p2.waitForSelector('text=穗仓还是空的');
+  const now = Date.now();
+  await p2.evaluate((now) => new Promise((res) => {
+    const r = indexedDB.open('lingan');
+    r.onsuccess = () => {
+      const tx = r.result.transaction(['items'], 'readwrite');
+      for (let i = 0; i < 25; i++) tx.objectStore('items').add({ type: 'idea', title: `旧念头 ${i}`, content: '', creator: '', year: '', url: '', why: '', tags: [], graftCount: 0, createdAt: now - (100 - i) * 864e5, updatedAt: now - (100 - i) * 864e5, uid: `01V043${String(i).padStart(20, '0')}` });
+      tx.oncomplete = () => { r.result.close(); res(); };
+    };
+  }), now);
+  // 空库那次启动的 tick 可能已经跑过（记了下次时间 / 提醒时间）：都清掉再刷新
+  await p2.evaluate(() => { localStorage.removeItem('glean.nudge.next'); localStorage.removeItem('glean.nudge'); sessionStorage.setItem('v043.nudge', '1'); });
+  await p2.reload();
+  await p2.waitForSelector('.toast:has-text("还没备份过")', { timeout: 9000 }).catch(async () => errs.push(`[${tag}] backup nudge toast missing ${JSON.stringify(await p2.evaluate(() => [window.__gleanNudge, localStorage.getItem('glean.nudge.next'), localStorage.getItem('glean.nudge')]))}`));
+  if (process.env.E2E_SHOTS) await p2.screenshot({ path: process.env.E2E_SHOTS + `/v043-nudge-${W}.png` });
+  await p2.click('.toast-act:has-text("去备份")').catch(() => errs.push(`[${tag}] nudge action missing`));
+  await p2.waitForSelector('.store-health', { timeout: 5000 }).catch(() => errs.push(`[${tag}] nudge action did not open settings`));
+  // 同一天不再提
+  await p2.reload();
+  await p2.waitForTimeout(4500);
+  if (await p2.locator('.toast:has-text("还没备份过")').count()) errs.push(`[${tag}] nudge repeated same day`);
+  await c2.close();
+  console.log(`v043: no external requests (${navs.length} pages); intake gps/shot/cap ok (${JSON.stringify(ib2 && [ib2.w, ib2.h])}); shot-at ok; store/backup ok; obsidian strip ok; prefs backup ok; nudge ok`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v043') {
+    await v043();
+    throw Object.assign(new Error('v043 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v042') {
     await v042();
     throw Object.assign(new Error('v042 only'), { only: true });
@@ -5709,6 +5896,7 @@ try {
   await v040();
   await v041();
   await v042();
+  await v043();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
