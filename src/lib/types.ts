@@ -85,6 +85,8 @@ export interface Item {
   revisits?: Revisit[];
   /** v0.40 0938 放下：不进默认穗仓 / 每日一穗，可搜、可拿回来（放下的时间）。没加索引，随同步 */
   down?: number;
+  /** v0.43 0651 照片 EXIF 里的拍摄时间（「拾于」候选；不加索引、随同步） */
+  shotAt?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -249,6 +251,8 @@ export interface StoredImage {
   blob: Blob;
   /** v0.37 0713 详情档（长边 ≤ MID_MAX 的 JPEG），本机派生、不进备份 / 同步；null = 看过了、原图不大不用做 */
   mid?: Blob | null;
+  /** v0.43 0651 / 0636 刚收进来、还没抹 GPS / 缩图（值 = 收进来那一刻，换图后对不上就不写回）；本机、不进备份 */
+  fresh?: number;
 }
 
 /** v0.14 每日一穗：某一天定下来的内容（同一天打开都一样） */
