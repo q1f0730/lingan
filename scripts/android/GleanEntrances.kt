@@ -95,8 +95,11 @@ class GleanReceiver : BroadcastReceiver() {
           Glean.postQuick(c, "已拾 ♪ " + s.title + if (s.artist.isNotEmpty()) " — " + s.artist else "")
         }
       }
+      // v0.45 到点递一穗（GleanDaily.kt）
+      GleanDaily.ACTION_DAILY -> GleanDaily.fire(c)
       Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> {
         if (Glean.notifyOn(c)) Glean.postQuick(c, null)
+        GleanDaily.schedule(c)
       }
     }
   }
