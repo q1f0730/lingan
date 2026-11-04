@@ -74,3 +74,89 @@ export async function clearPin(pin: string): Promise<boolean> {
   relock();
   return true;
 }
+
+// ——— v0.40 忘了 PIN：两条路 ———
+// ① 申请重设：24 小时冷静期。期间上锁的穗照样挡着（PIN 也照样能开）、随时可取消；满 24 小时后要再点一次「现在重设」才清掉旧 PIN。
+//    计时不直接信系统时间：App 开着时每次只记「墙钟走了多少」和「单调钟走了多少」里小的那个（把时间往后拨不算数）；
+//    App 关着的那段按墙钟补，但下次启动发现墙钟比见过的最晚时间还早（往回拨过）就判作动过时间，冷静期从头算。
+//    这只防「拿着已解锁设备的人当场绕过」；关机改时间再开机这种，本机没有可信时钟，挡不住（上锁本来也不是加密）。
+// ② 立即重设：上锁穗的内容当场清空（标题 / 正文 / 为什么 / 图 …），只剩空壳进回收站；要二次确认。
+export const RESET_KEY = 'glean.lock.reset';
+export const RESET_MS = 24 * 3600 * 1000;
+const SLACK = 5000;
+interface Reset {
+  /** 申请时间（只给人看） */
+  at: number;
+  /** 已经认下的冷静期毫秒 */
+  acc: number;
+  /** 上次记账时的墙钟 */
+  wall: number;
+  /** 见过的最晚墙钟（往回拨的判断依据） */
+  max: number;
+}
+let seen: { wall: number; mono: number } | null = null;
+const mono = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+function readReset(): Reset | null {
+  try {
+    const o = JSON.parse(localStorage.getItem(RESET_KEY) || 'null');
+    return o && typeof o.acc === 'number' && typeof o.wall === 'number' ? o : null;
+  } catch {
+    return null;
+  }
+}
+export function startReset(now = Date.now(), m = mono()): void {
+  localStorage.setItem(RESET_KEY, JSON.stringify({ at: now, acc: 0, wall: now, max: now } satisfies Reset));
+  seen = { wall: now, mono: m };
+}
+export function cancelReset(): void {
+  localStorage.removeItem(RESET_KEY);
+  seen = null;
+}
+/** 记一次账，返回冷静期还剩多少毫秒；null = 没在申请。now / m 只给单测注入 */
+export function resetLeft(now = Date.now(), m = mono()): number | null {
+  const r = readReset();
+  if (!r) return null;
+  if (now < (r.max || r.wall) - 60000) {
+    // 墙钟比见过的还早一分钟以上：动过时间，从头算
+    r.acc = 0;
+    r.at = now;
+  } else if (seen) {
+    // 同一次运行：墙钟和单调钟取小的（往后拨不算数）
+    r.acc += Math.max(0, Math.min(now - r.wall, m - seen.mono + SLACK));
+  } else {
+    // 上次记账之后 App 关过：按墙钟补
+    r.acc += Math.max(0, now - r.wall);
+  }
+  r.wall = now;
+  r.max = Math.max(r.max || 0, now);
+  seen = { wall: now, mono: m };
+  localStorage.setItem(RESET_KEY, JSON.stringify(r));
+  return Math.max(0, RESET_MS - r.acc);
+}
+/** 冷静期满了才真的清掉旧 PIN（之后设新的） */
+export function finishReset(now = Date.now(), m = mono()): boolean {
+  if (resetLeft(now, m) !== 0) return false;
+  localStorage.removeItem(LOCK_KEY);
+  localStorage.removeItem(FAIL_KEY);
+  cancelReset();
+  relock();
+  return true;
+}
+/** 立即重设：清空所有上锁穗的内容（进回收站，只剩空壳）并删掉旧 PIN。返回清了几穗 */
+export async function wipeLocked(): Promise<number> {
+  const { db, trashItems } = await import('./db');
+  const ids = (await db.items.filter((x) => !!x.locked).toArray()).map((x) => x.id!).filter(Boolean);
+  const blank = { title: '已清空的上锁穗', content: '', why: '', url: '', creator: '', year: '', tags: [], caption: undefined, ocr: undefined, snap: undefined, links: undefined, work: undefined, bundles: undefined, revisits: undefined, embedding: undefined, hasImage: undefined, thumb: undefined, image: undefined, source: undefined, meets: undefined, locked: undefined };
+  await db.transaction('rw', db.items, db.images, async () => {
+    for (const id of ids) {
+      await db.items.update(id, blank);
+      await db.images.delete(id);
+    }
+  });
+  await trashItems(ids);
+  localStorage.removeItem(LOCK_KEY);
+  localStorage.removeItem(FAIL_KEY);
+  cancelReset();
+  relock();
+  return ids.length;
+}
