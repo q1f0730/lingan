@@ -18,19 +18,13 @@ import { compressImage } from '../lib/image';
 import { isTauriEnv } from '../lib/desktop';
 
 
-/** v0.22 速记草稿：输入防抖写本地，App 被杀后下次打开接着写；存了或清空就删 */
-function useDraft(key: string, text: string, setText: (t: string) => void): [boolean, () => void] {
-  const [restored, setRestored] = useState(false);
+/** v0.22 速记草稿：输入防抖写本地，App 被杀后下次打开接着写；存了或清空就删。
+ * v0.44：草稿在首次渲染里读（useState 初始化，只读不删），不再先画一帧空输入框再 effect 补上（同 v0.43 CaptureForm）。 */
+function useDraft(key: string): [string, React.Dispatch<React.SetStateAction<string>>, boolean, () => void] {
+  const [text, setText] = useState(() => loadDraft(key));
+  const [restored, setRestored] = useState(() => !!text);
   const w = useMemo(() => draftWriter(key), [key]);
-  useEffect(() => {
-    const t = loadDraft(key);
-    if (t) {
-      setText(t);
-      setRestored(true);
-    }
-    return () => w.flush();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  useEffect(() => () => w.flush(), [w]);
   useEffect(() => {
     w.write(text);
   }, [text, w]);
@@ -48,7 +42,7 @@ function useDraft(key: string, text: string, setText: (t: string) => void): [boo
     clearDraft(key);
     setRestored(false);
   }, [key, w]);
-  return [restored, done];
+  return [text, setText, restored, done];
 }
 
 const isPending = (e: unknown) => (e as { name?: string } | null)?.name === 'PendingWriteError';
@@ -147,7 +141,7 @@ function PlusCaret({ caret }: { caret: boolean }) {
  */
 export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   const { settings, toast, openCapture } = useApp();
-  const [text, setText] = useState('');
+  const [text, setText, restored, dropDraft] = useDraft('quick');
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<number | null>(null);
   const [why, setWhy] = useState('');
@@ -156,7 +150,6 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const whyRef = useRef<HTMLInputElement>(null);
-  const [restored, dropDraft] = useDraft('quick', text, setText);
   const [typeOv, setTypeOv] = useState<ItemType | null>(null);
   const guess = useMemo(() => (text.trim() ? parseQuick(text) : null), [text]);
   useEffect(() => {
@@ -364,13 +357,12 @@ export function QuickBar({ where }: { where: 'top' | 'dock' }) {
 const QuickFind = lazy(() => import('./QuickFind'));
 export function QuickWindow({ onClose, initial = '' }: { onClose: () => void; initial?: string }) {
   const { settings, toast, openItem } = useApp();
-  const [text, setText] = useState('');
+  const [text, setText, , dropDraft] = useDraft('qw');
   const [type, setType] = useState<ItemType | null>(null);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
   const finding = /^[?？]/.test(text);
   const guess = useMemo(() => (finding ? null : parseQuick(text)), [text, finding]);
-  const [, dropDraft] = useDraft('qw', text, setText);
   const [found, setFound] = useState<Item[]>([]);
   const [fsel, setFsel] = useState(0);
   const onFound = useCallback((h: Item[]) => (setFound(h), setFsel(0)), []);
