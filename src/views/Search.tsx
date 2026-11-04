@@ -18,6 +18,12 @@ import { embed } from '../lib/ai';
 import { embedConfig } from '../lib/settings';
 import { isLocalBaseUrl, MINI } from '../lib/privacy';
 import { cosine } from '../lib/similarity';
+import { addSmart, agoText, commandText, dropSmart, filterCmds, forgotten, isCommand, loadSmart, loosenOptions, saveSmart, smartQuery, type Cmd } from '../lib/searchplus';
+import { parseQuick } from '../lib/quick';
+import { quickAdd } from '../components/QuickBar';
+import { NAV } from '../components/rw/NavBar';
+import { BASKET_MAX, BASKET_MIN } from '../lib/basket';
+import '../styles/v041.css';
 
 const RECENT_KEY = 'glean.recentq';
 const RANGES: DateRange[] = ['all', '7d', '30d', 'year', 'custom'];
@@ -57,7 +63,7 @@ function hitWhere(h: SearchHit, terms: Term[]): Array<{ label: string; text: str
 }
 
 export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Development[]; onClose: () => void }) {
-  const { openItem, go, desktop, settings } = useApp();
+  const { openItem, go, desktop, settings, toast, openCapture, developFrom } = useApp();
   const ft = ftShared(db);
   const rev = useSyncExternalStore(ft.subscribe, ft.getRev);
   const [q, setQ] = useState('');
@@ -92,7 +98,9 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   const itemDocs = useMemo(() => items.filter((i) => i.id != null && (unl || !i.locked)).map((i) => toDoc('i', i)), [items, unl]);
   const devDocs = useMemo(() => devs.filter((d) => d.id != null && d.idea).map((d) => toDoc('b', d)), [devs]);
   // v0.23 0111 搜索语法：type: tag: year: from: why: before: after: inbox: 先拆出来当筛选，剩下的字照常全文搜
-  const parsed = useMemo(() => parseSyntax(q), [q]);
+  // v0.41 0137 以 > 开头 = 命令面板，不当查询
+  const cmd = isCommand(q);
+  const parsed = useMemo(() => parseSyntax(cmd ? '' : q), [q, cmd]);
   const filters = parsed.filters;
   const terms = useMemo(() => parseQuery(parsed.text), [parsed.text]);
   // 拼音字表约 22KB：第一次打纯字母时才加载
@@ -101,6 +109,26 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
   useEffect(() => {
     if (wantPy && !py) void import('../lib/pinyin').then(setPy).catch(() => {});
   }, [wantPy, py]);
+  // v0.41 0134 繁简互搜：查询里第一次出现汉字才加载字表（约 10KB）
+  const [zh, setZh] = useState<typeof import('../lib/zhvar') | null>(null);
+  const wantZh = /[\u3400-\u9fff]/.test(parsed.text);
+  useEffect(() => {
+    if (wantZh && !zh) void import('../lib/zhvar').then(setZh).catch(() => {});
+  }, [wantZh, zh]);
+  const varTerms = useMemo(() => (zh && wantZh ? zh.zhVariants(parsed.text.trim()).map(parseQuery).filter((t) => t.length) : []), [zh, wantZh, parsed.text]);
+  // 高亮：原词 + 繁 / 简写法
+  const hlTerms = useMemo(() => {
+    if (!varTerms.length) return terms;
+    const seen = new Set(terms.map((t) => t.kind + t.s));
+    const out = [...terms];
+    for (const vt of varTerms)
+      for (const t of vt)
+        if (!seen.has(t.kind + t.s)) {
+          seen.add(t.kind + t.s);
+          out.push(t);
+        }
+    return out;
+  }, [terms, varTerms]);
   const complete = useMemo(() => {
     if (!/[:：][^\s]*$/.test(q)) return [];
     const tags = new Map<string, number>();
@@ -148,6 +176,23 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
     const t0 = performance.now();
     const ih = searchDocs(ft.index, itemDocs, terms);
     const bh = searchDocs(ft.index, devDocs, terms);
+    // v0.41 0134 繁 / 简写法各搜一遍，原文没命中的接在后面
+    if (varTerms.length) {
+      const si = new Set(ih.map((h) => h.doc.key));
+      const sb = new Set(bh.map((h) => h.doc.key));
+      for (const vt of varTerms) {
+        for (const h of searchDocs(ft.index, itemDocs, vt))
+          if (!si.has(h.doc.key)) {
+            si.add(h.doc.key);
+            ih.push(h);
+          }
+        for (const h of searchDocs(ft.index, devDocs, vt))
+          if (!sb.has(h.doc.key)) {
+            sb.add(h.doc.key);
+            bh.push(h);
+          }
+      }
+    }
     // v0.28 0112 拼音 / 首字母：打的是纯字母时，补上标题 / 作者 / 标签拼音对得上的穗（排在原文命中后面）
     if (py && py.isPinyinQuery(parsed.text)) {
       const seen = new Set(ih.map((h) => h.doc.key));
@@ -157,7 +202,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
     ft.status.lastQuery = q;
     ft.status.lastHits = ih.length + bh.length;
     return { ih, bh };
-  }, [terms, itemDocs, devDocs, rev, ft, q, py, parsed.text]);
+  }, [terms, itemDocs, devDocs, rev, ft, q, py, parsed.text, varTerms]);
 
   const [lo, hi] = useMemo(() => dateBounds(range, Date.now(), from, to), [range, from, to]);
   const inRange = useCallback((t: number) => t >= lo && t < hi, [lo, hi]);
@@ -243,6 +288,82 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
     return out.slice(0, 4);
   }, [terms, total, ft, itemDocs, q]);
 
+  // v0.41 0128 智能穗束：存查询（含当前类型 / 标签），打开时按当下的穗仓重新算
+  const [smart, setSmart] = useState(loadSmart);
+  const smartQ = smartQuery(q, type, tag);
+  const smartSaved = smart.some((x) => x.q === smartQ.replace(/\s+/g, ' '));
+  const keepSmart = () => {
+    const n = addSmart(smart, smartQ);
+    setSmart(n);
+    saveSmart(n);
+    toast('存成智能穗束了：以后收的穗对得上也会算进来');
+  };
+  const unSmart = (sq: string) => {
+    const n = dropSmart(smart, sq);
+    setSmart(n);
+    saveSmart(n);
+  };
+  const smartN = useMemo(() => {
+    void rev;
+    if (active) return [];
+    return smart.map((sm) => {
+      const ps = parseSyntax(sm.q);
+      const ts = parseQuery(ps.text);
+      const pool = ts.length ? searchDocs(ft.index, itemDocs, ts) : itemDocs.map((doc) => ({ doc }));
+      return ps.filters.length ? pool.filter((h) => matchFilters(h.doc.obj, ps.filters)).length : pool.length;
+    });
+  }, [smart, active, itemDocs, ft, rev]);
+  // v0.41 0136 搜索结果里挑几穗直接去嫁接
+  const [pick, setPick] = useState<number[] | null>(null);
+  const pickSet = useMemo(() => (pick ? new Set(pick) : null), [pick]);
+  const onRow = (it: Item) => {
+    if (!pick) return openHit(it);
+    const id = it.id!;
+    if (pick.includes(id)) setPick(pick.filter((x) => x !== id));
+    else if (pick.length >= BASKET_MAX) toast(`一次最多嫁接 ${BASKET_MAX} 穗`, 'err');
+    else setPick([...pick, id]);
+  };
+  // v0.41 0133 你忘了你收过：命中里有很久以前收的，轻轻提一句
+  const fg = useMemo(() => (terms.length && iHits.length ? forgotten(iHits.map((h) => h.doc.obj)) : null), [terms.length, iHits]);
+  // v0.41 0428 没结果：能放宽哪一个筛选 + 把这句拾进来
+  const loosen = total === 0 && active ? loosenOptions({ type, typeLabel: type === 'branch' ? '新枝' : type !== 'all' ? TYPE_LABEL[type] : '', tag, range, rangeLabel: DATE_LABEL[range], filters: filters.length }) : [];
+  const loosenBy = (id: string) => {
+    if (id === 'type') setType('all');
+    else if (id === 'tag') setTag(null);
+    else if (id === 'range') setRange('all');
+    else setQuery(parsed.text.trim());
+  };
+  const gleanText = parsed.text.trim();
+  const gleanQ = async () => {
+    const d = parseQuick(gleanText);
+    if (!d) return;
+    try {
+      await quickAdd(d, settings, (m) => toast(m, 'err'));
+      toast(`拾进来了：「${gleanText.slice(0, 20)}」`);
+    } catch (e) {
+      toast('保存失败：' + (e instanceof Error ? e.message : String(e)), 'err');
+    }
+  };
+  // v0.41 0137 命令面板：> 开头，跳页面 / 执行动作，↑↓ 选、回车执行
+  const [ci, setCi] = useState(0);
+  const cmds = useMemo(() => {
+    if (!cmd) return [];
+    const list: Array<Cmd & { run: () => void }> = [
+      ...NAV.map((n) => ({ id: 'go-' + n.v, label: '去' + n.label, keys: n.v + ' go', run: () => (onClose(), go(n.v)) })),
+      { id: 'capture', label: '拾一穗（完整表单）', keys: 'new add capture 新建 记', run: () => (onClose(), openCapture()) },
+      { id: 'ask', label: '问穗仓', keys: 'ask 问', run: () => (setQ(''), setAsking(true)) },
+      { id: 'random', label: '随便翻一穗', keys: 'random 随机', run: () => void (itemDocs.length && openItem(itemDocs[Math.floor(Math.random() * itemDocs.length)].obj)) },
+      { id: 'nowhy', label: '找还没写为什么的穗', keys: 'why 空', run: () => setQ('why:空 ') },
+      ...smart.map((sm) => ({ id: 'smart-' + sm.q, label: `打开智能穗束「${sm.q}」`, keys: 'smart 束', run: () => setQ(sm.q) })),
+    ];
+    return filterCmds(list, commandText(q));
+  }, [cmd, q, smart, itemDocs, onClose, go, openCapture, openItem]);
+  const runCmd = (c: { run: () => void } | undefined) => {
+    if (!c) return;
+    setCi(0);
+    c.run();
+  };
+
   const countText = active ? `在 ${items.length} 穗和 ${devs.length} 根新枝里找到 ${total} 处` : `在 ${items.length} 穗和 ${devs.length} 根新枝里找`;
 
   return (
@@ -254,9 +375,20 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
               ref={inputRef}
               className="sq-input"
               value={q}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => (setQuery(e.target.value), setCi(0))}
               onKeyDown={(e) => {
                 if (e.key === 'Escape') onClose();
+                if (cmd) {
+                  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setCi((i) => (cmds.length ? (i + (e.key === 'ArrowDown' ? 1 : cmds.length - 1)) % cmds.length : 0));
+                  }
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    runCmd(cmds[Math.min(ci, cmds.length - 1)]);
+                  }
+                  return;
+                }
                 if (e.key === 'Enter' && (terms.length || filters.length)) {
                   remember();
                   if (!desktop) inputRef.current?.blur();
@@ -299,6 +431,11 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
             </span>
           )}
         </p>
+        {active && !cmd && smartQ && (
+          <button className="linklike sq-keep" disabled={smartSaved} onClick={keepSmart} title="把这组筛选存成一个会自己长的穗束">
+            {smartSaved ? '已存成智能穗束' : '存成智能穗束'}
+          </button>
+        )}
         {complete.length > 0 && (
           <div className="sq-complete" role="listbox" aria-label="补全">
             {complete.map((c) => (
@@ -311,6 +448,21 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
       </header>
       {asking && <AskPanel items={items} initial={q} onOpen={openItem} />}
 
+      {cmd ? (
+        <div className="sq-cmds" role="listbox" aria-label="命令">
+          <div className="label">命令（↑↓ 选，回车执行）</div>
+          {cmds.length ? (
+            cmds.map((c, i) => (
+              <button key={c.id} role="option" aria-selected={i === Math.min(ci, cmds.length - 1)} className={`sq-cmd${i === Math.min(ci, cmds.length - 1) ? ' on' : ''}`} data-cmd={c.id} onMouseEnter={() => setCi(i)} onClick={() => runCmd(c)}>
+                {c.label}
+              </button>
+            ))
+          ) : (
+            <p className="meta-text">没有这个命令。去掉开头的 &gt; 就是普通搜索。</p>
+          )}
+        </div>
+      ) : (
+      <>
       <div className="sq-filters">
         <div className="sq-frow" role="toolbar" aria-label="类型">
           <span className="sq-fl label">类型</span>
@@ -366,7 +518,24 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
 
       {!active ? (
         <div className="sq-idle">
-          <p className="meta-text">输入就出结果：标题、作者、句子、为什么、标签，连新枝一起找。中文连着的字要连着出现，英文按词首。</p>
+          <p className="meta-text">输入就出结果：标题、作者、句子、为什么、标签，连新枝一起找。中文连着的字要连着出现，英文按词首；繁体简体互相找得到。打 &gt; 开头是命令面板。</p>
+          {smart.length > 0 && (
+            <section className="sq-smart">
+              <div className="label">智能穗束（存下的筛选，新收的穗会自动算进来）</div>
+              <div className="sq-recent-row">
+                {smart.map((sm, i) => (
+                  <span key={sm.q} className="sq-smart-item">
+                    <button className="linklike sq-smart-q" onClick={() => setQuery(sm.q)}>
+                      {sm.q} <span className="n num">({smartN[i] ?? 0})</span>
+                    </button>
+                    <button className="btn text faint sq-smart-x" aria-label={`删掉智能穗束 ${sm.q}`} onClick={() => unSmart(sm.q)}>
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
           <section className="sq-syntax">
             <div className="label">还可以这样筛（能叠加，前面加 - 是排除）</div>
             <div className="sq-recent-row">
@@ -403,8 +572,32 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
         <div className="sq-results">
           {type !== 'branch' && (
             <section className="sq-sec sq-items">
-              <div className="sq-sec-head label">{semHits ? '字面命中' : '穗'} ({iHits.length})</div>
-              {iHits.length > 0 && <ItemResults hits={iHits} terms={terms} desktop={desktop} onOpen={openHit} />}
+              {fg && (
+                <p className="sq-forgot meta-text">
+                  你 {agoText(fg)}收过
+                  <button className="linklike sq-forgot-open" onClick={() => openHit(fg.it)}>
+                    「{displayTitle(fg.it)}」
+                  </button>
+                  ，还记得吗？
+                </p>
+              )}
+              <div className="sq-sec-head label">
+                {semHits ? '字面命中' : '穗'} ({iHits.length})
+                {iHits.length >= 2 && (
+                  <button className={`btn text sq-pick${pick ? ' on' : ''}`} aria-pressed={!!pick} onClick={() => setPick(pick ? null : [])}>
+                    {pick ? '不挑了' : '挑几穗去嫁接'}
+                  </button>
+                )}
+              </div>
+              {pick && (
+                <div className="sq-pickbar">
+                  <span className="meta-text">点结果挑 {BASKET_MIN}–{BASKET_MAX} 穗 · 已挑 <span className="num">{pick.length}</span></span>
+                  <button className="btn primary sq-pick-go" disabled={pick.length < BASKET_MIN} onClick={() => developFrom(pick)}>
+                    {pick.length < BASKET_MIN ? `差 ${BASKET_MIN - pick.length} 穗` : `嫁接这 ${pick.length} 穗`}
+                  </button>
+                </div>
+              )}
+              {iHits.length > 0 && <ItemResults hits={iHits} terms={hlTerms} desktop={desktop} onOpen={onRow} picked={pickSet} />}
             </section>
           )}
           {semHits ? (
@@ -433,7 +626,7 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
             <section className="sq-sec sq-branches">
               <div className="sq-sec-head label">新枝 ({bHits.length})</div>
               {bHits.slice(0, 60).map((h) => (
-                <BranchRow key={h.doc.key} h={h} terms={terms} onOpen={openBranch} />
+                <BranchRow key={h.doc.key} h={h} terms={hlTerms} onOpen={openBranch} />
               ))}
               {bHits.length > 60 && <p className="meta-text sq-more">还有 {bHits.length - 60} 根，换个更具体的词试试</p>}
             </section>
@@ -441,6 +634,20 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
           {total === 0 && (
             <div className="sq-none">
               <p className="meta-text">没找到这一穗。</p>
+              {loosen.length > 0 && (
+                <p className="meta-text sq-loosens">
+                  {loosen.map((l) => (
+                    <button key={l.id} className="linklike sq-loosen" data-loosen={l.id} onClick={() => loosenBy(l.id)}>
+                      {l.label}
+                    </button>
+                  ))}
+                </p>
+              )}
+              {gleanText && !filters.length && (
+                <button className="btn text sq-glean" onClick={() => void gleanQ()}>
+                  把「{gleanText.slice(0, 24)}」拾进来
+                </button>
+              )}
               {tips.length > 0 && (
                 <p className="meta-text sq-tips">
                   没找到？试试
@@ -455,11 +662,13 @@ export function SearchView({ items, devs, onClose }: { items: Item[]; devs: Deve
           )}
         </div>
       )}
+      </>
+      )}
     </section>
   );
 }
 
-function ItemResults({ hits, terms, desktop, onOpen }: { hits: Array<SearchHit<Item>>; terms: Term[]; desktop: boolean; onOpen: (i: Item) => void }) {
+function ItemResults({ hits, terms, desktop, onOpen, picked }: { hits: Array<SearchHit<Item>>; terms: Term[]; desktop: boolean; onOpen: (i: Item) => void; picked?: Set<number> | null }) {
   const [hov, setHov] = useState<{ it: Item; x: number; y: number } | null>(null);
   const onHover = useCallback((it: Item | null, e?: React.PointerEvent) => setHov(it && e && itemHasImage(it) ? { it, x: e.clientX, y: e.clientY } : null), []);
   return (
@@ -480,7 +689,7 @@ function ItemResults({ hits, terms, desktop, onOpen }: { hits: Array<SearchHit<I
         keyOf={(h) => h.doc.key}
         estimate={() => (desktop ? 56 : 92)}
         threshold={40}
-        render={(h) => <ResultRow h={h} terms={terms} desktop={desktop} onOpen={onOpen} onHover={desktop ? onHover : undefined} />}
+        render={(h) => <ResultRow h={h} terms={terms} desktop={desktop} onOpen={onOpen} onHover={desktop ? onHover : undefined} on={picked ? picked.has(h.doc.obj.id!) : undefined} />}
       />
       {hov && <HoverPreview item={hov.it} x={hov.x} y={hov.y} />}
     </div>
@@ -492,7 +701,7 @@ function RowThumb({ it }: { it: Item }) {
   return <span className="sq-thumb">{src ? <img src={src} alt="" decoding="async" /> : null}</span>;
 }
 
-const ResultRow = memo(function ResultRow({ h, terms, desktop, onOpen, onHover }: { h: SearchHit<Item>; terms: Term[]; desktop: boolean; onOpen: (i: Item) => void; onHover?: (i: Item | null, e?: React.PointerEvent) => void }) {
+const ResultRow = memo(function ResultRow({ h, terms, desktop, onOpen, onHover, on }: { h: SearchHit<Item>; terms: Term[]; desktop: boolean; onOpen: (i: Item) => void; onHover?: (i: Item | null, e?: React.PointerEvent) => void; on?: boolean }) {
   const it = h.doc.obj;
   const where = hitWhere(h, terms);
   const titleHit = h.fields.some((f) => h.doc.fields[f.i].f === 'title' || (it.type === 'text' && h.doc.fields[f.i].f === 'content'));
@@ -506,8 +715,9 @@ const ResultRow = memo(function ResultRow({ h, terms, desktop, onOpen, onHover }
     <span className="sq-where dim">{terms.length ? (titleHit ? '标题' : '') : it.creator || ''}</span>
   );
   const common = {
-    className: 'sq-row',
+    className: on ? 'sq-row picked' : 'sq-row',
     role: 'button',
+    'aria-pressed': on,
     tabIndex: 0,
     'data-item-id': it.id,
     onClick: () => onOpen(it),
