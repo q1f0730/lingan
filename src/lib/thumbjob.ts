@@ -35,6 +35,7 @@ export async function runThumbs(): Promise<void> {
       const r: HealReport = await healImages(db, browserThumbMaker, {
         batch: 6,
         yieldFn: idle,
+        clean: (b) => import('./imgclean').then((m) => m.cleanIntake(b)),
       });
       status.made += r.made;
       status.failed += r.failed;
