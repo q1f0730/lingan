@@ -31,6 +31,8 @@ ok 'ideas.csv CRLF'
 if grep -rIn --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=target --exclude-dir=gen --exclude=preflight.sh -E 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|sk-[A-Za-z0-9]{20,}|untrusted comment: rsign encrypted secret key' . | grep -v 'sk-abcdefghijklmnop1234' >/tmp/preflight-secrets.txt; then cut -d: -f1,2 /tmp/preflight-secrets.txt; die '疑似私钥 / key'; fi
 ok '没有私钥 / key'
 find . -path ./node_modules -prune -o \( -name '*.p12' -o -name '*.jks' -o -name '*.keystore' -o -name 'updater.key' \) -print | grep -q . && die '仓库里有密钥文件' || ok '没有密钥文件'
+# v0.43 0653 identifier 不可改（改了 = 装成另一个 App，老数据 / 自动更新 / 安卓签名升级链全断）
+grep -q '"identifier": "com.q1f730.lingan"' src-tauri/tauri.conf.json && ok 'identifier com.q1f730.lingan' || die 'tauri.conf.json identifier 被改了'
 # 锁文件完整（CI 用 npm ci）
 node -e "const l=require('./package-lock.json');const p=require('./package.json');for(const d of Object.keys({...p.dependencies,...p.devDependencies}))if(!l.packages['node_modules/'+d])throw new Error('lock 缺 '+d)" && ok package-lock || die package-lock
 echo "preflight $V OK —— 下一步：InstaBox e2e ALL PASS + bench5 同会话交替 + node scripts/perf-gate.mjs，再 ghsync / 发版"
