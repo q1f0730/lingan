@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { addTo, basketHint, parseBasket } from '../lib/basket';
 import { bundleCounts, normBundle, splitBundles, withBundles } from '../lib/bundles';
 import { cleanUrl, parseShareCode } from '../lib/cleanurl';
-import { isPinyinQuery, pinyinMatch, toPinyin } from '../lib/pinyin';
+import { isPinyinQuery, pinyinMatch, toPinyin, ready as pinyinReady } from '../lib/pinyin';
 import { matchFilters, parseSyntax } from '../lib/qsyntax';
 import { parseQuick } from '../lib/quick';
+
+// v0.42 拼音字表压缩进包，先解开
+beforeAll(() => pinyinReady);
 
 describe('0023 cleanUrl', () => {
   it('strips tracking params, keeps content params', () => {
