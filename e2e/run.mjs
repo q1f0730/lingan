@@ -3153,7 +3153,7 @@ async function ui27() {
   await pg.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch', clientX: x, clientY: y })); }, [box.x + 20, box.y + 20]);
   await pg.waitForSelector('.ctxmenu.as-sheet', { timeout: 2000 }).catch(() => errs.push(`[${tag}] long press menu`));
   const acts = await pg.locator('.ctxmenu-item').allTextContents();
-  if (acts.join('|') !== '打开|编辑|拿去嫁接|放进嫁接篮|复制文字|复制 glean:// 链接|分享…|放进花园|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`);
+  if (acts.join('|') !== '打开|编辑|拿去嫁接|放进嫁接篮|复制文字|复制 glean:// 链接|分享…|放进花园|封存到某天…|删掉') errs.push(`[${tag}] menu items ${acts.join('|')}`); // v0.45 0924 加「封存到某天…」
   await pg.click('.ctx-edit');
   await pg.waitForSelector('.sheet .capture', { timeout: 3000 }).catch(() => errs.push(`[${tag}] menu edit`));
   await pg.click('.sheet .icon-btn');
@@ -4184,6 +4184,9 @@ async function tauriMock(ctx, opts) {
           }
           case 'plugin:clipboard-manager|read_text':
             return '';
+          // v0.45 0550：全屏 / 专注助手
+          case 'quiet_now':
+            return !!o.quiet;
           default:
             return null;
         }
@@ -5251,7 +5254,7 @@ async function v040() {
   const stxt = await pg.locator('.sheaf-line').innerText().catch(() => '');
   if (!/11 月的麦捆/.test(await pg.locator('.sheaf-card').innerText().catch(() => '')) || stxt.replace(/\s+/g, ' ') !== '拾了 3 穗 · 2 天在拾 · 最常在深夜收 · 长出 1 根新枝') errs.push(`[${tag}] sheaf line: ${stxt}`);
   if (!(await pg.locator('.sheaf-odd:has-text("远处的塔")').count())) errs.push(`[${tag}] sheaf surprise branch`);
-  const nLost = await pg.locator('.lost-row').count();
+  const nLost = await pg.locator('.review-lost .lost-row').count(); // v0.45 起回看卡（补一句 / 一年前 / 来信）也用 .lost-row，限定在麦捆的「被遗忘的好东西」里
   if (nLost !== 3) errs.push(`[${tag}] forgotten rows ${nLost}`);
   if (process.env.E2E_SHOTS) await pg.screenshot({ path: process.env.E2E_SHOTS + '/v040-cards.png', fullPage: true });
   if (await pg.locator('.week-a0').count()) errs.push(`[${tag}] week questions should start folded`);
@@ -5264,8 +5267,8 @@ async function v040() {
   if (!wk || wk.type !== 'idea' || !wk.tags.includes('周记') || !wk.content.includes('本周最打动你的一穗？\n远处的塔') || wk.content.includes('哪穗你现在不同意了')) errs.push(`[${tag}] week item ${JSON.stringify(wk && [wk.type, wk.tags, wk.content])}`);
   if (await pg.locator('.week-card').count()) errs.push(`[${tag}] week card still shown after save`);
   // 0938 放下：被遗忘的一穗点「放下」→ 不在穗仓、「放下的」里有它 → 详情「拿回来」
-  const lostTitle = (await pg.locator('.lost-row .linklike').first().innerText()).trim();
-  await pg.locator('.lost-row .lost-down').first().click();
+  const lostTitle = (await pg.locator('.review-lost .lost-row .linklike').first().innerText()).trim();
+  await pg.locator('.review-lost .lost-row .lost-down').first().click();
   await pg.waitForSelector('.toast:has-text("放下了")');
   if (await pg.locator(`.lib-main .card:has-text("${lostTitle}")`).count()) errs.push(`[${tag}] down item still on shelf`);
   await pg.click('.down-chip');
@@ -5885,7 +5888,173 @@ async function v044() {
   console.log(`v044: quick draft first frame ok; main_ready ok; crash log ok; android secure ok`);
 }
 
+async function v045() {
+  const tag = 'v045';
+  const W = +process.env.E2E_V045_W || 1440;
+  const H = W < 600 ? 844 : 900;
+  const DAY = 86400000;
+  const seed = (pg) =>
+    pg.evaluate(
+      ({ DAY }) =>
+        new Promise((res) => {
+          const r = indexedDB.open('lingan');
+          r.onsuccess = () => {
+            const tx = r.result.transaction(['items', 'works'], 'readwrite');
+            const st = tx.objectStore('items');
+            const now = Date.now();
+            const d = new Date(now);
+            const base = { type: 'idea', content: '', creator: '', year: '', url: '', tags: [], updatedAt: now };
+            const rows = [
+              { title: '封存中的一穗秘密', why: '因为', createdAt: now - 20 * DAY, sealUntil: now + 30 * DAY, sealAt: now - DAY },
+              { title: '到期的来信那一穗', why: '因为', createdAt: now - 60 * DAY, sealUntil: now - 1000, sealAt: now - 40 * DAY },
+              { title: '一年前拾的老穗', why: '那年', createdAt: new Date(d.getFullYear() - 1, d.getMonth(), d.getDate(), 10).getTime() },
+              { title: '还没写为什么甲', why: '', createdAt: now - 2 * DAY },
+              { title: '还没写为什么乙', why: '', createdAt: now - 3 * DAY },
+              { title: '普通的一穗丙', why: '有', createdAt: now - 5 * DAY },
+              { title: '普通的一穗丁', why: '有', createdAt: now - 6 * DAY },
+              { title: '普通的一穗戊', why: '有', createdAt: now - 7 * DAY },
+            ];
+            rows.forEach((x, i) => st.add({ ...base, ...x, uid: `01V045${String(i).padStart(20, '0')}` }));
+            tx.objectStore('works').add({ title: '停下来的短片', form: 'film', stage: 'doing', devUids: [], itemUids: [], draft: '', todos: [], uid: '01V045WORK0000000000000000', createdAt: now - 20 * DAY, updatedAt: now - 9 * DAY });
+            tx.oncomplete = () => (r.result.close(), res());
+          };
+        }),
+      { DAY },
+    );
+  const hm = (t) => new Date(t).toTimeString().slice(0, 5);
+
+  // 1. 网页版：给未来的穗 / 一年前的今天 / 作品停了 / 补一句为什么；卡片菜单封存
+  const c1 = await b.newContext({ viewport: { width: W, height: H } });
+  const p1 = await c1.newPage();
+  p1.on('pageerror', (e) => errs.push(`[${tag}] pageerror ${e.message}`));
+  await p1.goto(base);
+  await p1.waitForSelector('.view');
+  await seed(p1);
+  await p1.reload();
+  await p1.waitForSelector('.letter-card', { timeout: 15000 }).catch(() => errs.push(`[${tag}] letter card missing`));
+  const lib = await p1.locator('.view').innerText();
+  if (/封存中的一穗秘密/.test(lib)) errs.push(`[${tag}] sealed item visible in library`);
+  if (/到期的来信那一穗/.test(lib)) errs.push(`[${tag}] due letter spoiled before opening`);
+  if (!/封存中/.test(lib) && !(await p1.locator('.letter-card').count())) errs.push(`[${tag}] sealed summary missing`);
+  if (!(await p1.locator('.yearago-card:has-text("一年前拾的老穗")').count())) errs.push(`[${tag}] year-ago card missing`);
+  if (!(await p1.locator('.stale-row:has-text("停下来的短片")').count())) errs.push(`[${tag}] stale work nudge missing`);
+  if (!(await p1.locator('.needwhy-card:has-text("还没写为什么甲")').count())) errs.push(`[${tag}] need-why card missing`);
+  if (process.env.E2E_SHOTS) {
+    await p1.waitForTimeout(1500);
+    await p1.locator('.letter-card').scrollIntoViewIfNeeded().catch(() => {});
+    await p1.screenshot({ path: process.env.E2E_SHOTS + `/v045-library-${W}.png` });
+  }
+  // 作品「先放着」：这一段停顿不再推（刷新后也不推）
+  await p1.click('.stale-skip');
+  await p1.reload();
+  await p1.waitForSelector('.letter-card', { timeout: 15000 }).catch(() => {});
+  if (await p1.locator('.stale-row').count()) errs.push(`[${tag}] stale nudge came back after skip`);
+  // 拆开来信：回到穗仓、详情打开、库里不再封存
+  await p1.click('.letter-open');
+  await p1.waitForSelector('.detail', { timeout: 8000 }).catch(() => errs.push(`[${tag}] letter did not open detail`));
+  const opened = (await dbRaw(p1, 'items')).find((x) => x.title === '到期的来信那一穗');
+  if (!opened || opened.sealUntil || opened.sealAt) errs.push(`[${tag}] letter still sealed after open ${JSON.stringify(opened && { s: opened.sealUntil })}`);
+  await p1.keyboard.press('Escape');
+  await p1.reload();
+  await p1.waitForSelector('.view');
+  await p1.waitForFunction(() => document.querySelector('.view')?.textContent?.includes('到期的来信那一穗'), null, { timeout: 8000 }).catch(() => errs.push(`[${tag}] opened letter not back in library`));
+  // 卡片菜单封存：一个月后 → 从穗仓消失
+  const card = p1.locator('[data-item-id]:has-text("普通的一穗丙")').first();
+  await card.click({ button: 'right' });
+  await p1.waitForSelector('.ctxmenu .ctx-seal', { timeout: 6000 }).catch(() => errs.push(`[${tag}] seal menu item missing`));
+  await p1.click('.ctxmenu .ctx-seal');
+  await p1.waitForSelector('.ctxmenu .ctx-seal-at', { timeout: 3000 }).catch(() => errs.push(`[${tag}] seal choices missing`));
+  if (process.env.E2E_SHOTS) await p1.screenshot({ path: process.env.E2E_SHOTS + `/v045-menu-${W}.png` });
+  await p1.click('.ctxmenu .ctx-seal-at >> nth=0');
+  await p1.waitForSelector('.toast:has-text("封存到")', { timeout: 4000 }).catch(() => errs.push(`[${tag}] seal toast missing`));
+  const sealedRow = (await dbRaw(p1, 'items')).find((x) => x.title === '普通的一穗丙');
+  if (!sealedRow?.sealUntil || sealedRow.sealUntil < Date.now() + 27 * DAY) errs.push(`[${tag}] seal not saved ${sealedRow?.sealUntil}`);
+  await p1.waitForFunction(() => !document.querySelector('.view')?.textContent?.includes('普通的一穗丙'), null, { timeout: 6000 }).catch(() => errs.push(`[${tag}] sealed card still on shelf`));
+  await c1.close();
+
+  // 2. 电脑（模拟 Tauri）：到点发系统通知；托盘 glean://go/… 走同一个解析器；设置里试一条
+  const c2 = await b.newContext({ viewport: { width: W, height: H } });
+  await tauriMock(c2, { png: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', send: false, links: [] });
+  const p2 = await c2.newPage();
+  p2.on('pageerror', (e) => errs.push(`[${tag}] desktop pageerror ${e.message}`));
+  await p2.goto(base);
+  await p2.waitForSelector('.view');
+  // 先等这一页走到空闲（entryboot 调了 link_take、到点递一穗已经起过、第一次 tick 读的是「关」）再写配置：
+  // 否则空闲恰好落在「写配置 → reload 提交」之间时，旧页面会先递掉今天那一条（记了 glean.ping.last），新页面就不递了（v0.45 整套 / 单组偶发 2/7）
+  await p2.waitForFunction(() => (window.__mock?.calls || []).includes('link_take'), null, { timeout: 10000 }).catch(() => errs.push(`[${tag}] desktop idle not reached`));
+  await p2.waitForTimeout(1000);
+  await seed(p2);
+  await p2.evaluate((at) => localStorage.setItem('glean.ping', JSON.stringify({ on: true, at, why: true, wx: false })), hm(Date.now() - 60000));
+  await p2.reload();
+  await p2.waitForFunction(() => (window.__mock?.notes || []).some((n) => n.title === '今日一穗' || n.title === '一封给未来的穗到了'), null, { timeout: 15000 }).catch(() => errs.push(`[${tag}] daily ping not sent`));
+  const notes = await p2.evaluate(() => window.__mock.notes);
+  if (notes.some((n) => /封存中的一穗秘密|到期的来信那一穗/.test(n.body))) errs.push(`[${tag}] ping spoiled a sealed title`);
+  if (!(await p2.evaluate(() => window.__mock.calls.includes('quiet_now')))) errs.push(`[${tag}] quiet_now not checked`);
+  // 同一天不重复递
+  await p2.reload();
+  await p2.waitForTimeout(5000);
+  if ((await p2.evaluate(() => window.__mock.notes.length)) > 0) errs.push(`[${tag}] ping repeated same day`);
+  // 0545 托盘：Rust 只发 glean://go/<页>
+  await p2.evaluate(() => window.__emit('glean-go', 'glean://go/settings'));
+  await p2.waitForSelector('.view.settings', { timeout: 8000 }).catch(() => errs.push(`[${tag}] glean://go/settings not routed`));
+  await p2.waitForSelector('#set-ping', { timeout: 8000 }).catch(() => errs.push(`[${tag}] ping panel missing`));
+  if (!/每天/.test(await p2.locator('.set-link:has-text("到点递一穗")').innerText().catch(() => ''))) errs.push(`[${tag}] settings index summary wrong`);
+  await p2.click('#set-ping .ping-test');
+  await p2.waitForSelector('.toast:has-text("试了一条")', { timeout: 8000 }).catch(() => errs.push(`[${tag}] test ping toast missing`));
+  if (!(await p2.evaluate(() => window.__mock.notes.length))) errs.push(`[${tag}] test ping not sent`);
+  if (process.env.E2E_SHOTS) {
+    await p2.locator('#set-ping').scrollIntoViewIfNeeded();
+    await p2.waitForTimeout(600);
+    await p2.screenshot({ path: process.env.E2E_SHOTS + `/v045-settings-${W}.png` });
+  }
+  await p2.evaluate(() => window.__emit('glean-go', 'glean://go/daily'));
+  await p2.waitForSelector('.view:not(.settings)', { timeout: 8000 }).catch(() => errs.push(`[${tag}] glean://go/daily not routed`));
+  await c2.close();
+
+  // 3. 0550 全屏 / 专注时憋着
+  const c3 = await b.newContext({ viewport: { width: W, height: H } });
+  await tauriMock(c3, { png: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', send: false, links: [], quiet: true });
+  await c3.addInitScript((at) => localStorage.setItem('glean.ping', JSON.stringify({ on: true, at, why: true, wx: false })), hm(Date.now() - 60000));
+  const p3 = await c3.newPage();
+  await p3.goto(base);
+  await p3.waitForSelector('.view');
+  await p3.waitForTimeout(7000);
+  if ((await p3.evaluate(() => window.__mock.notes.length)) > 0) errs.push(`[${tag}] pinged during quiet time`);
+  if (await p3.evaluate(() => localStorage.getItem('glean.ping.last'))) errs.push(`[${tag}] quiet ping marked as sent`);
+  await c3.close();
+
+  // 4. 安卓：交给原生排闹钟（7 天文案）；vivo 显示「让提醒更准时」
+  const c4 = await b.newContext({ viewport: { width: W, height: H } });
+  await tauriMock(c4, { png: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', send: false, links: [] });
+  await c4.addInitScript(() => {
+    window.__daily = [];
+    window.__guide = 0;
+    window.LinganDaily = { set: (j) => (window.__daily.push(JSON.parse(j)), true), guide: () => (window.__guide++, true), brand: () => 'vivo' };
+  });
+  const p4 = await c4.newPage();
+  p4.on('pageerror', (e) => errs.push(`[${tag}] android pageerror ${e.message}`));
+  await p4.goto(base);
+  await p4.waitForSelector('.view');
+  await seed(p4);
+  await p4.click('.nav-btn:has-text("设置") >> visible=true');
+  await p4.waitForSelector('#set-ping .ping-on', { timeout: 8000 });
+  await p4.click('#set-ping .ping-on');
+  await p4.waitForFunction(() => window.__daily.some((d) => d.on && Object.keys(d.msgs).length === 7), null, { timeout: 10000 }).catch(() => errs.push(`[${tag}] native schedule not set ${JSON.stringify(window.__daily).slice(0, 200)}`));
+  const last = await p4.evaluate(() => window.__daily.at(-1));
+  if (last && JSON.stringify(last.msgs).match(/封存中的一穗秘密/)) errs.push(`[${tag}] native msgs spoil sealed title`);
+  if (!(await p4.locator('#set-ping .ping-guide:has-text("vivo")').count())) errs.push(`[${tag}] vivo guide row missing`);
+  await p4.click('#set-ping .ping-guide');
+  if ((await p4.evaluate(() => window.__guide)) !== 1) errs.push(`[${tag}] guide not called`);
+  if ((await p4.evaluate(() => window.__mock.notes.length)) > 0) errs.push(`[${tag}] android should not use plugin notify for daily`);
+  await c4.close();
+  console.log(`v045: letters / year-ago / stale work / need-why ok; seal menu ok; desktop ping + quiet ok; glean://go ok; android schedule ok`);
+}
+
 try {
+  if (process.env.E2E_ONLY === 'v045') {
+    await v045();
+    throw Object.assign(new Error('v045 only'), { only: true });
+  }
   if (process.env.E2E_ONLY === 'v044') {
     await v044();
     throw Object.assign(new Error('v044 only'), { only: true });
@@ -6007,6 +6176,7 @@ try {
   await v042();
   await v043();
   await v044();
+  await v045();
   await safety();
   if (process.env.E2E_ONLY === 'security') throw Object.assign(new Error('security only'), { only: true });
   await agent();
