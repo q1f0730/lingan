@@ -139,12 +139,24 @@ export default function App() {
   const [quickText, setQuickText] = useState('');
   // 首屏画完、空闲后才挂拖放 / 长按菜单（main.tsx afterFirstPaint → prefetchViews 发 IDLE_READY；兜底 4 秒）
   const [idle, setIdle] = useState(false);
+  // v0.40 菜单挂上之前就右键一张卡：拦下系统菜单、记住位置，立刻挂菜单并补开（以前这一下会弹出浏览器自己的菜单）
+  const [early, setEarly] = useState<{ el: Element; x: number; y: number } | null>(null);
   useEffect(() => {
-    const on = () => setIdle(true);
+    let done = false;
+    const on = () => ((done = true), setIdle(true));
+    const ctx = (e: MouseEvent) => {
+      const el = (e.target as Element | null)?.closest?.('[data-item-id]');
+      if (!el || done) return;
+      e.preventDefault();
+      setEarly({ el, x: e.clientX, y: e.clientY });
+      on();
+    };
     window.addEventListener(IDLE_READY, on);
+    document.addEventListener('contextmenu', ctx);
     const t = setTimeout(on, 4000);
     return () => {
       window.removeEventListener(IDLE_READY, on);
+      document.removeEventListener('contextmenu', ctx);
       clearTimeout(t);
     };
   }, []);
@@ -743,6 +755,7 @@ export default function App() {
           <Suspense fallback={null}>
             <DropIn blocked={!!capture || !!detail || !!confirmReq || quickWin} />
             <CardMenu
+          early={early}
           blocked={!!capture || !!detail || !!confirmReq || quickWin}
           onAct={(a, it) => {
             if (a === 'open') openItem(it);
