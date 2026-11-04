@@ -18,7 +18,8 @@ import { safeHost } from './ItemCard';
 import { clock, timeMark } from '../lib/platforms';
 import { lockReady, useUnlocked } from '../lib/lock';
 import { PinGate } from './PinGate';
-import { fillItem } from '../lib/repo';
+import { Revisits } from './Revisits';
+import { fillItem, setDown } from '../lib/repo';
 import { EXITS, type Exit } from '../lib/privacy';
 import '../styles/v039.css';
 
@@ -386,6 +387,7 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
               }} />
           </p>
         </section>
+        {it.id != null && <Revisits it={it} />}
         {it.caption && (
           <section className="detail-sec detail-caption">
             <div className="label">AI 看到的</div>
@@ -443,6 +445,9 @@ export function Detail({ it: it0, onEdit, onDelete, onDevelop, onReAI, onWhen, p
           </button>
           <button className="btn text" onClick={onReAI}>
             AI 重新整理
+          </button>
+          <button className={`btn text detail-down${it.down ? ' on' : ''}`} onClick={() => it.id != null && void setDown([it.id], !it.down).then(() => toast(it.down ? '拿回来了，回到穗仓' : '放下了：不进穗仓和每日一穗，搜得到'))}>
+            {it.down ? '拿回来' : '放下'}
           </button>
           <button className="btn text faint danger" onClick={onDelete}>
             删除
