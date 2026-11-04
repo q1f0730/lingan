@@ -13,6 +13,9 @@ mod entry;
 mod ocr;
 #[cfg(any(desktop, test))]
 mod entrylogic;
+// v0.44 外壳：首屏画完再亮窗口、崩溃记录、托盘提示 / 剪贴板暂停 / 跟着鼠标换屏
+mod shell;
+mod shelllogic;
 
 /// v0.22 正在播放一键拾（Windows SMTC）；其它平台返回 unsupported，安卓走 MainActivity 的 LinganNowPlaying 桥
 #[tauri::command]
@@ -23,6 +26,7 @@ async fn now_playing() -> Result<Option<smtc::NowPlaying>, String> {
 #[cfg(desktop)]
 fn show_quick(app: &tauri::AppHandle) {
   use tauri::{Emitter, Manager};
+  shell::to_cursor_monitor(app);
   if let Some(w) = app.get_webview_window("main") {
     let _ = w.unminimize();
     let _ = w.show();
@@ -107,7 +111,7 @@ pub fn run() {
     ;
 
   #[cfg(mobile)]
-  let builder = builder.invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete, now_playing]);
+  let builder = builder.invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete, now_playing, shell::main_ready, shell::crash_take]);
 
   // v0.25 本地 API / MCP（api_*）+ 自动更新（updater / process 插件）只在桌面版
   #[cfg(desktop)]
@@ -120,7 +124,11 @@ pub fn run() {
     .plugin(tauri_plugin_deep_link::init())
     .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--hidden"])))
     .plugin(tauri_plugin_opener::init())
+    // v0.44 0565：记住主窗口大小 / 位置 / 最大化（显示与否由我们自己管：开机静默启动、首屏画完再亮）
+    .plugin(tauri_plugin_window_state::Builder::default().with_state_flags(tauri_plugin_window_state::StateFlags::all() & !tauri_plugin_window_state::StateFlags::VISIBLE).build())
     .invoke_handler(tauri::generate_handler![
+      shell::main_ready,
+      shell::crash_take,
       vault::secret_get,
       vault::secret_set,
       vault::secret_delete,
@@ -164,11 +172,30 @@ pub fn run() {
       if let tauri::WindowEvent::CloseRequested { api, .. } = event {
         api.prevent_close();
         let _ = window.hide();
+        // v0.44 0561：第一次关进托盘时说一声
+        use tauri::Manager;
+        shell::first_close(window.app_handle());
       }
     });
 
   builder
+    .manage(shell::Shell::default())
     .setup(|app| {
+      {
+        use tauri::Manager;
+        // v0.44 0746：panic 写进 应用日志目录/crash.txt，下次启动前端取走提示
+        if let Ok(dir) = app.path().app_log_dir() {
+          shell::panic_hook(dir);
+        }
+        // v0.44 0747：正式版也写日志（Warn 及以上，单文件 256KB、只留一份旧的）；开发版照旧 Info
+        app.handle().plugin(
+          tauri_plugin_log::Builder::default()
+            .level(if cfg!(debug_assertions) { log::LevelFilter::Info } else { log::LevelFilter::Warn })
+            .max_file_size(256 * 1024)
+            .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
+            .build(),
+        )?;
+      }
       #[cfg(desktop)]
       {
         api::init(app.handle());
@@ -177,8 +204,17 @@ pub fn run() {
           app.manage(entry::Entry::default());
           entry::init(app.handle());
           // 0516：开机自启带 --hidden = 只进托盘（窗口在配置里默认不显示，网页照常加载 = 首次唤出不用等）
-          if !std::env::args().any(|a| a == "--hidden") {
-            entry::show_main(app.handle());
+          // v0.44 0741：不在这里亮窗口——前端首帧画完调 main_ready 才亮（免得先闪一下白窗）；5 秒没等到就兜底亮出来
+          let hidden = std::env::args().any(|a| a == "--hidden");
+          app.state::<shell::Shell>().hidden.store(hidden, std::sync::atomic::Ordering::SeqCst);
+          if !hidden {
+            let h = app.handle().clone();
+            std::thread::spawn(move || {
+              std::thread::sleep(std::time::Duration::from_secs(5));
+              if !h.state::<shell::Shell>().ready.swap(true, std::sync::atomic::Ordering::SeqCst) {
+                entry::show_main(&h);
+              }
+            });
           }
           use tauri_plugin_deep_link::DeepLinkExt;
           #[cfg(windows)]
@@ -203,19 +239,45 @@ pub fn run() {
         let quick = MenuItem::with_id(app, "quick", "随手拾一穗", true, None::<&str>)?;
         let song = MenuItem::with_id(app, "nowplaying", "拾正在播放的歌", true, None::<&str>)?;
         let shot = MenuItem::with_id(app, "shot", "框选截图拾", true, None::<&str>)?;
+        // v0.44 0538：从剪贴板拾（带着剪贴板里的字打开速记）、暂停剪贴板提示 1 小时
+        let clip = MenuItem::with_id(app, "clip", "从剪贴板拾", true, None::<&str>)?;
+        let pause = MenuItem::with_id(app, "clippause", "暂停剪贴板提示 1 小时", true, None::<&str>)?;
         let library = MenuItem::with_id(app, "library", "打开穗仓", true, None::<&str>)?;
         let daily = MenuItem::with_id(app, "daily", "今日一穗", true, None::<&str>)?;
         let settings = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
         let quit = MenuItem::with_id(app, "quit", "退出拾穗", true, None::<&str>)?;
         let sep1 = PredefinedMenuItem::separator(app)?;
         let sep2 = PredefinedMenuItem::separator(app)?;
-        let menu = Menu::with_items(app, &[&quick, &song, &shot, &sep1, &library, &daily, &sep2, &settings, &quit])?;
+        let menu = Menu::with_items(app, &[&quick, &clip, &song, &shot, &pause, &sep1, &library, &daily, &sep2, &settings, &quit])?;
         let mut tray = TrayIconBuilder::new()
           .tooltip("拾穗 Glean")
           .menu(&menu)
           .show_menu_on_left_click(false)
-          .on_menu_event(|app, e| match e.id().as_ref() {
+          .on_menu_event(move |app, e| match e.id().as_ref() {
             "quick" => show_quick(app),
+            "clip" => {
+              use tauri::Emitter;
+              use tauri_plugin_clipboard_manager::ClipboardExt;
+              let t = app.clipboard().read_text().unwrap_or_default();
+              shell::to_cursor_monitor(app);
+              entry::show_main(app);
+              let _ = app.emit("quick-focus", t.trim().chars().take(4000).collect::<String>());
+            }
+            "clippause" => {
+              let on = shell::toggle_pause(app);
+              let _ = pause.set_text(if on { "恢复剪贴板提示（1 小时后自动恢复）" } else { "暂停剪贴板提示 1 小时" });
+              if on {
+                // 到点自动恢复：菜单文字跟着改回来（期间又点过就不管）
+                let p = pause.clone();
+                let h = app.clone();
+                std::thread::spawn(move || {
+                  std::thread::sleep(std::time::Duration::from_secs(shell::PAUSE_SECS));
+                  if !shell::clip_paused(&h) {
+                    let _ = p.set_text("暂停剪贴板提示 1 小时");
+                  }
+                });
+              }
+            }
             "nowplaying" => {
               use tauri::{Emitter, Manager};
               if let Some(w) = app.get_webview_window("main") {
@@ -240,13 +302,6 @@ pub fn run() {
           tray = tray.icon(icon.clone());
         }
         tray.build(app)?;
-      }
-      if cfg!(debug_assertions) {
-        app.handle().plugin(
-          tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Info)
-            .build(),
-        )?;
       }
       Ok(())
     })
