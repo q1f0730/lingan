@@ -81,8 +81,18 @@ export interface Item {
   locked?: 1;
   /** v0.39 0934 这一穗关掉的出口（'ai' | 'agent' | 'share' | 'garden'）；上锁 = 全关。没加索引，随同步 */
   shut?: string[];
+  /** v0.40 0131 / 0915 再看一句：同一穗随时间多段感受（y = 1：满一年时「现在的为什么」）。没加索引，随同步 */
+  revisits?: Revisit[];
+  /** v0.40 0938 放下：不进默认穗仓 / 每日一穗，可搜、可拿回来（放下的时间）。没加索引，随同步 */
+  down?: number;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface Revisit {
+  text: string;
+  at: number;
+  y?: 1;
 }
 
 export type LinkKind = 'like' | 'anti' | 'lead' | 'reply';
