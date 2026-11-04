@@ -1,6 +1,6 @@
 [package]
 name = "lingan"
-version = "0.41.0"
+version = "0.42.0"
 description = "Glean (拾穗) — a personal inspiration gleaner"
 authors = ["Q1f730"]
 license = ""
