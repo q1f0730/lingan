@@ -245,6 +245,7 @@ export function PlugPanel() {
     { id: 'netease', reads: '不读穗仓；只发歌单 id', writes: '导入前你勾选的歌（先拍快照）', hosts: NETEASE_HOSTS.join('、'), on: plugOn('netease') },
     { id: 'mini', reads: '不读穗仓', writes: '本机模型库（独立，下载完核对 SHA-256）', hosts: MINI_HOSTS.join('、'), on: plugOn('mini') },
     { id: 'ai', reads: '穗的标题 / 正文 / 为什么；看图时读图片（私密穗不发云端；上锁的、关了 AI 出口的一律不发）', writes: '标签建议、图片描述、向量、新枝', hosts: aiHosts.join('、') || '还没配', on: plugOn('ai') },
+    { id: 'push', reads: '到点递一穗那一条的标题级文字（不带正文和为什么；上锁 / 私密的只说「一穗」）', writes: '不写', hosts: 'sctapi.ftqq.com、*.push.ft07.com（只在你填了 SendKey 并打开时）', on: plugOn('push') },
     { id: 'agent', reads: '穗的元数据和正文（私密、上锁、关了 Agent 出口的不给）', writes: agent.write ? '代拾一穗进待理（每次弹窗确认）' : '不能写（只读）', hosts: `只本机 127.0.0.1:${agent.port}`, on: plugOn('agent') && agent.on },
   ];
   function flip(id: PlugId, on: boolean) {
