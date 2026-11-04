@@ -455,7 +455,7 @@ export async function addItem(data: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>
     await d.transaction('rw', d.items, d.images, async () => {
       id = await d.items.add(row);
       if (blob) {
-        await d.images.put({ itemId: id, blob });
+        await d.images.put({ itemId: id, blob, fresh: Date.now() });
         had = true;
       }
     });
