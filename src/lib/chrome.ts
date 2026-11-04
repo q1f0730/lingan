@@ -49,14 +49,31 @@ export function applyInsets(ins: Insets, root: HTMLElement = document.documentEl
 interface ChromeBridge {
   insets?: () => string;
   setTheme?: (dark: boolean, bg: string) => void;
+  secure?: (on: boolean) => void;
 }
 const bridge = (): ChromeBridge | null => (typeof window !== 'undefined' ? ((window as unknown as { LinganChrome?: ChromeBridge }).LinganChrome ?? null) : null);
+
+/** v0.44 0567 安卓「最近任务」里不显示画面（FLAG_SECURE，也不能截屏）：glean.secure '1' 开 / '0' 关 / 没设 = 设了上锁 PIN 就开 */
+export const SECURE_KEY = 'glean.secure';
+export function secureOn(): boolean {
+  try {
+    const v = localStorage.getItem(SECURE_KEY);
+    return v ? v === '1' : !!localStorage.getItem('glean.lock.v1');
+  } catch {
+    return false;
+  }
+}
+export const hasSecure = () => !!bridge()?.secure;
+export function applySecure(): void {
+  bridge()?.secure?.(secureOn());
+}
 
 /** 启动时调一次：接上键盘与安全区 */
 export function initChrome(): () => void {
   if (typeof window === 'undefined') return () => {};
   const root = document.documentElement;
   const b = bridge();
+  applySecure();
   const ins = parseInsets(b?.insets?.());
   if (ins) applyInsets(ins);
   let tallest = window.innerHeight;
