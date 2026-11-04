@@ -139,16 +139,21 @@ export default function App() {
   const [quickText, setQuickText] = useState('');
   // 首屏画完、空闲后才挂拖放 / 长按菜单（main.tsx afterFirstPaint → prefetchViews 发 IDLE_READY；兜底 4 秒）
   const [idle, setIdle] = useState(false);
-  // v0.40 菜单挂上之前就右键一张卡：拦下系统菜单、记住位置，立刻挂菜单并补开（以前这一下会弹出浏览器自己的菜单）
-  const [early, setEarly] = useState<{ el: Element; x: number; y: number } | null>(null);
+  // v0.40 菜单真正开始监听之前就右键一张卡：拦下系统菜单、记住是哪一穗和位置，立刻挂菜单并补开（以前这一下会弹出浏览器自己的菜单）。
+  // 「开始监听」以 CardMenu 的 onLive 为准，不是 idle：idle 之后 CardMenu 块还要下载 / 解析，中间那一下右键以前会丢（整套 e2e 的 v034 卡住就是它）
+  const [early, setEarly] = useState<{ id: number; x: number; y: number; n: number } | null>(null);
+  const menuLive = useRef(false);
+  const onMenuLive = useCallback(() => void (menuLive.current = true), []);
   useEffect(() => {
-    let done = false;
-    const on = () => ((done = true), setIdle(true));
+    const on = () => setIdle(true);
     const ctx = (e: MouseEvent) => {
-      const el = (e.target as Element | null)?.closest?.('[data-item-id]');
-      if (!el || done) return;
+      if (menuLive.current) return;
+      const el = (e.target as Element | null)?.closest?.('[data-item-id]') as HTMLElement | null;
+      if (!el || !el.closest('.main')) return;
+      const id = Number(el.dataset.itemId);
+      if (!Number.isFinite(id)) return;
       e.preventDefault();
-      setEarly({ el, x: e.clientX, y: e.clientY });
+      setEarly((p) => ({ id, x: e.clientX, y: e.clientY, n: (p?.n || 0) + 1 }));
       on();
     };
     window.addEventListener(IDLE_READY, on);
@@ -756,6 +761,7 @@ export default function App() {
             <DropIn blocked={!!capture || !!detail || !!confirmReq || quickWin} />
             <CardMenu
           early={early}
+          onLive={onMenuLive}
           blocked={!!capture || !!detail || !!confirmReq || quickWin}
           onAct={(a, it) => {
             if (a === 'open') openItem(it);
