@@ -1,6 +1,6 @@
 [package]
 name = "lingan"
-version = "0.43.0"
+version = "0.44.0"
 description = "Glean (拾穗) — a personal inspiration gleaner"
 authors = ["Q1f730"]
 license = ""
@@ -49,7 +49,15 @@ tauri-plugin-deep-link = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-opener = "2"
 png = "0.18"
+# v0.44 0565：记住主窗口大小 / 位置
+tauri-plugin-window-state = "2"
 
 # v0.22：Windows「正在播放一键拾」读系统媒体传输控件（SMTC）；v0.36 0020 系统 OCR（Media_Ocr / Graphics_Imaging）
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.61", features = ["Media_Control", "Storage_Streams", "Foundation", "Win32_Foundation", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_UI_Input_KeyboardAndMouse", "Media_Ocr", "Globalization", "Graphics_Imaging", "Foundation_Collections"] }
+
+# v0.44 0718：正式版体积 / 速度（整体 LTO + 单代码生成单元 + 去符号）；panic 仍是 unwind（崩溃记录要先写文件再退出）
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
