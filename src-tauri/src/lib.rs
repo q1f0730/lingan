@@ -44,7 +44,8 @@ fn show_view(app: &tauri::AppHandle, view: &str) {
     let _ = w.show();
     let _ = w.set_focus();
   }
-  let _ = app.emit("glean-go", view.to_string());
+  // v0.45 0545：托盘、通知、快捷方式都只造 glean:// 地址，前端一个解析器（deeplink.ts）路由
+  let _ = app.emit("glean-go", format!("glean://go/{view}"));
 }
 
 /// v0.20 系统钥匙串：只认两个固定名字，错误信息不带平台细节和值
@@ -52,7 +53,7 @@ fn show_view(app: &tauri::AppHandle, view: &str) {
 mod vault {
   const SERVICE: &str = "com.q1f730.lingan";
   fn entry(name: &str) -> Result<keyring::Entry, String> {
-    if !matches!(name, "chat.apiKey" | "embed.apiKey" | "sync.davPass" | "sync.key" | "sync.lanKey") {
+    if !matches!(name, "chat.apiKey" | "embed.apiKey" | "sync.davPass" | "sync.key" | "sync.lanKey" | "push.key") {
       return Err("bad secret name".into());
     }
     keyring::Entry::new(SERVICE, name).map_err(|_| "keychain unavailable".to_string())
@@ -111,7 +112,7 @@ pub fn run() {
     ;
 
   #[cfg(mobile)]
-  let builder = builder.invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete, now_playing, shell::main_ready, shell::crash_take]);
+  let builder = builder.invoke_handler(tauri::generate_handler![vault::secret_get, vault::secret_set, vault::secret_delete, now_playing, shell::main_ready, shell::crash_take, shell::quiet_now]);
 
   // v0.25 本地 API / MCP（api_*）+ 自动更新（updater / process 插件）只在桌面版
   #[cfg(desktop)]
@@ -129,6 +130,7 @@ pub fn run() {
     .invoke_handler(tauri::generate_handler![
       shell::main_ready,
       shell::crash_take,
+      shell::quiet_now,
       vault::secret_get,
       vault::secret_set,
       vault::secret_delete,
@@ -241,7 +243,7 @@ pub fn run() {
         let shot = MenuItem::with_id(app, "shot", "框选截图拾", true, None::<&str>)?;
         // v0.44 0538：从剪贴板拾（带着剪贴板里的字打开速记）、暂停剪贴板提示 1 小时
         let clip = MenuItem::with_id(app, "clip", "从剪贴板拾", true, None::<&str>)?;
-        let pause = MenuItem::with_id(app, "clippause", "暂停剪贴板提示 1 小时", true, None::<&str>)?;
+        let pause = MenuItem::with_id(app, "clippause", shelllogic::pause_label(false), true, None::<&str>)?;
         let library = MenuItem::with_id(app, "library", "打开穗仓", true, None::<&str>)?;
         let daily = MenuItem::with_id(app, "daily", "今日一穗", true, None::<&str>)?;
         let settings = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
@@ -264,16 +266,21 @@ pub fn run() {
               let _ = app.emit("quick-focus", t.trim().chars().take(4000).collect::<String>());
             }
             "clippause" => {
-              let on = shell::toggle_pause(app);
-              let _ = pause.set_text(if on { "恢复剪贴板提示（1 小时后自动恢复）" } else { "暂停剪贴板提示 1 小时" });
+              // v0.45：文字只按状态算；到点自动恢复由后台线程每 20 秒看一次（墙钟，睡眠后也准），期间又点过就退出
+              let (on, ticket) = shell::toggle_pause(app);
+              let _ = pause.set_text(shelllogic::pause_label(on));
               if on {
-                // 到点自动恢复：菜单文字跟着改回来（期间又点过就不管）
                 let p = pause.clone();
                 let h = app.clone();
-                std::thread::spawn(move || {
-                  std::thread::sleep(std::time::Duration::from_secs(shell::PAUSE_SECS));
-                  if !shell::clip_paused(&h) {
-                    let _ = p.set_text("暂停剪贴板提示 1 小时");
+                std::thread::spawn(move || loop {
+                  std::thread::sleep(std::time::Duration::from_secs(20));
+                  match shell::pause_settled(&h, ticket) {
+                    None => break,
+                    Some(true) => {
+                      let _ = p.set_text(shelllogic::pause_label(false));
+                      break;
+                    }
+                    Some(false) => {}
                   }
                 });
               }
